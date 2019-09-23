@@ -1,2 +1,2 @@
 # burdock
-initial diff-priv clients and mechanisms
+initial diff-priv service, clients and mechanisms
