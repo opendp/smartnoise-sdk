@@ -1,0 +1,46 @@
+swagger: "2.0"
+info:
+  description: This is the Open API specification of the Burdock execution service.
+  version: "0.0.1"
+  title: Swagger ReST Article
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /api
+
+# Paths supported by the server application
+paths:
+  /execute:
+    post:
+      operationId: execute.run
+      tags:
+        - execute
+      summary: Execute a differentially private module
+      description: Create a run of the specified module and return the results.
+      parameters:
+        - name: details
+          in: body
+          description: Configuration for the module run.
+          required: True
+          schema:
+            $ref: '#/definitions/ProjectRunDetails'
+      responses:
+        200:
+          description: Successfully executed the run
+          schema:
+            properties:
+              result:
+                type: string
+                description: Json string result,  TODO release document
+definitions:
+  ProjectRunDetails:
+    type: object
+    properties:
+      project_uri:
+        type: string
+        description: Git url of the project
+      params:
+        type: string
+        description: Input parameters of the project
