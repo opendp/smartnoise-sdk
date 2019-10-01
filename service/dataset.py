@@ -3,8 +3,8 @@ from flask import abort
 
 
 DATASETS = {"0": {"type": "local_csv",
-                "local_path": os.path.abspath("datasets/example.csv"),
-                "key": "csv_details"}}
+                  "local_path": os.path.abspath("datasets/example.csv"),
+                  "key": "csv_details"}}
 
 
 def read(info):
