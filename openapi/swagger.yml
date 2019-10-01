@@ -82,3 +82,5 @@ definitions:
       dataset_type:
         type: string
         description: The type of the dataset
+      csv_details:
+        $ref: '#/definitions/LocalCSVDetails'
