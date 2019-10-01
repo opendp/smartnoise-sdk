@@ -3,8 +3,6 @@ import os
 import subprocess
 import sys
 
-from utils.service_utils import run_app
-
 # Add the utils directory to the path
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 sys.path.append(os.path.join(root_url, "utils"))

@@ -6,9 +6,15 @@
 # --------------------------------------------------------------------------
 
 from .project_run_details import ProjectRunDetails
+from .dataset_read_request import DatasetReadRequest
+from .local_csv_details import LocalCSVDetails
+from .dataset_document import DatasetDocument
 from .executerun_ok_response import ExecuterunOKResponse
 
 __all__ = [
     'ProjectRunDetails',
+    'DatasetReadRequest',
+    'LocalCSVDetails',
+    'DatasetDocument',
     'ExecuterunOKResponse',
 ]
