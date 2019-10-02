@@ -40,7 +40,7 @@ class RestClientConfiguration(Configuration):
 
 
 class RestClient(object):
-    """This is the Open API specification of the Burdock service.
+    """This is the Open API specification of the Burdock execution service.
 
     :ivar config: Configuration for client.
     :vartype config: RestClientConfiguration
@@ -116,3 +116,57 @@ class RestClient(object):
 
         return deserialized
     executerun.metadata = {'url': '/execute'}
+
+    def datasetread(
+            self, info, custom_headers=None, raw=False, **operation_config):
+        """Read the details for reading the dataset.
+
+        Return the details of the requested dataset.
+
+        :param info: Get the dataset read info
+        :type info: ~restclient.models.DatasetReadRequest
+        :param dict custom_headers: headers that will be added to the request
+        :param bool raw: returns the direct response alongside the
+         deserialized response
+        :param operation_config: :ref:`Operation configuration
+         overrides<msrest:optionsforoperations>`.
+        :return: DatasetDocument or ClientRawResponse if raw=true
+        :rtype: ~restclient.models.DatasetDocument or
+         ~msrest.pipeline.ClientRawResponse
+        :raises:
+         :class:`HttpOperationError<msrest.exceptions.HttpOperationError>`
+        """
+        # Construct URL
+        url = self.datasetread.metadata['url']
+
+        # Construct parameters
+        query_parameters = {}
+
+        # Construct headers
+        header_parameters = {}
+        header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+        if custom_headers:
+            header_parameters.update(custom_headers)
+
+        # Construct body
+        body_content = self._serialize.body(info, 'DatasetReadRequest')
+
+        # Construct and send request
+        request = self._client.post(url, query_parameters)
+        response = self._client.send(
+            request, header_parameters, body_content, stream=False, **operation_config)
+
+        if response.status_code not in [200]:
+            raise HttpOperationError(self._deserialize, response)
+
+        deserialized = None
+
+        if response.status_code == 200:
+            deserialized = self._deserialize('DatasetDocument', response)
+
+        if raw:
+            client_raw_response = ClientRawResponse(deserialized, response)
+            return client_raw_response
+
+        return deserialized
+    datasetread.metadata = {'url': '/dataset'}

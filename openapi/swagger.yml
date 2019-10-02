@@ -34,6 +34,26 @@ paths:
               result:
                 type: string
                 description: Json string result,  TODO release document
+  /dataset:
+    post:
+      operationId: dataset.read
+      tags:
+        - datasetRead
+      summary: Read the details for reading the dataset
+      description: Return the details of the requested dataset
+      parameters:
+        - name: info
+          in: body
+          description: Get the dataset read info
+          required: True
+          schema:
+            $ref: '#/definitions/DatasetReadRequest'
+      responses:
+         200:
+           description: Successfully return the dataset information
+           schema:
+            $ref: '#/definitions/DatasetDocument'
+
 definitions:
   ProjectRunDetails:
     type: object
@@ -44,3 +64,23 @@ definitions:
       params:
         type: string
         description: Input parameters of the project
+  DatasetReadRequest:
+    type: object
+    properties:
+      dataset_id:
+        type: string
+        description: The id for the dataset
+  LocalCSVDetails:
+    type: object
+    properties:
+      local_path:
+        type: string
+        description: Path to the csv on diskThe type of the dataset
+  DatasetDocument:
+    type: object
+    properties:
+      dataset_type:
+        type: string
+        description: The type of the dataset
+      csv_details:
+        $ref: '#/definitions/LocalCSVDetails'
