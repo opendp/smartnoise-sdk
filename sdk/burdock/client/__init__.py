@@ -1,6 +1,8 @@
 import os
+import json
 from requests import Session
 
+from burdock.restclient.models.project_run_details import ProjectRunDetails
 from burdock.restclient.rest_client import RestClient
 from burdock.restclient.models.dataset_read_request import DatasetReadRequest
 
@@ -17,6 +19,12 @@ def _get_client():
     client = RestClient(_MockCredentials(), base_url)
     return client
 
+class ExecutionClient(object):
+    def submit(self, params, uri):
+        client = _get_client()
+        details = ProjectRunDetails(params=json.dumps(params),
+                                    project_uri=uri)
+        return client.executerun(details)
 
 class DatasetClient(object):
     def read(self, dataset_name, budget):
@@ -28,5 +36,7 @@ class DatasetClient(object):
 def get_dataset_client():
     return DatasetClient()
 
+def get_execution_client():
+    return ExecutionClient()
 
-__all__ = "get_dataset_client"
+__all__ = ["get_dataset_client", "get_execution_client"]

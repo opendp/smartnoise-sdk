@@ -6,4 +6,4 @@ entry_points:
   main:
     parameters:
       text: str
-    command: "python train.py {text}"
+    command: "python hello_world.py {text}"

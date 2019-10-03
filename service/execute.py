@@ -7,7 +7,6 @@ from mlflow.tracking.client import MlflowClient
 
 def run(details):
     params = json.loads(details["params"])
-    params["server_path"] = os.getcwd()
     project_uri = details["project_uri"]
     if not(project_uri.startswith("http://") or project_uri.startswith("https://")):
         assert project_uri.replace(".", "").replace("/", "").startswith("modules"), "Only support modules dir"
@@ -17,5 +16,7 @@ def run(details):
     submitted_run = mlflow.projects.run(project_uri,
                                         parameters=params,
                                         use_conda=False)
-    out = MlflowClient().get_run(submitted_run.run_id).to_dictionary()
-    return {"result": json.dumps(out)}
+    path = MlflowClient().download_artifacts(submitted_run.run_id, ".")
+    with open(os.path.join(path, "result.json"), "r") as stream:
+        json_str = stream.read()
+    return {"result": json.dumps(json.loads(json_str))}
