@@ -2,16 +2,16 @@ import os
 from flask import abort
 
 
-DATASETS = {"0": {"type": "local_csv",
-                  "local_path": os.path.abspath("datasets/example.csv"),
-                  "key": "csv_details"}}
+DATASETS = {"example": {"type": "local_csv",
+                        "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv"),
+                        "key": "csv_details"}}
 
 
 def read(info):
-    dataset_id = info["dataset_id"]
+    dataset_name = info["dataset_name"]
 
-    if dataset_id not in DATASETS:
-        abort(400, "Dataset id {} not found.".format(dataset_id))
-    dataset = DATASETS[dataset_id]
+    if dataset_name not in DATASETS:
+        abort(400, "Dataset id {} not found.".format(dataset_name))
+    dataset = DATASETS[dataset_name]
 
     return {"dataset_type": dataset["type"], dataset["key"]: dataset}
