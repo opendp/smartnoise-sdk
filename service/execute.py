@@ -17,5 +17,7 @@ def run(details):
     submitted_run = mlflow.projects.run(project_uri,
                                         parameters=params,
                                         use_conda=False)
-    out = MlflowClient().get_run(submitted_run.run_id).to_dictionary()
-    return {"result": json.dumps(out)}
+    path = MlflowClient().download_artifacts(submitted_run.run_id, ".")
+    with open(os.path.join(path, "result.json"), "r") as stream:
+        json_str = stream.read()
+    return {"result": json.dumps(json.loads(json_str))}
