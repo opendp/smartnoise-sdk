@@ -7,7 +7,6 @@ from mlflow.tracking.client import MlflowClient
 
 def run(details):
     params = json.loads(details["params"])
-    params["server_path"] = os.getcwd()
     project_uri = details["project_uri"]
     if not(project_uri.startswith("http://") or project_uri.startswith("https://")):
         assert project_uri.replace(".", "").replace("/", "").startswith("modules"), "Only support modules dir"
