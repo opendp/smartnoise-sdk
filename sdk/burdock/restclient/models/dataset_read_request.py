@@ -11,14 +11,14 @@ from msrest.serialization import Model
 class DatasetReadRequest(Model):
     """DatasetReadRequest.
 
-    :param dataset_id: The id for the dataset
-    :type dataset_id: str
+    :param dataset_name: The name for the dataset
+    :type dataset_name: str
     """
 
     _attribute_map = {
-        'dataset_id': {'key': 'dataset_id', 'type': 'str'},
+        'dataset_name': {'key': 'dataset_name', 'type': 'str'},
     }
 
-    def __init__(self, dataset_id=None):
+    def __init__(self, dataset_name=None):
         super(DatasetReadRequest, self).__init__()
-        self.dataset_id = dataset_id
+        self.dataset_name = dataset_name

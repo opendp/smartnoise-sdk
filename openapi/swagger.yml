@@ -67,9 +67,9 @@ definitions:
   DatasetReadRequest:
     type: object
     properties:
-      dataset_id:
+      dataset_name:
         type: string
-        description: The id for the dataset
+        description: The name for the dataset
   LocalCSVDetails:
     type: object
     properties:
