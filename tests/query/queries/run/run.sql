@@ -1,0 +1,16 @@
+SELECT SUM(Crashes) AS crashes FROM Telemetry.Crashes WHERE Region = 'LATAM';
+SELECT AVG(Temperature) AS temperature FROM Telemetry.Crashes GROUP BY Refurbished;
+SELECT Building, SUM(Crashes) AS total_crash, AVG(Crashes) AS avg_crashes, AVG(Temperature) FROM Telemetry.Crashes WHERE Refurbished = TRUE GROUP BY Building;
+SELECT COUNT(DeviceID) AS Devices FROM Telemetry.Crashes;
+SELECT SUM(Crashes) AS Crashes, COUNT(DeviceID) AS Devices FROM Telemetry.Crashes;
+SELECT SUM(Crashes) AS Crashes FROM Telemetry.Crashes;
+SELECT COUNT(Crashes) AS Crashes FROM Telemetry.Crashes;
+SELECT Region, SUM(Crashes) AS crashes FROM Telemetry.Crashes WHERE Region IN ('LATAM', 'EMEA') GROUP BY Region ORDER BY Region DESC;
+SELECT COUNT(DeviceID) AS n, Region, Building, Refurbished FROM Telemetry.Crashes WHERE Temperature > 55 GROUP BY Region, Building, Refurbished;
+SELECT COUNT(DISTINCT DeviceID) AS n, Region, Building, Refurbished FROM Telemetry.Crashes WHERE Temperature > 55 GROUP BY Region, Building, Refurbished;
+SELECT COUNT(DISTINCT DeviceID) AS did FROM Telemetry.Crashes GROUP BY Refurbished;
+SELECT COUNT(DISTINCT DeviceID) AS did FROM Telemetry.Crashes;
+SELECT Region, Refurbished, AVG(Temperature) FROM Telemetry.Crashes GROUP BY Region, Refurbished ORDER BY Refurbished, Region;
+SELECT Region, Refurbished, AVG(Temperature) FROM Telemetry.Crashes GROUP BY Region, Refurbished ORDER BY Region, Refurbished DESC;
+SELECT POWER(COUNT ( DeviceID ) / 10000, 2) AS n, Region FROM Telemetry.Crashes GROUP BY Region;
+SELECT SQRT(AVG(Crashes * Crashes) - AVG(Crashes) * AVG(Crashes) )  FROM Telemetry.Crashes;

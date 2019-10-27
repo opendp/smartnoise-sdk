@@ -1,0 +1,4 @@
+SELECT FOO, (SELECT AVG(BAR) FROM other.Table) AS OT FROM BAZ;
+SELECT FOO, BAR FROM BAZ, (SELECT * FROM Db.dbo.[BIX]);
+SELECT A.B, B.C, C.D FROM (SELECT * FROM (SELECT * FROM (SELECT A, B, C FROM X.Y.Z))) AS Q, Y.Z.Z;
+SELECT Region, SUM(sum_Crashes) AS crashes FROM (SELECT COUNT(DeviceID) AS keycount, Region AS Region, SUM(sum_Crashes) AS sum_Crashes FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY DeviceID ORDER BY random()) AS row_num FROM (SELECT DeviceID AS DeviceID, Region AS Region, SUM(Crashes) AS sum_Crashes FROM (SELECT DeviceID AS DeviceID, Region AS Region, CASE WHEN Crashes < 0 THEN 0 WHEN Crashes > 10 THEN 10 ELSE Crashes END AS Crashes FROM Telemetry.Crashes  WHERE Region IN ('LATAM', 'EMEA')) AS clamped GROUP BY DeviceID, Region) AS per_key_clamped) AS per_key_random WHERE per_key_random.row_num <= 5 GROUP BY Region) AS exact_aggregates GROUP BY Region ORDER BY Region DESC;
