@@ -1,0 +1,175 @@
+Devices:
+  Telemetry:
+    Crashes:
+      rows: 103000
+      Refurbished:
+        type: boolean
+      Temperature:
+        type: float
+        min: 25.0
+        max: 65.0
+      Building:
+        cardinality: 12
+        type: string
+      Region:
+        cardinality: 13
+        type: string
+      DeviceID:
+        type: int
+        is_key: True
+      Crashes:
+        type: int
+        min: 0
+        max: 10
+    Census:
+      DeviceID:
+        type: int
+        is_key: true
+      OEM:
+        type: string
+        cardinality: 100
+      Memory:
+        type: string
+        cardinality: 1000
+      Disk:
+        type: int
+        min: 100
+        max: 10000
+    Rollouts:
+      DeviceID:
+        type: int
+        is_key: true
+      RolloutID:
+        type: int
+      StartTrial:
+        type: datetime
+      EndTrial:
+        type: datetime
+      TrialGroup:
+        type: int
+
+# Format is database -> schema -> table/view.
+
+# Valid column types are string, int, float, boolean, and key.
+
+# All tables must have only one key, representing the ID for the
+#   individual (e.g. person, household, device) to be protected.
+
+# Numeric columns must have a min and max.
+  ? ''
+  : A:
+      Crashes:
+        max: 10
+        min: 0
+        type: int
+      ID:
+        is_key: true
+        type: int
+      Refurbished:
+        type: boolean
+      rows: 100300
+    B:
+      A:
+        type: string
+      Crashes:
+        max: 10
+        min: 0
+        type: int
+      ID:
+        is_key: true
+        type: int
+      Refurbished:
+        type: boolean
+      rows: 100300
+    BAR:
+      Crashes:
+        max: 10
+        min: 0
+        type: int
+      ID:
+        is_key: true
+        type: int
+      Refurbished:
+        type: boolean
+      rows: 100300
+    BAZ:
+      Crashes:
+        max: 10
+        min: 0
+        type: int
+      ID:
+        is_key: true
+        type: int
+      Refurbished:
+        type: boolean
+      rows: 100300
+    FOO:
+      Crashes:
+        max: 10
+        min: 0
+        type: int
+      ID:
+        is_key: true
+        type: int
+      Refurbished:
+        type: boolean
+      rows: 100300
+    X:
+      Crashes:
+        max: 10
+        min: 0
+        type: int
+      ID:
+        is_key: true
+        type: int
+      Refurbished:
+        type: boolean
+      rows: 100300
+    XX:
+      Crashes:
+        max: 10
+        min: 0
+        type: int
+      ID:
+        is_key: true
+        type: int
+      Refurbished:
+        type: boolean
+      rows: 100300
+    Y:
+      X:
+        type: string
+      V:
+        type: string
+      Q:
+        type: string
+      B:
+        type: string
+      BB:
+        type: string
+      Y:
+        type: string
+      ZZ:
+        type: string
+      Z:
+        type: string
+      R:
+        type: string
+    BLAH:
+      X:
+        type: string
+      V:
+        type: string
+      Q:
+        type: string
+      B:
+        type: string
+      Y:
+        type: string
+      ZZ:
+        type: string
+      Z:
+        type: string
+      R:
+        type: string
+
