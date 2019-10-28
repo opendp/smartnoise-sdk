@@ -19,6 +19,7 @@ for d in other_dirs:
 
 metadata = MetadataLoader(join(dir_name, "Devices.yaml")).read_schema()
 
+
 #
 #   Unit tests
 #
@@ -28,6 +29,7 @@ class TestRewrite:
             print(goodpath)
             gqt = GoodQueryTester(goodpath)
             gqt.runRewrite()
+
     def test_all_bad_queries(self):
         for badpath in bad_files:
             bqt = BadQueryTester(badpath)
@@ -39,6 +41,7 @@ class GoodQueryTester:
         self.queryBatch = "\n".join(lines)
         queryLines = " ".join([line for line in lines if line.strip() != "" and not line.strip().startswith("--")])
         self.queries = [q.strip() for q in queryLines.split(";") if q.strip() != ""]
+
     def runRewrite(self):
         qb = QueryParser(metadata).queries(self.queryBatch)
         for q in qb:
@@ -48,11 +51,13 @@ class GoodQueryTester:
             assert new_q.has_symbols()
             assert all([qt[1].type() == nqt[1].type() for qt, nqt in zip(q.m_symbols, new_q.m_symbols) ])
 
+
 class BadQueryTester:
     def __init__(self, path):
         lines = open(path).readlines()
         self.queryBatch = "\n".join(lines)
         queryLines = " ".join([line for line in lines if line.strip() != "" and not line.strip().startswith("--")])
         self.queries = [q.strip() for q in queryLines.split(";") if q.strip() != ""]
+
     def runRewrite(self):
         pass
