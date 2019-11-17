@@ -1,0 +1,7 @@
+name: tutorial
+channels:
+  - defaults
+dependencies:
+  - pip:
+    - mlflow
+    - pandasql

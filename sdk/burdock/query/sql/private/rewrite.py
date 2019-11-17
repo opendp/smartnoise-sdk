@@ -3,7 +3,7 @@ import string
 
 from burdock.query.sql.ast.validate import Validate
 from burdock.query.sql.ast.ast import *  # TODO Why?
-import burdock.query.sql.ast.parse as qp
+from  burdock.query.sql import QueryParser
 
 
 """
@@ -113,7 +113,7 @@ class Rewriter:
 
 
     def query(self, query):
-        query = qp.QueryParser(self.metadata).query(str(query))
+        query = QueryParser(self.metadata).query(str(query))
         Validate().validateQuery(query, self.metadata)
 
         child_scope = Scope()
@@ -131,7 +131,7 @@ class Rewriter:
 
         q = Query(select, From(subquery), None, query.agg, None, query.order)
 
-        return qp.QueryParser(self.metadata).query(str(q))
+        return QueryParser(self.metadata).query(str(q))
 
     def exact_aggregates(self, query):
 

@@ -1,9 +1,14 @@
 import yaml
 from .metadata import *
 
+
 class MetadataLoader:
     def __init__(self, filename):
         self.filename = filename
+
+    @staticmethod
+    def from_dict(schema_dict):
+        return MetadataLoader("dummy")._create_schema(schema_dict)
 
     def read_schema(self):
         with open(self.filename, 'r') as stream:
@@ -11,7 +16,9 @@ class MetadataLoader:
                 dbs = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
+        return self._create_schema(dbs)
 
+    def _create_schema(self, dbs):
         keys = list(dbs.keys())
         engine = "Unknown"
 

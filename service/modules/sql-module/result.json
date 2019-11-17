@@ -1,0 +1,4 @@
+{"original_query": "SELECT COUNT ( A ) FROM example.example",
+"final_query": "SELECT ( SUM ( count_A ) ) FROM ( SELECT COUNT ( DISTINCT A ) AS keycount, ( SUM ( count_A ) ) AS count_A FROM ( SELECT *, ROW_NUMBER ( ) OVER ( PARTITION BY A ORDER BY RANDOM ( ) ) AS row_num FROM ( SELECT A AS A, COUNT ( A ) AS count_A FROM ( SELECT A AS A FROM example.example ) AS clamped GROUP BY A ) AS per_key_clamped ) AS per_key_random WHERE per_key_random.row_num <= 5 ) AS exact_aggregates", 
+"query_result": {"COUNT ( A )": {"0": 1}},
+"final_query_result": {"( SUM ( count_A ) )": {"0": 1}}}
