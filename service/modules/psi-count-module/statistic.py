@@ -82,7 +82,8 @@ class Count(Computer):
         num_obs = dataset.shape[0]
         # obfuscate the count
         sens = 2
-        counts = Laplace(self._epsilon).count([num_obs])
+        tau = 5
+        counts = Laplace(self._epsilon, tau).count([num_obs])
         count_release = counts[0]
 
         # calculate accuracy from epsilon
