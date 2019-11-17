@@ -1,9 +1,0 @@
-Database:
-  dbo:
-    test_table:
-      rows: 9
-      my_column:
-        type: int
-        is_key: True
-        min: 0
-        max: 10
