@@ -105,3 +105,4 @@ venv.bak/
 
 # mlflow
 mlruns
+result.json

@@ -9,14 +9,13 @@ from pandasql import sqldf
 
 
 if __name__ == "__main__":
-    dataset_name = sys.argv[1] if len(sys.argv) > 1 else "example"
+    dataset_name = sys.argv[1]
     budget = float(sys.argv[2])
     query = sys.argv[3]
 
     with mlflow.start_run():
         dataset_document = get_dataset_client().read(dataset_name, budget)
         df_for_diffpriv1234 = load_dataset(dataset_document)
-        import pdb; pdb.set_trace()
         df_name = "df_for_diffpriv1234"
         metadata = load_metadata(dataset_document)
         q = QueryParser(metadata).query(query)
