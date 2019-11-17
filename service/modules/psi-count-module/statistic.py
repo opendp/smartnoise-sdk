@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import math
 import logging
-from burdock.mechanisms.laplace import evaluate
+from burdock.mechanisms.laplace import Laplace
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +82,10 @@ class Count(Computer):
         num_obs = dataset.shape[0]
         # obfuscate the count
         sens = 2
-        noise = evaluate(sens, self._epsilon)
-        count_release = num_obs + noise
+        tau = 5
+        counts = Laplace(self._epsilon, tau).count([num_obs])
+        count_release = counts[0]
+
         # calculate accuracy from epsilon
         accuracy = self._compute_accuracy(self._epsilon)
         accuracy_bound = accuracy * num_obs

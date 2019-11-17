@@ -4,3 +4,5 @@ channels:
 dependencies:
   - pip:
     - mlflow
+    - pandas
+    - git+https://git.repo/some_repo.git#egg=version_subpkg&subdirectory=repo

@@ -1,12 +1,13 @@
 import numpy as np
 
+
 class Laplace:
-    def __init__(self, epsilon, tau):
+    def __init__(self, epsilon, tau=5):
         self.epsilon = epsilon
         self.tau = tau
 
     def count(self, vals):
-        noise = np.random.normal(0.0, self.tau / self.epsilon, len(vals) )
+        noise = np.random.normal(0.0, self.tau / self.epsilon, len(vals))
         new_vals = noise + vals
         return new_vals
 
