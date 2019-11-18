@@ -1,0 +1,17 @@
+Database:
+  example:
+    example:
+      rows: 1
+      A:
+        type: int
+        is_key: True
+        min: 0
+        max: 5
+      B:
+        type: int
+        min: 0
+        max: 25
+      C:
+        type: int
+        min: 0
+        max: 125
