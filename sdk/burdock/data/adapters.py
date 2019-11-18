@@ -90,7 +90,7 @@ def _csv_reader_adapter(dataset_document):
         raise Exception("Malformed csv details.")
     else:
         return CSVReader(_csv_metadata_adapter(dataset_document),
-                         dataset_document.csv_details.local_path)
+                         _csv_details_adapter(dataset_document))
 
 
 register_adapter(_CSV_DETAILS_KEY, _csv_details_adapter, _csv_metadata_adapter, _csv_reader_adapter)

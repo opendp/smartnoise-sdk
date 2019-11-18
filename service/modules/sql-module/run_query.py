@@ -2,6 +2,8 @@ import mlflow
 import json
 import sys
 
+import pandas as pd
+
 from burdock.client import get_dataset_client
 from burdock.data.adapters import load_reader, load_metadata
 from burdock.query.sql.private.query import PrivateQuery
@@ -22,6 +24,7 @@ if __name__ == "__main__":
 
         result = {"query_result": rowset}
 
+        df = pd.DataFrame(rowset[1:], columns=rowset[0])
         with open("result.json", "w") as stream:
-            json.dump(result, stream)
+            json.dump(df.to_dict(), stream)
         mlflow.log_artifact("result.json")
