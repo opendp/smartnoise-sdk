@@ -31,4 +31,4 @@ Steps:
 
 
 ## Adding tests
-For tests 
+Parser tests and query examples are added at tests/query. E2e tests through the sql module are found as parameterized execute tests at tests/service/execute/.
