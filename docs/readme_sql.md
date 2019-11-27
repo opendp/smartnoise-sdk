@@ -27,7 +27,10 @@ Steps:
 - pip install -e sdk/
 - pip install -r tests/requirements.txt
 - pip install -r service/requirements.txt
+- python service/app.py
+- python service/modules/sql-module/run_query.py "example" .3 "SELECT COUNT(A) from example.example"
 - pytest tests/
+
 
 
 ## Adding tests
