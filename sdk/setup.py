@@ -16,7 +16,6 @@ if os.path.exists("patch.version"):
 DEPENDENCIES = [
     "numpy",
     "pandas",
-    "scikit-learn",
     "msrest",
     "antlr4-python3-runtime"
 ]

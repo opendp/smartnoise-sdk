@@ -4,7 +4,6 @@ import sys
 
 from threading import Thread
 
-import connexion
 
 
 def get_git_root_dir():
@@ -15,6 +14,7 @@ root_url = get_git_root_dir()
 
 
 def run_app(name, spec_file, port, debug_mode=True, run_in_background=False):
+    import connexion
     specification_dir = os.path.join(root_url, "service")
     sys.path.insert(0, specification_dir)
 

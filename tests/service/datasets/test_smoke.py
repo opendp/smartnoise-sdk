@@ -20,5 +20,5 @@ def test_read_local_csv(dataset_client, dataset_name):
 def test_load_local_csv(dataset_client, dataset_name):
     dataset_document = dataset_client.read(dataset_name, None)
     df = load_dataset(dataset_document)
-    isinstance(df, pd.pandas.core.frame.DataFrame)
+    assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
