@@ -1,2 +1,5 @@
 pytest
-../sdk/
+pyyaml
+pandasql
+mlflow
+connexion
