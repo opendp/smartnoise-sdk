@@ -65,7 +65,7 @@ class DPVerification:
         return None
 
     # Generate histograms given the vectors of repeated aggregation results applied on neighboring datasets
-    def generate_histogram_neighbors(self, fD1, fD2, numbins = 0, binsize = "auto", alpha = 0.05):
+    def generate_histogram_neighbors(self, fD1, fD2, numbins = 0, binsize = "auto", alpha = 0.05, exact = False):
         d1 = np.array(fD1)
         d2 = np.array(fD2)
         d = np.concatenate((d1, d2), axis=None)
@@ -73,7 +73,9 @@ class DPVerification:
         binlist = []
         minval = min(min(d1), min(d2))
         maxval = max(max(d1), max(d2))
-        if(numbins > 0):
+        if(exact):
+            binlist = np.linspace(minval, maxval, 2)
+        elif(numbins > 0):
             binlist = np.linspace(minval, maxval, numbins)
         elif(binsize == "auto"):
             iqr = np.subtract(*np.percentile(d, [75, 25]))
@@ -84,27 +86,42 @@ class DPVerification:
             binlist = np.linspace(minval, maxval, numbins)
         else:
             # Choose bin size of unity
-            binlist = np.arange(np.floor(min(d1.min(), d2.min())),np.ceil(max(d1.max(), d2.max())))
+            binlist = np.arange(np.floor(minval),np.ceil(maxval))
         
         # Calculating histograms of fD1 and fD2
         d1hist, bin_edges = np.histogram(d1, bins = binlist, density = True)
-        print("Sum of probabilities in D1 Histogram: ", np.sum(d1hist))
+        #print("Sum of probabilities in D1 Histogram: ", np.sum(d1hist))
         d2hist, bin_edges = np.histogram(d2, bins = binlist, density = True)
-        print("Sum of probabilities in D2 Histogram: ", np.sum(d2hist))
+        #print("Sum of probabilities in D2 Histogram: ", np.sum(d2hist))
 
         # Lower and Upper bound
-        num_buckets = binlist.size - 1
-        critical_value = stats.norm.ppf(1-(alpha/2/num_buckets), loc=0.0, scale=1.0)
-        d1_error_interval = critical_value * math.sqrt(num_buckets / d1.size) / 2
-        d2_error_interval = critical_value * math.sqrt(num_buckets / d2.size) / 2
+        if(not exact):
+            num_buckets = binlist.size - 1
+            critical_value = stats.norm.ppf(1-(alpha/2/num_buckets), loc=0.0, scale=1.0)
+            d1_error_interval = critical_value * math.sqrt(num_buckets / d1.size) / 2
+            d2_error_interval = critical_value * math.sqrt(num_buckets / d2.size) / 2
+        else:
+            d1_error_interval = 0.0
+            d2_error_interval = 0.0
 
         return d1hist, d2hist, bin_edges, d1_error_interval, d2_error_interval
     
     # Plot histograms given the vectors of repeated aggregation results applied on neighboring datasets
-    def plot_histogram_neighbors(self, d1hist, d2hist, binlist, d1error, d2error, bound = True):
+    def plot_histogram_neighbors(self, fD1, fD2, d1hist, d2hist, binlist, d1error, d2error, bound = True, exact = False):
         plt.figure(figsize=(15,6))
+        if(exact):
+            ax = plt.subplot(1, 1, 1)
+            ax.ticklabel_format(useOffset=False)
+            plt.xlabel('Bin')
+            plt.ylabel('Probability')
+            plt.hist(fD1, width=0.2, alpha=0.5, ec="k", align = "right", bins = 1)
+            plt.hist(fD2, width=0.2, alpha=0.5, ec="k", align = "right", bins = 1)
+            ax.legend(['D1', 'D2'], loc="upper right")
+            return
+        
         d1histbound, d2histbound, d1upper, d2upper, d1lower, d2lower = \
             self.get_bounded_histogram(d1hist, d2hist, binlist, d1error, d2error)
+        
         if(bound):
             d1histbound = d1upper * math.exp(self.epsilon) + self.delta
             d2histbound = d2upper * math.exp(self.epsilon) + self.delta
@@ -115,10 +132,11 @@ class DPVerification:
         if(bound):
             plt.bar(binlist[:-1], d1histbound, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
             plt.bar(binlist[:-1], d2lower, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
+            plt.legend(['D1', 'D2'], loc="upper right")
         else:
             plt.bar(binlist[:-1], d1hist, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
             plt.bar(binlist[:-1], d2hist, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
-        plt.legend(['D1', 'D2'], loc="upper right")
+            plt.legend(['D1', 'D2'], loc="upper right")
 
         ax = plt.subplot(1, 2, 2)
         ax.ticklabel_format(useOffset=False)
@@ -127,10 +145,11 @@ class DPVerification:
         if(bound):
             plt.bar(binlist[:-1], d2histbound, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
             plt.bar(binlist[:-1], d1lower, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
+            plt.legend(['D2', 'D1'], loc="upper right")
         else:
             plt.bar(binlist[:-1], d2hist, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
             plt.bar(binlist[:-1], d1hist, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
-        plt.legend(['D2', 'D1'], loc="upper right")
+            plt.legend(['D2', 'D1'], loc="upper right")
         plt.show()
 
     def get_bounded_histogram(self, d1hist, d2hist, binlist, d1error, d2error):
@@ -183,7 +202,7 @@ class DPVerification:
     def wasserstein_distance(self, d1hist, d2hist):
         return stats.wasserstein_distance(d1hist, d2hist)
 
-    def aggtest(self, f, colname, repeatcount, numbins = 0, binsize = "auto", debug = False, plot = True, bound = True):
+    def aggtest(self, f, colname, repeatcount, numbins = 0, binsize = "auto", debug = False, plot = True, bound = True, exact = False):
         d1, d2 = self.generate_neighbors()
         
         fD1, fD2 = self.apply_aggregation_neighbors(f, (d1, colname), (d2, colname), repeatcount)
@@ -195,19 +214,24 @@ class DPVerification:
         #print("Anderson 2-sample Test Result: ", andderson_res, "\n")
         
         d1hist, d2hist, bin_edges, d1error, d2error = \
-            self.generate_histogram_neighbors(fD1, fD2, numbins, binsize)
+            self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact = exact)
         
         #kl_res = self.kl_divergence(d1hist, d2hist)
         #print("\nKL-Divergence Test: ", kl_res, "\n")
 
-        ws_res = self.wasserstein_distance(d1hist, d2hist)
-        print("\nWasserstein Distance Test: ", ws_res, "\n")
+        ws_res = 0.0
+        if(not exact):
+            ws_res = self.wasserstein_distance(d1hist, d2hist)
+        
+        print("Wasserstein Distance Test: ", ws_res, "\n")
 
-        dp_res = self.dp_test(d1hist, d2hist, bin_edges, d1error, d2error, debug)
-        print("DP Predicate Test:", dp_res)
+        dp_res = False
+        if(not exact):
+            dp_res = self.dp_test(d1hist, d2hist, bin_edges, d1error, d2error, debug)
+        print("DP Predicate Test:", dp_res, "\n")
         
         if(plot):
-            self.plot_histogram_neighbors(d1hist, d2hist, bin_edges, d1error, d2error, bound)
+            self.plot_histogram_neighbors(fD1, fD2, d1hist, d2hist, bin_edges, d1error, d2error, bound, exact)
         return dp_res, ks_res, ws_res
 
     # Main method listing all the DP verification steps
