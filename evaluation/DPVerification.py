@@ -10,13 +10,13 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import Aggregation as agg
-import statistics as st
 from scipy import stats
 
 class DPVerification:
     # Set the epsilon parameter of differential privacy
-    def __init__(self, epsilon=1.0):
+    def __init__(self, epsilon=1.0, dataset_size=10000):
         self.epsilon = epsilon
+        self.dataset_size = dataset_size
         self.df = self.create_simulated_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
@@ -24,9 +24,9 @@ class DPVerification:
 
     def create_simulated_dataset(self):
         np.random.seed(1)
-        userids = list(range(1, 10001))
+        userids = list(range(1, self.dataset_size+1))
         userids = ["A" + str(user) for user in userids]
-        usage = np.random.geometric(p=0.5, size=10000).tolist()
+        usage = np.random.geometric(p=0.5, size=self.dataset_size).tolist()
         df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', 'Usage'])
         return df
 
@@ -35,10 +35,6 @@ class DPVerification:
         if(self.N == 0):
             print("No records in dataframe to run the test")
             return None, None
-        
-        if(self.N > 10000):
-            self.df = self.df.sample(n=10000, random_state=1)
-            self.N = 10000
         
         d1 = self.df
         drop_idx = np.random.choice(self.df.index, 1, replace=False)
@@ -58,12 +54,12 @@ class DPVerification:
 
     # Instead of applying function to dataframe, this'll pass a query through PrivSQL and get response
     # This way we can test actual SQLDP implementation
-    def apply_query(self, d1, d2, agg_query, repeatcount=100):
+    def apply_query(self, d1, d2, agg_query):
         # To do
         return None
 
     # Generate histograms given the vectors of repeated aggregation results applied on neighboring datasets
-    def generate_histogram_neighbors(self, fD1, fD2, numbins = 0, binsize = "auto", exact = False):
+    def generate_histogram_neighbors(self, fD1, fD2, numbins=0, binsize="auto", exact=False):
         d1 = fD1
         d2 = fD2
         d = np.concatenate((d1, d2), axis=None)
@@ -95,7 +91,7 @@ class DPVerification:
         return d1hist, d2hist, bin_edges
     
     # Plot histograms given the vectors of repeated aggregation results applied on neighboring datasets
-    def plot_histogram_neighbors(self, fD1, fD2, d1hist, d2hist, binlist, d1size, d2size, bound = True, exact = False):
+    def plot_histogram_neighbors(self, fD1, fD2, d1hist, d2hist, binlist, d1size, d2size, bound=True, exact=False):
         plt.figure(figsize=(15,6))
         if(exact):
             ax = plt.subplot(1, 1, 1)
@@ -139,7 +135,7 @@ class DPVerification:
 
     # Check if histogram of fD1 values multiplied by e^epsilon and summed by delta is bounding fD2 and vice versa
     # Use the histogram results and create bounded histograms to compare in DP test
-    def get_bounded_histogram(self, d1hist, d2hist, binlist, d1size, d2size, exact, alpha = 0.05):
+    def get_bounded_histogram(self, d1hist, d2hist, binlist, d1size, d2size, exact, alpha=0.05):
         d1_error_interval = 0.0
         d2_error_interval = 0.0
         # Lower and Upper bound
@@ -170,7 +166,7 @@ class DPVerification:
         return px, py, d1histupperbound, d2histupperbound, d1histbound, d2histbound, d1lower, d2lower
 
     # Differentially Private Predicate Test
-    def dp_test(self, d1hist, d2hist, binlist, d1size, d2size, debug = False, exact = False):
+    def dp_test(self, d1hist, d2hist, binlist, d1size, d2size, debug=False, exact=False):
         px, py, d1histupperbound, d2histupperbound, d1histbound, d2histbound, d1lower, d2lower = \
             self.get_bounded_histogram(d1hist, d2hist, binlist, d1size, d2size, exact)
         if(debug):
@@ -211,7 +207,7 @@ class DPVerification:
     def wasserstein_distance(self, d1hist, d2hist):
         return stats.wasserstein_distance(d1hist, d2hist)
 
-    def aggtest(self, f, colname, repeatcount, numbins = 0, binsize = "auto", debug = False, plot = True, bound = True, exact = False):
+    def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
         d1, d2 = self.generate_neighbors()
         
         fD1, fD2 = self.apply_aggregation_neighbors(f, (d1, colname), (d2, colname))
@@ -224,7 +220,7 @@ class DPVerification:
         #print("Anderson 2-sample Test Result: ", andderson_res, "\n")
         
         d1hist, d2hist, bin_edges = \
-            self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact = exact)
+            self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
         
         #kl_res = self.kl_divergence(d1hist, d2hist)
         #print("\nKL-Divergence Test: ", kl_res, "\n")
@@ -237,7 +233,7 @@ class DPVerification:
 
         dp_res = False
         if(not exact):
-            dp_res = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug, exact = exact)
+            dp_res = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug, exact=exact)
         print("DP Predicate Test:", dp_res, "\n")
         
         if(plot):
