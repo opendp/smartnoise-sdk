@@ -235,8 +235,14 @@ class DPVerification:
         ks_res = self.ks_test(fD1, fD2)
         print("\nKS 2-sample Test Result: ", ks_res, "\n")
         
+        #andderson_res = self.anderson_ksamp(fD1, fD2)
+        #print("Anderson 2-sample Test Result: ", andderson_res, "\n")
+        
         d1hist, d2hist, bin_edges = \
             self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
+        
+        #kl_res = self.kl_divergence(d1hist, d2hist)
+        #print("\nKL-Divergence Test: ", kl_res, "\n")
 
         ws_res = 0.0
         dp_res = False
