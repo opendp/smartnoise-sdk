@@ -5,7 +5,6 @@ from burdock.query.sql.reader.rowset import TypedRowset
 
 import numpy as np
 
-
 """
     Takes a rewritten query, executes against the target backend, then
     adds noise before returning the recordset.
@@ -38,26 +37,10 @@ class PrivateQuery:
         return subquery.numeric_symbols()
 
     def execute(self, query_string):
-        if not isinstance(query_string, str):
-            raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
+        exact_values = self._execute_exact(query_string)
+        return self._apply_noise(*exact_values)
 
-        subquery, query = self.rewrite(query_string)
-
-        # 0. Rewrite query and execute subquery
-        # 0b. Serialize to target backend
-        # 1. Add Noise to subquery
-        # 1b. Clamp counts to 0, set SUM = NULL if count = 0
-        # 2. Filter tau thresh
-        # 3. Evaluate outer expression, set AVG = NULL if count = 0
-        # 4. Sort
-
-        syms = subquery.all_symbols()
-        types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
-
-        # execute the subquery against the backend and load in typed rowset
-        srs = self.reader.execute_typed(subquery)
-
+    def _apply_noise(self, subquery, query, syms, types, sens, srs):
         # if user has selected keycount for outer query, use that instead
         kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
         if len(kcc) > 0:
@@ -113,6 +96,29 @@ class PrivateQuery:
             newrs.sort(sf)
 
         return newrs.rows()
+        
+
+    def _execute_exact(self, query_string):
+        if not isinstance(query_string, str):
+            raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
+
+        subquery, query = self.rewrite(query_string)
+
+        # 0. Rewrite query and execute subquery
+        # 0b. Serialize to target backend
+        # 1. Add Noise to subquery
+        # 1b. Clamp counts to 0, set SUM = NULL if count = 0
+        # 2. Filter tau thresh
+        # 3. Evaluate outer expression, set AVG = NULL if count = 0
+        # 4. Sort
+
+        syms = subquery.all_symbols()
+        types = [s[1].type() for s in syms]
+        sens = [s[1].sensitivity() for s in syms]
+
+        # execute the subquery against the backend and load in typed rowset
+        srs = self.reader.execute_typed(subquery)
+        return (subquery, query, syms, types, sens, srs)
 
     def execute_typed(self, query):
         if isinstance(query, str):
