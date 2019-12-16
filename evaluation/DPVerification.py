@@ -97,7 +97,7 @@ class DPVerification:
             numerator = 2 * iqr if iqr > 0 else maxval - minval
             denominator = n ** (1. / 3)
             binwidth = numerator / denominator # Freedman–Diaconis' choice
-            numbins = math.ceil(maxval - minval) / binwidth
+            numbins = int(math.ceil((maxval - minval) / binwidth))
             binlist = np.linspace(minval, maxval, numbins)
         else:
             # Choose bin size of unity
@@ -283,7 +283,7 @@ class DPVerification:
         #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
         d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
         d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
-        dp_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10)
+        dp_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
         return dp_res
 
 if __name__ == "__main__":
