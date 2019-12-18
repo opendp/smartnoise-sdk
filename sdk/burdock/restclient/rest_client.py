@@ -170,3 +170,57 @@ class RestClient(object):
 
         return deserialized
     datasetread.metadata = {'url': '/dataset'}
+
+    def secretsput(
+            self, secret, custom_headers=None, raw=False, **operation_config):
+        """Add a secret to the secret store.
+
+        Add the secret to the secret store.
+
+        :param secret: Add a secret
+        :type secret: ~restclient.models.Secret
+        :param dict custom_headers: headers that will be added to the request
+        :param bool raw: returns the direct response alongside the
+         deserialized response
+        :param operation_config: :ref:`Operation configuration
+         overrides<msrest:optionsforoperations>`.
+        :return: SecretPutSuccess or ClientRawResponse if raw=true
+        :rtype: ~restclient.models.SecretPutSuccess or
+         ~msrest.pipeline.ClientRawResponse
+        :raises:
+         :class:`HttpOperationError<msrest.exceptions.HttpOperationError>`
+        """
+        # Construct URL
+        url = self.secretsput.metadata['url']
+
+        # Construct parameters
+        query_parameters = {}
+
+        # Construct headers
+        header_parameters = {}
+        header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+        if custom_headers:
+            header_parameters.update(custom_headers)
+
+        # Construct body
+        body_content = self._serialize.body(secret, 'Secret')
+
+        # Construct and send request
+        request = self._client.post(url, query_parameters)
+        response = self._client.send(
+            request, header_parameters, body_content, stream=False, **operation_config)
+
+        if response.status_code not in [200]:
+            raise HttpOperationError(self._deserialize, response)
+
+        deserialized = None
+
+        if response.status_code == 200:
+            deserialized = self._deserialize('SecretPutSuccess', response)
+
+        if raw:
+            client_raw_response = ClientRawResponse(deserialized, response)
+            return client_raw_response
+
+        return deserialized
+    secretsput.metadata = {'url': '/secrets'}

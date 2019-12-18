@@ -12,7 +12,10 @@ from threading import Thread
 import pytest
 
 from requests import Session
+
 from burdock.restclient.rest_client import RestClient
+from burdock.restclient.models.secret import Secret
+DATAVERSE_TOKEN_ENV_VAR = "BURDOCK_DATAVERSE_TEST_TOKEN"
 
 # Add the utils directory to the path
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -31,4 +34,10 @@ def client():
 
     base_url = "http://localhost:{}/api/".format(port)
     client = RestClient(Credentials(), base_url)
+    client.secretsput(Secret(name="dataverse:{}".format("demo_dataverse"),
+                             value=os.environ[DATAVERSE_TOKEN_ENV_VAR]))
     return client
+
+def test_client(client):
+    pass
+

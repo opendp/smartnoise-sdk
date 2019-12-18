@@ -1,3 +1,7 @@
+import os
+import tempfile
+import requests
+
 import pandas as pd
 
 from burdock.query.sql import MetadataLoader
@@ -60,9 +64,10 @@ def load_dataset(dataset_document):
 
 def load_metadata(dataset_document):
     """
-    rtype: MetadataLoader 
+    rtype: MetadataLoader
     """
     return DatasetAdapter.load_metadata(dataset_document)
+
 
 def load_reader(dataset_document):
     """
@@ -70,8 +75,8 @@ def load_reader(dataset_document):
     """
     return DatasetAdapter.load_reader(dataset_document)
 
-_CSV_DETAILS_KEY = "local_csv"
 
+_CSV_DETAILS_KEY = "local_csv"
 
 def _csv_details_adapter(dataset_document):
     if dataset_document.csv_details is None:
@@ -92,5 +97,35 @@ def _csv_reader_adapter(dataset_document):
         return CSVReader(_csv_metadata_adapter(dataset_document),
                          _csv_details_adapter(dataset_document))
 
+_DATAVERSE_DETAILS_KEY = "dataverse"
+
+def _dataverse_details_adapter(dataset_document):
+    if dataset_document.dataverse_details is None:
+        raise Exception("Malformed csv details.")
+    else:
+        response = requests.get(dataset_document.dataverse_details.host, headers={"X-Dataverse-key":dataset_document.dataverse_details.token})
+        response.raise_for_status()
+        temp_dir = tempfile.gettempdir()
+        path = os.path.join(temp_dir, "data.tsv")
+        with open(path, "w") as stream:
+            stream.write(response.text)
+        return pd.read_csv(path, sep='\t')
+
+
+def _dataverse_metadata_adapter(dataset_document):
+    if dataset_document.dataverse_details is None:
+        raise Exception("Malformed dataverse details.")
+    else:
+        return MetadataLoader(dataset_document.dataverse_details.local_metadata_path).read_schema()
+
+
+def _dataverse_reader_adapter(dataset_document):
+    if dataset_document.dataverse_details is None:
+        raise Exception("Malformed dataverse details.")
+    else:
+        return CSVReader(_dataverse_metadata_adapter(dataset_document),
+                         _dataverse_details_adapter(dataset_document))
+
 
 register_adapter(_CSV_DETAILS_KEY, _csv_details_adapter, _csv_metadata_adapter, _csv_reader_adapter)
+register_adapter(_DATAVERSE_DETAILS_KEY, _dataverse_details_adapter, _dataverse_metadata_adapter, _dataverse_reader_adapter)

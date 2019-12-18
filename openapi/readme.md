@@ -6,7 +6,8 @@
 ## Getting Started
 
 To build the SDKs for Rest APIs, simply install AutoRest via `npm` (`npm install -g autorest`), move command prompt to ./openapi folder, and run:
-> `autorest readme.md`
+> `autorest --use:@microsoft.azure/autorest.python@2.1.40 readme.md
+
 
 To see additional help and options, run:
 > `autorest --help
