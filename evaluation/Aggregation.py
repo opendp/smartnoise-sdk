@@ -2,6 +2,17 @@
 import random
 import math
 import numpy as np
+import pandas as pd
+
+import mlflow
+import json
+import sys
+
+from burdock.query.sql.reader import CSVReader
+from burdock.query.sql import MetadataLoader
+from burdock.query.sql.private.query import PrivateQuery
+from burdock.query.sql.reader.rowset import TypedRowset
+from pandasql import sqldf
 
 class Aggregation:
     def __init__(self, epsilon=1.0, t=1, repeat_count=10000):
@@ -38,3 +49,14 @@ class Aggregation:
         df[colname + "squared"] = df[colname] ** 2
         sumsq = self.dp_sum(df, colname + "squared")
         return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
+
+    # Run the query using the private reader and input query
+    # Get query response back
+    def run_agg_query(self, df, metadata_path, query):
+        schema = MetadataLoader(metadata_path).read_schema()
+        reader = CSVReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, self.t)
+        res = []
+        for i in range(self.repeat_count):
+            res.append(float(private_reader.execute(query)[1:][0][0]))
+        return np.array(res)

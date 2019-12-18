@@ -10,6 +10,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import Aggregation as agg
+import os
 from scipy import stats
 
 class DPVerification:
@@ -17,21 +18,30 @@ class DPVerification:
     def __init__(self, epsilon=1.0, dataset_size=10000):
         self.epsilon = epsilon
         self.dataset_size = dataset_size
-        self.df = self.create_simulated_dataset()
+        self.file_dir = os.path.dirname(os.path.abspath(__file__))
+        self.csv_path = r'../service/datasets'
+        self.df, self.dataset_path, self.file_name = self.create_simulated_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
         self.delta = 1/(self.N * math.sqrt(self.N))
 
-    def create_simulated_dataset(self):
+    def create_simulated_dataset(self, file_name = "simulation"):
         np.random.seed(1)
         userids = list(range(1, self.dataset_size+1))
         userids = ["A" + str(user) for user in userids]
         usage = np.random.geometric(p=0.5, size=self.dataset_size).tolist()
         df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', 'Usage'])
-        return df
+        
+        # Storing the data as a CSV
+        file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
+        df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
+        return df, file_path, file_name
 
     # Generate dataframes that differ by a single record that is randomly chosen
-    def generate_neighbors(self):
+    def generate_neighbors(self, load_csv = False):
+        if(load_csv):
+            self.df = pd.read_csv(self.dataset_path)
+        
         if(self.N == 0):
             print("No records in dataframe to run the test")
             return None, None
@@ -40,8 +50,19 @@ class DPVerification:
         drop_idx = np.random.choice(self.df.index, 1, replace=False)
         d2 = self.df.drop(drop_idx)
         print("Length of D1: ", len(d1), " Length of D2: ", len(d2))
-        return d1, d2
 
+        d1_yaml_path, d2_yaml_path = "", ""
+        if(load_csv):
+            # Storing the data as a CSV for applying queries via Burdock querying system
+            d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
+            d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
+            d1_yaml_path = os.path.join(self.file_dir, self.csv_path , "d1.yaml")
+            d2_yaml_path = os.path.join(self.file_dir, self.csv_path , "d2.yaml")
+            d1.to_csv(d1_file_path, sep=',', encoding='utf-8', index=False)
+            d2.to_csv(d2_file_path, sep=',', encoding='utf-8', index=False)
+
+        return d1, d2, d1_yaml_path, d2_yaml_path
+    
     # If there is an aggregation function that we need to test, we need to apply it on neighboring datasets
     # This function applies the aggregation repeatedly to log results in two vectors that are then used for generating histogram
     # The histogram is then passed through the DP test
@@ -54,7 +75,7 @@ class DPVerification:
 
     # Instead of applying function to dataframe, this'll pass a query through PrivSQL and get response
     # This way we can test actual SQLDP implementation
-    def apply_query(self, d1, d2, agg_query):
+    def apply_query_neighbors(self, d1, d2, agg_query):
         # To do
         return None
 
@@ -91,7 +112,7 @@ class DPVerification:
         return d1hist, d2hist, bin_edges
     
     # Plot histograms given the vectors of repeated aggregation results applied on neighboring datasets
-    def plot_histogram_neighbors(self, fD1, fD2, d1hist, d2hist, binlist, d1size, d2size, bound=True, exact=False):
+    def plot_histogram_neighbors(self, fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, binlist, bound=True, exact=False):
         plt.figure(figsize=(15,6))
         if(exact):
             ax = plt.subplot(1, 1, 1)
@@ -102,9 +123,6 @@ class DPVerification:
             plt.hist(fD2, width=0.2, alpha=0.5, ec="k", align = "right", bins = 1)
             ax.legend(['D1', 'D2'], loc="upper right")
             return
-        
-        px, py, d1histupperbound, d2histupperbound, d1histbound, d2histbound, d1lower, d2lower = \
-            self.get_bounded_histogram(d1hist, d2hist, binlist, d1size, d2size, exact = exact)
         
         ax = plt.subplot(1, 2, 1)
         ax.ticklabel_format(useOffset=False)
@@ -189,7 +207,7 @@ class DPVerification:
         # Check if any of the bounds across the bins violate the relaxed DP condition
         bound_exceeded = np.any(np.logical_and(np.greater(d1hist, np.zeros(d1hist.size)), np.greater(d1lower, d2histupperbound))) or \
         np.any(np.logical_and(np.greater(d2hist, np.zeros(d2hist.size)), np.greater(d2lower, d1histupperbound)))
-        return not bound_exceeded
+        return not bound_exceeded, d1histupperbound, d2histupperbound, d1lower, d2lower
 
     # K-S Two sample test between the repeated query results on neighboring datasets
     def ks_test(self, fD1, fD2):
@@ -207,8 +225,9 @@ class DPVerification:
     def wasserstein_distance(self, d1hist, d2hist):
         return stats.wasserstein_distance(d1hist, d2hist)
 
+    # Verification of SQL aggregation mechanisms
     def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
-        d1, d2 = self.generate_neighbors()
+        d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors()
         
         fD1, fD2 = self.apply_aggregation_neighbors(f, (d1, colname), (d2, colname))
         d1size, d2size = fD1.size, fD2.size
@@ -226,34 +245,47 @@ class DPVerification:
         #print("\nKL-Divergence Test: ", kl_res, "\n")
 
         ws_res = 0.0
-        if(not exact):
-            ws_res = self.wasserstein_distance(d1hist, d2hist)
-        
-        print("Wasserstein Distance Test: ", ws_res, "\n")
-
         dp_res = False
-        if(not exact):
-            dp_res = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug, exact=exact)
+        if(exact):
+            print("Wasserstein Distance Test: ", ws_res, "\n")
+            print("DP Predicate Test:", dp_res, "\n")
+            return dp_res, ks_res, ws_res
+        
+        ws_res = self.wasserstein_distance(d1hist, d2hist)
+        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug, exact=exact)
+        print("Wasserstein Distance Test: ", ws_res, "\n")
         print("DP Predicate Test:", dp_res, "\n")
         
         if(plot):
-            self.plot_histogram_neighbors(fD1, fD2, d1hist, d2hist, bin_edges, d1size, d2size, bound, exact)
+            self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
+
+    # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
+    def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000):
+        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
+        d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors(load_csv=True)
+        fD1, fD2 = ag.run_agg_query(d1, d1_yaml_path, d1_query), ag.run_agg_query(d2, d2_yaml_path, d2_query)
+        d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
+        d1size, d2size = fD1.size, fD2.size
+        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+        if(plot):
+            self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
+        return dp_res
 
     # Main method listing all the DP verification steps
     def main(self):
-        # Load simulated data to pandas dataframe
-        print("1. Generate neighboring datasets from dataframe")
-        d1, d2 = self.generate_neighbors()
-        print("2. Apply the same aggregation function on both neighboring dataframes repeatedly")
-        ag = agg.Aggregation()
-        fD1, fD2 = self.apply_aggregation_neighbors(ag.dp_count, (d1, 'UserId'), (d2, 'UserId'), 10)
-        print("3. Generate Histogram")
-        d1hist, d2hist, bin_edges, d1error, d2error = self.generate_histogram_neighbors(fD1, fD2)
-        print("4. DP Verification")
-        res = self.dp_test(d1hist, d2hist, bin_edges, True)
-        return res
+        #ag = agg.Aggregation(t=1, repeat_count=10000)
+        #dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
+        #dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
+        #dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
+        #dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
+        #dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
+        #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
+        d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
+        d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
+        dp_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10)
+        return dp_res
 
 if __name__ == "__main__":
-    dv = DPVerification()
+    dv = DPVerification(dataset_size=10000)
     print(dv.main())
