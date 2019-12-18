@@ -8,13 +8,19 @@
 from .project_run_details import ProjectRunDetails
 from .dataset_read_request import DatasetReadRequest
 from .local_csv_details import LocalCSVDetails
+from .dataverse_details import DataverseDetails
 from .dataset_document import DatasetDocument
+from .secret import Secret
+from .secret_put_success import SecretPutSuccess
 from .executerun_ok_response import ExecuterunOKResponse
 
 __all__ = [
     'ProjectRunDetails',
     'DatasetReadRequest',
     'LocalCSVDetails',
+    'DataverseDetails',
     'DatasetDocument',
+    'Secret',
+    'SecretPutSuccess',
     'ExecuterunOKResponse',
 ]

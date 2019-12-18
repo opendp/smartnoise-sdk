@@ -53,6 +53,25 @@ paths:
            description: Successfully return the dataset information
            schema:
             $ref: '#/definitions/DatasetDocument'
+  /secrets:
+    post:
+      operationId: secrets.put
+      tags:
+        - addSecret
+      summary: Add a secret to the secret store
+      description: Add the secret to the secret store
+      parameters:
+        - name: secret
+          in: body
+          description: Add a secret
+          required: True
+          schema:
+            $ref: '#/definitions/Secret'
+      responses:
+         200:
+           description: Successfully added the secret
+           schema:
+            $ref: '#/definitions/SecretPutSuccess'
 
 definitions:
   ProjectRunDetails:
@@ -76,6 +95,15 @@ definitions:
       local_path:
         type: string
         description: Path to the csv on diskThe type of the dataset
+  DataverseDetails:
+    type: object
+    properties:
+      local_metadata_path:
+        type: string
+      token:
+        type: string
+      host:
+        type: string
   DatasetDocument:
     type: object
     properties:
@@ -84,3 +112,20 @@ definitions:
         description: The type of the dataset
       csv_details:
         $ref: '#/definitions/LocalCSVDetails'
+      dataverse_details:
+        $ref: '#/definitions/DataverseDetails'
+  Secret:
+    type: object
+    properties:
+      name:
+        type: string
+        description: The name of the secret
+      value:
+        type: string
+        description: The secret
+  SecretPutSuccess:
+    type: object
+    properties:
+      name:
+        type: string
+        description: The name of the secret
