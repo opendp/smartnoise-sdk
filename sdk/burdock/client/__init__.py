@@ -13,7 +13,7 @@ class _MockCredentials(object):
 
 
 def _get_client():
-    url = int(os.environ.get("BURDOCK_SERVICE_URL", "localhost"))
+    url = os.environ.get("BURDOCK_SERVICE_URL", "localhost")
     port = int(os.environ.get("BURDOCK_SERVICE_PORT", 5000))
 
     base_url = "http://{}:{}/api/".format(url, port)
