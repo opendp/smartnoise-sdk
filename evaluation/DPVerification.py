@@ -97,7 +97,7 @@ class DPVerification:
             numerator = 2 * iqr if iqr > 0 else maxval - minval
             denominator = n ** (1. / 3)
             binwidth = numerator / denominator # Freedman–Diaconis' choice
-            numbins = math.ceil(maxval - minval) / binwidth
+            numbins = int(math.ceil((maxval - minval) / binwidth))
             binlist = np.linspace(minval, maxval, numbins)
         else:
             # Choose bin size of unity
@@ -260,17 +260,32 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
 
+    def accuracy_test(self, fD1, confidence=0.95):
+        # Actual mean of aggregation function f on D1 is equal to sample mean
+        # Sample standard deviation of mean of aggregation function f on D1
+        n = fD1.size
+        fD1_mean, fD1_std = np.mean(fD1), np.std(fD1)
+        h = fD1_std * stats.t.ppf((1 + confidence) / 2., n-1)
+        upper_bound = fD1 + h
+        lower_bound = fD1 - h
+        m = np.ones(n) * fD1_mean
+        print("Mean: ", fD1_mean, " Standard Deviation: ", fD1_std, " Standard Error: ", h)
+        print("Confidence Interval: [", fD1_mean-h, ", ", fD1_mean+h, "]")
+        print("Count of times Actual Mean within Confidence Interval:", np.sum(np.logical_and(np.greater_equal(m, lower_bound), np.greater_equal(upper_bound, m))), "/", n)
+        return (np.sum(np.logical_and(np.greater_equal(m, lower_bound), np.greater_equal(upper_bound, m))) / n >= confidence)
+
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
-    def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000):
+    def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors(load_csv=True)
         fD1, fD2 = ag.run_agg_query(d1, d1_yaml_path, d1_query), ag.run_agg_query(d2, d2_yaml_path, d2_query)
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+        acc_res = self.accuracy_test(fD1, confidence)
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
-        return dp_res
+        return dp_res, acc_res
 
     # Main method listing all the DP verification steps
     def main(self):
@@ -283,8 +298,8 @@ class DPVerification:
         #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
         d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
         d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
-        dp_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10)
-        return dp_res
+        dp_res, acc_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
+        return dp_res, acc_res
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=10000)

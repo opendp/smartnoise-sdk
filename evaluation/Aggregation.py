@@ -56,7 +56,5 @@ class Aggregation:
         schema = MetadataLoader(metadata_path).read_schema()
         reader = CSVReader(schema, df)
         private_reader = PrivateQuery(reader, schema, self.t)
-        res = []
-        for i in range(self.repeat_count):
-            res.append(float(private_reader.execute(query)[1:][0][0]))
-        return np.array(res)
+        exact_values = private_reader._execute_exact(query)
+        return np.array([private_reader._apply_noise(*exact_values)[1:][0][0] for i in range(self.repeat_count)])
