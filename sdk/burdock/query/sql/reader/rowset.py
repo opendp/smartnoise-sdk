@@ -108,7 +108,7 @@ class TypedRowset:
         else:
             raise ValueError("Must index by string or int")
 
-    def filter(self, colname, relation, value):
+    def filter(self, colname, relation, value, bounds):
         ops = {'>': operator.gt,
         '<': operator.lt,
         '>=': operator.ge,
@@ -121,7 +121,9 @@ class TypedRowset:
         for idx in range(self.n_rows):
             if ops[relation](col[idx], value):
                 rows.append(tuple(self[name][idx] for name in self.colnames))
-        return TypedRowset(rows, types, sens)
+        filtered_rs = TypedRowset(rows, types, sens)
+        filtered_rs.bounds = bounds
+        return filtered_rs
 
     def sort(self, sortcols):
         body = self.rows(False)

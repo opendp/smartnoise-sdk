@@ -42,7 +42,7 @@ class PrivateQuery:
         kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
         if len(kcc) > 0:
             srs["keycount"] = srs[kcc[0][0].lower()]
-        srs = srs.filter("keycount", ">", self.tau ** 2)
+        srs = srs.filter("keycount", ">", self.tau ** 2, srs.bounds)
 
         # add noise to all columns that need noise
         for nsym in subquery.numeric_symbols():
@@ -56,7 +56,8 @@ class PrivateQuery:
                     counts = mechanism.release(srs[name])
                     counts[counts < 0] = 0
                     srs[name] = counts
-                    srs = srs.filter(name, ">", self.tau)
+                    # New rowset returned at below step. So passing bounds, else they get initialized again.
+                    srs = srs.filter(name, ">", self.tau, srs.bounds)
                 elif sens is not None:
                     srs[name] = mechanism.release(srs[name])
             elif sym.type() == "float" and sens is not None:
@@ -70,12 +71,16 @@ class PrivateQuery:
 
         srsc = srs.m_cols
         bindings = dict((name.lower(), srsc[name]) for name in srsc.keys())
+        #bound_bindings = dict((name.lower(), srs.bounds[name]) for name in srsc.keys())
 
         cols = []
+        bound_cols = []
         for c in query.select.namedExpressions:
             cols.append(c.expression.evaluate(bindings))
+            #bound_cols.append(c.expression.evaluate(bound_bindings))
         for idx in range(len(cols)):
             newrs[newrs.idxcol[idx]] = cols[idx]
+            #newrs.bounds[newrs.idxcol[idx]] = bound_cols[idx]
 
         # Now sort, if it has order by clause
         if query.order is not None:
@@ -92,9 +97,8 @@ class PrivateQuery:
             sf = [("-" if desc else "") + colname for colname, desc in sort_fields]
 
             newrs.sort(sf)
-
-        return newrs.rows()
         
+        return (newrs.rows(), srs.bounds)
 
     def _execute_exact(self, query_string):
         if not isinstance(query_string, str):
