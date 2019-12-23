@@ -5,7 +5,7 @@ import sys
 import pandas as pd
 
 from burdock.client import get_dataset_client
-from burdock.data.adapters import load_reader, load_metadata
+from burdock.data.adapters import load_reader, load_metadata, load_dataset
 from burdock.query.sql.private.query import PrivateQuery
 from pandasql import sqldf
 
@@ -17,6 +17,7 @@ if __name__ == "__main__":
 
     with mlflow.start_run():
         dataset_document = get_dataset_client().read(dataset_name, budget)
+        dataset = load_dataset(dataset_document)
         reader = load_reader(dataset_document)
         schema = load_metadata(dataset_document)
         private_reader = PrivateQuery(reader, schema, budget)

@@ -4,6 +4,9 @@ import pytest
                                      {"params": {"dataset_name": "example", "budget": .2,
                                       "query": "SELECT COUNT(*) FROM example.example"},
                                       "uri": "modules/sql-module"},
+                                     {"params": {"dataset_name": "demo_dataverse", "budget": .2,
+                                      "query": "SELECT COUNT(*) FROM demo_dataverse.demo_dataverse"},
+                                      "uri": "modules/sql-module"},
                                      {"params": {"dataset_name": "example", "column_name": "a", "budget": .2},
                                       "uri": "modules/psi-count-module"}])
 def test_execute_run(execution_client, project):

@@ -1,0 +1,17 @@
+Database:
+  demo_dataverse:
+    demo_dataverse:
+      rows: 15000
+      COUNTRY:
+        type: int
+        is_key: True
+        min: 0
+        max: 5
+      CORRELATION:
+        type: int
+        min: -1000
+        max: 1000
+      REGION:
+        type: int
+        min: 1000
+        max: 5000
