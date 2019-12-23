@@ -18,9 +18,6 @@ class PrivateQuery:
 
         self.tau = 5
 
-        #self.mechanism = Gaussian(epsilon, 100000, 1, self.tau)
-        self.mechanism = Laplace(self.epsilon, self.tau)
-
     def rewrite(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
         if len(queries) > 1:
@@ -52,16 +49,17 @@ class PrivateQuery:
             name, sym = nsym
             name = name.lower()
             sens = sym.sensitivity()
+            mechanism = Laplace(self.epsilon, sens, self.tau)
             if sym.type() == "int":
                 if sym.sensitivity() == 1:
-                    counts = self.mechanism.count(srs[name])
+                    counts = mechanism.release(srs[name])
                     counts[counts < 0] = 0
                     srs[name] = counts
                     srs = srs.filter(name, ">", self.tau)
                 elif sens is not None:
-                    srs[name] = self.mechanism.sum_int(srs[name], sens)
+                    srs[name] = mechanism.sum_int(srs[name], sens)
             elif sym.type() == "float" and sens is not None:
-                srs[name] = self.mechanism.sum_float(srs[name], sens)
+                srs[name] = mechanism.release(srs[name])
 
 
         syms = query.all_symbols()
