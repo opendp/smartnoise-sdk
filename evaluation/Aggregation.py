@@ -12,6 +12,7 @@ from burdock.query.sql.reader import CSVReader
 from burdock.query.sql import MetadataLoader
 from burdock.query.sql.private.query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
+from burdock.mechanisms.laplace import Laplace
 from pandasql import sqldf
 
 class Aggregation:
@@ -57,6 +58,8 @@ class Aggregation:
         reader = CSVReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         exact_values = private_reader._execute_exact(query)
-        lower_bound = private_reader._apply_noise_bounds(*exact_values, bounds = "lower", pct = confidence)[1:][0][0]
-        upper_bound = private_reader._apply_noise_bounds(*exact_values, bounds = "upper", pct = confidence)[1:][0][0]
-        return np.array([private_reader._apply_noise_bounds(*exact_values)[1:][0][0] for i in range(self.repeat_count)]), lower_bound, upper_bound
+        bounds_centered_zero = list(private_reader._apply_noise(*exact_values, confidence)[1].values())[1]
+        actual_value = exact_values[-1].rows()[1:][0][1]
+        bounds = np.array([bounds_centered_zero[0] + actual_value, bounds_centered_zero[1] + actual_value])
+        noisy_values = np.array([private_reader._apply_noise(*exact_values)[0][1:][0][0] for i in range(self.repeat_count)])
+        return noisy_values, bounds
