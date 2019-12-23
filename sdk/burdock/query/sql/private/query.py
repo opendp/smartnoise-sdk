@@ -58,7 +58,7 @@ class PrivateQuery:
                     srs[name] = counts
                     srs = srs.filter(name, ">", self.tau)
                 elif sens is not None:
-                    srs[name] = mechanism.sum_int(srs[name], sens)
+                    srs[name] = mechanism.release(srs[name])
             elif sym.type() == "float" and sens is not None:
                 srs[name] = mechanism.release(srs[name])
 
