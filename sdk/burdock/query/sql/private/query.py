@@ -37,7 +37,7 @@ class PrivateQuery:
         exact_values = self._execute_exact(query_string)
         return self._apply_noise(*exact_values)
 
-    def _apply_noise(self, subquery, query, syms, types, sens, srs):
+    def _apply_noise(self, subquery, query, syms, types, sens, srs, pct=0.95):
         # if user has selected keycount for outer query, use that instead
         kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
         if len(kcc) > 0:
@@ -50,6 +50,7 @@ class PrivateQuery:
             name = name.lower()
             sens = sym.sensitivity()
             mechanism = Laplace(self.epsilon, sens, self.tau)
+            srs.bounds[name] = mechanism.bounds(pct)
             if sym.type() == "int":
                 if sym.sensitivity() == 1:
                     counts = mechanism.release(srs[name])
@@ -60,7 +61,6 @@ class PrivateQuery:
                     srs[name] = mechanism.sum_int(srs[name], sens)
             elif sym.type() == "float" and sens is not None:
                 srs[name] = mechanism.release(srs[name])
-
 
         syms = query.all_symbols()
         types = [s[1].type() for s in syms]

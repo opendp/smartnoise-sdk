@@ -28,6 +28,7 @@ class TypedRowset:
         self.types = {}
         self.sens = {}
         self.colnames = []
+        self.bounds = {}
 
         for idx in range(len(header)):
             cname = header[idx]
