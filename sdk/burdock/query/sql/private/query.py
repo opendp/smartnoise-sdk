@@ -1,6 +1,6 @@
 from burdock.query.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
-import burdock.query.sql.ast as ast
+import burdock.query.sql.ast.expressions.sql as ast
 from burdock.query.sql.reader.rowset import TypedRowset
 
 import numpy as np
@@ -16,9 +16,8 @@ class PrivateQuery:
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
 
-        self.tau = 5
+        self.tau = 1
 
-        #self.mechanism = Gaussian(epsilon, 100000, 1, self.tau)
         self.mechanism = Laplace(self.epsilon, self.tau)
 
     def rewrite(self, query_string):
@@ -62,8 +61,7 @@ class PrivateQuery:
                     srs[name] = self.mechanism.sum_int(srs[name], sens)
             elif sym.type() == "float" and sens is not None:
                 srs[name] = self.mechanism.sum_float(srs[name], sens)
-
-
+                
         syms = query.all_symbols()
         types = [s[1].type() for s in syms]
         sens = [s[1].sensitivity() for s in syms]
