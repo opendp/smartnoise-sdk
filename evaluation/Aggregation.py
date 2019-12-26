@@ -52,9 +52,13 @@ class Aggregation:
 
     # Run the query using the private reader and input query
     # Get query response back
-    def run_agg_query(self, df, metadata_path, query):
-        schema = MetadataLoader(metadata_path).read_schema()
-        reader = CSVReader(schema, df)
-        private_reader = PrivateQuery(reader, schema, self.t)
+    def run_agg_query(self, df, metadata_path, query, confidence):
+        metadata = MetadataLoader(metadata_path).read_schema()
+        reader = CSVReader(metadata, df)
+        private_reader = PrivateQuery(reader, metadata, self.epsilon)
         exact_values = private_reader._execute_exact(query)
-        return np.array([private_reader._apply_noise(*exact_values)[1:][0][0] for i in range(self.repeat_count)])
+        bounds_centered_zero = list(private_reader._apply_noise(*exact_values, confidence)[1].values())[1]
+        actual_value = exact_values[-1].rows()[1:][0][1]
+        bounds = np.array([bounds_centered_zero[0] + actual_value, bounds_centered_zero[1] + actual_value])
+        noisy_values = np.array([private_reader._apply_noise(*exact_values)[0][1:][0][0] for i in range(self.repeat_count)])
+        return noisy_values, bounds
