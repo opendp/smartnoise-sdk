@@ -12,7 +12,6 @@ from burdock.query.sql.reader import CSVReader
 from burdock.query.sql import MetadataLoader
 from burdock.query.sql.private.query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
-from burdock.mechanisms.laplace import Laplace
 from pandasql import sqldf
 
 class Aggregation:

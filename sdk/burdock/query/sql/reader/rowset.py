@@ -28,6 +28,7 @@ class TypedRowset:
         self.types = {}
         self.sens = {}
         self.colnames = []
+        self.bounds = {}
 
         for idx in range(len(header)):
             cname = header[idx]
@@ -120,7 +121,9 @@ class TypedRowset:
         for idx in range(self.n_rows):
             if ops[relation](col[idx], value):
                 rows.append(tuple(self[name][idx] for name in self.colnames))
-        return TypedRowset(rows, types, sens)
+        filtered_rs = TypedRowset(rows, types, sens)
+        filtered_rs.bounds = self.bounds
+        return filtered_rs
 
     def sort(self, sortcols):
         body = self.rows(False)
