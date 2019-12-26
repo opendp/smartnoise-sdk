@@ -1,6 +1,6 @@
 from burdock.query.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
-import burdock.query.sql.ast as ast
+import burdock.query.sql.ast.expressions.sql as ast
 from burdock.query.sql.reader.rowset import TypedRowset
 
 import numpy as np
@@ -15,8 +15,7 @@ class PrivateQuery:
         self.metadata = metadata
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
-
-        self.tau = 5
+        self.tau = 1
 
     def rewrite(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
