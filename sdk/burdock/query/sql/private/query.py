@@ -15,10 +15,7 @@ class PrivateQuery:
         self.metadata = metadata
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
-
         self.tau = 1
-
-        self.mechanism = Laplace(self.epsilon, self.tau)
 
     def rewrite(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -39,7 +36,7 @@ class PrivateQuery:
         exact_values = self._execute_exact(query_string)
         return self._apply_noise(*exact_values)
 
-    def _apply_noise(self, subquery, query, syms, types, sens, srs):
+    def _apply_noise(self, subquery, query, syms, types, sens, srs, pct=0.95):
         # if user has selected keycount for outer query, use that instead
         kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
         if len(kcc) > 0:
@@ -51,17 +48,16 @@ class PrivateQuery:
             name, sym = nsym
             name = name.lower()
             sens = sym.sensitivity()
-            if sym.type() == "int":
-                if sym.sensitivity() == 1:
-                    counts = self.mechanism.count(srs[name])
-                    counts[counts < 0] = 0
-                    srs[name] = counts
-                    srs = srs.filter(name, ">", self.tau)
-                elif sens is not None:
-                    srs[name] = self.mechanism.sum_int(srs[name], sens)
-            elif sym.type() == "float" and sens is not None:
-                srs[name] = self.mechanism.sum_float(srs[name], sens)
-                
+            mechanism = Laplace(self.epsilon, sens, self.tau)
+            srs.bounds[name] = mechanism.bounds(pct)
+            if sym.sensitivity() == 1:
+                counts = mechanism.release(srs[name])
+                counts[counts < 0] = 0
+                srs[name] = counts
+                srs = srs.filter(name, ">", self.tau)
+            else:
+                srs[name] = mechanism.release(srs[name])
+
         syms = query.all_symbols()
         types = [s[1].type() for s in syms]
         sens = [s[1].sensitivity() for s in syms]
@@ -92,9 +88,8 @@ class PrivateQuery:
             sf = [("-" if desc else "") + colname for colname, desc in sort_fields]
 
             newrs.sort(sf)
-
-        return newrs.rows()
         
+        return (newrs.rows(), srs.bounds)
 
     def _execute_exact(self, query_string):
         if not isinstance(query_string, str):
