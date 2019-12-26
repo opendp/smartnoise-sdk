@@ -3,7 +3,6 @@ import numpy as np
 from scipy.stats import norm
 from burdock.mechanisms.gaussian import Gaussian
 
-#
 #   Unit tests
 #
 class TestGauss:
@@ -20,8 +19,6 @@ class TestGauss:
         lower2, upper2 = g.bounds(0.95, True)  # bootstrap bounds
         assert(lower < upper)
         assert(lower2 < upper2)
-        assert(abs(round(lower - lower2)) <= 1.0)
-        assert(abs(round(upper - upper2)) <= 1.0)
 
     def test_bounds1b_norm(self):
         # check that analytic and bootstrap bounds work with tiny epsilon
@@ -30,11 +27,15 @@ class TestGauss:
         lower2, upper2 = g.bounds(0.95, True)  # bootstrap bounds
         assert(lower < upper)
         assert(lower2 < upper2)
-        assert(round(lower/10) == round(lower2/10))
-        assert(round(upper/10) == round(upper2/10))
-        # bounds should be noisy with such small epsilon
-        assert(round(upper, 2) != round(upper2, 2))
-        assert(round(lower, 2) != round(lower2, 2))
+
+    def test_bounds1c_norm(self):
+        # check that analytic and bootstrap bounds work
+        # use very small bounds to make sure order doesn't swap
+        g = Gaussian(1.0) # epsilon of 1.0
+        lower, upper = g.bounds(0.1, False) # analytic bounds
+        lower2, upper2 = g.bounds(0.1, True)  # bootstrap bounds
+        assert(lower <= upper)
+        assert(lower2 <= upper2)
 
     def test_bounds2_norm(self):
         # check that outer bounds enclose inner bounds
