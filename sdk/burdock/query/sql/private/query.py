@@ -33,11 +33,36 @@ class PrivateQuery:
         return subquery.numeric_symbols()
 
     def execute(self, query_string):
-        exact_values = self._execute_exact(query_string)
-        return self._apply_noise(*exact_values)
+        exact_values = self._preprocess(query_string)
+        return self._postprocess(*exact_values)
 
-    def _apply_noise(self, subquery, query, syms, types, sens, srs, pct=0.95):
-        # if user has selected keycount for outer query, use that instead
+    def _preprocess(self, query_string):
+        if not isinstance(query_string, str):
+            raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
+
+        subquery, query = self.rewrite(query_string)
+
+        # Preprocess:
+        # 0. Rewrite query and execute subquery
+        # 0b. Serialize to target backend
+
+        syms = subquery.all_symbols()
+        types = [s[1].type() for s in syms]
+        sens = [s[1].sensitivity() for s in syms]
+
+        # execute the subquery against the backend and load in typed rowset
+        srs = self.reader.execute_typed(subquery)
+        return (subquery, query, syms, types, sens, srs)
+
+    def _postprocess(self, subquery, query, syms, types, sens, srs, pct=0.95):
+        # Postprocess:
+        # 1. Add Noise to subquery results
+        # 1b. Clamp counts to 0, set SUM = NULL if count = 0
+        # 2. Filter tau thresh
+        # 3. Evaluate outer expression, set AVG = NULL if count = 0
+        # 4. Sort        
+
+        # # if user has selected keycount for outer query, use that instead
         kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
         if len(kcc) > 0:
             srs["keycount"] = srs[kcc[0][0].lower()]
@@ -50,6 +75,7 @@ class PrivateQuery:
             sens = sym.sensitivity()
             mechanism = Laplace(self.epsilon, sens, self.tau)
             srs.bounds[name] = mechanism.bounds(pct)
+            # BUGBUG: Things other than counts can have sensitivity of 1
             if sym.sensitivity() == 1:
                 counts = mechanism.release(srs[name])
                 counts[counts < 0] = 0
@@ -91,27 +117,6 @@ class PrivateQuery:
         
         return (newrs.rows(), srs.bounds)
 
-    def _execute_exact(self, query_string):
-        if not isinstance(query_string, str):
-            raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
-
-        subquery, query = self.rewrite(query_string)
-
-        # 0. Rewrite query and execute subquery
-        # 0b. Serialize to target backend
-        # 1. Add Noise to subquery
-        # 1b. Clamp counts to 0, set SUM = NULL if count = 0
-        # 2. Filter tau thresh
-        # 3. Evaluate outer expression, set AVG = NULL if count = 0
-        # 4. Sort
-
-        syms = subquery.all_symbols()
-        types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
-
-        # execute the subquery against the backend and load in typed rowset
-        srs = self.reader.execute_typed(subquery)
-        return (subquery, query, syms, types, sens, srs)
 
     def execute_typed(self, query):
         if isinstance(query, str):
