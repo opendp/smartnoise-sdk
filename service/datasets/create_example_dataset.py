@@ -5,8 +5,8 @@ Code to create an example dataset for testing. c is y-value;
 c is 0 if a is low and is high, and is 1 otherwise
 """
 
-list_a = [random.randint(0, 50) for i in range(100)]
-list_b = [random.randint(0, 50) for i in range(100)]
+list_a = [random.randint(0, 50) for i in range(1000)]
+list_b = [random.randint(0, 50) for i in range(1000)]
 f = open("example.csv", "w", newline='')
 f.write("a,b,c\n")
 for i in range(len(list_a)):
