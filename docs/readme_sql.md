@@ -24,6 +24,7 @@ Steps:
 - create a conda environment: conda create -n oss_dp python
 - conda activate oss_dp
 - git clone https://github.com/privacytoolsproject/burdock.git
+- cd burdock
 - pip install -e sdk/
 - pip install -r tests/requirements.txt
 - pip install -r service/requirements.txt
