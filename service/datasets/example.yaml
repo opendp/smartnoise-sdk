@@ -14,4 +14,4 @@ Database:
       c:
         type: int
         min: 0
-        max: 125
+        max: 1
