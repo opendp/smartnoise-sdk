@@ -8,7 +8,11 @@ import numpy as np
 import pandas as pd
 
 from burdock.client import get_dataset_client
+<<<<<<< HEAD
 from burdock.data.adapters import load_metadata, load_dataset
+=======
+from burdock.data.adapters import load_reader, load_metadata, load_dataset
+>>>>>>> Made MLFlow project containing IBM's differentially private linear regression
 
 from diffprivlib.mechanisms import Vector
 from diffprivlib.utils import PrivacyLeakWarning, DiffprivlibCompatibilityWarning, warn_unused_args
@@ -56,6 +60,7 @@ if __name__ == "__main__":
 
         model = LinearRegression(data_norm=max_norm, epsilon=budget, range_X=x_range, range_y=y_range).fit(X, y)
 
+<<<<<<< HEAD
         # Save model for access through mlflow ui
         mlflow.sklearn.log_model(model, "model")
 
@@ -66,3 +71,11 @@ if __name__ == "__main__":
         with open("result.json", "w") as stream:
             json.dump(results, stream)
         mlflow.log_artifact("result.json")
+=======
+        # Log mlflow attributes for mlflow UI
+        mlflow.log_param("dataset_name", dataset_name)
+        mlflow.log_param("budget", budget)
+        mlflow.log_param("x_features", x_features)
+        mlflow.log_param("y_targets", y_targets)
+        mlflow.sklearn.log_model(model, "model")
+>>>>>>> Made MLFlow project containing IBM's differentially private linear regression
