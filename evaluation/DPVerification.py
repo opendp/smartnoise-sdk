@@ -240,21 +240,20 @@ class DPVerification:
         
         d1hist, d2hist, bin_edges = \
             self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
-        
-        #kl_res = self.kl_divergence(d1hist, d2hist)
-        #print("\nKL-Divergence Test: ", kl_res, "\n")
 
         ws_res = 0.0
-        dp_res = False
-        if(exact):
-            print("Wasserstein Distance Test: ", ws_res, "\n")
-            print("DP Predicate Test:", dp_res, "\n")
-            return dp_res, ks_res, ws_res
-        
-        ws_res = self.wasserstein_distance(d1hist, d2hist)
+        #kl_res = 0.0
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug, exact=exact)
-        print("Wasserstein Distance Test: ", ws_res, "\n")
-        print("DP Predicate Test:", dp_res, "\n")
+        if(exact):
+            print("Wasserstein Distance: ", ws_res, "\n")
+            #print("KL Divergence Distance: ", kl_res, "\n")
+            print("DP Predicate Test:", False, "\n")
+        else:
+            ws_res = self.wasserstein_distance(d1hist, d2hist)
+            print("Wasserstein Distance: ", ws_res, "\n")
+            #kl_res = self.kl_divergence(d1histupperbound, d2lower)
+            #print("KL-Divergence: ", kl_res, "\n")
+            print("DP Predicate Test:", dp_res, "\n")
         
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
@@ -292,15 +291,15 @@ class DPVerification:
 
     # Main method listing all the DP verification steps
     def main(self):
-        #ag = agg.Aggregation(t=1, repeat_count=10000)
+        ag = agg.Aggregation(t=1, repeat_count=10000)
         #dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
         #dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
-        #dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
         #dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
         #dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
         #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
-        d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
-        d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
+        d1_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d1.d1"
+        d2_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d2.d2"
         dp_res, acc_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
         return dp_res, acc_res
 
