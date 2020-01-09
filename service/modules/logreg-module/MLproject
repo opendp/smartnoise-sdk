@@ -1,0 +1,12 @@
+name: diffpriv_sql
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      dataset_name: str
+      budget: float
+      x_features: str
+      y_targets: str
+    command: "python run_query.py {dataset_name} {budget} {x_features} {y_targets}"

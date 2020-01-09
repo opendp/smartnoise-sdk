@@ -1,0 +1,10 @@
+name: tutorial
+channels:
+  - defaults
+dependencies:
+  - pip:
+    - mlflow
+    - pandasql
+    - pandas
+    - diffprivlib
+    - git+https://github.com/privacytoolsproject/burdock.git#subdirectory=sdk
