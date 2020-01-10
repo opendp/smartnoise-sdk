@@ -21,8 +21,6 @@ class TestLaplace:
         lower2, upper2 = g.bounds(0.95, True)  # bootstrap bounds
         assert(lower < upper)
         assert(lower2 < upper2)
-        assert(round(lower) == round(lower2))
-        assert(round(upper) == round(upper2))
 
     def test_bounds1b_lap(self):
         # check that analytic and bootstrap bounds work
@@ -31,8 +29,15 @@ class TestLaplace:
         lower2, upper2 = g.bounds(0.95, True)  # bootstrap bounds
         assert(lower < upper)
         assert(lower2 < upper2)
-        assert(round(lower/10) == round(lower2/10))
-        assert(round(upper/10) == round(upper2/10))
+
+    def test_bounds1c_lap(self):
+        # check that analytic and bootstrap bounds work
+        # use very small bounds to make sure order doesn't swap
+        g = Laplace(1.0) # epsilon of 1.0
+        lower, upper = g.bounds(0.1, False) # analytic bounds
+        lower2, upper2 = g.bounds(0.1, True)  # bootstrap bounds
+        assert(lower <= upper)
+        assert(lower2 <= upper2)
 
     def test_bounds2_lap(self):
         # check that outer bounds enclose inner bounds
@@ -45,3 +50,4 @@ class TestLaplace:
         assert(upper2 > upper1)
         assert(lower2b < lower1b)
         assert(upper2b > upper1b)
+
