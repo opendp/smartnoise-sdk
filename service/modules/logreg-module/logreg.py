@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from burdock.client import get_dataset_client
-from burdock.data.adapters import load_reader, load_metadata, load_dataset
+from burdock.data.adapters import load_metadata, load_dataset
 
 from diffprivlib.mechanisms import Vector
 from diffprivlib.utils import PrivacyLeakWarning, DiffprivlibCompatibilityWarning, warn_unused_args
@@ -24,6 +24,12 @@ if __name__ == "__main__":
     y_targets = json.loads(sys.argv[4]) # class labels
 
     with mlflow.start_run(run_name="diffpriv_logreg"):
+        # log attributes
+        mlflow.log_param("dataset_name", dataset_name)
+        mlflow.log_param("budget", budget)
+        mlflow.log_param("x_features", x_features)
+        mlflow.log_param("y_targets", y_targets)
+
         dataset_document = get_dataset_client().read(dataset_name, budget)
         dataset = load_dataset(dataset_document)
         schema = load_metadata(dataset_document)
@@ -39,9 +45,14 @@ if __name__ == "__main__":
 
         model = LogisticRegression(data_norm=max_norm, epsilon=budget).fit(X, y)
 
-        # log attributes
-        mlflow.log_param("dataset_name", dataset_name)
-        mlflow.log_param("budget", budget)
-        mlflow.log_param("x_features", x_features)
-        mlflow.log_param("y_targets", y_targets)
+        # log model
         mlflow.sklearn.log_model(model, "model")
+
+        results = {
+            "run_id": mlflow.active_run().info.run_id,
+            "model_name": "diffpriv_logreg"
+        }
+
+        with open("result.json", "w") as stream:
+            json.dump(results, stream)
+        mlflow.log_artifact("result.json")

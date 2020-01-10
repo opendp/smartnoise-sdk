@@ -1,4 +1,4 @@
-name: diffpriv_sql
+name: diffpriv_logreg
 
 conda_env: conda.yaml
 
@@ -9,4 +9,4 @@ entry_points:
       budget: float
       x_features: str
       y_targets: str
-    command: "python run_query.py {dataset_name} {budget} {x_features} {y_targets}"
+    command: "python logreg.py {dataset_name} {budget} {x_features} {y_targets}"
