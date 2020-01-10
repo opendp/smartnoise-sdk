@@ -44,3 +44,13 @@ class TestQuery:
         private_reader = PrivateQuery(reader, schema, 1.0)
         rs = private_reader.execute("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs[1][0] > rs[2][0])
+    def test_group_by_noisy_typed_order(self):
+        reader = CSVReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, 1.0)
+        rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
+        assert(rs['c'][0] < rs['c'][1])
+    def test_group_by_noisy_typed_order_desc(self):
+        reader = CSVReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, 1.0)
+        rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
+        assert(rs['c'][0] > rs['c'][1])
