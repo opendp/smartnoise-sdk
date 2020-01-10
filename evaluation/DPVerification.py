@@ -10,6 +10,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import Aggregation as agg
+import Exploration as exp
 import os
 from scipy import stats
 
@@ -289,19 +290,51 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, acc_res
 
+    # Use the powerset based neighboring datasets to scan through all edges of database search graph
+    def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
+        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
+        ex = exp.Exploration()
+        ex.generate_powerset(ex.df)
+        res_list = {}
+        for filename in ex.visited:
+            # Right now Burdock not working for empty databases. So running only for neighboring databases 
+            # where both D1 and D2 are not null
+            if(filename not in ["0_0", "1_1", "2_2"]):
+                print("Testing: ", filename)
+                d1_query = query_str + "d1_" + filename + "." + "d1_" + filename
+                d2_query = query_str + "d2_" + filename + "." + "d2_" + filename
+                d1 = pd.read_csv(os.path.join(ex.file_dir, ex.csv_path , "d1_" + filename + ".csv"))
+                d2 = pd.read_csv(os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".csv"))
+                d1_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d1_" + filename + ".yaml")
+                d2_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".yaml")
+                fD1, fD1_bounds = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
+                fD2, fD2_bounds = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
+                acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
+                d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
+                d1size, d2size = fD1.size, fD2.size
+                dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+                if(plot):
+                    self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
+                print(filename, dp_res, acc_res)
+                res_list[filename] = [dp_res, acc_res]
+        return res_list
+
     # Main method listing all the DP verification steps
     def main(self):
         ag = agg.Aggregation(t=1, repeat_count=10000)
         #dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
         #dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
+        #dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
         #dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
         #dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
         #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
         d1_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d2.d2"
         dp_res, acc_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
-        return dp_res, acc_res
+
+        query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
+        res_list = self.dp_powerset_test(query_str, plot=False)
+        return res_list
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=10000)
