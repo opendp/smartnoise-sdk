@@ -108,7 +108,8 @@ class PrivateQuery:
                 counts[counts < 0] = 0
                 srs[name] = counts
 
-        srs = srs.filter("keycount", ">", self.tau ** 2)
+        if subquery.agg is not None:
+            srs = srs.filter("keycount", ">", self.tau ** 2)
 
         syms = query.all_symbols()
         types = [s[1].type() for s in syms]
@@ -149,7 +150,7 @@ class PrivateQuery:
         """
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-        trs = self.execute_ast_exact(query)
+        trs = self.execute_ast_typed(query)
         return trs.rows()
 
     def execute_ast_typed(self, query):
