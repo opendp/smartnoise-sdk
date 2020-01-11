@@ -34,8 +34,9 @@ def client():
 
     base_url = "http://localhost:{}/api/".format(port)
     client = RestClient(Credentials(), base_url)
-    client.secretsput(Secret(name="dataverse:{}".format("demo_dataverse"),
-                             value=os.environ[DATAVERSE_TOKEN_ENV_VAR]))
+    if DATAVERSE_TOKEN_ENV_VAR in os.environ:
+        client.secretsput(Secret(name="dataverse:{}".format("demo_dataverse"),
+                                 value=os.environ[DATAVERSE_TOKEN_ENV_VAR]))
     return client
 
 def test_client(client):
