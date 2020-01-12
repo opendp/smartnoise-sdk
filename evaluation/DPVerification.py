@@ -280,9 +280,10 @@ class DPVerification:
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors(load_csv=True)
-        fD1, fD1_bounds = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
-        fD2, fD2_bounds = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
-        acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
+        fD1 = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
+        fD2 = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
+        #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
+        acc_res = None
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
@@ -307,9 +308,10 @@ class DPVerification:
                 d2 = pd.read_csv(os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".csv"))
                 d1_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d1_" + filename + ".yaml")
                 d2_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".yaml")
-                fD1, fD1_bounds = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
-                fD2, fD2_bounds = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
-                acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
+                fD1 = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
+                fD2 = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
+                #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
+                acc_res = None
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
@@ -328,13 +330,13 @@ class DPVerification:
         #dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
         #dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
         #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
-        d1_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d1.d1"
-        d2_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d2.d2"
-        dp_res, acc_res = self.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
+        d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
+        d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
+        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=True, repeat_count=10000)
 
-        query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        res_list = self.dp_powerset_test(query_str, plot=False)
-        return res_list
+        #query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
+        #res_list = self.dp_powerset_test(query_str, plot=False)
+        return dp_res, acc_res
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=10000)
