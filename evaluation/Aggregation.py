@@ -56,28 +56,36 @@ class Aggregation:
         metadata = MetadataLoader(metadata_path).read_schema()
         reader = CSVReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
-        exact_values = private_reader._execute_exact(query)
-        bounds_centered_zero = list(private_reader._apply_noise(*exact_values, confidence)[1].values())[1]
-        actual_value = exact_values[-1].rows()[1:][0][1]
-        bounds = np.array([bounds_centered_zero[0] + actual_value, bounds_centered_zero[1] + actual_value])
-        noisy_values = [private_reader._apply_noise(*exact_values)[0][1:] for i in range(self.repeat_count)]
-        
-        # Workaround to fix the intermittent NULL issue we seeing in noisy_values
-        res_noisy_values = []
-        n = len(noisy_values)
-        print("Count of times noisy values NULL: ", noisy_values.count([]), " out of ", n, " times")
-        for i in range(n):
-            if(len(noisy_values[i]) == 0):
-                filled = False
-                # Try to fill will previous non-NULL value similar to synopsis concept
-                for j in range(i-1, -1, -1):
-                    if(len(noisy_values[j]) != 0):
-                        res_noisy_values.append(noisy_values[j][0][0])
-                        filled = True
-                        break
-                if(not filled):
-                    res_noisy_values.append(actual_value)
-            else:
-                res_noisy_values.append(noisy_values[i][0][0])
+        query_ast = private_reader.parse_query_string(query)
+        subquery_results = private_reader._preprocess(query_ast)
 
-        return np.array(res_noisy_values), bounds
+        #exact_values = private_reader.execute_ast(query)
+        #bounds_centered_zero = list(private_reader._apply_noise(*exact_values, confidence)[1].values())[1]
+        #actual_value = exact_values[1:][0][1]
+        #bounds = np.array([bounds_centered_zero[0] + actual_value, bounds_centered_zero[1] + actual_value])
+        noisy_values = [private_reader._postprocess(*subquery_results).rows()[1:][0][0] for i in range(self.repeat_count)]
+        # Workaround to fix the intermittent NULL issue we seeing in noisy_values
+        # res_noisy_values = []
+        # n = len(noisy_values)
+        # print("Count of times noisy values NULL: ", noisy_values.count([]), " out of ", n, " times")
+        # for i in range(n):
+        #     if(len(noisy_values[i]) == 0):
+        #         filled = False
+        #         # Try to fill will previous non-NULL value similar to synopsis concept
+        #         for j in range(i-1, -1, -1):
+        #             if(len(noisy_values[j]) != 0):
+        #                 res_noisy_values.append(noisy_values[j][0][0])
+        #                 filled = True
+        #                 break
+        #         # Try to fill with any non-NULL value starting from last
+        #         if(not filled):
+        #             for j in range(n-1, -1, -1):
+        #                 if(len(noisy_values[j]) != 0):
+        #                     res_noisy_values.append(noisy_values[j][0][0])
+        #                     filled = True
+        #                     break
+        #         # If all values are NULL, it should crash
+        #     else:
+        #         res_noisy_values.append(noisy_values[i][0][0])
+                
+        return np.array(noisy_values)#, bounds
