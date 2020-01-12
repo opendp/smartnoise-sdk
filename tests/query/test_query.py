@@ -70,3 +70,11 @@ class TestQuery:
         private_reader = PrivateQuery(reader, schema, 1.0)
         trs = private_reader.execute_typed("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100 GROUP BY married")
         assert(len(trs) == 0)
+    def test_empty_result_typed_with_tau_prepost(self):
+        reader = CSVReader(schema, df)
+        query = QueryParser(schema).queries("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100 GROUP BY married")[0]
+        private_reader = PrivateQuery(reader, schema, 1.0)
+        pre = private_reader._preprocess(query)
+        for i in range(3):
+            trs = private_reader._postprocess(*pre)
+            assert(len(trs) == 0)
