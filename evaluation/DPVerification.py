@@ -5,13 +5,15 @@
 # i.e. passing (epsilon, delta) - DP condition
 # If the definition is not passed, there is a bug or it is a by-design bug in case of passing actual aggregates
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import Aggregation as agg
-import Exploration as exp
-import os
+import evaluation.Aggregation as agg
+import evaluation.Exploration as exp
 from scipy import stats
 
 class DPVerification:
@@ -246,15 +248,15 @@ class DPVerification:
         #kl_res = 0.0
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug, exact=exact)
         if(exact):
+            dp_res = False
             print("Wasserstein Distance: ", ws_res, "\n")
             #print("KL Divergence Distance: ", kl_res, "\n")
-            print("DP Predicate Test:", False, "\n")
         else:
             ws_res = self.wasserstein_distance(d1hist, d2hist)
             print("Wasserstein Distance: ", ws_res, "\n")
             #kl_res = self.kl_divergence(d1histupperbound, d2lower)
             #print("KL-Divergence: ", kl_res, "\n")
-            print("DP Predicate Test:", dp_res, "\n")
+        print("DP Predicate Test:", dp_res, "\n")
         
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
@@ -330,8 +332,8 @@ class DPVerification:
         #dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
         #dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
         #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
-        d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
-        d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
+        d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
+        d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
         dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=True, repeat_count=10000)
 
         #query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
