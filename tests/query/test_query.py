@@ -19,6 +19,16 @@ class TestQuery:
         reader = CSVReader(schema, df)
         rs = reader.execute("SELECT COUNT(*) AS c FROM PUMS.PUMS")
         assert(rs[1][0] == 1000)
+    def test_empty_result(self):
+        reader = CSVReader(schema, df)
+        rs = reader.execute("SELECT age as a FROM PUMS.PUMS WHERE age > 100")
+        print(rs)
+        assert(len(rs) == 1)
+    def test_empty_result_typed(self):
+        reader = CSVReader(schema, df)
+        rs = reader.execute("SELECT age as a FROM PUMS.PUMS WHERE age > 100")
+        trs = TypedRowset(rs, ['int'], [None])
+        assert(len(trs) == 0)
     def test_group_by_exact_order(self):
         reader = CSVReader(schema, df)
         rs = reader.execute("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
@@ -54,3 +64,8 @@ class TestQuery:
         private_reader = PrivateQuery(reader, schema, 1.0)
         rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs['c'][0] > rs['c'][1])
+    def test_empty_result_typed_with_tau(self):
+        reader = CSVReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, 1.0)
+        trs = private_reader.execute_typed("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100 GROUP BY married")
+        assert(len(trs) == 0)
