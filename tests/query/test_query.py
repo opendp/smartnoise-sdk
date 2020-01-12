@@ -54,3 +54,28 @@ class TestQuery:
         private_reader = PrivateQuery(reader, schema, 1.0)
         rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs['c'][0] > rs['c'][1])
+    def test_no_tau(self):
+        # should never drop rows
+        reader = CSVReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, 4.0)
+        for i in range(10):
+            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
+            assert(len(rs['c']) == 1)
+    def test_no_tau_noisy(self):
+        # should never drop rows
+        reader = CSVReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, 0.01)
+        for i in range(10):
+            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
+            assert(len(rs['c']) == 1)
+    def test_yes_tau(self):
+        # should usually drop some rows
+        reader = CSVReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, 0.01)
+        lengths = []
+        for i in range(10):
+            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 GROUP BY educ")
+            lengths.append(len(rs['c']))
+        l = lengths[0]
+        print(lengths)
+        assert(any([l != ll for ll in lengths]))
