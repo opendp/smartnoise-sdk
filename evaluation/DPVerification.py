@@ -338,7 +338,7 @@ class DPVerification:
 
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
         res_list = self.dp_powerset_test(query_str, plot=False)
-        return dp_res, acc_res, res_list
+        return res_list
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=10000)
