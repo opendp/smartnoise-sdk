@@ -42,25 +42,25 @@ class TestStochastic:
         assert(dp_res == True)
 
     def test_dp_gaussian_count(self):
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", plot=False, debug = False)
         assert(dp_count == True)
 
     def test_dp_gaussian_sum(self):
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto", debug=False)
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum == True)
     
     def test_dp_gaussian_mean(self):
-        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False)
+        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_mean == True)
     
     def test_dp_gaussian_var(self):
-        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
+        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_var == True)
 
     def test_dp_exact_count(self):
-        dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
+        dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', plot=False, binsize = "unity", bound = False, exact = True)
         assert(dp_exact == False)
 
     def test_dp_buggy_count(self):
-        dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
+        dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", plot=False, debug=False,bound = True)
         assert(dp_buggy == False)
