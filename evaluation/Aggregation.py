@@ -56,9 +56,12 @@ class Aggregation:
         metadata = MetadataLoader(metadata_path).read_schema()
         reader = CSVReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
-        exact_values = private_reader._execute_exact(query)
-        bounds_centered_zero = list(private_reader._apply_noise(*exact_values, confidence)[1].values())[1]
-        actual_value = exact_values[-1].rows()[1:][0][1]
-        bounds = np.array([bounds_centered_zero[0] + actual_value, bounds_centered_zero[1] + actual_value])
-        noisy_values = np.array([private_reader._apply_noise(*exact_values)[0][1:][0][0] for i in range(self.repeat_count)])
-        return noisy_values, bounds
+        query_ast = private_reader.parse_query_string(query)
+        subquery_results = private_reader._preprocess(query_ast)
+
+        #exact_values = private_reader.execute_ast(query)
+        #bounds_centered_zero = list(private_reader._apply_noise(*exact_values, confidence)[1].values())[1]
+        #actual_value = exact_values[1:][0][1]
+        #bounds = np.array([bounds_centered_zero[0] + actual_value, bounds_centered_zero[1] + actual_value])
+        noisy_values = [private_reader._postprocess(*subquery_results).rows()[1:][0][0] for i in range(self.repeat_count)]
+        return np.array(noisy_values)#, bounds
