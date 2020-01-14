@@ -1,0 +1,11 @@
+Database:
+  {0}:
+    {0}:
+      rows: {1}
+      UserId:
+        type: string
+        is_key: True
+      Usage:
+        type: {2}
+        min: {3}
+        max: {4}
