@@ -99,6 +99,8 @@ class PrivateQuery:
             name, sym = nsym
             name = name.lower()
             sens = sym.sensitivity()
+            # treat null as 0 before adding noise
+            srs[name] = np.array([v if v is not None else 0.0 for v in srs[name]])
             mechanism = Laplace(self.epsilon, sens, self.tau)
             srs.bounds[name] = mechanism.bounds(pct)
             srs[name] = mechanism.release(srs[name])
@@ -108,7 +110,8 @@ class PrivateQuery:
                 counts[counts < 0] = 0
                 srs[name] = counts
 
-        srs = srs.filter("keycount", ">", self.tau ** 2)
+        if subquery.agg is not None:
+            srs = srs.filter("keycount", ">", self.tau ** 2)
 
         syms = query.all_symbols()
         types = [s[1].type() for s in syms]
@@ -149,7 +152,7 @@ class PrivateQuery:
         """
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-        trs = self.execute_ast_exact(query)
+        trs = self.execute_ast_typed(query)
         return trs.rows()
 
     def execute_ast_typed(self, query):

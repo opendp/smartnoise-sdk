@@ -92,15 +92,15 @@ class TypedRowset:
             cn = key
             t = self.types[cn]
             if t == "string":
-                self.m_cols[cn] = np.array(value).astype(str)
+                self.m_cols[cn] = np.array([str(v) if v is not None else v for v in value])
             elif t == "boolean":
-                self.m_cols[cn] = np.array(value).astype(bool)
+                self.m_cols[cn] = np.array([bool(v) if v is not None else v for v in value])
             elif t == "int":
-                self.m_cols[cn] = np.array(value).astype(int)
+                self.m_cols[cn] = np.array([int(v) if v is not None else v for v in value])
             elif t == "float":
-                self.m_cols[cn] = np.array(value).astype(float)
+                self.m_cols[cn] = np.array([float(v) if v is not None else v for v in value])
             elif t == "datetime":
-                self.m_cols[cn] = [datetime.datetime(v) for v in value]
+                self.m_cols[cn] = np.array([datetime.datetime(v) if v is not None else None for v in value])
             else:
                 raise ValueError("Trying to load unknown type " + t)
         elif type(key) is int:

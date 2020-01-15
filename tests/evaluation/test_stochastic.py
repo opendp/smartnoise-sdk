@@ -41,26 +41,20 @@ class TestStochastic:
         print("Result of DP Predicate Test on VAR Query: ", dp_res)
         assert(dp_res == True)
 
-    def test_dp_gaussian_count(self):
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", plot=False, debug = False)
+    def test_dp_laplace_mechanism_count(self):
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", plot=False, debug = False)
         assert(dp_count == True)
 
-    def test_dp_gaussian_sum(self):
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto", plot=False, debug=False)
+    def test_dp_laplace_mechanism_sum(self):
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum == True)
     
-    def test_dp_gaussian_mean(self):
-        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", plot=False, debug=False)
-        assert(dp_mean == True)
+    def test_dp_gaussian_mechanism_count(self):
+        ag = Aggregation(t=1, repeat_count=10000, mechanism = "Gaussian")
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", plot=False, debug = False)
+        assert(dp_count == True)
     
-    def test_dp_gaussian_var(self):
-        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", plot=False, debug=False)
-        assert(dp_var == True)
-
-    def test_dp_exact_count(self):
-        dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', plot=False, binsize = "unity", bound = False, exact = True)
-        assert(dp_exact == False)
-
-    def test_dp_buggy_count(self):
-        dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", plot=False, debug=False,bound = True)
-        assert(dp_buggy == False)
+    def test_dp_gaussian_mechanism_sum(self):
+        ag = Aggregation(t=1, repeat_count=10000, mechanism = "Gaussian")
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
+        assert(dp_sum == True)
