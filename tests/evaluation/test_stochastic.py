@@ -16,28 +16,28 @@ class TestStochastic:
     def test_dp_predicate_count(self):
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
+        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         print("Result of DP Predicate Test on COUNT Query: ", dp_res)
         assert(dp_res == True)
 
     def test_dp_predicate_sum(self):
         d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
         d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
-        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
+        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         print("Result of DP Predicate Test on SUM Query: ", dp_res)
         assert(dp_res == True)    
     
     def test_dp_predicate_mean(self):
         d1_query = "SELECT AVG(Usage) AS MeanUsage FROM d1.d1"
         d2_query = "SELECT AVG(Usage) AS MeanUsage FROM d2.d2"
-        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
+        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         print("Result of DP Predicate Test on MEAN Query: ", dp_res)
         assert(dp_res == True)
 
     def test_dp_predicate_var(self):
         d1_query = "SELECT VAR(Usage) AS UsageVariance FROM d1.d1"
         d2_query = "SELECT VAR(Usage) AS UsageVariance FROM d2.d2"
-        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=10000)
+        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         print("Result of DP Predicate Test on VAR Query: ", dp_res)
         assert(dp_res == True)
 
