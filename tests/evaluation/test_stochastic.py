@@ -42,19 +42,19 @@ class TestStochastic:
         assert(dp_res == True)
 
     def test_dp_laplace_mechanism_count(self):
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", plot=False, debug = False)
         assert(dp_count == True)
 
     def test_dp_laplace_mechanism_sum(self):
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum == True)
     
     def test_dp_gaussian_mechanism_count(self):
         ag = Aggregation(t=1, repeat_count=10000, mechanism = "Gaussian")
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", plot=False, debug = False)
         assert(dp_count == True)
     
     def test_dp_gaussian_mechanism_sum(self):
         ag = Aggregation(t=1, repeat_count=10000, mechanism = "Gaussian")
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum == True)
