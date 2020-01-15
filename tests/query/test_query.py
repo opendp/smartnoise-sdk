@@ -23,7 +23,10 @@ class TestQuery:
     def test_empty_result(self):
         reader = CSVReader(schema, df)
         rs = reader.execute("SELECT age as a FROM PUMS.PUMS WHERE age > 100")
+<<<<<<< HEAD
         print(rs)
+=======
+>>>>>>> master
         assert(len(rs) == 1)
     def test_empty_result_typed(self):
         reader = CSVReader(schema, df)
@@ -89,7 +92,6 @@ class TestQuery:
             rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 GROUP BY educ")
             lengths.append(len(rs['c']))
         l = lengths[0]
-        print(lengths)
         assert(any([l != ll for ll in lengths]))
     def test_count_no_rows_exact_typed(self):
         reader = CSVReader(schema, df)
