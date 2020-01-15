@@ -36,7 +36,7 @@ class Exploration:
         file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
         df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
         return df, file_path, file_name
-    
+
     # Given a list of N records in a database, create a powerset of neighboring datasets by traversing the edges of database search graph
     # Perform DFS to traverse the database search graph
     # Convention of CSV names = <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>.csv
