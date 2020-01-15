@@ -12,13 +12,16 @@ from burdock.query.sql.reader import CSVReader
 from burdock.query.sql import MetadataLoader
 from burdock.query.sql.private.query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
+from burdock.mechanisms.laplace import Laplace
+from burdock.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 class Aggregation:
-    def __init__(self, epsilon=1.0, t=1, repeat_count=10000):
+    def __init__(self, epsilon=1.0, t=1, repeat_count=10000, mechanism="Laplace"):
         self.epsilon = epsilon
         self.t = t
         self.repeat_count = repeat_count
+        self.mechanism = mechanism
 
     # Taking df as a parameter it shall be passed both d1 and d2 that differ by 1 record
     def exact_count(self, df, colname):
@@ -48,6 +51,31 @@ class Aggregation:
         sum = self.dp_sum(df, colname)
         df[colname + "squared"] = df[colname] ** 2
         sumsq = self.dp_sum(df, colname + "squared")
+        return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
+
+    def dp_mechanism_count(self, df, colname):
+        exact_count = df[colname].count()
+        mech = Laplace(self.epsilon)
+        if(self.mechanism == "Gaussian"):
+            mech = Gaussian(self.epsilon)
+        return np.array([mech.release([exact_count])[0] for i in range(self.repeat_count)])
+
+    def dp_mechanism_sum(self, df, colname):
+        exact_sum = df[colname].sum()
+        M = float(abs(max(df[colname]) - min(df[colname])))
+        mech = Laplace(self.epsilon, sensitivity = M)
+        if(self.mechanism == "Gaussian"):
+            mech = Gaussian(self.epsilon)
+        return np.array([mech.release([exact_sum])[0] for i in range(self.repeat_count)])
+
+    def dp_mechanism_mean(self, df, colname):
+        return np.divide(self.dp_mechanism_sum(df, colname), self.dp_mechanism_count(df, colname))
+
+    def dp_mechanism_var(self, df, colname):
+        cnt = self.dp_mechanism_count(df, colname)
+        sum = self.dp_mechanism_sum(df, colname)
+        df[colname + "squared"] = df[colname] ** 2
+        sumsq = self.dp_mechanism_sum(df, colname + "squared")
         return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
 
     # Run the query using the private reader and input query
