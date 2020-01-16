@@ -1,7 +1,7 @@
 import pandas as pd
 
 from burdock.query.sql import MetadataLoader
-from burdock.query.sql.reader import CSVReader
+from burdock.query.sql.reader import DataFrameReader
 
 from .dataset_adapter import DatasetAdapter
 
@@ -21,5 +21,5 @@ class LocalCSVAdapter(DatasetAdapter):
         return MetadataLoader(dataset_document.csv_details.local_path.split(".")[0] + ".yaml").read_schema()
 
     def _load_reader(dataset_document):
-        return CSVReader(LocalCSVAdapter.load_metadata(dataset_document),
-                         LocalCSVAdapter.load_df(dataset_document))
+        return DataFrameReader(LocalCSVAdapter.load_metadata(dataset_document),
+                               LocalCSVAdapter.load_df(dataset_document))
