@@ -6,8 +6,6 @@ test_logger = logging.getLogger("stochastic-test-logger")
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
 import pytest
 from evaluation.dp_verification import DPVerification
 from evaluation.exploration import Exploration
