@@ -7,8 +7,8 @@ from .reader.dataframe_reader import DataFrameReader
 
 
 def execute_private_query(reader, schema, budget, query):
-    schema = reader.metadata if hasattr(reader, "metadata") else schema,
-    query = reader._sanitize_query if hasattr(reader ,"_sanitize_query") else query
+    schema = reader.metadata if hasattr(reader, "metadata") else schema
+    query = reader._sanitize_query(query) if hasattr(reader ,"_sanitize_query") else query
     return PrivateQuery(reader, schema, budget).execute(query)
 
 __all__ = ["MetadataLoader", "QueryParser", "Rewriter", "Validate",

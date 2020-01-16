@@ -32,14 +32,12 @@ class DataFrameReader:
             sanitized_column_name = self._sanitize_column_name(column_name)
             metadata.m_tables[table_name].m_columns[sanitized_column_name] = metadata.m_tables[table_name].m_columns[column_name]
             metadata.m_tables[table_name].m_columns[sanitized_column_name].name = sanitized_column_name
-            import pdb; pdb.set_trace()
             has_key = has_key or metadata.m_tables[table_name].m_columns[sanitized_column_name].is_key
             self.df[sanitized_column_name] = self.df[column_name]
             if column_name != sanitized_column_name:
                 del metadata.m_tables[table_name].m_columns[column_name]
 
         if not has_key:
-            import pdb; pdb.set_trace()
             key = "primary_key"
             self.df[key] = range(len(self.df))
             metadata.m_tables[table_name].m_columns[key] = Int(key,
@@ -49,7 +47,6 @@ class DataFrameReader:
         return metadata
 
     def _sanitize_query(self, query):
-        import pdb; pdb.set_trace()
         for column in self.original_column_names:
             sanitized_column = self._sanitize_column_name(column)
             for column_form in ["'{}'".format(column), '"{}"'.format(column), column]:
@@ -95,9 +92,7 @@ class DataFrameReader:
                 if new_column_name not in self.df:
                     self.df[new_column_name] = self.df[column]
 
-        import pdb; pdb.set_trace()
         df_for_diffpriv1234 = self.df
-        print(query)
         q_result = sqldf(clean_query(query), locals())
         return [tuple([col for col in q_result.columns])] + [val[1:] for val in q_result.itertuples()]
 
