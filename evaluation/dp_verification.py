@@ -12,8 +12,8 @@ import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import evaluation.Aggregation as agg
-import evaluation.Exploration as exp
+import evaluation.aggregation as agg
+import evaluation.exploration as exp
 from scipy import stats
 
 class DPVerification:
@@ -320,20 +320,27 @@ class DPVerification:
     # Main method listing all the DP verification steps
     def main(self):
         ag = agg.Aggregation(t=1, repeat_count=10000)
-        #dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
-        #dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
-        #dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
-        #dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
-        #dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
-        #dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
-        #d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
-        #d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        #dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=True, repeat_count=10000)
 
+        # Sample DP Noise addtion mechanism for 4 SQL aggregations
+        dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
+        dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
+        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
+        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
+        
+        # COUNT Example
+        d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
+        d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
+        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=True, repeat_count=10000)
+
+        # Mechanism calls with default Laplace
         dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
         dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
         dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mechanism_mean, 'Usage', binsize="auto", debug=False)
         dp_var, ks_var, ws_var = dv.aggtest(ag.dp_mechanism_var, 'Usage', binsize="auto", debug=False)
+        
+        # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
         dp_res = self.dp_powerset_test(query_str, plot=False)
         return dp_res
