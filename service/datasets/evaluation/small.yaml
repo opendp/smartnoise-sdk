@@ -1,0 +1,11 @@
+Database:
+  small:
+    small:
+      rows: 3
+      UserId:
+        type: string
+        is_key: True
+      Usage:
+        type: int
+        min: 0
+        max: 10000
