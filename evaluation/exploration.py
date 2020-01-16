@@ -61,7 +61,8 @@ class Exploration:
                     min_val = min(d1[self.numerical_col_name])
                     max_val = max(d1[self.numerical_col_name])
                     # Avoiding sensitivity to be 0
-                    max_val = max_val if max_val > min_val else min_val + 1
+                    min_val = min_val if max_val > min_val else 0
+                    max_val = max_val if max_val > min_val else abs(max_val)
 
                     d1_yaml = self.get_yaml("d1_" + filename, len(d1), self.numerical_col_type, min_val, max_val)
                     d2_yaml = self.get_yaml("d2_" + filename, len(d2), self.numerical_col_type, min_val, max_val)
