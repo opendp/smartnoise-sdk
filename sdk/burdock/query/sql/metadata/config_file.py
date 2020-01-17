@@ -49,30 +49,37 @@ class MetadataLoader:
 
     def load_table(self, schema, table, t):
         rowcount = int(t["rows"]) if "rows" in t else 0
+        row_privacy = bool(t["row_privacy"]) if "row_privacy" in t else False
+        max_ids = int(t["max_ids"]) if "max_ids" in t else None
+        sample_max_ids = bool(t["sample_max_ids"]) if "sample_max_ids" in t else None
+        rows_exact = int(t["rows_exact"]) if "rows_exact" in t else None
 
         columns = []
         colnames = [cn for cn in t.keys() if cn != "rows"]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 
-        return Table(schema, table, rowcount, columns)
+        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, rows_exact)
 
     def load_column(self, column, c):
+        is_key = False if "private_id" not in c else bool(c["private_id"])
+        bounded = False if "bounded" not in c else bool(c["bounded"])
+
         if c["type"] == "boolean":
-            return Boolean(column, False if "is_key" not in c else bool(c["is_key"]))
+            return Boolean(column, is_key, bounded)
         elif c["type"] == "datetime":
-            return DateTime(column, False if "is_key" not in c else bool(c["is_key"]))
+            return DateTime(column, is_key, bounded)
         elif c["type"] == "int":
-            minval = int(c["min"]) if "min" in c else None
-            maxval = int(c["max"]) if "max" in c else None
-            return Int(column, minval, maxval, False if "is_key" not in c else bool(c["is_key"]))
+            minval = int(c["lower"]) if "lower" in c else None
+            maxval = int(c["upper"]) if "upper" in c else None
+            return Int(column, minval, maxval, is_key, bounded)
         elif c["type"] == "float":
-            minval = float(c["min"]) if "min" in c else None
-            maxval = float(c["max"]) if "max" in c else None
-            return Float(column, minval, maxval, False if "is_key" not in c else bool(c["is_key"]))
+            minval = float(c["lower"]) if "lower" in c else None
+            maxval = float(c["upper"]) if "upper" in c else None
+            return Float(column, minval, maxval, is_key, bounded)
         elif c["type"] == "string":
             card = int(c["cardinality"]) if "cardinality" in c else 0
-            return String(column, card, False if "is_key" not in c else bool(c["is_key"]))
+            return String(column, card, is_key, bounded)
         else:
             raise ValueError("Unknown column type for column {0}: {1}".format(column, c))
 
@@ -91,6 +98,14 @@ class MetadataLoader:
             schema[table_name] = {}
             table = schema[table_name]
             table["rows"] = t.rowcount
+            if t.row_privacy is not None: 
+                table["row_privacy"] = t.row_privacy
+            if t.max_ids is not None: 
+                table["max_ids"] = t.max_ids
+            if t.sample_max_ids is not None: 
+                table["sample_max_ids"] = t.sample_max_ids
+            if t.rows_exact is not None:
+                table["rows_exact"] = t.rows_exact
 
             for c in t.columns():
                 cname = c.name
@@ -98,23 +113,22 @@ class MetadataLoader:
                     raise ValueError("Duplicate column name {0} in table {1}".format(cname, table_name))
                 table[cname] = {}
                 column = table[cname]
+                if hasattr(c, "bounded") and c.bounded == True:
+                    column["bounded"] = c.bounded
+                if hasattr(c, "card"):
+                    column["cardinality"] = c.card
+                if hasattr(c, "minval") and c.minval is not None:
+                    column["lower"] = c.minval
+                if hasattr(c, "maxval") and c.maxval is not None:
+                    column["upper"] = c.maxval
                 if c.is_key is not None and c.is_key == True:
-                    column["is_key"] = c.is_key
+                    column["private_id"] = c.is_key
                 if type(c) is String:
                     column["type"] = "string"
-                    column["cardinality"] = c.card
                 elif type(c) is Int:
                     column["type"] = "int"
-                    if hasattr(c, "minval") and c.minval is not None:
-                        column["min"] = c.minval
-                    if hasattr(c, "maxval") and c.maxval is not None:
-                        column["max"] = c.maxval
                 elif type(c) is Float:
                     column["type"] = "float"
-                    if hasattr(c, "minval") and c.minval is not None:
-                        column["min"] = c.minval
-                    if hasattr(c, "maxval") and c.maxval is not None:
-                        column["max"] = c.maxval
                 elif type(c) is Boolean:
                     column["type"] = "boolean"
                 elif type(c) is DateTime:

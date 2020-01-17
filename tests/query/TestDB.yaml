@@ -6,8 +6,8 @@ Devices:
         type: boolean
       Temperature:
         type: float
-        min: 25.0
-        max: 65.0
+        lower: 25.0
+        upper: 65.0
       Building:
         cardinality: 12
         type: string
@@ -16,15 +16,15 @@ Devices:
         type: string
       DeviceID:
         type: int
-        is_key: True
+        private_id: True
       Crashes:
         type: int
-        min: 0
-        max: 10
+        lower: 0
+        upper: 10
     Census:
       DeviceID:
         type: int
-        is_key: true
+        private_id: true
       OEM:
         type: string
         cardinality: 100
@@ -33,12 +33,12 @@ Devices:
         cardinality: 1000
       Disk:
         type: int
-        min: 100
-        max: 10000
+        lower: 100
+        upper: 10000
     Rollouts:
       DeviceID:
         type: int
-        is_key: true
+        private_id: true
       RolloutID:
         type: int
       StartTrial:
@@ -55,15 +55,15 @@ Devices:
 # All tables must have only one key, representing the ID for the
 #   individual (e.g. person, household, device) to be protected.
 
-# Numeric columns must have a min and max.
+# Numeric columns must have a lower and upper.
   ? ''
   : A:
       Crashes:
-        max: 10
-        min: 0
+        upper: 10
+        lower: 0
         type: int
       ID:
-        is_key: true
+        private_id: true
         type: int
       Refurbished:
         type: boolean
@@ -72,66 +72,66 @@ Devices:
       A:
         type: string
       Crashes:
-        max: 10
-        min: 0
+        upper: 10
+        lower: 0
         type: int
       ID:
-        is_key: true
+        private_id: true
         type: int
       Refurbished:
         type: boolean
       rows: 100300
     BAR:
       Crashes:
-        max: 10
-        min: 0
+        upper: 10
+        lower: 0
         type: int
       ID:
-        is_key: true
+        private_id: true
         type: int
       Refurbished:
         type: boolean
       rows: 100300
     BAZ:
       Crashes:
-        max: 10
-        min: 0
+        upper: 10
+        lower: 0
         type: int
       ID:
-        is_key: true
+        private_id: true
         type: int
       Refurbished:
         type: boolean
       rows: 100300
     FOO:
       Crashes:
-        max: 10
-        min: 0
+        upper: 10
+        lower: 0
         type: int
       ID:
-        is_key: true
+        private_id: true
         type: int
       Refurbished:
         type: boolean
       rows: 100300
     X:
       Crashes:
-        max: 10
-        min: 0
+        upper: 10
+        lower: 0
         type: int
       ID:
-        is_key: true
+        private_id: true
         type: int
       Refurbished:
         type: boolean
       rows: 100300
     XX:
       Crashes:
-        max: 10
-        min: 0
+        upper: 10
+        lower: 0
         type: int
       ID:
-        is_key: true
+        private_id: true
         type: int
       Refurbished:
         type: boolean

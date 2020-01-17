@@ -4,8 +4,8 @@ Database:
       rows: 3
       UserId:
         type: string
-        is_key: True
+        private_id: True
       Usage:
         type: int
-        min: 0
-        max: 10000
+        lower: 0
+        upper: 10000
