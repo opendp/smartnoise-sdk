@@ -5,6 +5,10 @@ Database:
       UserId:
         type: string
         is_key: True
+      Segment:
+        type: string
+      Role:
+        type: string
       Usage:
         type: int
         min: 0

@@ -7,6 +7,7 @@ import pandas as pd
 import mlflow
 import json
 import sys
+import os
 
 from burdock.query.sql.reader import CSVReader
 from burdock.query.sql.private.query import PrivateQuery
@@ -21,6 +22,8 @@ class Aggregation:
         self.t = t
         self.repeat_count = repeat_count
         self.mechanism = mechanism
+        self.file_dir = os.path.dirname(os.path.abspath(__file__))
+        self.csv_path = r'../service/datasets/evaluation'
 
     # Taking df as a parameter it shall be passed both d1 and d2 that differ by 1 record
     def exact_count(self, df, colname):
@@ -89,5 +92,26 @@ class Aggregation:
         for idx in range(self.repeat_count):
             srs = TypedRowset(srs_orig.rows(), types, sens)
             noisy_values.append(private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:][0][0])
-
         return np.array(noisy_values)
+        
+    # Run the query using the private reader and input query
+    # Get query response back
+    def run_agg_query_file(self, df, metadata, query, confidence, file_name = "d1"):
+        reader = CSVReader(metadata, df)
+        private_reader = PrivateQuery(reader, metadata, self.epsilon)
+        query_ast = private_reader.parse_query_string(query)
+        subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
+        srs = TypedRowset(srs_orig.rows(), types, sens)
+        headers = private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[0]
+
+        file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
+        f = open(file_path, "w")
+        f.write(','.join([str(n) for n in headers]) + "\n")
+
+        for idx in range(self.repeat_count):
+            srs = TypedRowset(srs_orig.rows(), types, sens)
+            res = private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:]
+            for row in res:
+                f.write(','.join([str(n) for n in row]) + "\n")
+        f.close()
+        return
