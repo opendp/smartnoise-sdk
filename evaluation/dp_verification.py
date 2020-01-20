@@ -294,23 +294,37 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, acc_res
 
-    # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
+    # Allows DP Predicate test on both singleton and GROUP BY queries
     def dp_groupby_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors(load_csv=True)
         d1_yaml = MetadataLoader(filename=d1_yaml_path).read_schema()
         d2_yaml = MetadataLoader(filename=d2_yaml_path).read_schema()
-        ag.run_agg_query_file(d1, d1_yaml, d1_query, confidence, file_name = "d1")
-        ag.run_agg_query_file(d2, d2_yaml, d2_query, confidence, file_name = "d2")
-        #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
-        dp_res, acc_res = None, None
-        # d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
-        # d1size, d2size = fD1.size, fD2.size
-        # dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-        # if(plot):
-        #     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
-        # return dp_res, acc_res
-        return dp_res, acc_res
+        
+        d1_res, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_yaml, d1_query, confidence, file_name = "d1")
+        d2_res, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_yaml, d2_query, confidence, file_name = "d2")
+        
+        res_list = []
+        for col in num_cols:
+            d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            # Full outer join
+            d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
+            n_cols = len(d1_d2.columns)
+            for index, row in d1_d2.iterrows():
+                print(d1_d2.iloc[index, :n_cols - 2])
+                print("Column: ", col)
+                fD1 = np.array(d1_d2.iloc[index, n_cols - 2])
+                fD2 = np.array(d1_d2.iloc[index, n_cols - 1])
+                d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
+                d1size, d2size = fD1.size, fD2.size
+                dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+                print("DP Predicate Test Result: ", dp_res)
+                res_list.append(dp_res)
+                if(plot):
+                    self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
+        
+        return np.all(np.array(dp_res))
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
@@ -347,31 +361,31 @@ class DPVerification:
         ag = agg.Aggregation(t=1, repeat_count=10000)
 
         # Sample DP Noise addtion mechanism for 4 SQL aggregations
-        # dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
-        # dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
-        # dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
-        # dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
-        # dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
-        # dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
+        dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
+        dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
+        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
+        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
         
         # COUNT Example
-        # d1_query = "SELECT SUM(Usage) AS UserCount FROM d1.d1"
-        # d2_query = "SELECT SUM(Usage) AS UserCount FROM d2.d2"
-        # dp_res, acc_res = dv.dp_query_test(ag.run_agg_query, d1_query, d2_query, plot=True, repeat_count=10000)
+        d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
+        d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=10000)
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
 
         # Mechanism calls with default Laplace
-        # dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
-        # dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
-        # dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mechanism_mean, 'Usage', binsize="auto", debug=False)
-        # dp_var, ks_var, ws_var = dv.aggtest(ag.dp_mechanism_var, 'Usage', binsize="auto", debug=False)
+        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
+        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
+        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mechanism_mean, 'Usage', binsize="auto", debug=False)
+        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_mechanism_var, 'Usage', binsize="auto", debug=False)
         
         # Powerset Test on SUM query
-        # query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        # dp_res = self.dp_powerset_test(query_str, plot=False)
+        query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
+        dp_res = self.dp_powerset_test(query_str, plot=False)
         return dp_res
 
 if __name__ == "__main__":
