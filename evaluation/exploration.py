@@ -15,11 +15,12 @@ class Exploration:
         self.numerical_col_name = "Usage"
         self.numerical_col_type = "int"
 
-        self.df, self.dataset_path, self.file_name = self.create_small_dataset()
+        self.df = self.create_small_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         
         self.N = len(self.df)
         self.visited = []
+        self.neighbor_pair = {}
         
         self.template_yaml_path = os.path.join(self.file_dir, self.csv_path , "template.yaml")
         with open(self.template_yaml_path, 'r') as metadata_file:
@@ -31,15 +32,11 @@ class Exploration:
         userids = ["A" + str(user) for user in userids]
         usage = [10**i for i in range(0, self.dataset_size*2, 2)]
         df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', self.numerical_col_name])
-        
-        # Storing the data as a CSV
-        file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
-        df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
-        return df, file_path, file_name
+        return df
 
     # Given a list of N records in a database, create a powerset of neighboring datasets by traversing the edges of database search graph
     # Perform DFS to traverse the database search graph
-    # Convention of CSV names = <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>.csv
+    # Convention of file names = <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>
     def generate_powerset(self, d1):
         if(len(d1) == 0):
             return
@@ -51,13 +48,6 @@ class Exploration:
                 filename = d1_idx_range + "_" + str(drop_idx)
                 if(filename not in self.visited):
                     d2 = d1.drop(drop_idx)
-                    d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1_" + filename + ".csv")
-                    d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2_" + filename + ".csv")
-                    d1_yaml_path = os.path.join(self.file_dir, self.csv_path , "d1_" + filename + ".yaml")
-                    d2_yaml_path = os.path.join(self.file_dir, self.csv_path , "d2_" + filename + ".yaml")
-                    d1.to_csv(d1_file_path, sep=',', encoding='utf-8', index=False)
-                    d2.to_csv(d2_file_path, sep=',', encoding='utf-8', index=False)
-
                     min_val = min(d1[self.numerical_col_name])
                     max_val = max(d1[self.numerical_col_name])
                     # Avoiding sensitivity to be 0
@@ -66,13 +56,8 @@ class Exploration:
 
                     d1_yaml = self.get_yaml("d1_" + filename, len(d1), self.numerical_col_type, min_val, max_val)
                     d2_yaml = self.get_yaml("d2_" + filename, len(d2), self.numerical_col_type, min_val, max_val)
-                    d1_yaml_file = open(d1_yaml_path, "w")
-                    d1_yaml_file.write(d1_yaml)
-                    d1_yaml_file.close()
-                    d2_yaml_file = open(d2_yaml_path, "w")
-                    d2_yaml_file.write(d2_yaml)
-                    d2_yaml_file.close()
-
+                    
+                    self.neighbor_pair[filename] = [d1, d2, d1_yaml, d2_yaml]
                     self.visited.append(filename)
                     self.generate_powerset(d2)
             return

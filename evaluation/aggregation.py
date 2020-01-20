@@ -9,7 +9,6 @@ import json
 import sys
 
 from burdock.query.sql.reader import CSVReader
-from burdock.query.sql import MetadataLoader
 from burdock.query.sql.private.query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
 from burdock.mechanisms.laplace import Laplace
@@ -80,8 +79,7 @@ class Aggregation:
 
     # Run the query using the private reader and input query
     # Get query response back
-    def run_agg_query(self, df, metadata_path, query, confidence):
-        metadata = MetadataLoader(metadata_path).read_schema()
+    def run_agg_query(self, df, metadata, query, confidence):
         reader = CSVReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)

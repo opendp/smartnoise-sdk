@@ -14,6 +14,7 @@ import math
 import matplotlib.pyplot as plt
 import evaluation.aggregation as agg
 import evaluation.exploration as exp
+from burdock.query.sql import MetadataLoader
 from scipy import stats
 
 class DPVerification:
@@ -276,8 +277,10 @@ class DPVerification:
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors(load_csv=True)
-        fD1 = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
-        fD2 = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
+        d1_yaml = MetadataLoader(filename=d1_yaml_path).read_schema()
+        d2_yaml = MetadataLoader(filename=d2_yaml_path).read_schema()
+        fD1 = ag.run_agg_query(d1, d1_yaml, d1_query, confidence)
+        fD2 = ag.run_agg_query(d2, d2_yaml, d2_query, confidence)
         #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
         acc_res = None
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
@@ -297,18 +300,18 @@ class DPVerification:
             print("Testing: ", filename)
             d1_query = query_str + "d1_" + filename + "." + "d1_" + filename
             d2_query = query_str + "d2_" + filename + "." + "d2_" + filename
-            d1 = pd.read_csv(os.path.join(ex.file_dir, ex.csv_path , "d1_" + filename + ".csv"))
-            d2 = pd.read_csv(os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".csv"))
-            d1_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d1_" + filename + ".yaml")
-            d2_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".yaml")
-            fD1 = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
-            fD2 = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
+            [d1, d2, d1_yaml_str, d2_yaml_str] = ex.neighbor_pair[filename]
+            d1_yaml = MetadataLoader(file=d1_yaml_str).read_schema()
+            d2_yaml = MetadataLoader(file=d2_yaml_str).read_schema()
+            fD1 = ag.run_agg_query(d1, d1_yaml, d1_query, confidence)
+            fD2 = ag.run_agg_query(d2, d2_yaml, d2_query, confidence)
             # Disabling the accuracy test 
             #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
             acc_res = None
             d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
             d1size, d2size = fD1.size, fD2.size
             dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+            print("DP Predicate Test Result: ", dp_res)
             if(plot):
                 self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
             res_list[filename] = [dp_res, acc_res]
