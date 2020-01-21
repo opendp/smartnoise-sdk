@@ -6,11 +6,11 @@ Database:
         type: int
         is_key: True
         min: 0
-        max: 5
+        max: 50
       b:
         type: int
         min: 0
-        max: 25
+        max: 20
       c:
         type: int
         min: 0
