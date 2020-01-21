@@ -7,6 +7,7 @@ c is 0 if a is low and is high, and is 1 otherwise
 
 list_a = [random.randint(0, 50) for i in range(1000)]
 list_b = [random.randint(0, 50) for i in range(1000)]
+
 with open("example.csv", "w", newline='') as f:
     f.write("a,b,c\n")
     for i in range(len(list_a)):
@@ -17,4 +18,3 @@ with open("example.csv", "w", newline='') as f:
         else:
             c = 1
         f.write(str(a)+","+str(b)+","+str(c)+"\n")
-
