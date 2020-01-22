@@ -5,6 +5,8 @@
 import numpy as np
 import pandas as pd
 import os
+import copy
+from burdock.query.sql.metadata.metadata import *
 
 class Exploration:
     def __init__(self, dataset_size = 3):
@@ -15,16 +17,12 @@ class Exploration:
         self.numerical_col_name = "Usage"
         self.numerical_col_type = "int"
 
-        self.df = self.create_small_dataset()
+        self.df, self.metadata = self.create_small_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         
         self.N = len(self.df)
         self.visited = []
         self.neighbor_pair = {}
-        
-        self.template_yaml_path = os.path.join(self.file_dir, self.csv_path , "template.yaml")
-        with open(self.template_yaml_path, 'r') as metadata_file:
-            self.template_yaml = metadata_file.read()
     
     # Create a dataset with one numerical column on which we shall evaluate DP queries
     def create_small_dataset(self, file_name = "small"):
@@ -32,7 +30,12 @@ class Exploration:
         userids = ["A" + str(user) for user in userids]
         usage = [10**i for i in range(0, self.dataset_size*2, 2)]
         df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', self.numerical_col_name])
-        return df
+        metadata = Table(file_name, file_name, self.dataset_size, \
+        [\
+            String("UserId", 0, True),\
+            Int(self.numerical_col_name, min(usage), max(usage))
+        ])
+        return df, metadata
 
     # Given a list of N records in a database, create a powerset of neighboring datasets by traversing the edges of database search graph
     # Perform DFS to traverse the database search graph
@@ -54,17 +57,19 @@ class Exploration:
                     min_val = min_val if max_val > min_val else 0
                     max_val = max_val if max_val > min_val else abs(max_val)
 
-                    d1_yaml = self.get_yaml("d1_" + filename, len(d1), self.numerical_col_type, min_val, max_val)
-                    d2_yaml = self.get_yaml("d2_" + filename, len(d2), self.numerical_col_type, min_val, max_val)
-                    
-                    self.neighbor_pair[filename] = [d1, d2, d1_yaml, d2_yaml]
+                    d1_table = Table("d1_" + filename, "d1_" + filename, len(d1), \
+                    [\
+                        String("UserId", 0, True),\
+                        Int(self.numerical_col_name, min_val, max_val)
+                    ])
+                    d2_table = copy.copy(d1_table)
+                    d2_table.schema, d2_table.name = "d2_" + filename, "d2_" + filename
+                    d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
+
+                    self.neighbor_pair[filename] = [d1, d2, d1_metadata, d2_metadata]
                     self.visited.append(filename)
                     self.generate_powerset(d2)
             return
-
-    # Generate YAML string for the D1 / D2 neighboring dataset
-    def get_yaml(self, db_name, nrow = 3, numerical_col_type = "int", min_val = 0, max_val = 10000):
-        return self.template_yaml.format(db_name, nrow, numerical_col_type, min_val, max_val)
 
     def main(self):
         self.generate_powerset(self.df)
