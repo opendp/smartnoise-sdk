@@ -277,7 +277,7 @@ def check_global_epsilon(eps):
 def covariance_sensitivity(n, rng, intercept):
     diffs = []
     for i in range(rng.shape[1]):
-        diffs.append(rng[i][0] - rng[i][1])
+        diffs.append(rng[i][1] - rng[i][0])
     if intercept:
         diffs = [0] + diffs
     const = 2 / n
@@ -290,9 +290,9 @@ def covariance_sensitivity(n, rng, intercept):
 
 
 def check_range(rng):
+    rng.columns = list(range(rng.shape[1]))
     for col in range(rng.shape[1]):
         rng[col] = rng[col].sort_values()
-    rng.columns = list(range(rng.shape[1]))
     return rng
 
 
