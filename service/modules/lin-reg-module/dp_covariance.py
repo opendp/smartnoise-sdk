@@ -2,14 +2,23 @@ import pandas as pd
 import numpy as np
 import math
 
+
 class DPcovariance():
 
-    # TODO: check out https://github.com/privacytoolsproject/PSI-Library/blob/2b71facd614845e548be9459ca94bc979eed0d4f/R/statistic-covariance.R#L101
-    #   & add properties & etc
+    # Implementation is based off of https://github.com/privacytoolsproject/PSI-Library
 
-    def __init__(self, n, cols, rng, intercept=False, epsilon=None, globalEps=None, epsilonDist= None,
-                 accuracy=None, accuracyVals=None, imputeRng=None,
-                 alpha=0.05):
+    def __init__(self, n, cols, rng, globalEps, epsilonDist=None, alpha=0.05):
+
+        # TODO finish adding functionality for intercept
+        intercept = False
+
+        # The following variables are for different ways of setting up the epsilon value for DP covariance calculation
+        # There is infrastructure for them, but we're currently choosing not to expose them.
+        epsilon = None
+        accuracy = None
+        imputeRng = None
+        accuracyVals = None
+
         self.num_rows = n
         self.columns = cols
 
@@ -25,11 +34,12 @@ class DPcovariance():
             self.imputeRng = imputeRng
 
         if self.intercept:
-            self.columns = ['intercept']+self.columns
+            self.columns = ['intercept'] + self.columns
         else:
             self.columns = self.columns
 
-        output_length = np.triu_indices(len(self.columns))
+        s = len(self.columns)
+        output_length = (np.zeros((s, s))[np.tril_indices(s)]).size
         # Distribute epsilon across all covariances that will be calculated
         if epsilon is not None:
             self.epsilon = check_epsilon(epsilon, expected_length=output_length)
@@ -37,13 +47,13 @@ class DPcovariance():
         # Option 2: Enter global epsilon value and vector of percentages specifying how to split global
         # epsilon between covariance calculations.
         elif globalEps is not None and epsilonDist is not None:
-            self.globalEps = check_epsilon(globalEps)
+            self.globalEps = check_global_epsilon(globalEps)
             self.epsilonDist = check_epsilon_dist(epsilonDist, output_length)
             self.epsilon = distribute_epsilon(self.globalEps, epsilonDist=epsilonDist)
             self.accuracyVals = laplace_get_accuracy(self.sens, self.epsilon, self.alpha)
         # Option 3: Only enter global epsilon, and have it be split evenly between covariance calculations.
         elif globalEps is not None:
-            self.globalEps = check_epsilon(globalEps)
+            self.globalEps = check_global_epsilon(globalEps)
             self.epsilon = distribute_epsilon(self.globalEps, nCalcs=output_length)
             self.accuracyVals = laplace_get_accuracy(self.sens, self.epsilon, self.alpha)
         # Option 4: Enter an accuracy value instead of an epsilon, and calculate individual epsilons with this accuracy.
@@ -63,16 +73,17 @@ class DPcovariance():
 
         Args:
             covar (???): differentially privately release of elements in lower triangle of covariance matrix
-            columns (list): a list of columns (x & y) to be included in the output
         Returns:
-            A symmetric differentially private covariance matrix (Dataframe)
+            A symmetric differentially private covariance matrix (numpy array)
         """
         n = len(self.columns)
         indices = np.triu_indices(n)
         m = np.zeros((n, n))
-        for i in range(indices):
-            m[indices[i]] = covar[i]
-        return np.tril(m) + np.triu(m.T, 1)
+        m[indices] = covar
+        m = m.T
+        m = np.tril(m) + np.triu(m.T, 1)
+        df = pd.DataFrame(m, columns=self.columns, index=self.columns)
+        return df
 
     def release(self, data):
         new_data = censor_data(data[self.columns], self.rng)
@@ -83,24 +94,27 @@ class DPcovariance():
             if intercept:
                 pass  # TODO: Find python equivalent for the following R code: `x < - cbind(1, x)`
             covariance = np.cov(x)
-            return list(covariance[np.triu_indices(covariance.shape[0])])
+            return list(covariance[np.tril_indices(covariance.shape[0])])
 
-        def q_lap(p, mu=0, b=1):
-            if p < 0.5:
-                return mu + b * np.log(2*p)
+        def q_lap_iter(p, mu=0, b=1):
+            for i in range(len(p)):
+                p[i] = q_lap(p[i], mu, b[i])
+            return p
+
+        def q_lap(elem, mu=0, b=1):
+            if elem < 0.5:
+                return mu + b * np.log(2 * elem)
             else:
-                return mu - b * np.log(2 - 2*p)
+                return mu - b * np.log(2 - 2 * elem)
 
         def dp_noise(n, noise_scale):
             u = np.random.uniform(size=n)
-            return q_lap(u, b=noise_scale)
+            return q_lap_iter(u, b=noise_scale)
 
-        def sum_lists(first, second):
-            return [x + y for x, y in zip(first, second)]
-
-        true_val = covar(data)
+        true_val = covar(data.values.T, self.intercept)
         scale = self.sens / self.epsilon
-        return sum_lists(true_val + dp_noise(n=len(true_val), noise_scale=scale))
+        val = np.array(true_val) + dp_noise(n=len(true_val), noise_scale=scale)
+        return list(val)
 
     # TODO: this implementation only works for one dependent variable right now
     def get_linear_regression(self, data, x_names, y_name, intercept=False):
@@ -162,7 +176,7 @@ def cov_method_lin_reg(release, num_rows, x_names, y_name, intercept=False):
         raise ValueError("Matrix is not positive definite")
     else:
         # Find locations corresponding to the given x & y names
-        loc_vec = [False]*release.shape[0]
+        loc_vec = [False] * release.shape[0]
         row_labels = release.index.values
         x_loc = []
         y_loc = None
@@ -177,7 +191,7 @@ def cov_method_lin_reg(release, num_rows, x_names, y_name, intercept=False):
 
         # Use a sweep to find the coefficient of the independent variable in
         # the linear regression corresponding to the covariance matrix
-        sweep = amsweep(release.values, num_rows, loc_vec) # TODO implement amsweep
+        sweep = amsweep(release.values / num_rows, np.array(loc_vec))
         coef = sweep[y_loc, x_loc]
 
         # Calculate the standard error
@@ -207,7 +221,7 @@ def check_accuracy_vals(accuracyVals, expected_length):
 
 
 def laplace_get_epsilon(sens, accuracy, alpha=.05):
-    return np.log(1/alpha) * (sens / accuracy)
+    return np.log(1 / alpha) * (sens / accuracy)
 
 
 def check_accuracy(accuracy):
@@ -217,14 +231,14 @@ def check_accuracy(accuracy):
 
 
 def laplace_get_accuracy(sens, epsilon, alpha=.05):
-    return np.log(1/alpha) * (sens / epsilon)
+    return np.log(1 / alpha) * (sens / epsilon)
 
 
 def distribute_epsilon(globalEps, nCalcs=None, epsilonDist=None):
     if epsilonDist is None:
-        eps = [globalEps/nCalcs for i in range(nCalcs)]
+        eps = [globalEps / nCalcs for i in range(nCalcs)]
     else:
-        eps = [eps*globalEps for eps in epsilonDist]
+        eps = [eps * globalEps for eps in epsilonDist]
     return eps
 
 
@@ -246,22 +260,30 @@ def check_epsilon(epsilon, expected_length):
     else:
         for eps in epsilon:
             if eps <= 0:
-                raise ValueError("(Privacy parameter epsilon must be a value greater than zero")"
+                raise ValueError("(Privacy parameter epsilon must be a value greater than zero")
             elif eps >= 3:
-                raise ValueError("This is a higher global value than recommended for most cases")"
+                raise ValueError("This is a higher global value than recommended for most cases")
     return epsilon
+
+
+def check_global_epsilon(eps):
+    if eps <= 0:
+        raise ValueError("(Privacy parameter epsilon must be a value greater than zero")
+    elif eps >= 3:
+        raise ValueError("This is a higher global value than recommended for most cases")
+    return eps
 
 
 def covariance_sensitivity(n, rng, intercept):
     diffs = []
     for i in range(rng.shape[1]):
-        diffs.append(rng[i][0]-rng[i][1])
+        diffs.append(rng[i][0] - rng[i][1])
     if intercept:
         diffs = [0] + diffs
-    const = 2/n
+    const = 2 / n
     sensitivity = []
     for i in range(len(diffs)):
-        for j in range(len(diffs)):
+        for j in range(i, len(diffs)):
             s = const * diffs[i] * diffs[j]
             sensitivity.append(s)
     return np.array(sensitivity)
@@ -270,6 +292,7 @@ def covariance_sensitivity(n, rng, intercept):
 def check_range(rng):
     for col in range(rng.shape[1]):
         rng[col] = rng[col].sort_values()
+    rng.columns = list(range(rng.shape[1]))
     return rng
 
 
@@ -313,26 +336,72 @@ def censor_data_1D(x, l, h):
 
 
 def censor_data(data, rng):
-    check_range(rng)
+    new_data = data
+
+    new_data.columns = list(range(data.shape[1]))
+    rng = check_range(rng)
+
     for i in range(data.shape[1]):
         data[i] = censor_data_1D(data[i], rng[i][0], rng[i][1])
     return data
 
 
-def amsweep(release, num_rows, loc_vec):
-    # TODO: impement sweep
-    return None
+def amsweep(g, m):
+    """
+    Sweeps a covariance matrix to extract regression coefficients.
 
+    Args:
+        g (Numpy array): a numeric, symmetric covariance matrix divided by the number of observations in the data
+        m (Numpy array): a logical vector of length equal to the number of rows in g
+        in which the True values correspond to the x values in the matrix
+        and the False values correspond to the y values in the matrix
 
-# if __name__ == "__main__":
-#     df = pd.DataFrame([[1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [7, 8, 9, 10]])
-#     df.iloc[1, 1] = math.nan
-#     df.iloc[0, 2] = math.nan
-#     df.iloc[2, 3] = math.nan
-#     data = df[[0,1,2,3]]
-#     print("data:\n", data)
-#     rng = pd.DataFrame([[1, 5], [2, 6], [3, 7], [4, 8]]).transpose()
-#     print("rng:\n", rng)
-#     new_data = censor_data(data, rng)
-#     new_data = fill_missing(new_data, imputeRng=rng)
-#     print(new_data)
+    Return:
+        a matrix with the coefficients from g
+    """
+    # if m is a vector of all falses, then return g
+    if np.array_equal(m, np.full(np.shape(m), False, dtype=bool)):
+        return g
+    else:
+        p = np.shape(g)[0]  # number of rows of g (np.shape gives a tuple as (rows, cols), so we index [0])
+        rowsm = sum(m)  # sum of logical vector "m" (m must be a (n,) shape np array)
+
+        # if all values of m are True (thus making the sum equal to the length),
+        # we take the inverse and then negate all the values
+        if p == rowsm:
+            h = np.linalg.inv(g)  # inverse of g
+            h = np.negative(h)  # negate the sign of all elements
+        else:
+            k = np.where(m == True)[0]  # indices where m is True
+            kcompl = np.where(m == False)[0]  # indices where m is False
+
+            # separate the elements of g
+            # make the type np.matrix so that dimensions are preserved correctly
+            g11 = np.matrix(g[k, k])
+            g12 = np.matrix(g[k, kcompl])
+            g21 = np.transpose(g12)
+            g22 = np.matrix(g[kcompl, kcompl])
+
+            # use a try-except to get the inverse of g11
+            try:
+                h11a = np.linalg.inv(g11)  # try to get the regular inverse
+            except:  # should have LinAlgError (not defined error)
+                h11a = np.linalg.pinv(g11)
+            h11 = np.negative(h11a)
+
+            # matrix multiplication to get sections of h
+            h12 = np.matmul(h11a, g12)
+            h21 = np.transpose(h12)
+            h22 = g22 - np.matmul(np.matmul(g21, h11a), g12)
+
+            # combine sections of h
+            hwo = np.concatenate((np.concatenate((h11, h12), axis=1), np.concatenate((h21, h22), axis=1)), axis=0)
+            hwo = np.asarray(hwo)  # convert back to array (from matrix) to avoid weird indexing behavior
+            xordering = np.concatenate((k, kcompl), axis=0)  # concatenate k and kcompl
+            h = np.zeros((p, p))  # make a pxp array of zeros
+
+            for i in range(p):  # traverse each element as defined by xordering
+                for j in range(p):
+                    h[xordering[i]][xordering[j]] = hwo[i][j]  # and replace it with the normal i, j element from hwo
+
+        return h
