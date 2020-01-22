@@ -46,9 +46,9 @@ class DPVerification:
         df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
         metadata = Table(file_name, file_name, self.dataset_size, \
             [\
-                String("UserId", 0, True), \
-                String("Segment", 1, False), \
-                String("Role", 1, False), \
+                String("UserId", self.dataset_size, True), \
+                String("Segment", 3, False), \
+                String("Role", 2, False), \
                 Int("Usage", 0, 25)
             ])
 
@@ -80,6 +80,7 @@ class DPVerification:
         d2_table = copy.copy(d1_table)
         d1_table.schema, d2_table.schema = "d1", "d2"
         d1_table.name, d2_table.name = "d1", "d2"
+        d2_table.rowcount = d1_table.rowcount - 1
         d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
 
         return d1, d2, d1_metadata, d2_metadata
