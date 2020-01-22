@@ -44,7 +44,7 @@ if __name__ == "__main__":
         y_range = pd.Series(data=y_range_dict)
 
         data_range = pd.DataFrame([[schema[table_name][col].minval, schema[table_name][col].maxval] for col in
-                                   x_features+y_targets], columns=x_features+y_targets).transpose()
+                                   (x_features+y_targets)], index=(x_features+y_targets)).transpose()
 
         model = DPLinearRegression().fit(X, y, data_range, budget)
 
