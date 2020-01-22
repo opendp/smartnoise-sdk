@@ -10,10 +10,7 @@ import pandas as pd
 from burdock.client import get_dataset_client
 from burdock.data.adapters import load_metadata, load_dataset
 
-from diffprivlib.mechanisms import Vector
-from diffprivlib.utils import PrivacyLeakWarning, DiffprivlibCompatibilityWarning, warn_unused_args
-from diffprivlib.tools.utils import mean
-from diffprivlib.models import LinearRegression
+from dp_lin_reg import DPLinearRegression
 
 if __name__ == "__main__":
     dataset_name = sys.argv[1]
@@ -22,7 +19,7 @@ if __name__ == "__main__":
     x_features = json.loads(sys.argv[3])
     y_targets = json.loads(sys.argv[4])
 
-    with mlflow.start_run(run_name="diffpriv_linreg"):
+    with mlflow.start_run(run_name="diffpriv_covariance_linreg"):
         # Log mlflow attributes for mlflow UI
         mlflow.log_param("dataset_name", dataset_name)
         mlflow.log_param("budget", budget)
@@ -46,15 +43,10 @@ if __name__ == "__main__":
         x_range = pd.Series(data=x_range_dict)
         y_range = pd.Series(data=y_range_dict)
 
-        # TODO:
-        #  Currently calculating the data norm instead of using schema-specified
-        #  Eventually, this will need to be changed, as it is bad practice
-        norms = np.linalg.norm(dataset, axis=1)
-        max_norm = np.amax(norms)
-        logging.warning('Currently calculating the data norm instead of using schema-specified value. \
-                        This is bad practice, and will eventually be changed')
+        data_range = pd.DataFrame([[schema[table_name][col].minval, schema[table_name][col].maxval] for col in
+                                   x_features+y_targets], columns=x_features+y_targets).transpose()
 
-        model = LinearRegression(data_norm=max_norm, epsilon=budget, range_X=x_range, range_y=y_range).fit(X, y)
+        model = DPLinearRegression().fit(X, y, data_range, budget)
 
         # Save model for access through mlflow ui
         mlflow.sklearn.log_model(model, "model")

@@ -1,8 +1,9 @@
 import pandas as pd
-from sklearn.base import (BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin,
-                          LinearModel)
+from sklearn.base import (BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin)
+from sklearn.linear_model.base import LinearModel
 from sklearn.utils import check_array, check_X_y
 from dp_covariance import DPcovariance
+
 
 class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
@@ -51,7 +52,7 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     array([16.])
     """
 
-    def __init__(self, fit_intercept=True):
+    def __init__(self, fit_intercept=False):
         self.fit_intercept = fit_intercept
 
     def _set_coef_and_intercept(self, df):
@@ -61,7 +62,7 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             df_copy = df_copy.drop(['intercept'])
         self.coef_ = df_copy['Estimate'].values
 
-    def fit(self, X, y, rng):
+    def fit(self, X, y, rng, budget):
         """
         Fit linear model.
 
@@ -78,12 +79,13 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
-        data = pd.concat(X, y, axis=1)
+        data = pd.concat((X, y), axis=1)
         n = data.shape[0]
         m = data.shape[1]
-        rng = []
 
-        results = DPcovariance(n, m, rng).get_linear_regression(data, X.columns.values, y.columns.value,
-                                                                self.fit_intercept)
+        cols = list(X.columns.values) + list(y.columns.values)
+
+        results = DPcovariance(n, cols, rng, budget).get_linear_regression(
+            data, X.columns.values, y.columns.values, self.fit_intercept)
         self._set_coef_and_intercept(results)
         return self
