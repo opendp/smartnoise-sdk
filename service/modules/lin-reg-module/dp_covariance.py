@@ -7,7 +7,7 @@ class DPcovariance():
 
     # Implementation is based off of https://github.com/privacytoolsproject/PSI-Library
 
-    def __init__(self, n, cols, rng, globalEps, epsilonDist=None, alpha=0.05):
+    def __init__(self, n, cols, rng, global_eps, epsilon_dist=None, alpha=0.05):
 
         # TODO finish adding functionality for intercept
         intercept = False
@@ -16,8 +16,8 @@ class DPcovariance():
         # There is infrastructure for them, but we're currently choosing not to expose them.
         epsilon = None
         accuracy = None
-        imputeRng = None
-        accuracyVals = None
+        impute_rng = None
+        accuracy_vals = None
 
         self.num_rows = n
         self.columns = cols
@@ -28,10 +28,10 @@ class DPcovariance():
         self.rng = check_range(rng)
         self.sens = covariance_sensitivity(n, rng, intercept)
 
-        if imputeRng is None:
+        if impute_rng is None:
             self.imputeRng = rng
         else:
-            self.imputeRng = imputeRng
+            self.imputeRng = impute_rng
 
         if self.intercept:
             self.columns = ['intercept'] + self.columns
@@ -46,15 +46,15 @@ class DPcovariance():
             self.globalEps = sum(self.epsilon)
         # Option 2: Enter global epsilon value and vector of percentages specifying how to split global
         # epsilon between covariance calculations.
-        elif globalEps is not None and epsilonDist is not None:
-            self.globalEps = check_global_epsilon(globalEps)
-            self.epsilonDist = check_epsilon_dist(epsilonDist, output_length)
-            self.epsilon = distribute_epsilon(self.globalEps, epsilonDist=epsilonDist)
+        elif global_eps is not None and epsilon_dist is not None:
+            self.globalEps = check_global_epsilon(global_eps)
+            self.epsilonDist = check_epsilon_dist(epsilon_dist, output_length)
+            self.epsilon = distribute_epsilon(self.globalEps, epsilon_dist=epsilon_dist)
             self.accuracyVals = laplace_get_accuracy(self.sens, self.epsilon, self.alpha)
         # Option 3: Only enter global epsilon, and have it be split evenly between covariance calculations.
-        elif globalEps is not None:
-            self.globalEps = check_global_epsilon(globalEps)
-            self.epsilon = distribute_epsilon(self.globalEps, nCalcs=output_length)
+        elif global_eps is not None:
+            self.globalEps = check_global_epsilon(global_eps)
+            self.epsilon = distribute_epsilon(self.globalEps, n_calcs=output_length)
             self.accuracyVals = laplace_get_accuracy(self.sens, self.epsilon, self.alpha)
         # Option 4: Enter an accuracy value instead of an epsilon, and calculate individual epsilons with this accuracy.
         elif accuracy is not None:
@@ -62,8 +62,8 @@ class DPcovariance():
             self.epsilon = laplace_get_epsilon(self.sens, self.accuracy, self.alpha)
             self.globalEps = sum(self.epsilon)
         # Option 5: Enter vector of accuracy values, and calculate ith epsilon value from ith accuracy value
-        elif accuracyVals is not None:
-            self.accuracyVals = check_accuracy_vals(accuracyVals, output_length)
+        elif accuracy_vals is not None:
+            self.accuracyVals = check_accuracy_vals(accuracy_vals, output_length)
             self.epsilon = laplace_get_epsilon(self.sens, self.accuracyVals, self.alpha)
             self.globalEps = sum(self.epsilon)
 
@@ -87,7 +87,7 @@ class DPcovariance():
 
     def release(self, data):
         new_data = censor_data(data[self.columns], self.rng)
-        new_data = fill_missing(new_data, imputeRng=self.imputeRng)
+        new_data = fill_missing(new_data, impute_rng=self.imputeRng)
 
         # TODO: add intercept functionality
         def covar(x, intercept=False):
@@ -210,14 +210,14 @@ def cov_method_lin_reg(release, num_rows, x_names, y_name, intercept=False):
         return pd.DataFrame([estimates, std_error]).transpose()
 
 
-def check_accuracy_vals(accuracyVals, expected_length):
-    if len(accuracyVals) != expected_length:
+def check_accuracy_vals(accuracy_vals, expected_length):
+    if len(accuracy_vals) != expected_length:
         raise ValueError("Epsilon parameter has improper length")
     else:
-        for eps in accuracyVals:
+        for eps in accuracy_vals:
             if eps <= 0:
                 raise ValueError("Privacy parameter epsilon must be a value greater than zero")
-    return accuracyVals
+    return accuracy_vals
 
 
 def laplace_get_epsilon(sens, accuracy, alpha=.05):
@@ -234,24 +234,24 @@ def laplace_get_accuracy(sens, epsilon, alpha=.05):
     return np.log(1 / alpha) * (sens / epsilon)
 
 
-def distribute_epsilon(globalEps, nCalcs=None, epsilonDist=None):
-    if epsilonDist is None:
-        eps = [globalEps / nCalcs for i in range(nCalcs)]
+def distribute_epsilon(global_eps, n_calcs=None, epsilon_dist=None):
+    if epsilon_dist is None:
+        eps = [global_eps / n_calcs for i in range(n_calcs)]
     else:
-        eps = [eps * globalEps for eps in epsilonDist]
+        eps = [eps * global_eps for eps in epsilon_dist]
     return eps
 
 
-def check_epsilon_dist(epsilonDist, expected_length):
-    if len(epsilonDist) != expected_length:
+def check_epsilon_dist(epsilon_dist, expected_length):
+    if len(epsilon_dist) != expected_length:
         raise ValueError("Epsilon parameter has improper length")
     else:
-        for eps in epsilonDist:
+        for eps in epsilon_dist:
             if eps <= 0:
                 raise ValueError("All values in epsilonDist must be a value greater than zero")
-        if sum(epsilonDist) != 1.0:
+        if sum(epsilon_dist) != 1.0:
             raise ValueError("All values in epsilonDist must sum to 1")
-    return epsilonDist
+    return epsilon_dist
 
 
 def check_epsilon(epsilon, expected_length):
@@ -296,12 +296,12 @@ def check_range(rng):
     return rng
 
 
-def fill_missing_1D(x, l, h):
+def fill_missing_1D(x, low, high):
     n_missing = x.isnull().sum()
     u = np.random.uniform(size=n_missing)
 
     def scale(v):
-        return v * (h - l) + l
+        return v * (high - low) + low
 
     u = list(map(scale, u))
 
@@ -313,9 +313,9 @@ def fill_missing_1D(x, l, h):
     return x.apply(replace_nan)
 
 
-def fill_missing(data, imputeRng):
+def fill_missing(data, impute_rng):
     for i in range(data.shape[1]):
-        data[i] = fill_missing_1D(data[i], imputeRng[i][0], imputeRng[i][1])
+        data[i] = fill_missing_1D(data[i], impute_rng[i][0], impute_rng[i][1])
     return data
 
 
