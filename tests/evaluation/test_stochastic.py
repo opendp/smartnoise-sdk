@@ -69,3 +69,9 @@ class TestStochastic:
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
         dp_res = dv.dp_powerset_test(query_str, repeat_count=500, plot=False)
         assert(dp_res == True)
+
+    def test_groupby(self):
+        d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
+        d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=100)
+        assert(dp_res == True)
