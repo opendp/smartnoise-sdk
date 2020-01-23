@@ -62,7 +62,7 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             df_copy = df_copy.drop(['intercept'])
         self.coef_ = df_copy['Estimate'].values
 
-    def fit(self, X, y, rng, budget):
+    def fit(self, X, y, bounds, budget):
         """
         Fit linear model.
 
@@ -85,7 +85,7 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         cols = list(X.columns.values) + list(y.columns.values)
 
-        results = DPcovariance(n, cols, rng, budget).get_linear_regression(
+        results = DPcovariance(n, cols, bounds, budget).get_linear_regression(
             data, X.columns.values, y.columns.values, self.fit_intercept)
         self._set_coef_and_intercept(results)
         return self
