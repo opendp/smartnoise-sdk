@@ -2,16 +2,16 @@ Database:
   example:
     example:
       rows: 1
-      A:
+      a:
         type: int
         is_key: True
         min: 0
         max: 5
-      B:
+      b:
         type: int
         min: 0
         max: 25
-      C:
+      c:
         type: int
         min: 0
         max: 125
