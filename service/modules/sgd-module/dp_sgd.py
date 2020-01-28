@@ -16,7 +16,6 @@ from sklearn.utils.validation import check_is_fitted, _check_sample_weight
 from sklearn.linear_model._stochastic_gradient import BaseSGDClassifier, BaseSGDRegressor, _prepare_fit_binary
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 
-# TODO create sgd_fast.py and put translated cython in there
 from _sgd_dp_fast import plain_sgd, average_sgd
 from sklearn.utils import compute_class_weight
 from sklearn.linear_model._sgd_fast import Hinge
