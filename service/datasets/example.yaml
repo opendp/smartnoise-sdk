@@ -2,7 +2,7 @@ Database:
   example:
     example:
       rows: 1
-      A:
+      a:
         type: int
         private_id: True
         lower: 0

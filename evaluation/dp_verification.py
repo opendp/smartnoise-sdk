@@ -14,6 +14,8 @@ import math
 import matplotlib.pyplot as plt
 import evaluation.aggregation as agg
 import evaluation.exploration as exp
+import copy
+from burdock.query.sql.metadata.metadata import *
 from scipy import stats
 
 class DPVerification:
@@ -23,7 +25,7 @@ class DPVerification:
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
         self.csv_path = r'../service/datasets'
-        self.df, self.dataset_path, self.file_name = self.create_simulated_dataset()
+        self.df, self.dataset_path, self.file_name, self.metadata = self.create_simulated_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
         self.delta = 1/(self.N * math.sqrt(self.N))
@@ -32,13 +34,25 @@ class DPVerification:
         np.random.seed(1)
         userids = list(range(1, self.dataset_size+1))
         userids = ["A" + str(user) for user in userids]
+        segment = ['A', 'B', 'C']
+        role = ['R1', 'R2']
+        roles = np.random.choice(role, size=self.dataset_size, p=[0.7, 0.3]).tolist()
+        segments = np.random.choice(segment, size=self.dataset_size, p=[0.5, 0.3, 0.2]).tolist()
         usage = np.random.geometric(p=0.5, size=self.dataset_size).tolist()
-        df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', 'Usage'])
+        df = pd.DataFrame(list(zip(userids, segments, roles, usage)), columns=['UserId', 'Segment', 'Role', 'Usage'])
         
         # Storing the data as a CSV
         file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
         df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
-        return df, file_path, file_name
+        metadata = Table(file_name, file_name, self.dataset_size, \
+            [\
+                String("UserId", self.dataset_size, True), \
+                String("Segment", 3, False), \
+                String("Role", 2, False), \
+                Int("Usage", 0, 25)
+            ])
+
+        return df, file_path, file_name, metadata
 
     # Generate dataframes that differ by a single record that is randomly chosen
     def generate_neighbors(self, load_csv = False):
@@ -54,18 +68,23 @@ class DPVerification:
         d2 = self.df.drop(drop_idx)
         print("Length of D1: ", len(d1), " Length of D2: ", len(d2))
 
-        d1_yaml_path, d2_yaml_path = "", ""
         if(load_csv):
             # Storing the data as a CSV for applying queries via Burdock querying system
             d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
             d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
-            d1_yaml_path = os.path.join(self.file_dir, self.csv_path , "d1.yaml")
-            d2_yaml_path = os.path.join(self.file_dir, self.csv_path , "d2.yaml")
+
             d1.to_csv(d1_file_path, sep=',', encoding='utf-8', index=False)
             d2.to_csv(d2_file_path, sep=',', encoding='utf-8', index=False)
+        
+        d1_table = self.metadata
+        d2_table = copy.copy(d1_table)
+        d1_table.schema, d2_table.schema = "d1", "d2"
+        d1_table.name, d2_table.name = "d1", "d2"
+        d2_table.rowcount = d1_table.rowcount - 1
+        d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
 
-        return d1, d2, d1_yaml_path, d2_yaml_path
-    
+        return d1, d2, d1_metadata, d2_metadata
+
     # If there is an aggregation function that we need to test, we need to apply it on neighboring datasets
     # This function applies the aggregation repeatedly to log results in two vectors that are then used for generating histogram
     # The histogram is then passed through the DP test
@@ -224,7 +243,7 @@ class DPVerification:
 
     # Verification of SQL aggregation mechanisms
     def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
-        d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors()
+        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors()
         
         fD1, fD2 = self.apply_aggregation_neighbors(f, (d1, colname), (d2, colname))
         d1size, d2size = fD1.size, fD2.size
@@ -275,9 +294,10 @@ class DPVerification:
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
-        d1, d2, d1_yaml_path, d2_yaml_path = self.generate_neighbors(load_csv=True)
-        fD1 = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
-        fD2 = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
+        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
+        
+        fD1 = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
+        fD2 = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
         #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
         acc_res = None
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
@@ -286,6 +306,36 @@ class DPVerification:
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, acc_res
+
+    # Allows DP Predicate test on both singleton and GROUP BY queries
+    def dp_groupby_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
+        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
+        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
+
+        d1_res, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
+        d2_res, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
+        
+        res_list = []
+        for col in num_cols:
+            d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            # Full outer join
+            d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
+            n_cols = len(d1_d2.columns)
+            for index, row in d1_d2.iterrows():
+                print(d1_d2.iloc[index, :n_cols - 2])
+                print("Column: ", col)
+                fD1 = np.array(d1_d2.iloc[index, n_cols - 2])
+                fD2 = np.array(d1_d2.iloc[index, n_cols - 1])
+                d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
+                d1size, d2size = fD1.size, fD2.size
+                dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+                print("DP Predicate Test Result: ", dp_res)
+                res_list.append(dp_res)
+                if(plot):
+                    self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
+        
+        return np.all(np.array(dp_res))
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
@@ -297,18 +347,16 @@ class DPVerification:
             print("Testing: ", filename)
             d1_query = query_str + "d1_" + filename + "." + "d1_" + filename
             d2_query = query_str + "d2_" + filename + "." + "d2_" + filename
-            d1 = pd.read_csv(os.path.join(ex.file_dir, ex.csv_path , "d1_" + filename + ".csv"))
-            d2 = pd.read_csv(os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".csv"))
-            d1_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d1_" + filename + ".yaml")
-            d2_yaml_path = os.path.join(ex.file_dir, ex.csv_path , "d2_" + filename + ".yaml")
-            fD1 = ag.run_agg_query(d1, d1_yaml_path, d1_query, confidence)
-            fD2 = ag.run_agg_query(d2, d2_yaml_path, d2_query, confidence)
+            [d1, d2, d1_metadata, d2_metadata] = ex.neighbor_pair[filename]
+            fD1 = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
+            fD2 = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
             # Disabling the accuracy test 
             #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
             acc_res = None
             d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
             d1size, d2size = fD1.size, fD2.size
             dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+            print("DP Predicate Test Result: ", dp_res)
             if(plot):
                 self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
             res_list[filename] = [dp_res, acc_res]
@@ -332,7 +380,11 @@ class DPVerification:
         # COUNT Example
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=True, repeat_count=10000)
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
+
+        d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
+        d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
 
         # Mechanism calls with default Laplace
         dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
@@ -346,5 +398,5 @@ class DPVerification:
         return dp_res
 
 if __name__ == "__main__":
-    dv = DPVerification(dataset_size=10000)
+    dv = DPVerification(dataset_size=500)
     print(dv.main())

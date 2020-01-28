@@ -5,6 +5,8 @@
 import numpy as np
 import pandas as pd
 import os
+import copy
+from burdock.query.sql.metadata.metadata import *
 
 class Exploration:
     def __init__(self, dataset_size = 3):
@@ -15,15 +17,12 @@ class Exploration:
         self.numerical_col_name = "Usage"
         self.numerical_col_type = "int"
 
-        self.df, self.dataset_path, self.file_name = self.create_small_dataset()
+        self.df, self.metadata = self.create_small_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         
         self.N = len(self.df)
         self.visited = []
-        
-        self.template_yaml_path = os.path.join(self.file_dir, self.csv_path , "template.yaml")
-        with open(self.template_yaml_path, 'r') as metadata_file:
-            self.template_yaml = metadata_file.read()
+        self.neighbor_pair = {}
     
     # Create a dataset with one numerical column on which we shall evaluate DP queries
     def create_small_dataset(self, file_name = "small"):
@@ -31,15 +30,16 @@ class Exploration:
         userids = ["A" + str(user) for user in userids]
         usage = [10**i for i in range(0, self.dataset_size*2, 2)]
         df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', self.numerical_col_name])
-        
-        # Storing the data as a CSV
-        file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
-        df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
-        return df, file_path, file_name
+        metadata = Table(file_name, file_name, self.dataset_size, \
+        [\
+            String("UserId", self.dataset_size, True),\
+            Int(self.numerical_col_name, min(usage), max(usage))
+        ])
+        return df, metadata
 
     # Given a list of N records in a database, create a powerset of neighboring datasets by traversing the edges of database search graph
     # Perform DFS to traverse the database search graph
-    # Convention of CSV names = <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>.csv
+    # Convention of file names = <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>
     def generate_powerset(self, d1):
         if(len(d1) == 0):
             return
@@ -51,35 +51,25 @@ class Exploration:
                 filename = d1_idx_range + "_" + str(drop_idx)
                 if(filename not in self.visited):
                     d2 = d1.drop(drop_idx)
-                    d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1_" + filename + ".csv")
-                    d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2_" + filename + ".csv")
-                    d1_yaml_path = os.path.join(self.file_dir, self.csv_path , "d1_" + filename + ".yaml")
-                    d2_yaml_path = os.path.join(self.file_dir, self.csv_path , "d2_" + filename + ".yaml")
-                    d1.to_csv(d1_file_path, sep=',', encoding='utf-8', index=False)
-                    d2.to_csv(d2_file_path, sep=',', encoding='utf-8', index=False)
-
                     min_val = min(d1[self.numerical_col_name])
                     max_val = max(d1[self.numerical_col_name])
                     # Avoiding sensitivity to be 0
                     min_val = min_val if max_val > min_val else 0
                     max_val = max_val if max_val > min_val else abs(max_val)
 
-                    d1_yaml = self.get_yaml("d1_" + filename, len(d1), self.numerical_col_type, min_val, max_val)
-                    d2_yaml = self.get_yaml("d2_" + filename, len(d2), self.numerical_col_type, min_val, max_val)
-                    d1_yaml_file = open(d1_yaml_path, "w")
-                    d1_yaml_file.write(d1_yaml)
-                    d1_yaml_file.close()
-                    d2_yaml_file = open(d2_yaml_path, "w")
-                    d2_yaml_file.write(d2_yaml)
-                    d2_yaml_file.close()
+                    d1_table = Table("d1_" + filename, "d1_" + filename, len(d1), \
+                    [\
+                        String("UserId", len(d1), True),\
+                        Int(self.numerical_col_name, min_val, max_val)
+                    ])
+                    d2_table = copy.copy(d1_table)
+                    d2_table.schema, d2_table.name, d2_table.rowcount = "d2_" + filename, "d2_" + filename, d1_table.rowcount - 1
+                    d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
 
+                    self.neighbor_pair[filename] = [d1, d2, d1_metadata, d2_metadata]
                     self.visited.append(filename)
                     self.generate_powerset(d2)
             return
-
-    # Generate YAML string for the D1 / D2 neighboring dataset
-    def get_yaml(self, db_name, nrow = 3, numerical_col_type = "int", min_val = 0, max_val = 10000):
-        return self.template_yaml.format(db_name, nrow, numerical_col_type, min_val, max_val)
 
     def main(self):
         self.generate_powerset(self.df)

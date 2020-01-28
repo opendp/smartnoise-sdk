@@ -19,4 +19,10 @@ if __name__ == "__main__":
     parser.add_argument("--debug", type=bool, default=True, help="whether to run in debug mode")
     args = parser.parse_args()
 
+    try:
+        from custom_mlflow_setup import setup_mlflow
+        setup_mlflow()
+    except:
+        pass
+
     run_app(__name__, spec_file=args.spec, port=args.port, debug_mode=args.debug)

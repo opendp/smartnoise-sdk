@@ -97,5 +97,3 @@ class QueryConstraints:
 
         kp = keys[0].split(".")
         return kp[len(kp) - 1]
-
-  

@@ -7,9 +7,9 @@ import pandas as pd
 import mlflow
 import json
 import sys
+import os
 
-from burdock.query.sql.reader import CSVReader
-from burdock.query.sql import MetadataLoader
+from burdock.query.sql.reader import DataFrameReader
 from burdock.query.sql.private.query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
 from burdock.mechanisms.laplace import Laplace
@@ -80,9 +80,8 @@ class Aggregation:
 
     # Run the query using the private reader and input query
     # Get query response back
-    def run_agg_query(self, df, metadata_path, query, confidence):
-        metadata = MetadataLoader(metadata_path).read_schema()
-        reader = CSVReader(metadata, df)
+    def run_agg_query(self, df, metadata, query, confidence):
+        reader = DataFrameReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
@@ -91,5 +90,41 @@ class Aggregation:
         for idx in range(self.repeat_count):
             srs = TypedRowset(srs_orig.rows(), types, sens)
             noisy_values.append(private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:][0][0])
-
         return np.array(noisy_values)
+        
+    # Run the query using the private reader and input query
+    # Get query response back
+    def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
+        reader = DataFrameReader(metadata, df)
+        private_reader = PrivateQuery(reader, metadata, self.epsilon)
+        query_ast = private_reader.parse_query_string(query)
+        subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
+        
+        srs = TypedRowset(srs_orig.rows(), types, sens)
+        sample_res = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+        headers = sample_res.colnames
+
+        dim_cols = []
+        num_cols = []
+
+        for col in headers:
+            if(sample_res.types[col] == "string"):
+                dim_cols.append(col)
+            else:
+                num_cols.append(col)
+        
+        if(len(dim_cols) == 0):
+            dim_cols.append("__dim__")
+        
+        res = []
+        for idx in range(self.repeat_count):
+            srs = TypedRowset(srs_orig.rows(), types, sens)
+            singleres = private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:]
+            for row in singleres:
+                res.append(row)
+        noisy_df = pd.DataFrame(res, columns=headers)
+        
+        if(dim_cols[0] == "__dim__"):
+            noisy_df[dim_cols[0]] = ["key"]*len(noisy_df)
+
+        return noisy_df, dim_cols, num_cols
