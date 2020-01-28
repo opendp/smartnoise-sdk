@@ -14,20 +14,20 @@ def test_sklearn_query():
                          "rows": 150,
                          "sepal length (cm)": {
                             "type": "float",
-                            "min": 4,
-                            "max": 8},
+                            "lower": 4,
+                            "upper": 8},
                          "sepal width (cm)": {
                             "type": "float",
-                            "min": 2,
-                            "max": 5},
+                            "lower": 2,
+                            "upper": 5},
                          "petal length (cm)": {
                             "type": "float",
-                            "min": 1,
-                            "max": 7},
+                            "lower": 1,
+                            "upper": 7},
                          "petal width (cm)": {
                             "type": "float",
-                            "min": 0,
-                            "max": 3}
+                            "lower": 0,
+                            "upper": 3}
                         }
                       }
                     }
