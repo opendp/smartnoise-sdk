@@ -393,6 +393,11 @@ def _plain_sgd(weights,
                     dloss = -MAX_DLOSS
                 elif dloss > MAX_DLOSS:
                     dloss = MAX_DLOSS
+
+                # TODO add DP clipping of gradient here
+
+                # TODO add accumulation/addition of noise here
+
                 update = -eta * dloss
 
             if learning_rate >= PA1:
