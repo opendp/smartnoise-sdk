@@ -20,11 +20,14 @@ if __name__ == "__main__":
     y_targets = json.loads(sys.argv[4])
 
     with mlflow.start_run(run_name="diffpriv_covariance_linreg"):
-        # Log mlflow attributes for mlflow UI
-        mlflow.log_param("dataset_name", dataset_name)
-        mlflow.log_param("budget", budget)
-        mlflow.log_param("x_features", x_features)
-        mlflow.log_param("y_targets", y_targets)
+        try:
+            # Log mlflow attributes for mlflow UI
+            mlflow.log_param("dataset_name", dataset_name)
+            mlflow.log_param("budget", budget)
+            mlflow.log_param("x_features", x_features)
+            mlflow.log_param("y_targets", y_targets)
+        except:
+            pass  # retries and failures do not work with params
 
         dataset_document = get_dataset_client().read(dataset_name, budget)
         dataset = load_dataset(dataset_document)
@@ -46,19 +49,17 @@ if __name__ == "__main__":
         data_range = pd.DataFrame([[schema[table_name][col].minval, schema[table_name][col].maxval] for col in
                                    (x_features+y_targets)], index=(x_features+y_targets)).transpose()
 
-        model = DPLinearRegression().fit(X, y, data_range, budget)
+        # Try multiple times because sometimes noise makes cov matrix not positive definite
+        model = None
+        for i in range(10):
+            try:
+                model = DPLinearRegression().fit(X, y, data_range, budget)
+                break
+            except:
+                pass
 
-        # Save model for access through mlflow ui
-        mlflow.sklearn.log_model(model, "model")
-
-        results = {
-            "run_id": mlflow.active_run().info.run_id,
-            "model_name": "diffpriv_linreg"
-        }
-        with open("result.json", "w") as stream:
-            json.dump(results, stream)
-        mlflow.log_artifact("result.json")
-
+        if model is None:
+            raise Exception("The added noise made your covariance matrix no longer positive definite.")
         # Save model for access through mlflow ui
         mlflow.sklearn.log_model(model, "model")
 
