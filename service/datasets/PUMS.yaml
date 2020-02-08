@@ -4,8 +4,8 @@ Database:
       rows: 1000
       age:
         type: int
-        min: 0
-        max: 100
+        lower: 0
+        upper: 100
       sex:
         type: string
       educ:
@@ -14,10 +14,10 @@ Database:
         type: string
       income:
         type: int
-        min: 0
-        max: 500000
+        lower: 0
+        upper: 500000
       married:
         type: string
       pid:
         type: int
-        is_key: True
+        private_id: True

@@ -1,6 +1,8 @@
 from .name_compare import *
 
-class Database:
+# implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
+
+class Collection:
     def __init__(self, tables, engine, compare=None):
         self.m_tables = dict([(t.table_name(), t) for t in tables])
         self.engine = engine if engine is not None else "Unknown"
@@ -31,10 +33,14 @@ class Database:
     Common attributes for a table or a view
 """
 class Table:
-    def __init__(self, schema, name, rowcount, columns):
+    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=None, sample_max_ids=True, rows_exact=None):
         self.schema = schema
         self.name = name
         self.rowcount = rowcount
+        self.row_privacy = row_privacy
+        self.max_ids = max_ids
+        self.sample_max_ids = sample_max_ids
+        self.rows_exact = rows_exact
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
     def __getitem__(self, colname):
@@ -56,40 +62,44 @@ class Table:
         return (self.schema + "." if len(self.schema.strip()) > 0 else "") + self.name
 
 class String:
-    def __init__(self, name, card, is_key = False):
+    def __init__(self, name, card, is_key = False, bounded = False):
         self.name = name
         self.card = card
         self.is_key = is_key
+        self.bounded = bounded
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (card: " + str(self.card) + ")"
     def typename(self):
         return "string"
 
 class Boolean:
-    def __init__(self, name, is_key = False):
+    def __init__(self, name, is_key = False, bounded = False):
         self.name = name
         self.is_key = is_key
+        self.bounded = bounded
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (boolean)"
     def typename(self):
         return "boolean"
 
 class DateTime:
-    def __init__(self, name, is_key = False):
+    def __init__(self, name, is_key = False, bounded = False):
         self.name = name
         self.is_key = is_key
+        self.bounded = bounded
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (datetime)"
     def typename(self):
         return "datetime"
 
 class Int:
-    def __init__(self, name, minval = None, maxval = None, is_key = False):
+    def __init__(self, name, minval = None, maxval = None, is_key = False, bounded = False):
         self.name = name
         self.minval = minval
         self.maxval = maxval
         self.is_key = is_key
         self.unbounded = minval is None or maxval is None
+        self.bounded = bounded
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval) 
         return ("*" if self.is_key else "") + str(self.name) + " [int] (" + bounds + ")"
@@ -97,12 +107,13 @@ class Int:
         return "int"
 
 class Float:
-    def __init__(self, name, minval = None, maxval = None, is_key = False):
+    def __init__(self, name, minval = None, maxval = None, is_key = False, bounded = False):
         self.name = name
         self.minval = minval
         self.maxval = maxval
         self.is_key = is_key
         self.unbounded = minval is None or maxval is None
+        self.bounded = bounded
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval) 
         return ("*" if self.is_key else "") + str(self.name) + " [float] (" + bounds + ")"
