@@ -45,7 +45,7 @@ class MetadataLoader:
                 t = s[table]
                 tables.append(self.load_table(schema, table, t))
 
-        return Database(tables, engine)
+        return Collection(tables, engine)
 
     def load_table(self, schema, table, t):
         rowcount = int(t["rows"]) if "rows" in t else 0

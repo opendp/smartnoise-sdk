@@ -10,7 +10,7 @@ class MetadataLoader:
         self.engine = reader.engine
 
     def databaseSchema(self, tables=None):
-        return Database(self.getTables(tables), self.engine)
+        return Collection(self.getTables(tables), self.engine)
 
     def getTables(self, tableList=None):
         if tableList is None:
