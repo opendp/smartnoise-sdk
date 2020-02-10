@@ -4,9 +4,6 @@ import requests
 
 import pandas as pd
 
-from burdock.query.sql import MetadataLoader
-from burdock.query.sql.reader import CSVReader
-
 
 class DatasetAdapter(object):
     KEY = "default"
