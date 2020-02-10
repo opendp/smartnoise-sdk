@@ -29,6 +29,7 @@ if __name__ == "__main__":
         except:
             pass  # retries and failures do not work with params
 
+
         dataset_document = get_dataset_client().read(dataset_name, budget)
         dataset = load_dataset(dataset_document)
         schema = load_metadata(dataset_document)
@@ -60,6 +61,7 @@ if __name__ == "__main__":
 
         if model is None:
             raise Exception("The added noise made your covariance matrix no longer positive definite.")
+
         # Save model for access through mlflow ui
         mlflow.sklearn.log_model(model, "model")
 
