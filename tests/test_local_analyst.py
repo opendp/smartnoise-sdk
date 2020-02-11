@@ -2,8 +2,8 @@
 import sklearn.datasets
 import pandas as pd
 
-from burdock.query.sql import DataFrameReader, execute_private_query
-from burdock.query.sql.metadata.metadata import Collection, Table, Float
+from burdock.query.sql import DataFrameReader, MetadataLoader, execute_private_query
+from burdock.metadata import Collection, Table, Float
 
 def test_sklearn_query():
    sklearn_dataset = sklearn.datasets.load_iris()
