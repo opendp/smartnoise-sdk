@@ -4,8 +4,8 @@ Database:
       rows: {1}
       UserId:
         type: string
-        is_key: True
+        private_id: True
       Usage:
         type: {2}
-        min: {3}
-        max: {4}
+        lower: {3}
+        upper: {4}
