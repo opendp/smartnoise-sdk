@@ -9,6 +9,25 @@ from burdock.query.sql.reader import DataFrameReader
 
 from .dataset_adapter import DatasetAdapter
 
+def _make_doi_host(host, doi):
+    doi = doi.replace("doi:", "")
+    return "{}/api/access/datafile/:persistentId/?persistentId=doi:{}".format(host, doi)
+
+
+def dataverse_loader(host, doi=None, token=None):
+    host = host if doi is None else _make_doi_host(host, doi)
+    kwargs = {}
+    if token is not None:
+        kwargs["headers"] = {"X-Dataverse-key": token}
+    response = requests.get(host, **kwargs)
+    response.raise_for_status()
+
+    temp_dir = tempfile.gettempdir()
+    path = os.path.join(temp_dir, "data.tsv")
+    with open(path, "w") as stream:
+        stream.write(response.text)
+    return pd.read_csv(path, sep="\t")
+
 
 class DataverseAdapter(DatasetAdapter):
     KEY = "dataverse"
@@ -20,15 +39,8 @@ class DataverseAdapter(DatasetAdapter):
 
     @staticmethod
     def _load_df(dataset_document):
-        response = requests.get(dataset_document.dataverse_details.host, headers={"X-Dataverse-key":dataset_document.dataverse_details.token})
-        response.raise_for_status()
-
-        temp_dir = tempfile.gettempdir()
-        path = os.path.join(temp_dir, "data.tsv")
-        with open(path, "w") as stream:
-            stream.write(response.text)
-
-        return pd.read_csv(path, sep='\t')
+        return dataverse_loader(dataset_document.dataverse_details.host,
+                                token=dataset_document.dataverse_details.token)
 
     @staticmethod
     def _load_metadata(dataset_document):
