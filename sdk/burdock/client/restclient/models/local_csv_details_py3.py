@@ -8,17 +8,17 @@
 from msrest.serialization import Model
 
 
-class SecretPutSuccess(Model):
-    """SecretPutSuccess.
+class LocalCSVDetails(Model):
+    """LocalCSVDetails.
 
-    :param name: The name of the secret
-    :type name: str
+    :param local_path: Path to the csv on diskThe type of the dataset
+    :type local_path: str
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
+        'local_path': {'key': 'local_path', 'type': 'str'},
     }
 
-    def __init__(self, name=None):
-        super(SecretPutSuccess, self).__init__()
-        self.name = name
+    def __init__(self, *, local_path: str=None, **kwargs) -> None:
+        super(LocalCSVDetails, self).__init__(**kwargs)
+        self.local_path = local_path

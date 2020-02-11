@@ -22,7 +22,7 @@ class ProjectRunDetails(Model):
         'params': {'key': 'params', 'type': 'str'},
     }
 
-    def __init__(self, project_uri=None, params=None):
-        super(ProjectRunDetails, self).__init__()
-        self.project_uri = project_uri
-        self.params = params
+    def __init__(self, **kwargs):
+        super(ProjectRunDetails, self).__init__(**kwargs)
+        self.project_uri = kwargs.get('project_uri', None)
+        self.params = kwargs.get('params', None)

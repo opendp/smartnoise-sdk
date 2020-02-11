@@ -8,21 +8,17 @@
 from msrest.serialization import Model
 
 
-class Secret(Model):
-    """Secret.
+class DatasetReadRequest(Model):
+    """DatasetReadRequest.
 
-    :param name: The name of the secret
-    :type name: str
-    :param value: The secret
-    :type value: str
+    :param dataset_name: The name for the dataset
+    :type dataset_name: str
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'value': {'key': 'value', 'type': 'str'},
+        'dataset_name': {'key': 'dataset_name', 'type': 'str'},
     }
 
-    def __init__(self, name=None, value=None):
-        super(Secret, self).__init__()
-        self.name = name
-        self.value = value
+    def __init__(self, *, dataset_name: str=None, **kwargs) -> None:
+        super(DatasetReadRequest, self).__init__(**kwargs)
+        self.dataset_name = dataset_name

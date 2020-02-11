@@ -8,17 +8,17 @@
 from msrest.serialization import Model
 
 
-class ExecuterunOKResponse(Model):
-    """ExecuterunOKResponse.
+class SecretPutSuccess(Model):
+    """SecretPutSuccess.
 
-    :param result: Json string result,  TODO release document
-    :type result: str
+    :param name: The name of the secret
+    :type name: str
     """
 
     _attribute_map = {
-        'result': {'key': 'result', 'type': 'str'},
+        'name': {'key': 'name', 'type': 'str'},
     }
 
-    def __init__(self, result=None):
-        super(ExecuterunOKResponse, self).__init__()
-        self.result = result
+    def __init__(self, **kwargs):
+        super(SecretPutSuccess, self).__init__(**kwargs)
+        self.name = kwargs.get('name', None)

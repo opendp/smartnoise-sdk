@@ -25,8 +25,8 @@ class DatasetDocument(Model):
         'dataverse_details': {'key': 'dataverse_details', 'type': 'DataverseDetails'},
     }
 
-    def __init__(self, dataset_type=None, csv_details=None, dataverse_details=None):
-        super(DatasetDocument, self).__init__()
-        self.dataset_type = dataset_type
-        self.csv_details = csv_details
-        self.dataverse_details = dataverse_details
+    def __init__(self, **kwargs):
+        super(DatasetDocument, self).__init__(**kwargs)
+        self.dataset_type = kwargs.get('dataset_type', None)
+        self.csv_details = kwargs.get('csv_details', None)
+        self.dataverse_details = kwargs.get('dataverse_details', None)
