@@ -10,7 +10,7 @@ import sys
 import os
 import yarrow
 
-from burdock.query.sql.reader import DataFrameReader
+from burdock.query.sql.reader import CSVReader
 from burdock.query.sql.private.query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
 from burdock.mechanisms.laplace import Laplace
@@ -79,21 +79,21 @@ class Aggregation:
         sumsq = self.dp_mechanism_sum(df, colname + "squared")
         return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
 
-    # Apply noise to input aggregation using Yarrow library
-    def yarrow_dp_agg(self, data_csv_path, f, *args, **kwargs):
+    # Apply noise to input aggregation function using Yarrow library
+    def yarrow_dp_agg(self, data_csv_path, colname, coltype, f, *args, **kwargs):
         with yarrow.Analysis() as analysis:
-            df = yarrow.Dataset(data_csv_path)
-            agg = yarrow.f(args, kwargs)
+            df = yarrow.Dataset(data_csv_path)[colname, coltype]
+            agg = yarrow.f(df, args, kwargs)
             noisy_values = []
             for x in range(self.repeat_count):
                 analysis.release()
                 noisy_values.append(analysis.release_proto.values[6].values['data'].f64.data[0])
-            return noisy_values
+            return np.array(noisy_values)
 
     # Run the query using the private reader and input query
     # Get query response back
     def run_agg_query(self, df, metadata, query, confidence):
-        reader = DataFrameReader(metadata, df)
+        reader = CSVReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
@@ -107,7 +107,7 @@ class Aggregation:
     # Run the query using the private reader and input query
     # Get query response back
     def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
-        reader = DataFrameReader(metadata, df)
+        reader = CSVReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
