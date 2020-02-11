@@ -29,8 +29,6 @@ class Collection:
     def tables(self):
         return [self.m_tables[tname] for tname in self.m_tables.keys()]
 
-Database = Collection  # backcompat for now
-#  TODO remove Database
 
 """
     Common attributes for a table or a view
