@@ -1,6 +1,6 @@
 from .name_compare import *
 
-class Database:
+class Collection:
     def __init__(self, tables, engine, compare=None):
         self.m_tables = dict([(t.table_name(), t) for t in tables])
         self.engine = engine if engine is not None else "Unknown"
@@ -26,6 +26,9 @@ class Database:
         return "\n\n".join([str(self.m_tables[table]) for table in self.m_tables.keys()])
     def tables(self):
         return [self.m_tables[tname] for tname in self.m_tables.keys()]
+
+Database = Collection  # backcompat for now
+#  TODO remove Database
 
 """
     Common attributes for a table or a view
