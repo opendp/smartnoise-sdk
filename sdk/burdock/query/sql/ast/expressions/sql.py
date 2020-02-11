@@ -4,37 +4,6 @@ from burdock.query.sql.ast.tokens import *
     SQL-specific expressions
 """
 
-class Column(SqlExpr):
-    """A fully qualified column name"""
-    def __init__(self, name):
-        self.name = name
-    def __str__(self):
-        return str(self.name)
-    def __eq__(self, other):
-        return type(self) == type(other) and self.name == other.name
-    def __hash__(self):
-        return hash(self.name)
-    def escaped(self):
-        # is any part of this identifier escaped?
-        parts = self.name.split(".")
-        return any([p.startswith('"') or p.startswith('[') for p in parts])
-    def symbol_name(self):
-        return self.name
-    def symbol(self, relations):
-        sym = [r.symbol(self) for r in relations if r.alias_match(self.name)]
-        if len(sym) == 0:
-            raise ValueError("Column cannot be found " + str(self))
-        elif len(sym) > 1:
-            raise ValueError("Column matches more than one relation, ambiguous " + str(self))
-        else:
-            return sym[0]
-    def evaluate(self, bindings):
-        # may need to handle escaping here
-        if str(self).lower().replace('"','') in bindings:
-            return bindings[str(self).lower().replace('"','')]
-        else:
-            return None
-
 class AllColumns(SqlExpr):
     """A SELECT with * or Table.*"""
     def __init__(self, table=None):
@@ -112,6 +81,8 @@ class RankingFunction(SqlExpr):
         self.over = over
     def children(self):
         return [self.name, Token('('), Token(')'), self.over]
+    def symbol(self, relations):
+        return RankingFunction(self.name, self.over.symbol(relations))
 
 class OverClause(SqlExpr):
     def __init__(self, partition, order):
@@ -123,6 +94,8 @@ class OverClause(SqlExpr):
         partition = [] if self.partition is None else [Token('PARTITION'), Token('BY'), self.partition]
         order = [] if self.order is None else [self.order]
         return pre + partition + order + post
+    def symbol(self, relations):
+        return OverClause(self.partition.symbol(relations), self.order.symbol(relations))
 
 class GroupingExpression(SqlExpr):
     """An expression used in Group By"""
@@ -132,6 +105,8 @@ class GroupingExpression(SqlExpr):
         return self.expression.type()
     def children(self):
         return [self.expression]
+    def symbol(self, relations):
+        return GroupingExpression(self.expression.symbol(relations))
 
 class SortItem(SqlExpr):
     """Used to sort a query's output"""
@@ -142,6 +117,8 @@ class SortItem(SqlExpr):
         return self.expression.type()
     def children(self):
         return [self.expression, self.order]
+    def symbol(self, relations):
+        return SortItem(self.expression.symbol(relations), None if self.order is None else self.order.symbol(relations))
 
 class BooleanJoinCriteria(SqlExpr):
     """Join criteria using boolean expression"""
@@ -149,6 +126,9 @@ class BooleanJoinCriteria(SqlExpr):
         self.expression = expression
     def children(self):
         return [Token("ON"), self.expression]
+    def symbol(self, relations):
+        return BooleanJoinCriteria(self.expression.symbol(relations))
+
 
 class UsingJoinCriteria(SqlExpr):
     """Join criteria with USING syntax"""
@@ -156,3 +136,5 @@ class UsingJoinCriteria(SqlExpr):
         self.identifiers = Seq(identifiers)
     def children(self):
         return [Token("USING"), Token("("), self.identifiers, Token(")")]
+    def symbol(self, relations):
+        return UsingJoinCriteria(self.identifiers.symbol(relations))

@@ -14,6 +14,8 @@ class Expression(SqlExpr):
         return type(self) == type(other) and self.fragment == other.fragment
     def __hash__(self):
         return hash(self.fragment)
+    def symbol(self, relations):
+        raise ValueError("Cannot load symbol on bare expression: " + str(self))
 
 class NestedExpression(SqlExpr):
     """A nested expression with no name"""
