@@ -19,6 +19,6 @@ class LocalCSVDetails(Model):
         'local_path': {'key': 'local_path', 'type': 'str'},
     }
 
-    def __init__(self, **kwargs):
-        super(LocalCSVDetails, self).__init__(**kwargs)
-        self.local_path = kwargs.get('local_path', None)
+    def __init__(self, local_path=None):
+        super(LocalCSVDetails, self).__init__()
+        self.local_path = local_path

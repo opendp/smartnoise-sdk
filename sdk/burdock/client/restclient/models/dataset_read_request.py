@@ -19,6 +19,6 @@ class DatasetReadRequest(Model):
         'dataset_name': {'key': 'dataset_name', 'type': 'str'},
     }
 
-    def __init__(self, **kwargs):
-        super(DatasetReadRequest, self).__init__(**kwargs)
-        self.dataset_name = kwargs.get('dataset_name', None)
+    def __init__(self, dataset_name=None):
+        super(DatasetReadRequest, self).__init__()
+        self.dataset_name = dataset_name

@@ -25,8 +25,8 @@ class DataverseDetails(Model):
         'host': {'key': 'host', 'type': 'str'},
     }
 
-    def __init__(self, **kwargs):
-        super(DataverseDetails, self).__init__(**kwargs)
-        self.local_metadata_path = kwargs.get('local_metadata_path', None)
-        self.token = kwargs.get('token', None)
-        self.host = kwargs.get('host', None)
+    def __init__(self, local_metadata_path=None, token=None, host=None):
+        super(DataverseDetails, self).__init__()
+        self.local_metadata_path = local_metadata_path
+        self.token = token
+        self.host = host

@@ -5,24 +5,14 @@
 # regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from .project_run_details_py3 import ProjectRunDetails
-    from .dataset_read_request_py3 import DatasetReadRequest
-    from .local_csv_details_py3 import LocalCSVDetails
-    from .dataverse_details_py3 import DataverseDetails
-    from .dataset_document_py3 import DatasetDocument
-    from .secret_py3 import Secret
-    from .secret_put_success_py3 import SecretPutSuccess
-    from .executerun_ok_response_py3 import ExecuterunOKResponse
-except (SyntaxError, ImportError):
-    from .project_run_details import ProjectRunDetails
-    from .dataset_read_request import DatasetReadRequest
-    from .local_csv_details import LocalCSVDetails
-    from .dataverse_details import DataverseDetails
-    from .dataset_document import DatasetDocument
-    from .secret import Secret
-    from .secret_put_success import SecretPutSuccess
-    from .executerun_ok_response import ExecuterunOKResponse
+from .project_run_details import ProjectRunDetails
+from .dataset_read_request import DatasetReadRequest
+from .local_csv_details import LocalCSVDetails
+from .dataverse_details import DataverseDetails
+from .dataset_document import DatasetDocument
+from .secret import Secret
+from .secret_put_success import SecretPutSuccess
+from .executerun_ok_response import ExecuterunOKResponse
 
 __all__ = [
     'ProjectRunDetails',

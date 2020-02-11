@@ -19,6 +19,6 @@ class ExecuterunOKResponse(Model):
         'result': {'key': 'result', 'type': 'str'},
     }
 
-    def __init__(self, **kwargs):
-        super(ExecuterunOKResponse, self).__init__(**kwargs)
-        self.result = kwargs.get('result', None)
+    def __init__(self, result=None):
+        super(ExecuterunOKResponse, self).__init__()
+        self.result = result
