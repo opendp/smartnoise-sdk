@@ -13,9 +13,10 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import evaluation.aggregation as agg
-import evaluation.exploration as exp
+#import evaluation.exploration as exp
 import copy
-from burdock.query.sql.metadata.metadata import *
+import yarrow
+#from burdock.query.sql.metadata.metadata import *
 from scipy import stats
 
 class DPVerification:
@@ -25,7 +26,7 @@ class DPVerification:
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
         self.csv_path = r'../service/datasets'
-        self.df, self.dataset_path, self.file_name, self.metadata = self.create_simulated_dataset()
+        self.df, self.dataset_path, self.file_name = self.create_simulated_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
         self.delta = 1/(self.N * math.sqrt(self.N))
@@ -44,15 +45,15 @@ class DPVerification:
         # Storing the data as a CSV
         file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
         df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
-        metadata = Table(file_name, file_name, self.dataset_size, \
-            [\
-                String("UserId", self.dataset_size, True), \
-                String("Segment", 3, False), \
-                String("Role", 2, False), \
-                Int("Usage", 0, 25)
-            ])
+        #metadata = Table(file_name, file_name, self.dataset_size, \
+        #    [\
+        #        String("UserId", self.dataset_size, True), \
+        #        String("Segment", 3, False), \
+        #        String("Role", 2, False), \
+        #        Int("Usage", 0, 25)
+        #    ])
 
-        return df, file_path, file_name, metadata
+        return df, file_path, file_name#, metadata
 
     # Generate dataframes that differ by a single record that is randomly chosen
     def generate_neighbors(self, load_csv = False):
@@ -76,14 +77,14 @@ class DPVerification:
             d1.to_csv(d1_file_path, sep=',', encoding='utf-8', index=False)
             d2.to_csv(d2_file_path, sep=',', encoding='utf-8', index=False)
         
-        d1_table = self.metadata
-        d2_table = copy.copy(d1_table)
-        d1_table.schema, d2_table.schema = "d1", "d2"
-        d1_table.name, d2_table.name = "d1", "d2"
-        d2_table.rowcount = d1_table.rowcount - 1
-        d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
+        #d1_table = self.metadata
+        #d2_table = copy.copy(d1_table)
+        #d1_table.schema, d2_table.schema = "d1", "d2"
+        #d1_table.name, d2_table.name = "d1", "d2"
+        #d2_table.rowcount = d1_table.rowcount - 1
+        #d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
 
-        return d1, d2, d1_metadata, d2_metadata
+        return d1, d2#, d1_metadata, d2_metadata
 
     # If there is an aggregation function that we need to test, we need to apply it on neighboring datasets
     # This function applies the aggregation repeatedly to log results in two vectors that are then used for generating histogram
@@ -279,16 +280,16 @@ class DPVerification:
     # Creating a new function to take in non-keyworded args and keyworded kwargs
     # This makes it generic to take in any Yarrow aggregate function with any set of parameters
     # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
-    def yarrow_test(self, dataset_path, colname, coltype, f, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=10000, *args, **kwargs):
+    def yarrow_test(self, dataset_path, f, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=10000, **kwargs):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         self.dataset_path = dataset_path
-        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
+        d1, d2 = self.generate_neighbors(load_csv=True)
         
         d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
         d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
-
-        fD1 = ag.yarrow_dp_agg(d1_file_path, colname, coltype, args, kwargs)
-        fD2 = ag.yarrow_dp_agg(d2_file_path, colname, coltype, args, kwargs)
+        
+        fD1 = ag.yarrow_dp_agg(f, d1_file_path, kwargs)
+        fD2 = ag.yarrow_dp_agg(f, d2_file_path, kwargs)
 
         d1size, d2size = fD1.size, fD2.size
         d1hist, d2hist, bin_edges = \
@@ -394,36 +395,43 @@ class DPVerification:
     def main(self):
         ag = agg.Aggregation(t=1, repeat_count=10000)
 
-        # Sample DP Noise addtion mechanism for 4 SQL aggregations
-        dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
-        dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
-        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
-        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
+        # # Sample DP Noise addtion mechanism for 4 SQL aggregations
+        # dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
+        # dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
+        # dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
+        # dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
+        # dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
+        # dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
         
-        # COUNT Example
-        d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
-        d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
+        # # COUNT Example
+        # d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
+        # d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
+        # dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
 
-        d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
-        d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
+        # d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
+        # d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
+        # dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
 
-        # Mechanism calls with default Laplace
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
-        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mechanism_mean, 'Usage', binsize="auto", debug=False)
-        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_mechanism_var, 'Usage', binsize="auto", debug=False)
+        # # Mechanism calls with default Laplace
+        # dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
+        # dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
+        # dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mechanism_mean, 'Usage', binsize="auto", debug=False)
+        # dp_var, ks_var, ws_var = dv.aggtest(ag.dp_mechanism_var, 'Usage', binsize="auto", debug=False)
         
-        # Powerset Test on SUM query
-        query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res = self.dp_powerset_test(query_str, plot=False)
-        return dp_res
+        # # Powerset Test on SUM query
+        # query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
+        # dp_res = self.dp_powerset_test(query_str, plot=False)
+        # return dp_res
 
         # Yarrow Test
+        dataset_root = os.getenv('DATASET_ROOT', '/home/ankit/Documents/github/datasets/')
+        test_csv_path = dataset_root + 'data/PUMS_california_demographics_1000/data.csv'
 
+        dp_yarrow_res = self.yarrow_test(test_csv_path, yarrow.dp_mean, colname='income', coltype=float, epsilon=self.epsilon, minimum=0, maximum=100, num_records=1000)
+        #dp_yarrow_res = self.yarrow_test(test_csv_path, yarrow.dp_variance, colname='educ', coltype=int, epsilon=self.epsilon, minimum=0, maximum=12, num_records=1000)
+        #dp_yarrow_res = self.yarrow_test(test_csv_path, yarrow.dp_moment_raw, colname='married', coltype=float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
+        #dp_yarrow_res = self.yarrow_test(test_csv_path, yarrow.dp_covariance, colname1='married', coltype1=int, colname2 = 'sex', coltype2 = int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
+        return dp_yarrow_res
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=500)
