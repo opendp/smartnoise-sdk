@@ -10,11 +10,11 @@ import sys
 import os
 import yarrow
 
-#from burdock.query.sql.reader import DataframeReader
-#from burdock.query.sql.private.query import PrivateQuery
-#from burdock.query.sql.reader.rowset import TypedRowset
-#from burdock.mechanisms.laplace import Laplace
-#from burdock.mechanisms.gaussian import Gaussian
+from burdock.query.sql.reader import DataFrameReader
+from burdock.query.sql.private.query import PrivateQuery
+from burdock.query.sql.reader.rowset import TypedRowset
+from burdock.mechanisms.laplace import Laplace
+from burdock.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 class Aggregation:

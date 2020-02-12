@@ -13,10 +13,10 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import evaluation.aggregation as agg
-#import evaluation.exploration as exp
+import evaluation.exploration as exp
 import copy
 import yarrow
-#from burdock.query.sql.metadata.metadata import *
+from burdock.query.sql.metadata.metadata import *
 from scipy import stats
 
 class DPVerification:
@@ -26,7 +26,7 @@ class DPVerification:
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
         self.csv_path = r'../service/datasets'
-        self.df, self.dataset_path, self.file_name = self.create_simulated_dataset()
+        self.df, self.dataset_path, self.file_name, self.metadata = self.create_simulated_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
         self.delta = 1/(self.N * math.sqrt(self.N))
@@ -45,15 +45,15 @@ class DPVerification:
         # Storing the data as a CSV
         file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
         df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
-        #metadata = Table(file_name, file_name, self.dataset_size, \
-        #    [\
-        #        String("UserId", self.dataset_size, True), \
-        #        String("Segment", 3, False), \
-        #        String("Role", 2, False), \
-        #        Int("Usage", 0, 25)
-        #    ])
+        metadata = Table(file_name, file_name, self.dataset_size, \
+           [\
+               String("UserId", self.dataset_size, True), \
+               String("Segment", 3, False), \
+               String("Role", 2, False), \
+               Int("Usage", 0, 25)
+           ])
 
-        return df, file_path, file_name#, metadata
+        return df, file_path, file_name, metadata
 
     # Generate dataframes that differ by a single record that is randomly chosen
     def generate_neighbors(self, load_csv = False):
@@ -77,14 +77,14 @@ class DPVerification:
             d1.to_csv(d1_file_path, sep=',', encoding='utf-8', index=False)
             d2.to_csv(d2_file_path, sep=',', encoding='utf-8', index=False)
         
-        #d1_table = self.metadata
-        #d2_table = copy.copy(d1_table)
-        #d1_table.schema, d2_table.schema = "d1", "d2"
-        #d1_table.name, d2_table.name = "d1", "d2"
-        #d2_table.rowcount = d1_table.rowcount - 1
-        #d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
+        d1_table = self.metadata
+        d2_table = copy.copy(d1_table)
+        d1_table.schema, d2_table.schema = "d1", "d2"
+        d1_table.name, d2_table.name = "d1", "d2"
+        d2_table.rowcount = d1_table.rowcount - 1
+        d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
 
-        return d1, d2#, d1_metadata, d2_metadata
+        return d1, d2, d1_metadata, d2_metadata
 
     # If there is an aggregation function that we need to test, we need to apply it on neighboring datasets
     # This function applies the aggregation repeatedly to log results in two vectors that are then used for generating histogram
@@ -434,7 +434,7 @@ class DPVerification:
         dp_yarrow_var_res = self.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=self.epsilon, minimum=0, maximum=12, num_records=1000)
         dp_yarrow_moment_res = self.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
         dp_yarrow_covariance_res = self.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
-        return dp_res
+        return dp_yarrow_mean_res
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=1000)
