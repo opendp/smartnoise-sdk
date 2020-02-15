@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import os
 import copy
+from statsmodels.tools import sequences
 from burdock.query.sql.metadata.metadata import *
 
 class Exploration:
@@ -16,19 +17,17 @@ class Exploration:
         
         self.numerical_col_name = "Usage"
         self.numerical_col_type = "int"
-
-        self.df, self.metadata = self.create_small_dataset()
-        print("Loaded " + str(len(self.df)) + " records")
-        
-        self.N = len(self.df)
+        self.N = dataset_size
+        # if we are exploring 3 dimensions, corners shall be [-1000, -1000, -1000] to [1000, 1000, 1000]
+        self.corners = np.array([[-1*(10**self.N)]*self.N, [10**self.N]*self.N])
         self.visited = []
         self.neighbor_pair = {}
     
     # Create a dataset with one numerical column on which we shall evaluate DP queries
-    def create_small_dataset(self, file_name = "small"):
+    def create_small_dataset(self, sample, file_name = "small"):
         userids = list(range(1, self.dataset_size+1))
         userids = ["A" + str(user) for user in userids]
-        usage = [10**i for i in range(0, self.dataset_size*2, 2)]
+        usage = list(sample)
         df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', self.numerical_col_name])
         metadata = Table(file_name, file_name, self.dataset_size, \
         [\
@@ -36,6 +35,11 @@ class Exploration:
             Int(self.numerical_col_name, min(usage), max(usage))
         ])
         return df, metadata
+
+    # Generate halton samples in a n-dimensional space. Defaulted to 3 dimensions
+    def generate_halton_samples(self, bounds, dims, n_sample=10):
+        samples = sequences.halton(dim=dims, n_sample=n_sample, bounds=bounds)
+        return samples
 
     # Given a list of N records in a database, create a powerset of neighboring datasets by traversing the edges of database search graph
     # Perform DFS to traverse the database search graph
@@ -71,9 +75,16 @@ class Exploration:
                     self.generate_powerset(d2)
             return
 
+    def test_exploration(self):
+        samples = self.generate_halton_samples(bounds = self.corners, dims = self.N)
+        for sample in samples:
+            df, metadata = self.create_small_dataset(sample)
+            print("Loaded " + str(len(df)) + " records")
+            self.generate_powerset(df)
+            print(self.visited)
+
     def main(self):
-        self.generate_powerset(self.df)
-        print(self.visited)
+        self.test_exploration()
 
 if __name__ == "__main__":
     ex = Exploration()
