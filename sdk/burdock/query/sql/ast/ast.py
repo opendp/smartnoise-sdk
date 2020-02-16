@@ -130,6 +130,8 @@ class Order(Sql):
         self.sortItems = Seq(sortItems)
     def children(self):
         return [Token("ORDER"), Token("BY"), self.sortItems]
+    def symbol(self, relations):
+        return Order(self.sortItems.symbol(relations))
 
 
 """

@@ -106,3 +106,13 @@ class TestQuery:
         for i in range(3):
             trs = private_reader._postprocess(*pre)
             assert(len(trs) == 1)
+    def test_sum_noisy(self):
+        reader = DataFrameReader(schema, df)
+        query = QueryParser(schema).queries("SELECT SUM(age) as age_total FROM PUMS.PUMS")[0]
+        trs = reader.execute_typed(query)
+        assert(trs['age_total'][0] > 1000)
+    def test_sum_noisy_postprocess(self):
+        reader = DataFrameReader(schema, df)
+        private_reader = PrivateQuery(reader, schema, 1.0)
+        trs = private_reader.execute_typed("SELECT POWER(SUM(age), 2) as age_total FROM PUMS.PUMS")
+        assert(trs['age_total'][0] > 1000 ** 2)

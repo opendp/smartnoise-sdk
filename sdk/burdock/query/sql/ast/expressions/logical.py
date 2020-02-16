@@ -67,6 +67,8 @@ class PredicatedExpression(SqlExpr):
         self.predicate = predicate
     def children(self):
         return [self.expression, self.predicate]
+    def symbol(self, relations):
+        return PredicatedExpression(self.expression.symbol(relations), self.predicate.symbol(relations))
 
 class InCondition(SqlExpr):
     def __init__(self, expressions, is_not=False):
