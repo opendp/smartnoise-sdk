@@ -1,7 +1,7 @@
-from .metadata import *
+from .collection import *
 
 from burdock.query.sql import QueryParser, ast
-from burdock.query.sql.metadata import sql_reservered
+from burdock.metadata import sql_reservered
 
 class MetadataLoader:
     def __init__(self, reader):
