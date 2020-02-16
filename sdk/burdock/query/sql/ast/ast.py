@@ -1,7 +1,7 @@
 from .tokens import *
 from .expression import *
 
-from burdock.query.sql.metadata.name_compare import BaseNameCompare
+from burdock.metadata.name_compare import BaseNameCompare
 
 """
     AST for parsed Python Query Batch.  Allows validation, normalization, 

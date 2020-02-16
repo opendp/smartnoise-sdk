@@ -1,4 +1,4 @@
-from burdock.query.sql.metadata.metadata import *
+from burdock.metadata.collection import *
 import copy
 
 class TestDSMetadataLiteral:

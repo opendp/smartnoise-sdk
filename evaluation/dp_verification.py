@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import evaluation.aggregation as agg
 import evaluation.exploration as exp
 import copy
-from burdock.query.sql.metadata.metadata import *
+from burdock.metadata.collection import *
 from scipy import stats
 
 class DPVerification:
