@@ -5,30 +5,21 @@ from scipy.stats import norm
 
 
 class Gaussian(AdditiveNoiseMechanism):
-    def __init__(self, eps, delta=1.0E-16, sensitivity=1.0, tau=1, rows=None):
-        super().__init__(eps, delta, sensitivity, tau, rows)
+    def __init__(self, eps, delta=1.0E-16, sensitivity=1.0, max_contrib=1, alpha=[0.95], rows=None):
+        super().__init__(eps, delta, sensitivity, max_contrib, alpha, rows)
         self.sd = (math.sqrt(math.log(1/delta)) + math.sqrt(math.log(1/delta) + self.eps)) / (math.sqrt(2) * self.eps)
 
     def release(self, vals):
-        noise = np.random.normal(0.0, self.sd * self.tau * self.sensitivity, len(vals))
+        noise = np.random.normal(0.0, self.sd * self.max_contrib * self.sensitivity, len(vals))
         return noise + vals
 
-    def bounds(self, pct=0.95, bootstrap=False):
+    def bounds(self, bootstrap=False):
         if not bootstrap:
-            edge = (1 - pct) / 2.0
-            return norm.ppf([edge, 1 - edge], 0.0, self.sd * self.tau * self.sensitivity)
+            _bounds = []
+            for a in self.alpha:
+                edge = (1.0 - a) / 2.0
+                _bounds.append(norm.ppf([edge, 1 - edge], 0.0, self.sd * self.max_contrib * self.sensitivity))
+            return _bounds
         else:
-            return super().bounds(pct, bootstrap)
+            return super().bounds(bootstrap)
 
-    def count(self, vals):
-        noise = np.random.normal(0.0, self.sd * self.tau, len(vals))
-        new_vals = noise + vals
-        return new_vals
-
-    def sum_int(self, vals, sensitivity):
-        noise = np.random.normal(0.0, self.tau * sensitivity * self.sd, len(vals))
-        return np.array(noise).astype(int) + vals
-
-    def sum_float(self, vals, sensitivity):
-        noise = np.random.normal(0.0, self.tau * sensitivity * self.sd, len(vals))
-        return noise + vals

@@ -102,8 +102,7 @@ class PrivateQuery:
             # treat null as 0 before adding noise
             srs[name] = np.array([v if v is not None else 0.0 for v in srs[name]])
             mechanism = Laplace(self.epsilon, sens, self.tau)
-            srs.bounds[name] = mechanism.bounds(pct)
-            srs[name] = mechanism.release(srs[name])
+            srs[name] = mechanism.release(srs[name]).value
             # BUGBUG: Things other than counts can have sensitivity of 1
             if sym.sensitivity() == 1:
                 counts = srs[name]
@@ -125,8 +124,11 @@ class PrivateQuery:
         cols = []
         for c in query.select.namedExpressions:
             cols.append(c.expression.evaluate(bindings))
+            
         for idx in range(len(cols)):
-            newrs[newrs.idxcol[idx]] = cols[idx]
+            colname = newrs.idxcol[idx]
+
+            newrs[colname] = cols[idx]
 
         # Now sort, if it has order by clause
         if query.order is not None:

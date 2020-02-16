@@ -1,11 +1,12 @@
 import math
 import numpy as np
+from burdock.query.sql.metadata.release import Result
 
 class AdditiveNoiseMechanism:
     """
     Adds noise to an exact aggregated quantity.
     """
-    def __init__(self, eps, delta=0.0, sensitivity=1.0, tau=1, rows=None):
+    def __init__(self, eps, delta=0.0, sensitivity=1.0, max_contrib=1, alpha = [0.95], rows=None):
         """
         Initialize an addititive noise mechanism.
 
@@ -14,13 +15,14 @@ class AdditiveNoiseMechanism:
             delta (float): the delta privacy parameter.  Usually much smaller than 1.
             sensitivity (float): the maximum amount that any individual can affect the output.
                 For counts, sensitivity is 1.  For sums, sensitivity is the allowed range
-            tau (int): the maximum times an individual may appear in a partition.
+            max_contrib (int): the maximum times an individual may appear in a partition.
             rows (int): can be supplied to cause delta to be computed as a heuristic.
         """
         self.eps = eps
         self.delta = delta
         self.sensitivity = sensitivity
-        self.tau = tau
+        self.max_contrib = max_contrib
+        self.alpha = alpha
         if rows is not None:
             self.delta = 1 / (math.sqrt(rows) * rows)
 
@@ -33,7 +35,7 @@ class AdditiveNoiseMechanism:
         """
         raise NotImplementedError("Please implement release on the derived class")
 
-    def bounds(self, pct=0.95, bootstrap=False):
+    def bounds(self, bootstrap=False):
         """
         Returns the error bounds, centered around 0.
         """
@@ -42,9 +44,11 @@ class AdditiveNoiseMechanism:
         else:
             vals = np.repeat(0.0, 10000)
             r = self.release(vals)
-            edge = (1 - pct) / 2.0
-            return np.percentile(r, [edge * 100, 100 - edge * 100])
-
+            _bounds = []
+            for a in self.alpha:
+                edge = (1.0 - a) / 2.0
+                _bounds.append(np.percentile(r, [edge * 100, 100 - edge * 100]))
+            return _bounds
 
 
 class Statistic:

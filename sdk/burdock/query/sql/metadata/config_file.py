@@ -53,13 +53,14 @@ class MetadataLoader:
         max_ids = int(t["max_ids"]) if "max_ids" in t else None
         sample_max_ids = bool(t["sample_max_ids"]) if "sample_max_ids" in t else None
         rows_exact = int(t["rows_exact"]) if "rows_exact" in t else None
+        clamp_counts = bool(t["clamp_counts"]) if "clamp_counts" in t else True
 
         columns = []
         colnames = [cn for cn in t.keys() if cn != "rows"]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 
-        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, rows_exact)
+        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, rows_exact, clamp_counts)
 
     def load_column(self, column, c):
         is_key = False if "private_id" not in c else bool(c["private_id"])
@@ -106,6 +107,8 @@ class MetadataLoader:
                 table["sample_max_ids"] = t.sample_max_ids
             if t.rows_exact is not None:
                 table["rows_exact"] = t.rows_exact
+            if not t.clamp_counts:
+                table["clamp_counts"] = t.clamp_counts
 
             for c in t.columns():
                 cname = c.name
