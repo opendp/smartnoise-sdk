@@ -58,7 +58,7 @@ class Aggregation:
         mech = Laplace(self.epsilon)
         if(self.mechanism == "Gaussian"):
             mech = Gaussian(self.epsilon)
-        return np.array([mech.release([exact_count])[0] for i in range(self.repeat_count)])
+        return np.array([mech.release([exact_count]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_sum(self, df, colname):
         exact_sum = df[colname].sum()
@@ -66,7 +66,7 @@ class Aggregation:
         mech = Laplace(self.epsilon, sensitivity = M)
         if(self.mechanism == "Gaussian"):
             mech = Gaussian(self.epsilon)
-        return np.array([mech.release([exact_sum])[0] for i in range(self.repeat_count)])
+        return np.array([mech.release([exact_sum]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_mean(self, df, colname):
         return np.divide(self.dp_mechanism_sum(df, colname), self.dp_mechanism_count(df, colname))

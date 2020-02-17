@@ -1,7 +1,9 @@
 from burdock.query.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
+from burdock.mechanisms.gaussian import Gaussian
 import burdock.query.sql.ast.expressions.sql as ast
 from burdock.query.sql.reader.rowset import TypedRowset
+from burdock.metadata.release import Interval
 
 import numpy as np
 
@@ -10,12 +12,13 @@ import numpy as np
     adds noise before returning the recordset.
 """
 class PrivateQuery:
-    def __init__(self, reader, metadata, epsilon=4.0):
+    def __init__(self, reader, metadata, epsilon=4.0, alphas=[0.95, 0.985]):
         self.reader = reader
         self.metadata = metadata
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
-        self.tau = 1
+        self.max_contrib = 1
+        self.alphas = alphas
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -81,11 +84,11 @@ class PrivateQuery:
         srs = self.reader.execute_typed(subquery)
         return (subquery, query, syms, types, sens, srs)
 
-    def _postprocess(self, subquery, query, syms, types, sens, srs, pct=0.95):
+    def _postprocess(self, subquery, query, syms, types, sens, srs):
         # Postprocess:
         # 1. Add Noise to subquery results
         # 1b. Clamp counts to 0, set SUM = NULL if count = 0
-        # 2. Filter tau thresh
+        # 2. Filter max_contrib thresh
         # 3. Evaluate outer expression, set AVG = NULL if count = 0
         # 4. Sort        
 
@@ -101,34 +104,78 @@ class PrivateQuery:
             sens = sym.sensitivity()
             # treat null as 0 before adding noise
             srs[name] = np.array([v if v is not None else 0.0 for v in srs[name]])
-            mechanism = Laplace(self.epsilon, sens, self.tau)
-            srs[name] = mechanism.release(srs[name]).value
-            # BUGBUG: Things other than counts can have sensitivity of 1
-            if sym.sensitivity() == 1:
+            mechanism = Gaussian(self.epsilon, 10E-16, sens, self.max_contrib, self.alphas)
+            release = mechanism.release(srs[name], True)
+            srs[name] = release.values
+            srs.intervals[name] = release.intervals
+            srs.release[name] = release
+            srs.release[name].values = None  # to avoid duplication of values
+            srs.release[name].intervals = None  # to avoid duplication of values
+
+            if sym is ast.AggFunction and sym.name == "COUNT" and query.clamp_counts:
                 counts = srs[name]
                 counts[counts < 0] = 0
                 srs[name] = counts
 
         if subquery.agg is not None:
-            srs = srs.filter("keycount", ">", self.tau ** 2)
+            srs = srs.filter("keycount", ">", self.max_contrib ** 2)
 
         syms = query.all_symbols()
         types = [s[1].type() for s in syms]
         sens = [s[1].sensitivity() for s in syms]
         colnames = [s[0] for s in syms]
-        newrs = TypedRowset([colnames], types, sens)
 
         srsc = srs.m_cols
-        bindings = dict((name.lower(), srsc[name]) for name in srsc.keys())
 
+        bindings_list = []
+
+        # first do the noisy values
+        bindings_list.append(dict((name.lower(), srsc[name]) for name in srsc.keys()))
+
+        # now find a list of alphas
+        alphas = None
+        for name in srsc.keys():
+            alpha = srs.release[name].alphas if name in srs.release else None
+            if alpha is not None:
+                alphas = alpha
+                break
+        if alphas is not None:
+            for idx in range(len(alphas)):
+                print("looking at range: {0}".format(idx))
+                bind_low = {}
+                bind_high = {}
+                for name in srsc.keys():
+                    if name in srs.intervals and srs.intervals[name] is not None and len(srs.intervals[name]) > 0:
+                        bind_low[name.lower()] = [i.low for i in srs.intervals[name][idx]]
+                        bind_high[name.lower()] = [i.high for i in srs.intervals[name][idx]]
+                    else:
+                        bind_low[name.lower()] = srsc[name]
+                        bind_high[name.lower()] = srsc[name]
+                bindings_list.append(bind_low)
+                bindings_list.append(bind_high)
+    
         cols = []
+        intervals_list = []
         for c in query.select.namedExpressions:
-            cols.append(c.expression.evaluate(bindings))
-            
+            cols.append(c.expression.evaluate(bindings_list[0]))
+
+            ivals = []
+            # initial hack; just evaluate lower and upper for each alpha
+            if alphas is not None:
+                for idx in range(len(alphas)):
+                    low_idx = idx * 2 + 1
+                    high_idx = idx * 2 + 2
+                    low = c.expression.evaluate(bindings_list[low_idx])
+                    high = c.expression.evaluate(bindings_list[high_idx])
+                    ivals.append([Interval(l, h) for l, h in zip(low, high)])
+            intervals_list.append(ivals)
+
+        newrs = TypedRowset([colnames], types, sens)            
         for idx in range(len(cols)):
             colname = newrs.idxcol[idx]
-
             newrs[colname] = cols[idx]
+
+            newrs.intervals[colname] = intervals_list[idx]
 
         # Now sort, if it has order by clause
         if query.order is not None:

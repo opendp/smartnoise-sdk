@@ -50,7 +50,7 @@ class MetadataLoader:
     def load_table(self, schema, table, t):
         rowcount = int(t["rows"]) if "rows" in t else 0
         row_privacy = bool(t["row_privacy"]) if "row_privacy" in t else False
-        max_ids = int(t["max_ids"]) if "max_ids" in t else None
+        max_ids = int(t["max_ids"]) if "max_ids" in t else 1
         sample_max_ids = bool(t["sample_max_ids"]) if "sample_max_ids" in t else None
         rows_exact = int(t["rows_exact"]) if "rows_exact" in t else None
         clamp_counts = bool(t["clamp_counts"]) if "clamp_counts" in t else True

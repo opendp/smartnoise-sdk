@@ -28,7 +28,8 @@ class TypedRowset:
         self.types = {}
         self.sens = {}
         self.colnames = []
-        self.bounds = {}
+        self.release = {}
+        self.intervals = {}
 
         for idx in range(len(header)):
             cname = header[idx]
@@ -118,11 +119,44 @@ class TypedRowset:
         types = [self.types[name] for name in self.colnames]
         sens = [self.sens[name] for name in self.colnames]
         rows = [tuple(self.colnames)]
+        intervals = {}
+        for name in self.colnames:
+            if name in self.intervals:
+                intervals[name] = None
+                if self.intervals[name] is not None:
+                    intervals[name] = []
+                    for idx in range(len(self.intervals[name])):
+                        intervals[name].append([])
+        
+        print("-- intervals for ")
+        print(self)
+        for k in self.intervals.keys():
+            print(k)
+            ival = self.intervals[k]
+            for idx in range(len(ival)):
+                print("index: {0}".format(idx))
+                print([str(i) for i in ival[idx]])
         for idx in range(self.n_rows):
             if ops[relation](col[idx], value):
                 rows.append(tuple(self[name][idx] for name in self.colnames))
+                for name in self.colnames:
+                    if name in self.intervals and self.intervals[name] is not None:
+                        print("hkjhkhkjhkjhkj")
+                        for q in range(len(self.intervals[name])):
+                            print(q)
+                            print([i for i in self.intervals[name][q]])
+                            intervals[name][q].append(self.intervals[name][q][idx])
         filtered_rs = TypedRowset(rows, types, sens)
-        filtered_rs.bounds = self.bounds
+        filtered_rs.intervals = intervals
+        filtered_rs.release = self.release
+        print("- - - - - - -  - - - - ")
+        for k in intervals.keys():
+            print(k)
+            ival = self.intervals[k]
+            for idx in range(len(ival)):
+                print("index: {0}".format(idx))
+                print([str(i) for i in ival[idx]])
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-")
         return filtered_rs
 
     def sort(self, sortcols):

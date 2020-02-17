@@ -34,7 +34,7 @@ class Collection:
     Common attributes for a table or a view
 """
 class Table:
-    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=None, sample_max_ids=True, rows_exact=None, clamp_counts=True):
+    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None, clamp_counts=True):
         self.schema = schema
         self.name = name
         self.rowcount = rowcount

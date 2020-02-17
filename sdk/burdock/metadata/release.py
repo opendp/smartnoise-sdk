@@ -10,8 +10,16 @@ while having multiple values per column, and multiple intervals per value.
 For single row queries with default single confidence interval, there will be only one value
 per column and one interval per value, but callers should be prepared for multiple values.
 """
+
+class Interval:
+    def __init__(self, low, high):
+        self.low = low
+        self.high = high
+    def __str__(self):
+        return "[{0} - {1}]".format(self.low, self.high)
+        
 class Result:
-    def __init__(self, mechanism, statistic, source, value, epsilon, delta, sensitivity, max_contrib, alpha, accuracy, interval):
+    def __init__(self, mechanism, statistic, source, values, epsilon, delta, sensitivity, max_contrib, alphas, accuracy, intervals):
         """Instantiate a release.
 
         :param string mechanism: The label for the mechanism being used (e.g. 'laplace', 'gaussian')
@@ -30,11 +38,13 @@ class Result:
         self.mechanism = mechanism
         self.statistic = statistic
         self.source = source
-        self.value = value
+        self.values = values
         self.epsilon = epsilon
         self.delta = delta
         self.sensitivity = sensitivity
         self.max_contrib = max_contrib
-        self.alpha = alpha
+        self.alphas = alphas
         self.accuracy = accuracy
-        self.interval = interval
+        self.intervals = intervals
+    def __str__(self):
+        return "mechanism: {0}\nstatistic: {1}\nsource: {2}\nvalues: {3}\nepsilon: {4}\ndelta: {5}\nsensitivity: {6}\nmax_contrib: {7}\nalphas: {8}\naccuracy: {9}\nintervals: {10}".format(self.mechanism, self.statistic, self.source, self.values, self.epsilon, self.delta, self.sensitivity, self.max_contrib, self.alphas, self.accuracy, self.intervals)

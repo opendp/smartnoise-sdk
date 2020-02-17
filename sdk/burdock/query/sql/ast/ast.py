@@ -26,6 +26,11 @@ class Query(SqlRel):
         self.having = having
         self.order = order
 
+        self.max_ids = 1
+        self.sample_max_ids = True
+        self.row_privacy = False
+        self.clamp_counts = True
+
         # m_symbols includes all columns in the output, including anonymous columns,
         #   equivalent to the result of SELECT * on this name scope.
         # m_sym_dict includes only columns with explicit or inferred aliases,
@@ -55,14 +60,21 @@ class Query(SqlRel):
         self.m_symbols = symbols
         self.m_sym_dict = {}
 
+        tables = []
         for name, symbol in self.m_symbols:
+            for table in symbol.find_nodes(TableColumn):
+                tables.append(table)
             if name == "???":
                 continue
             if name in self.m_sym_dict:
                 raise ValueError("SELECT has duplicate column names: " + name)
             self.m_sym_dict[name] = symbol
 
-
+        if len(tables) > 0:
+            self.max_ids = max(tc.max_ids for tc in tables)
+            self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
+            self.row_privacy = any(tc.row_privacy for tc in tables)
+            self.clamp_counts = any(tc.clamp_counts for tc in tables)
     """
         returns the expression for an output column in the SELECT statement.
         Query objects do not have aliases, so caller must strip alias first.
@@ -222,14 +234,19 @@ class Table(SqlRel):
             if table is None:
                 raise ValueError("No metadata available for " + str(self.name))
             tc = table.m_columns
-            self.m_symbols = [(name, TableColumn(\
-                self.name, \
-                name, \
-                tc[name].typename(), \
-                tc[name].is_key, \
-                tc[name].minval if tc[name].typename() in ["int", "float"] else None, \
-                tc[name].maxval if tc[name].typename() in ["int", "float"] else None, \
-                    metadata.compare)) for name in tc.keys()]
+            self.m_symbols = [(name, TableColumn(
+                tablename=self.name,
+                colname=name,
+                valtype=tc[name].typename(),
+                is_key=tc[name].is_key,
+                minval=tc[name].minval if tc[name].typename() in ["int", "float"] else None,
+                maxval=tc[name].maxval if tc[name].typename() in ["int", "float"] else None,
+                max_ids=table.max_ids,
+                sample_max_ids=table.sample_max_ids,
+                row_privacy=table.row_privacy,
+                clamp_counts=table.clamp_counts,
+                compare=metadata.compare)
+                ) for name in tc.keys()]
     def escaped(self):
         # is any part of this identifier escaped?
         parts = str(self).split(".")
@@ -290,13 +307,17 @@ class Join(SqlRel):
 #
 class TableColumn(SqlExpr):
     """ A column attached to a fully qualified table """
-    def __init__(self, tablename, colname, valtype="unknown", is_key=False, minval=None, maxval=None, compare=None):
+    def __init__(self, tablename, colname, valtype="unknown", is_key=False, minval=None, maxval=None, max_ids=1, sample_max_ids=True, row_privacy=False, clamp_counts=True, compare=None):
         self.tablename = tablename
         self.colname = colname
         self.valtype = valtype
         self.is_key = is_key
         self.minval = minval
         self.maxval = maxval
+        self.max_ids = max_ids
+        self.sample_max_ids = sample_max_ids
+        self.row_privacy = row_privacy
+        self.clamp_counts = clamp_counts
         self.unbounded = minval is None or maxval is None
         compare = BaseNameCompare([]) if compare is None else compare
         self.compare = compare
