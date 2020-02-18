@@ -7,11 +7,11 @@ Database:
         private_id: True
         lower: 0
         upper: 5
-      B:
+      b:
         type: int
         lower: 0
         upper: 25
-      C:
+      c:
         type: int
         lower: 0
         upper: 125
