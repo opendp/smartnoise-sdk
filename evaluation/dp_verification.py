@@ -17,7 +17,7 @@ import evaluation.aggregation as agg
 import evaluation.exploration as exp
 import copy
 import yarrow
-from burdock.query.sql.metadata.metadata import *
+from burdock.metadata.collection import *
 from scipy import stats
 
 class DPVerification:

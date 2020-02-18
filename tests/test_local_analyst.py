@@ -2,12 +2,14 @@
 import sklearn.datasets
 import pandas as pd
 
+
 from burdock.query.sql import DataFrameReader, execute_private_query
-from burdock.query.sql.metadata.metadata import Collection, Table, Float
+from burdock.metadata.collection import Collection, Table, Float
 
 def test_sklearn_query():
    sklearn_dataset = sklearn.datasets.load_iris()
    sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)
+
 
    iris = Table("dbo", "iris", 150, [
       Float("sepal length (cm)", 4, 8),
