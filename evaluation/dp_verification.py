@@ -128,7 +128,7 @@ class DPVerification:
     
     # Plot histograms given the vectors of repeated aggregation results applied on neighboring datasets
     def plot_histogram_neighbors(self, fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, binlist, bound=True, exact=False):
-        plt.figure(figsize=(15,6))
+        plt.figure(figsize=(15,5))
         if(exact):
             ax = plt.subplot(1, 1, 1)
             ax.ticklabel_format(useOffset=False)
@@ -142,7 +142,7 @@ class DPVerification:
         ax = plt.subplot(1, 2, 1)
         ax.ticklabel_format(useOffset=False)
         plt.xlabel('Bin')
-        plt.ylabel('Frequency')
+        plt.ylabel('Probability')
         if(bound):
             plt.bar(binlist[:-1], d2histupperbound, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
             plt.bar(binlist[:-1], d1lower, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
@@ -155,7 +155,7 @@ class DPVerification:
         ax = plt.subplot(1, 2, 2)
         ax.ticklabel_format(useOffset=False)
         plt.xlabel('Bin')
-        plt.ylabel('Frequency')
+        plt.ylabel('Probability')
         if(bound):
             plt.bar(binlist[:-1], d1histupperbound, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
             plt.bar(binlist[:-1], d2lower, alpha=0.5, width=np.diff(binlist), ec="k", align="edge")
@@ -366,7 +366,10 @@ class DPVerification:
                 key = "[" + ','.join(str(e) for e in list(sample)) + "] - " + filename
                 res_list[key] = [dp_res, acc_res]
         
-        print(res_list)
+        print("Halton sequence based Powerset Test Result")
+        for data, res in res_list.items():
+            print(data, "-", res[0])
+
         dp_res = np.all(np.array([dp_res[0] for dp_res in res_list.values()]))
         return dp_res
 
