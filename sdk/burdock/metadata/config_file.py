@@ -1,5 +1,5 @@
 import yaml
-from .metadata import *
+from .collection import *
 
 
 class MetadataLoader:

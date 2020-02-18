@@ -1,6 +1,6 @@
 from .rowset import TypedRowset
-from burdock.query.sql.metadata.name_compare import BaseNameCompare
-from burdock.query.sql.metadata.metadata import Int
+from burdock.metadata.name_compare import BaseNameCompare
+from burdock.metadata.collection import Int
 import copy
 import re
 

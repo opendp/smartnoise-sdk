@@ -7,7 +7,7 @@ import pandas as pd
 import os
 import copy
 from statsmodels.tools import sequences
-from burdock.query.sql.metadata.metadata import *
+from burdock.metadata.collection import *
 
 class Exploration:
     def __init__(self, dataset_size = 3):

@@ -4,7 +4,7 @@ import pandas as pd
 
 
 from burdock.query.sql import DataFrameReader, execute_private_query
-from burdock.query.sql.metadata.metadata import Collection, Table, Float
+from burdock.metadata.collection import Collection, Table, Float
 
 def test_sklearn_query():
    sklearn_dataset = sklearn.datasets.load_iris()
