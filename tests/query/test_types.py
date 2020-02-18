@@ -26,7 +26,7 @@ class TestTypes:
             q.load_symbols(metadata)
             assert q["Refurbished"].type() == "boolean"
             assert q["Refurbished"].sensitivity() == 1
-            assert q["Temperature"].sensitivity() == 40
+            assert q["Temperature"].sensitivity() == 65.0
 
     def test_s20(self):
             q = qp("SELECT 7 * Temperature, Crashes * 101.11 FROM Telemetry.Crashes;")
@@ -35,7 +35,7 @@ class TestTypes:
             assert q.m_symbols[0][1].type() == "float"
             assert q.m_symbols[1][1].type() == "float"
             assert q.m_symbols[1][1].sensitivity() > 1010
-            assert q.m_symbols[0][1].sensitivity() == 280
+            assert q.m_symbols[0][1].sensitivity() == 455
 
     def test_s23(self):
         q = qp("SELECT SUM(C.Crashes) AS Crashes FROM (Telemetry.Crashes) AS C;")
@@ -58,13 +58,13 @@ class TestTypes:
         q = qp("SELECT Temperature FROM (SELECT * FROM (SELECT * FROM (SELECT Temperature, Crashes FROM Telemetry.Census JOIN Telemetry.Crashes USING(DeviceID))));")
         q.load_symbols(metadata)
         assert q["Temperature"].type() == "float"
-        assert q["Temperature"].sensitivity() == 40
+        assert q["Temperature"].sensitivity() == 65
 
     def test_s47(self):
         q = qp("SELECT (1 + Temperature) AS Temperature FROM (SELECT * FROM (SELECT * FROM (SELECT Temperature, Crashes FROM Telemetry.Census JOIN Telemetry.Crashes USING(DeviceID))));")
         q.load_symbols(metadata)
         assert q["Temperature"].type() == "float"
-        assert q["Temperature"].sensitivity() == 40
+        assert q["Temperature"].sensitivity() == 65
 
     def test_s48(self):
         q = qp("SELECT (3 * COUNT(Temperature)) AS Temperature FROM (SELECT * FROM (SELECT * FROM (SELECT Temperature, Crashes FROM Telemetry.Census JOIN Telemetry.Crashes USING(DeviceID))));")
@@ -77,4 +77,4 @@ class TestTypes:
         q.load_symbols(metadata)
         assert q["Temperature"].type() == "float"
         assert q["Temperature"].sensitivity() == 1.0 / 7.0
-
+        

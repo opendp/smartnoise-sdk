@@ -48,7 +48,7 @@ class NamedExpression(SqlExpr):
     def type(self):
         return self.expression.type()
     def sensitivity(self):
-        return self.expression.type()
+        return self.expression.sensitivity()
     def children(self):
         return [self.expression] + ([Token("AS"), self.name] if self.name is not None else [])
     def evaluate(self, bindings):
