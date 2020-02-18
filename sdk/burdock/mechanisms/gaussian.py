@@ -2,7 +2,7 @@ import numpy as np
 import math
 from burdock.mechanisms.base import AdditiveNoiseMechanism
 from scipy.stats import norm
-from burdock.metadata.release import Result, Interval
+from burdock.metadata.release import Result, Interval, Intervals
 
 
 class Gaussian(AdditiveNoiseMechanism):
@@ -20,14 +20,14 @@ class Gaussian(AdditiveNoiseMechanism):
         delta = self.delta
         sensitivity = self.sensitivity
         max_contrib = self.max_contrib
-        alphas = self.alphas
         accuracy = None
         intervals = None
         if compute_accuracy:
             bounds = self.bounds(bootstrap)
             accuracy = [(hi - lo) / 2.0 for lo, hi in bounds]
-            intervals = [[Interval(v - a, v + a) for v in reported_vals] for a in accuracy]
-        return Result(mechanism, statistic, source, reported_vals, epsilon, delta, sensitivity, max_contrib, alphas, accuracy, intervals)
+            intervals = Intervals([Interval(alpha, accuracy) for alpha, accuracy in zip(self.alphas, accuracy)])
+            intervals.extend(reported_vals)
+        return Result(mechanism, statistic, source, reported_vals, epsilon, delta, sensitivity, self.sd, max_contrib, intervals)
 
     def bounds(self, bootstrap=False):
         if not bootstrap:

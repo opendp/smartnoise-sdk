@@ -1,7 +1,7 @@
 import numpy as np
 from burdock.mechanisms.base import AdditiveNoiseMechanism
 from scipy.stats import laplace
-from burdock.metadata.release import Result, Interval
+from burdock.metadata.release import Result, Interval, Intervals
 
 
 class Laplace(AdditiveNoiseMechanism):
@@ -19,14 +19,14 @@ class Laplace(AdditiveNoiseMechanism):
         delta = self.delta
         sensitivity = self.sensitivity
         max_contrib = self.max_contrib
-        alphas = self.alphas
         accuracy = None
         intervals = None
         if compute_accuracy:
             bounds = self.bounds(bootstrap)
-            accuracy = [(hi - lo) / 2.0 for hi, lo in bounds]
-            intervals = [[Interval(v - a, v + a) for v in reported_vals] for a in accuracy]
-        return Result(mechanism, statistic, source, reported_vals, epsilon, delta, sensitivity, max_contrib, alphas, accuracy, intervals)
+            accuracy = [(hi - lo) / 2.0 for lo, hi in bounds]
+            intervals = Intervals([Interval(alpha, accuracy) for alpha, accuracy in zip(self.alphas, accuracy)])
+            intervals.extend(reported_vals)
+        return Result(mechanism, statistic, source, reported_vals, epsilon, delta, sensitivity, self.scale, max_contrib, intervals)
 
 
     def bounds(self, bootstrap=False):
