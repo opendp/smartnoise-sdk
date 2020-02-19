@@ -24,7 +24,6 @@ if __name__ == "__main__":
         rowset = private_reader.execute(query)
 
         result = {"query_result": rowset}
-        # TODO this is failing
         df = pd.DataFrame(rowset[1:], columns=rowset[0])
         with open("result.json", "w") as stream:
             json.dump(df.to_dict(), stream)
