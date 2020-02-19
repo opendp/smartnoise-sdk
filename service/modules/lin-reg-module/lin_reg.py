@@ -10,8 +10,9 @@ import pandas as pd
 from burdock.client import get_dataset_client
 from burdock.data.adapters import load_metadata, load_dataset
 
-from dp_lin_reg import DPLinearRegression
+from burdock.models import DPLinearRegression
 #  TODO add a test for both this and log_reg module in smoke tests
+
 
 if __name__ == "__main__":
     dataset_name = sys.argv[1]
