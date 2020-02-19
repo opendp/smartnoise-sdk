@@ -10,7 +10,7 @@ Database:
       b:
         type: int
         min: 0
-        max: 20
+        max: 50
       c:
         type: int
         min: 0
