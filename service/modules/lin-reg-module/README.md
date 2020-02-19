@@ -1,1 +1,1 @@
-# Partial Differentially Private Linear Regression module Mlflow project
+# Differentially Private Linear Regression module Mlflow project

@@ -11,6 +11,7 @@ from burdock.client import get_dataset_client
 from burdock.data.adapters import load_metadata, load_dataset
 
 from burdock.models import DPLinearRegression
+#  TODO add a test for both this and log_reg module in smoke tests
 
 if __name__ == "__main__":
     dataset_name = sys.argv[1]
@@ -52,12 +53,10 @@ if __name__ == "__main__":
 
         # Try multiple times because sometimes noise makes cov matrix not positive definite
         model = None
-        for i in range(10):
-            try:
-                model = DPLinearRegression().fit(X, y, data_range, budget)
-                break
-            except:
-                pass
+        try:
+            model = DPLinearRegression().fit(X, y, data_range, budget)
+        except:
+            pass
 
         if model is None:
             raise Exception("The added noise made your covariance matrix no longer positive definite.")

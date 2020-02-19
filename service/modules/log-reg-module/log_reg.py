@@ -38,7 +38,7 @@ if __name__ == "__main__":
         X = dataset[x_features]
         y = np.ravel(dataset[y_targets]) # use ravel to convert the column vector to a 1d array to avoid issues later using fit
 
-        # TODO change how we find data norm (bad practice here in calculating the true norm; will be changed to use one specified in the schema)
+        # TODO Calculate max norm with schema
         norms = np.linalg.norm(dataset, axis=1) # norms for each column
         max_norm = np.amax(norms)
         logging.warning('Currently calculating the data norm instead of using schema-specified value. This is bad practice, and will eventually be changed') # provide a warning about bad practice

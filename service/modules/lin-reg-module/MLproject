@@ -9,4 +9,4 @@ entry_points:
       budget: float
       x_features: str
       y_targets: str
-    command: "python linreg.py {dataset_name} {budget} {x_features} {y_targets}"
+    command: "python lin_reg.py {dataset_name} {budget} {x_features} {y_targets}"
