@@ -48,8 +48,6 @@ class ArithmeticExpression(SqlExpr):
         self.left = left
         self.right = right
         self.op = op
-    def symbol(self, relations):
-        return ArithmeticExpression(self.left.symbol(relations), self.op, self.right.symbol(relations))
     def type(self):
         if self.op == "/":
             return "float"
@@ -93,6 +91,8 @@ class ArithmeticExpression(SqlExpr):
         l = self.left.evaluate(bindings)
         r = self.right.evaluate(bindings)
         return ops[self.op](l, r)
+    def symbol(self, relations):
+        return ArithmeticExpression(self.left.symbol(relations), self.op, self.right.symbol(relations))
 
 class MathFunction(SqlExpr):
     def __init__(self, name, expression):
@@ -118,6 +118,8 @@ class MathFunction(SqlExpr):
     def evaluate(self, bindings):
         exp = self.expression.evaluate(bindings)
         return funcs[self.name.lower()](exp)
+    def symbol(self, relations):
+        return MathFunction(self.name, self.expression.symbol(relations))
 
 class PowerFunction(SqlExpr):
     def __init__(self, expression, power):
@@ -130,6 +132,8 @@ class PowerFunction(SqlExpr):
     def evaluate(self, bindings):
         exp = self.expression.evaluate(bindings)
         return np.power(exp, self.power.value)
+    def symbol(self, relations):
+        return PowerFunction(self.expression.symbol(relations), self.power.symbol(relations))
 
 class BareFunction(SqlExpr):
     def __init__(self, name):
@@ -149,3 +153,5 @@ class RoundFunction(SqlExpr):
     def evaluate(self, bindings):
         exp = self.expression.evaluate(bindings)
         return np.round(exp, self.decimals.value)
+    def symbol(self, relations):
+        return RoundFunction(self.expression.symbol(relations), self.decimals)

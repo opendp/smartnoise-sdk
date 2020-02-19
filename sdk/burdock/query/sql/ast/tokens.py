@@ -118,6 +118,8 @@ class Seq(Sql):
         return iter(self.seq)
     def children(self):
         return self.seq
+    def symbol(self, relations):
+        return Seq([i.symbol(relations) for i in self.seq])
 
 
 """
@@ -178,8 +180,6 @@ class SqlRel(Sql):
     Base type for all SQL expressions
 """
 class SqlExpr(Sql):
-    def symbol(self, relations):
-        return self
     def type(self):
         return "unknown"
     def sensitivity(self):
@@ -188,6 +188,12 @@ class SqlExpr(Sql):
         raise ValueError("We don't know how to evaluate " + str(self))
     def children(self):
         return [None]
+    def symbol(self, relations):
+        # force inherited class to override if Column children exist
+        child_col = self.find_node(Column)
+        if child_col is not None:
+            raise ValueError("Symbol not implemented on: " + str(self) + " even though has Sql Column child " + str(child_col))
+        return self
 
 class Literal(SqlExpr):
     """A literal used in an expression"""
@@ -226,6 +232,37 @@ class Literal(SqlExpr):
             raise ValueError("Unknown literal type: " + str(type(self.value)))
     def evaluate(self, bindings):
         return self.value
+
+class Column(SqlExpr):
+    """A fully qualified column name"""
+    def __init__(self, name):
+        self.name = name
+    def __str__(self):
+        return str(self.name)
+    def __eq__(self, other):
+        return type(self) == type(other) and self.name == other.name
+    def __hash__(self):
+        return hash(self.name)
+    def escaped(self):
+        # is any part of this identifier escaped?
+        parts = self.name.split(".")
+        return any([p.startswith('"') or p.startswith('[') for p in parts])
+    def symbol_name(self):
+        return self.name
+    def symbol(self, relations):
+        sym = [r.symbol(self) for r in relations if r.alias_match(self.name)]
+        if len(sym) == 0:
+            raise ValueError("Column cannot be found " + str(self))
+        elif len(sym) > 1:
+            raise ValueError("Column matches more than one relation, ambiguous " + str(self))
+        else:
+            return sym[0]
+    def evaluate(self, bindings):
+        # may need to handle escaping here
+        if str(self).lower().replace('"','') in bindings:
+            return bindings[str(self).lower().replace('"','')]
+        else:
+            return None
 
 
 def flatten(iter):
