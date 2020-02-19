@@ -311,7 +311,7 @@ class TableColumn(SqlExpr):
     def sensitivity(self):
         if self.valtype in ["int", "float"]:
             if self.minval is not None and self.maxval is not None:
-                return abs(self.maxval - self.minval)
+                return max(abs(self.maxval), abs(self.minval))
         elif self.valtype == "boolean":
             return 1
         else:
