@@ -1,7 +1,7 @@
-from .metadata import *
+from .collection import *
 
 from burdock.query.sql import QueryParser, ast
-from burdock.query.sql.metadata import sql_reservered
+from burdock.metadata import sql_reservered
 
 class MetadataLoader:
     def __init__(self, reader):
@@ -10,7 +10,7 @@ class MetadataLoader:
         self.engine = reader.engine
 
     def databaseSchema(self, tables=None):
-        return Database(self.getTables(tables), self.engine)
+        return Collection(self.getTables(tables), self.engine)
 
     def getTables(self, tableList=None):
         if tableList is None:

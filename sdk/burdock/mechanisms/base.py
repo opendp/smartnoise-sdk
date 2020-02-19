@@ -44,8 +44,3 @@ class AdditiveNoiseMechanism:
             r = self.release(vals)
             edge = (1 - pct) / 2.0
             return np.percentile(r, [edge * 100, 100 - edge * 100])
-
-
-
-class Statistic:
-    pass

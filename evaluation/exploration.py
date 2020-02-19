@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import os
 import copy
-from burdock.query.sql.metadata.metadata import *
+from burdock.metadata.collection import *
 
 class Exploration:
     def __init__(self, dataset_size = 3):
@@ -64,7 +64,7 @@ class Exploration:
                     ])
                     d2_table = copy.copy(d1_table)
                     d2_table.schema, d2_table.name, d2_table.rowcount = "d2_" + filename, "d2_" + filename, d1_table.rowcount - 1
-                    d1_metadata, d2_metadata = Database([d1_table], "csv"), Database([d2_table], "csv")
+                    d1_metadata, d2_metadata = Collection([d1_table], "csv"), Collection([d2_table], "csv")
 
                     self.neighbor_pair[filename] = [d1, d2, d1_metadata, d2_metadata]
                     self.visited.append(filename)
