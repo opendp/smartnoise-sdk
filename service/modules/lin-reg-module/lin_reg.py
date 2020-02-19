@@ -12,6 +12,7 @@ from burdock.data.adapters import load_metadata, load_dataset
 
 from burdock.models import DPLinearRegression
 #  TODO add a test for both this and log_reg module in smoke tests
+from burdock.models import DPLinearRegression
 
 if __name__ == "__main__":
     dataset_name = sys.argv[1]
