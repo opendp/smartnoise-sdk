@@ -10,6 +10,7 @@ import pytest
 from evaluation.dp_verification import DPVerification
 from evaluation.exploration import Exploration
 from evaluation.aggregation import Aggregation
+import yarrow
 
 dv = DPVerification(dataset_size=10000)
 ag = Aggregation(t=1, repeat_count=10000)
@@ -75,3 +76,23 @@ class TestStochastic:
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
         dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=100)
         assert(dp_res == True)
+
+    def test_yarrow_dp_mean(self):
+        test_csv_path = 'service/datasets/PUMS.csv'
+        dp_yarrow_mean_res = dv.yarrow_test(test_csv_path, yarrow.dp_mean, 'income', float, epsilon=1.0, minimum=0, maximum=100, num_records=1000)
+        assert(dp_yarrow_mean_res == True)
+
+    def test_yarrow_dp_variance(self):
+        test_csv_path = 'service/datasets/PUMS.csv'
+        dp_yarrow_var_res = dv.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=1.0, minimum=0, maximum=12, num_records=1000)
+        assert(dp_yarrow_var_res == True)
+
+    def test_yarrow_dp_moment_raw(self):
+        test_csv_path = 'service/datasets/PUMS.csv'
+        dp_yarrow_moment_res = dv.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
+        assert(dp_yarrow_moment_res == True)
+
+    def test_yarrow_dp_covariance(self):
+        test_csv_path = 'service/datasets/PUMS.csv'
+        dp_yarrow_covariance_res = dv.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
+        assert(dp_yarrow_covariance_res == True)
