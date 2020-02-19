@@ -10,7 +10,7 @@ import pandas as pd
 from burdock.client import get_dataset_client
 from burdock.data.adapters import load_metadata, load_dataset
 
-from dp_lin_reg import DPLinearRegression
+from burdock.models import DPLinearRegression
 
 if __name__ == "__main__":
     dataset_name = sys.argv[1]
