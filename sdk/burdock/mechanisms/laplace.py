@@ -11,7 +11,7 @@ class Laplace(AdditiveNoiseMechanism):
 
     def release(self, vals, compute_accuracy=False, bootstrap=False):
         noise = rand.laplace(0.0, self.scale, len(vals))
-        reported_vals = noise + vals
+        reported_vals = [n + v for n, v in zip(noise, vals)]
         mechanism = "Laplace"
         statistic = "additive_noise"
         source = None

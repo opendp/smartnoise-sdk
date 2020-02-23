@@ -12,7 +12,7 @@ class Gaussian(AdditiveNoiseMechanism):
 
     def release(self, vals, compute_accuracy=False, bootstrap=False):
         noise = rand.normal(0.0, self.sd * self.max_contrib * self.sensitivity, len(vals))
-        reported_vals = noise + vals
+        reported_vals = [n + v for n, v in zip(noise, vals)]
         mechanism = "Gaussian"
         statistic = "additive_noise"
         source = None
