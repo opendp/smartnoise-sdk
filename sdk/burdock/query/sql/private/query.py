@@ -3,7 +3,7 @@ from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 import burdock.query.sql.ast.expressions.sql as ast
 from burdock.query.sql.reader.rowset import TypedRowset
-from burdock.metadata.release import Interval
+from burdock.metadata.release import Interval, Intervals, Result
 
 import numpy as np
 
@@ -137,22 +137,22 @@ class PrivateQuery:
         # first do the noisy values
         bindings_list.append(dict((name.lower(), db_rsc[name]) for name in db_rsc.keys()))
 
-        # now find a list of alphas
+        # now evaluate all lower and upper
         alphas = None
         for name in db_rsc.keys():
-            alpha = db_rs.release[name].alphas if name in db_rs.release else None
-            if alpha is not None:
-                alphas = alpha
+            alpha_list = db_rs.release[name].alphas if name in db_rs.release else None
+            if alpha_list is not None:
+                alphas = alpha_list
                 break
         if alphas is not None:
-            for idx in range(len(alphas)):
-                print("looking at range: {0}".format(idx))
+            for alpha in alphas:
+                print("looking at range: {0}".format(alpha))
                 bind_low = {}
                 bind_high = {}
                 for name in db_rsc.keys():
-                    if name in db_rs.intervals and db_rs.intervals[name] is not None and len(db_rs.intervals[name]) > 0:
-                        bind_low[name.lower()] = [i.low for i in db_rs.intervals[name][idx]]
-                        bind_high[name.lower()] = [i.high for i in db_rs.intervals[name][idx]]
+                    if name in db_rs.release and db_rs.release[name].intervals is not None:
+                        bind_low[name.lower()] = db_rs.release[name].intervals[alpha].low
+                        bind_high[name.lower()] = db_rs.release[name].intervals[alpha].high
                     else:
                         bind_low[name.lower()] = db_rsc[name]
                         bind_high[name.lower()] = db_rsc[name]
@@ -172,7 +172,7 @@ class PrivateQuery:
                     high_idx = idx * 2 + 2
                     low = c.expression.evaluate(bindings_list[low_idx])
                     high = c.expression.evaluate(bindings_list[high_idx])
-                    ivals.append([Interval(l, h) for l, h in zip(low, high)])
+                    ivals.append(Interval(alphas[idx], None, low, high))
             intervals_list.append(ivals)
 
         # make the new recordset
@@ -180,8 +180,9 @@ class PrivateQuery:
         for idx in range(len(cols)):
             colname = newrs.idxcol[idx]
             newrs[colname] = cols[idx]
+            newrs.release[colname] = Result(None, None, None, cols[idx], None, None, None, None, None, Intervals(intervals_list[idx]), None)
 
-            newrs.intervals[colname] = intervals_list[idx]
+            #newrs.intervals[colname] = Intervals(intervals_list[idx])
 
         # Now sort, if it has order by clause
         if query.order is not None:

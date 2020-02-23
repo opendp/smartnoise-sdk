@@ -54,7 +54,6 @@ class TestGauss:
         r = g.release(vals, True)
         assert(r_n.accuracy is None)
         assert(r.accuracy is not None)
-        assert(r.intervals[0].low < r.intervals[1].low )
-        assert(r.intervals[1].low < r.intervals[2].low )
-        assert(r.intervals[0].high < r.intervals[1].high)
-        assert(r.intervals[1].high < r.intervals[2].high )
+        r0, r1 = r.intervals
+        assert(r1.inside(r0))
+        assert(not r1.contains(r0))

@@ -56,7 +56,6 @@ class TestLaplace:
         r = l.release(vals, True)
         assert(r_n.accuracy is None)
         assert(r.accuracy is not None)
-        assert(r.intervals[0].low < r.intervals[1].low )
-        assert(r.intervals[1].low < r.intervals[2].low )
-        assert(r.intervals[0].high < r.intervals[1].high)
-        assert(r.intervals[1].high < r.intervals[2].high )
+        r0, r1 = r.intervals
+        assert(r0.contains(r1))
+        assert(not r0.inside(r1))

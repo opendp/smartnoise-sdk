@@ -22,6 +22,8 @@ class IntervalRange:
         return "[{0}-{1}]".format(round(self.low, 2), round(self.high, 2))
     def contains(self, other):
         return self.low <= other.low and self.high >= other.high
+    def inside(self, other):
+        return other.contains(self)
     def __eq__(self, other):
         return self.low == other.low and self.high == other.high
     def __lt__(self, other):
@@ -56,6 +58,18 @@ class Interval:
         return "alpha: {0}\naccuracy: {1}\n".format(self.alpha, self.accuracy) + cis
     def __len__(self):
         return len(self.low)
+    def contains(self, other):
+        return all([s.contains(o) for s, o in zip(self, other)])
+    def inside(self, other):
+        return all([s.inside(o) for s, o in zip(self, other)])
+    def __eq__(self, other):
+        return all([s == o for s, o in zip(self, other)])
+    def __lt__(self, other):
+        return all([s < o for s, o in zip(self, other)])
+    def __gt__(self, other):
+        return all([s > o for s, o in zip(self, other)])
+    def intersects(self, other):
+        return all([s.intersects(o) for s, o in zip(self, other)])
     def __iter__(self):
         return iter([IntervalRange(low, high) for low, high in zip(self.low, self.high)])
     def __getitem__(self, key):
@@ -223,6 +237,13 @@ class Result:
             self.intervals.delete_row(idx)
     def __len__(self):
         return len(self.values)
+    @property
+    def alphas(self):
+        return None if self.intervals is None else self.intervals.alphas
+    @property
+    def accuracy(self):
+        return None if self.intervals is None else self.intervals.accuracy
+
 
 """A differentially private release
 
@@ -233,14 +254,16 @@ source and privacy paramaters.
 The individual result objects need not be the same length,
 though lengths will be the same for multi-column SQL outputs."""
 class Release:
-    def __init__(self, results):
+    def __init__(self, results=None):
         self._results = {}
-        for r in results:
-            self._results[r.name] = r
+        if results is not None:
+            for r in results:
+                self._results[r.name] = r
     def __getitem__(self, key):
         return self._results[key]
     def __setitem__(self, key, value):
         self._results[key] = value
     def __delitem__(self, key):
         del self._results[key]
-            
+    def __contains__(self, key):
+        return key in self._results
