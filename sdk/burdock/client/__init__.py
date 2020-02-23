@@ -2,9 +2,9 @@ import os
 import json
 from requests import Session
 
-from burdock.restclient.models.project_run_details import ProjectRunDetails
-from burdock.restclient.rest_client import RestClient
-from burdock.restclient.models.dataset_read_request import DatasetReadRequest
+from .restclient.models.project_run_details import ProjectRunDetails
+from .restclient.rest_client import RestClient
+from .restclient.models.dataset_read_request import DatasetReadRequest
 
 
 class _MockCredentials(object):

@@ -50,5 +50,3 @@ class AdditiveNoiseMechanism:
             return _bounds
 
 
-class Statistic:
-    pass
