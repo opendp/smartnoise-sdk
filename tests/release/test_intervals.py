@@ -1,5 +1,5 @@
 import pytest
-from burdock.metadata.release import Interval, Intervals
+from burdock.metadata.report import Interval, Intervals
 
 
 class TestIntervals:
@@ -28,7 +28,7 @@ class TestIntervals:
         ival_a = Interval(0.95, 3.0)
         ival_b = Interval(0.77, 2.7)
         ivals = Intervals([ival_a, ival_b])
-        assert(ivals.alphas == [0.95, 0.77])
+        assert(ivals.confidence_widths == [0.95, 0.77])
         assert(ivals.accuracy == [3.0, 2.7])
         for a, b in zip(ival1, ival_a):
             assert(a == b)

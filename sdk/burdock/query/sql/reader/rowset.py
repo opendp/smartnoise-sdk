@@ -2,7 +2,7 @@ import numpy as np
 import datetime
 import operator
 from numpy import inf
-from burdock.metadata.release import Release
+from burdock.metadata.report import Report
 
 """
     Represents a typed rowset supporting the types used in differentially private
@@ -29,7 +29,7 @@ class TypedRowset:
         self.types = {}
         self.sens = {}
         self.colnames = []
-        self.release = Release()
+        self.report = Report()
 
         for idx in range(len(header)):
             cname = header[idx]
@@ -123,7 +123,7 @@ class TypedRowset:
             if ops[relation](col[idx], value):
                 rows.append(tuple(self[name][idx] for name in self.colnames))
         filtered_rs = TypedRowset(rows, types, sens)
-        filtered_rs.release = self.release
+        filtered_rs.report = self.report
         return filtered_rs
 
     def sort(self, sortcols):

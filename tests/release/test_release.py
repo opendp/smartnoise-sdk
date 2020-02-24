@@ -1,5 +1,5 @@
 import pytest
-from burdock.metadata.release import Result, Release, Interval, Intervals
+from burdock.metadata.report import Result, Report, Interval, Intervals
 
 class TestRelease:
     def test_release(self):
@@ -24,7 +24,7 @@ class TestRelease:
         ival_b = Interval(0.9, 3.0)
         r_b = Result("foo", "bar", "baz", vals_b, 0.1, None, 1.0, None, 1, [ival_b], "biff" )
 
-        rel = Release([r, r_b])
+        rel = Report([r, r_b])
 
         for a, b in zip(rel["baz"].intervals[0.9], rel["biff"].intervals[0.9]):
             assert a < b

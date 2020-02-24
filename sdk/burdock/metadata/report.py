@@ -6,7 +6,7 @@ Represents the metadata for a differentially private release.
 Specification at https://docs.google.com/document/d/1PTAG2xImB5B3m4crc9t3MQLyRUp3GieD-u8tJlNCDzY/edit#heading=h.ga5nyepy7ehj
 
 Note that SQL results may return multiple rows, with columns representing a vector of
-values that share a commoon mechanism, statistic, source, epsilon, delta, alphas, and accuracy,
+values that share a commoon mechanism, statistic, source, epsilon, delta, confidence_widths, and accuracy,
 while having multiple values per column, and multiple intervals per value.
 
 For single row queries with default single confidence interval, there will be only one value
@@ -36,12 +36,12 @@ class IntervalRange:
         return iter([self.low, self.high])
     
 
-"""A vector of CIs for a single column and alpha."""
+"""A vector of CIs for a single column and confidence."""
 class Interval:
-    def __init__(self, alpha, accuracy, low=None, high=None):
-        """Collection of confidence intervals for a given alpha
+    def __init__(self, confidence, accuracy, low=None, high=None):
+        """Collection of confidence intervals for a given width
 
-        :param float alpha: the significance level for the CIs in the list
+        :param float confidence: the confidence interval width for the CIs in the list.  Between 0.0 and 1.0 inclusive.
         :param float accuracy: the plus/minus accuracy for values generated here. May be None, if not known or not symmetrical
         :param float[] low: the lower bound for each CI in the list
         :param float[] high: the lower bound for each CI in the list
@@ -51,11 +51,11 @@ class Interval:
         if high is None:
             self.low = []
             self.high = []
-        self.alpha = alpha
+        self.confidence = confidence
         self.accuracy = accuracy
     def __str__(self):
         cis = ", ".join(["[{0}-{1}]".format(round(low, 2), round(high, 2)) for low, high in zip(self.low, self.high)])
-        return "alpha: {0}\naccuracy: {1}\n".format(self.alpha, self.accuracy) + cis
+        return "confidence: {0}\naccuracy: {1}\n".format(self.confidence, self.accuracy) + cis
     def __len__(self):
         return len(self.low)
     def contains(self, other):
@@ -144,7 +144,7 @@ class Interval:
                 break
     
 
-"""Collection of confidence intervals for varying alphas.
+"""Collection of confidence intervals for varying confidence_widths.
 
 Column-vector based access to CIs, with helper methods for
 row-based manipulation."""
@@ -152,9 +152,9 @@ class Intervals:
     def __init__(self, intervals):
         self._intervals = {}
         for i in intervals:
-            self._intervals[i.alpha] = i
+            self._intervals[i.confidence] = i
     def __str__(self):
-        return "Intervals: \n" + "\n".join(str(self._intervals[alpha]) for alpha in self._intervals.keys() )
+        return "Intervals: \n" + "\n".join(str(self._intervals[confidence]) for confidence in self._intervals.keys() )
     def __iter__(self):
         return iter([self._intervals[k] for k in self._intervals.keys()])
     def __getitem__(self, key):
@@ -185,8 +185,11 @@ class Intervals:
             interval = self._intervals[k]
             del interval[idx]
     @property
+    def confidence_widths(self):
+        return [self._intervals[k].confidence for k in self._intervals.keys()]
+    @property
     def alphas(self):
-        return [self._intervals[k].alpha for k in self._intervals.keys()]
+        return [1 - confidence for confidence in self.confidence_widths]
     @property
     def accuracy(self):
         return [self._intervals[k].accuracy for k in self._intervals.keys()]
@@ -197,7 +200,7 @@ Allows access to values and confidence intervals in column-vector format.  Helpe
 methods for adding and deleting rows that span values and confidence intervals."""
 class Result:
     def __init__(self, mechanism, statistic, source, values, epsilon, delta, sensitivity, scale, max_contrib, intervals, name=None):
-        """A result within a release.
+        """A result within a report.
 
         :param string mechanism: The label for the mechanism being used (e.g. 'laplace', 'gaussian')
         :param string statistic: The label for the statistic being computed (e.g. 'sum', 'mean')
@@ -238,6 +241,9 @@ class Result:
     def __len__(self):
         return len(self.values)
     @property
+    def confidence_widths(self):
+        return None if self.intervals is None else self.intervals.confidence_widths
+    @property
     def alphas(self):
         return None if self.intervals is None else self.intervals.alphas
     @property
@@ -245,7 +251,7 @@ class Result:
         return None if self.intervals is None else self.intervals.accuracy
 
 
-"""A differentially private release
+"""A differentially private report
 
 Represents a list of result objects, with each result being
 a vector of differentially private results sharing common
@@ -253,7 +259,7 @@ source and privacy paramaters.
 
 The individual result objects need not be the same length,
 though lengths will be the same for multi-column SQL outputs."""
-class Release:
+class Report:
     def __init__(self, results=None):
         self._results = {}
         if results is not None:

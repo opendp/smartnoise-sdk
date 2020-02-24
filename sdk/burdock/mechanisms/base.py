@@ -5,7 +5,7 @@ class AdditiveNoiseMechanism:
     """
     Adds noise to an exact aggregated quantity.
     """
-    def __init__(self, eps, delta=0.0, sensitivity=1.0, max_contrib=1, alphas = [0.95], rows=None):
+    def __init__(self, eps, delta=0.0, sensitivity=1.0, max_contrib=1, confidence_widths = [0.95], n_rows=None):
         """
         Initialize an addititive noise mechanism.
 
@@ -21,9 +21,9 @@ class AdditiveNoiseMechanism:
         self.delta = delta
         self.sensitivity = sensitivity
         self.max_contrib = max_contrib
-        self.alphas = alphas
-        if rows is not None:
-            self.delta = 1 / (math.sqrt(rows) * rows)
+        self.confidence_widths = confidence_widths
+        if n_rows is not None:
+            self.delta = 1 / (math.sqrt(n_rows) * n_rows)
 
 
     def release(self, vals, accuracy=False, bootstrap=False):
@@ -44,7 +44,7 @@ class AdditiveNoiseMechanism:
             vals = np.repeat(0.0, 10000)
             r = self.release(vals).values
             _bounds = []
-            for a in self.alphas:
+            for a in self.confidence_widths:
                 edge = (1.0 - a) / 2.0
                 _bounds.append(np.percentile(r, [edge * 100, 100 - edge * 100]))
             return _bounds

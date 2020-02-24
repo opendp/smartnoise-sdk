@@ -3,7 +3,7 @@ from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 import burdock.query.sql.ast.expressions.sql as ast
 from burdock.query.sql.reader.rowset import TypedRowset
-from burdock.metadata.release import Interval, Intervals, Result
+from burdock.metadata.report import Interval, Intervals, Result
 
 import numpy as np
 
@@ -12,13 +12,13 @@ import numpy as np
     adds noise before returning the recordset.
 """
 class PrivateQuery:
-    def __init__(self, reader, metadata, epsilon=4.0, alphas=[0.95, 0.985]):
+    def __init__(self, reader, metadata, epsilon=4.0, confidence_widths=[0.95, 0.985]):
         self.reader = reader
         self.metadata = metadata
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
         self.max_contrib = 1
-        self.alphas = alphas
+        self.confidence_widths = confidence_widths
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -106,14 +106,14 @@ class PrivateQuery:
             # treat null as 0 before adding noise
             db_rs[name] = np.array([v if v is not None else 0.0 for v in db_rs[name]])
 
-            mechanism = Gaussian(self.epsilon, 10E-16, sens, self.max_contrib, self.alphas)
-            release = mechanism.release(db_rs[name], compute_accuracy=True)
+            mechanism = Gaussian(self.epsilon, 10E-16, sens, self.max_contrib, self.confidence_widths)
+            report = mechanism.release(db_rs[name], compute_accuracy=True)
 
-            db_rs[name] = release.values
-            #db_rs.intervals[name] = release.intervals
+            db_rs[name] = report.values
+            #db_rs.intervals[name] = report.intervals
 
-            db_rs.release[name] = release
-            db_rs.release[name].values = None  # to avoid duplication of values
+            db_rs.report[name] = report
+            db_rs.report[name].values = None  # to avoid duplication of values
 
             if sym is ast.AggFunction and sym.name == "COUNT" and query.clamp_counts:
                 counts = db_rs[name]
@@ -138,21 +138,21 @@ class PrivateQuery:
         bindings_list.append(dict((name.lower(), db_rsc[name]) for name in db_rsc.keys()))
 
         # now evaluate all lower and upper
-        alphas = None
+        confidence_widths = None
         for name in db_rsc.keys():
-            alpha_list = db_rs.release[name].alphas if name in db_rs.release else None
+            alpha_list = db_rs.report[name].confidence_widths if name in db_rs.report else None
             if alpha_list is not None:
-                alphas = alpha_list
+                confidence_widths = alpha_list
                 break
-        if alphas is not None:
-            for alpha in alphas:
-                print("looking at range: {0}".format(alpha))
+        if confidence_widths is not None:
+            for confidence in confidence_widths:
+                print("looking at range: {0}".format(confidence))
                 bind_low = {}
                 bind_high = {}
                 for name in db_rsc.keys():
-                    if name in db_rs.release and db_rs.release[name].intervals is not None:
-                        bind_low[name.lower()] = db_rs.release[name].intervals[alpha].low
-                        bind_high[name.lower()] = db_rs.release[name].intervals[alpha].high
+                    if name in db_rs.report and db_rs.report[name].intervals is not None:
+                        bind_low[name.lower()] = db_rs.report[name].intervals[confidence].low
+                        bind_high[name.lower()] = db_rs.report[name].intervals[confidence].high
                     else:
                         bind_low[name.lower()] = db_rsc[name]
                         bind_high[name.lower()] = db_rsc[name]
@@ -165,14 +165,14 @@ class PrivateQuery:
             cols.append(c.expression.evaluate(bindings_list[0]))
 
             ivals = []
-            # initial hack; just evaluate lower and upper for each alpha
-            if alphas is not None:
-                for idx in range(len(alphas)):
+            # initial hack; just evaluate lower and upper for each confidence
+            if confidence_widths is not None:
+                for idx in range(len(confidence_widths)):
                     low_idx = idx * 2 + 1
                     high_idx = idx * 2 + 2
                     low = c.expression.evaluate(bindings_list[low_idx])
                     high = c.expression.evaluate(bindings_list[high_idx])
-                    ivals.append(Interval(alphas[idx], None, low, high))
+                    ivals.append(Interval(confidence_widths[idx], None, low, high))
             intervals_list.append(ivals)
 
         # make the new recordset
@@ -180,7 +180,7 @@ class PrivateQuery:
         for idx in range(len(cols)):
             colname = newrs.idxcol[idx]
             newrs[colname] = cols[idx]
-            newrs.release[colname] = Result(None, None, None, cols[idx], None, None, None, None, None, Intervals(intervals_list[idx]), None)
+            newrs.report[colname] = Result(None, None, None, cols[idx], None, None, None, None, None, Intervals(intervals_list[idx]), None)
 
             #newrs.intervals[colname] = Intervals(intervals_list[idx])
 
