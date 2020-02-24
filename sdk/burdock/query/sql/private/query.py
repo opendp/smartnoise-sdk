@@ -12,13 +12,13 @@ import numpy as np
     adds noise before returning the recordset.
 """
 class PrivateQuery:
-    def __init__(self, reader, metadata, epsilon=4.0, confidence_widths=[0.95, 0.985]):
+    def __init__(self, reader, metadata, epsilon=1.0, interval_widths=[0.95, 0.985]):
         self.reader = reader
         self.metadata = metadata
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
         self.max_contrib = 1
-        self.confidence_widths = confidence_widths
+        self.interval_widths = interval_widths
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -106,7 +106,7 @@ class PrivateQuery:
             # treat null as 0 before adding noise
             db_rs[name] = np.array([v if v is not None else 0.0 for v in db_rs[name]])
 
-            mechanism = Gaussian(self.epsilon, 10E-16, sens, self.max_contrib, self.confidence_widths)
+            mechanism = Gaussian(self.epsilon, 10E-16, sens, self.max_contrib, self.interval_widths)
             report = mechanism.release(db_rs[name], compute_accuracy=True)
 
             db_rs[name] = report.values
@@ -138,14 +138,14 @@ class PrivateQuery:
         bindings_list.append(dict((name.lower(), db_rsc[name]) for name in db_rsc.keys()))
 
         # now evaluate all lower and upper
-        confidence_widths = None
+        interval_widths = None
         for name in db_rsc.keys():
-            alpha_list = db_rs.report[name].confidence_widths if name in db_rs.report else None
+            alpha_list = db_rs.report[name].interval_widths if name in db_rs.report else None
             if alpha_list is not None:
-                confidence_widths = alpha_list
+                interval_widths = alpha_list
                 break
-        if confidence_widths is not None:
-            for confidence in confidence_widths:
+        if interval_widths is not None:
+            for confidence in interval_widths:
                 print("looking at range: {0}".format(confidence))
                 bind_low = {}
                 bind_high = {}
@@ -166,13 +166,13 @@ class PrivateQuery:
 
             ivals = []
             # initial hack; just evaluate lower and upper for each confidence
-            if confidence_widths is not None:
-                for idx in range(len(confidence_widths)):
+            if interval_widths is not None:
+                for idx in range(len(interval_widths)):
                     low_idx = idx * 2 + 1
                     high_idx = idx * 2 + 2
                     low = c.expression.evaluate(bindings_list[low_idx])
                     high = c.expression.evaluate(bindings_list[high_idx])
-                    ivals.append(Interval(confidence_widths[idx], None, low, high))
+                    ivals.append(Interval(interval_widths[idx], None, low, high))
             intervals_list.append(ivals)
 
         # make the new recordset

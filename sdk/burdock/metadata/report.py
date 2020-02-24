@@ -6,7 +6,7 @@ Represents the metadata for a differentially private release.
 Specification at https://docs.google.com/document/d/1PTAG2xImB5B3m4crc9t3MQLyRUp3GieD-u8tJlNCDzY/edit#heading=h.ga5nyepy7ehj
 
 Note that SQL results may return multiple rows, with columns representing a vector of
-values that share a commoon mechanism, statistic, source, epsilon, delta, confidence_widths, and accuracy,
+values that share a commoon mechanism, statistic, source, epsilon, delta, interval_widths, and accuracy,
 while having multiple values per column, and multiple intervals per value.
 
 For single row queries with default single confidence interval, there will be only one value
@@ -144,7 +144,7 @@ class Interval:
                 break
     
 
-"""Collection of confidence intervals for varying confidence_widths.
+"""Collection of confidence intervals for varying interval_widths.
 
 Column-vector based access to CIs, with helper methods for
 row-based manipulation."""
@@ -185,11 +185,11 @@ class Intervals:
             interval = self._intervals[k]
             del interval[idx]
     @property
-    def confidence_widths(self):
+    def interval_widths(self):
         return [self._intervals[k].confidence for k in self._intervals.keys()]
     @property
     def alphas(self):
-        return [1 - confidence for confidence in self.confidence_widths]
+        return [1 - confidence for confidence in self.interval_widths]
     @property
     def accuracy(self):
         return [self._intervals[k].accuracy for k in self._intervals.keys()]
@@ -241,8 +241,8 @@ class Result:
     def __len__(self):
         return len(self.values)
     @property
-    def confidence_widths(self):
-        return None if self.intervals is None else self.intervals.confidence_widths
+    def interval_widths(self):
+        return None if self.intervals is None else self.intervals.interval_widths
     @property
     def alphas(self):
         return None if self.intervals is None else self.intervals.alphas
