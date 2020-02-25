@@ -1,5 +1,5 @@
-import burdock.mechanisms.random as rand
-from burdock.mechanisms.base import AdditiveNoiseMechanism
+from .rand import laplace as rand_laplace
+from .base import AdditiveNoiseMechanism
 from scipy.stats import laplace
 
 
@@ -9,7 +9,7 @@ class Laplace(AdditiveNoiseMechanism):
         self.scale = (self.tau * self.sensitivity) / self.eps
 
     def release(self, vals):
-        noise = rand.laplace(0.0, self.scale, len(vals))
+        noise = rand_laplace(0.0, self.scale, len(vals))
         return noise + vals
 
     def bounds(self, pct=0.95, bootstrap=False):
