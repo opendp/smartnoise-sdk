@@ -1,9 +1,10 @@
 from burdock.query.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
-import burdock.query.sql.ast.expressions.sql as ast
-from burdock.query.sql.reader.rowset import TypedRowset
 from burdock.metadata.report import Interval, Intervals, Result
+
+from .reader.rowset import TypedRowset
+from .ast.expressions import sql as ast
 
 import numpy as np
 

@@ -1,9 +1,10 @@
 import random
 import string
 
-from burdock.query.sql.ast.validate import Validate
-from burdock.query.sql.ast.ast import *  # TODO Why?
-from  burdock.query.sql import QueryParser
+from burdock.query.sql import QueryParser
+
+from .ast.validate import Validate
+from .ast.ast import *  # TODO Why?
 
 
 """

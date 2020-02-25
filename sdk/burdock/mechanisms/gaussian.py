@@ -1,6 +1,7 @@
 import math
-import burdock.mechanisms.random as rand
-from burdock.mechanisms.base import AdditiveNoiseMechanism
+
+from .rand import normal as rand_normal
+from .base import AdditiveNoiseMechanism
 from scipy.stats import norm
 from burdock.metadata.report import Result, Interval, Intervals
 
@@ -11,7 +12,7 @@ class Gaussian(AdditiveNoiseMechanism):
         self.sd = (math.sqrt(math.log(1/delta)) + math.sqrt(math.log(1/delta) + self.eps)) / (math.sqrt(2) * self.eps)
 
     def release(self, vals, compute_accuracy=False, bootstrap=False):
-        noise = rand.normal(0.0, self.sd * self.max_contrib * self.sensitivity, len(vals))
+        noise = rand_normal(0.0, self.sd * self.max_contrib * self.sensitivity, len(vals))
         reported_vals = [n + v for n, v in zip(noise, vals)]
         mechanism = "Gaussian"
         statistic = "additive_noise"
