@@ -3,7 +3,7 @@ from .ast.parse import QueryParser
 from .ast.validate import Validate
 from .private.rewrite import Rewriter
 from .private.query import PrivateQuery
-from .reader.dataframe_reader import DataFrameReader
+from .reader.pandas_reader import PandasReader
 
 
 def execute_private_query(reader, schema, budget, query):
@@ -12,4 +12,4 @@ def execute_private_query(reader, schema, budget, query):
     return PrivateQuery(reader, schema, budget).execute(query)
 
 __all__ = ["MetadataLoader", "QueryParser", "Rewriter", "Validate",
-           "DataFrameReader", "execute_private_query"]
+           "PandasReader", "execute_private_query"]

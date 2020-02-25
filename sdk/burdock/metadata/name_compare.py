@@ -59,33 +59,3 @@ class BaseNameCompare:
         else:
             return True
         
-
-class MSSQLNameCompare(BaseNameCompare):
-    def __init__(self, search_path=None):
-        self.search_path = search_path if search_path is not None else ["dbo"]
-    def identifier_match(self, query, meta):
-        return self.strip_escapes(query).lower() == self.strip_escapes(meta).lower()
-
-
-class PostgresNameCompare(BaseNameCompare):
-    def __init__(self, search_path=None):
-        self.search_path = search_path if search_path is not None else ["public"]
-    def identifier_match(self, query, meta):
-        query = self.clean_escape(query)
-        meta = self.clean_escape(meta)
-        if query == meta:
-            return True
-        if self.is_escaped(meta) and meta.lower() == meta:
-            meta = meta.lower().replace('"','')
-        if self.is_escaped(query) and query.lower() == query:
-            query = query.lower().replace('"','')
-        return meta == query
-    def should_escape(self, identifier):
-        if self.is_escaped(identifier):
-            return False
-        if identifier.lower() in self.reserved():
-            return True
-        if identifier.replace(' ', '') == identifier.lower():
-            return False
-        else:
-            return True
