@@ -1,10 +1,9 @@
 Database:
   example:
     example:
-      rows: 1
+      rows: 4
       a:
         type: int
-        private_id: True
         lower: 0
         upper: 50
       b:
@@ -15,4 +14,3 @@ Database:
         type: int
         lower: 0
         upper: 1
-
