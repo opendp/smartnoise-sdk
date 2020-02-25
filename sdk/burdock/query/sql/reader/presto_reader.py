@@ -12,7 +12,7 @@ from burdock.query.sql.ast.expressions.sql import BooleanJoinCriteria, UsingJoin
     A dumb pipe that gets a rowset back from a database using 
     a SQL string, and converts types to some useful subset
 """
-class DataReader:
+class PrestoReader:
     def __init__(self, host, database, user, password=None, port=None):
         import prestodb
         self.api = prestodb.dbapi

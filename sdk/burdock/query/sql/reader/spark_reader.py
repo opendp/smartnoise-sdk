@@ -13,7 +13,7 @@ class SparkReader:
         self.api = SparkSession.builder.config("spark.rpc.askTimeout", "600s").config("spark.executor.memory", "6g").config("spark.driver.memory", "6g").config("spark.executor.memoryOverhead", "600").config("spark.driver.memoryOverhead", "600").getOrCreate()
         self.engine = "Spark"
         self.database = database
-        self.serializer = SparkSQLSerializer()
+        self.serializer = SparkSerializer()
         self.compare = SparkNameCompare()  
         self.update_connection_string()      
 
@@ -57,7 +57,7 @@ class SparkReader:
         self.connection_string = None
         pass
 
-class SparkSQLSerializer:
+class SparkSerializer:
     def serialize(self, query):
         for re in [n for n in query.find_nodes(BareFunction) if n.name == 'RANDOM']:
             re.name = 'rand'
