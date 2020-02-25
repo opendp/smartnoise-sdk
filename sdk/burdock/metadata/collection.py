@@ -11,7 +11,7 @@ class Collection:
             if engine == "Unknown":
                 self.compare = BaseNameCompare()
             else:
-                engine_module_name = "burdock.query.sql.reader." + engine.lower() + "reader"
+                engine_module_name = "burdock.query.sql.reader." + engine.lower() + "_reader"
                 compare_class = engine + "NameCompare"
                 try:
                     engine_module = importlib.import_module(engine_module_name)
