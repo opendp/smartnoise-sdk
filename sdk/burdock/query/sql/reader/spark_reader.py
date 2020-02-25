@@ -8,11 +8,11 @@ from burdock.query.sql.ast.tokens import Literal
 from burdock.query.sql.ast.expressions.numeric import BareFunction
 
 class SparkReader:
-    def __init__(self, host, database, user, password=None, port=None):
+    def __init__(self, host, session, user, password=None, port=None):
         from pyspark.sql import SparkSession
-        self.api = SparkSession.builder.config("spark.rpc.askTimeout", "600s").config("spark.executor.memory", "6g").config("spark.driver.memory", "6g").config("spark.executor.memoryOverhead", "600").config("spark.driver.memoryOverhead", "600").getOrCreate()
+        self.api = session
         self.engine = "Spark"
-        self.database = database
+        self.database = "Spark Session"
         self.serializer = SparkSerializer()
         self.compare = SparkNameCompare()  
         self.update_connection_string()      
