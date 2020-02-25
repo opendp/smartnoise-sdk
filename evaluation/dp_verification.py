@@ -405,20 +405,18 @@ class DPVerification:
 
     # Main method listing all the DP verification steps
     def main(self):
-        ag = agg.Aggregation(t=1, repeat_count=10000)
-        
         # COUNT Example
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         
         # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res = self.dp_powerset_test(query_str, plot=False)
+        dp_res = self.dp_powerset_test(query_str, plot=False, repeat_count=500)
 
         # Yarrow Test
         # dataset_root = os.getenv('DATASET_ROOT', '/home/ankit/Documents/github/datasets/')
