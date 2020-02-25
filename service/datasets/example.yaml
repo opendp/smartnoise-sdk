@@ -4,15 +4,15 @@ Database:
       rows: 1
       a:
         type: int
-        is_key: True
-        min: 0
-        max: 50
+        private_id: True
+        lower: 0
+        upper: 50
       b:
         type: int
-        min: 0
-        max: 50
+        lower: 0
+        upper: 50
       c:
         type: int
-        min: 0
-        max: 1
+        lower: 0
+        upper: 1
 
