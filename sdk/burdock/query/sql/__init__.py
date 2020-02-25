@@ -1,8 +1,8 @@
 from burdock.metadata.config_file import MetadataLoader
 from .ast.parse import QueryParser
 from .ast.validate import Validate
-from .private.rewrite import Rewriter
-from .private.query import PrivateQuery
+from .private_rewrite import Rewriter
+from .private_query import PrivateQuery
 from .reader.dataframe_reader import DataFrameReader
 
 
