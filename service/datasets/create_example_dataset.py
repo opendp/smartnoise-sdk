@@ -17,4 +17,4 @@ with open("example.csv", "w", newline='') as f:
             c = 0
         else:
             c = 1
-        f.write(str(a)+","+str(b)+","+str(c)+"\n")
+        f.write("{},{},{}\n".format(a, b, c))
