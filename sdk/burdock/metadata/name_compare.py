@@ -3,6 +3,19 @@
     for escaped identifiers.
 """
 class BaseNameCompare:
+    _name_compare_classes = {}
+
+    @classmethod
+    def register_name_compare(cls, engine, class_to_add):
+        cls._name_compare_classes[engine] = class_to_add
+
+    @classmethod
+    def get_name_compare(cls, engine):
+        if engine in cls._name_compare_classes:
+            return cls._name_compare_classes[engine]()
+        else:
+            return BaseNameCompare()
+
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else []
     """

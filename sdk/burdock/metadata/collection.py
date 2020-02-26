@@ -7,18 +7,7 @@ class Collection:
     def __init__(self, tables, engine, compare=None):
         self.m_tables = dict([(t.table_name(), t) for t in tables])
         self.engine = engine if engine is not None else "Unknown"
-        if compare is None:
-            if engine == "Unknown":
-                self.compare = BaseNameCompare()
-            else:
-                engine_module_name = "burdock.query.sql.reader." + engine.lower() + "_reader"
-                compare_class = engine + "NameCompare"
-                try:
-                    engine_module = importlib.import_module(engine_module_name)
-                    name_compare = getattr(engine_module, compare_class)
-                    self.compare = name_compare()
-                except Exception:
-                    self.compare = BaseNameCompare()
+        self.compare = BaseNameCompare.get_name_compare(engine) if compare is None else compare
 
     def __getitem__(self, tablename):
         schema_name = ''
