@@ -4,7 +4,7 @@ import pandas as pd
 from burdock.query.sql.reader.pandas_reader import PandasReader
 from burdock.query.sql import CollectionMetadata
 from burdock.query.sql import QueryParser
-from burdock.query.sql.private_query import PrivateQuery
+from burdock.query.sql.private_query import PrivateReader
 from burdock.query.sql.reader.rowset import TypedRowset
 from pandasql import sqldf
 
@@ -18,7 +18,7 @@ df = pd.read_csv(csv_path)
 class TestQuery:
     def test_group_by_noisy_typed_order_inter(self):
         reader = PandasReader(schema, df)
-        private_reader = PrivateQuery(reader, schema, 1.0)
+        private_reader = PrivateReader(reader, schema, 1.0)
         rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
         assert(rs['c'][0] < rs['c'][1])
         assert(len(rs.report['c'].intervals[0.95]) == 2)
@@ -29,7 +29,7 @@ class TestQuery:
         assert(all(outer.high > inner.high for inner, outer in zip(rs.report['c'].intervals[0.95], rs.report['c'].intervals[0.985])))
     def test_group_by_noisy_typed_order_inter_constant(self):
         reader = PandasReader(schema, df)
-        private_reader = PrivateQuery(reader, schema, 1.0)
+        private_reader = PrivateReader(reader, schema, 1.0)
         rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
         rs2 = private_reader.execute_typed("SELECT COUNT(*) * 2 AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
         assert(len(rs.report['c'].intervals[0.95]) == 2)

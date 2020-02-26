@@ -12,7 +12,7 @@ import numpy as np
     Takes a rewritten query, executes against the target backend, then
     adds noise before returning the recordset.
 """
-class PrivateQuery:
+class PrivateReader:
     def __init__(self, reader, metadata, epsilon=1.0, interval_widths=[0.95, 0.985]):
         self.reader = reader
         self.metadata = metadata
