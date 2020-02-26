@@ -1,3 +1,3 @@
-from .dataframe_reader import DataFrameReader
+from .pandas_reader import PandasReader
 
-__all__ = ["DataFrameReader"]
+__all__ = ["PandasReader"]

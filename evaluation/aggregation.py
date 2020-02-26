@@ -10,7 +10,7 @@ import sys
 import os
 # import yarrow
 
-from burdock.query.sql.reader import DataFrameReader
+from burdock.query.sql.reader import PandasReader
 from burdock.query.sql.private_query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
 from burdock.mechanisms.laplace import Laplace
@@ -102,9 +102,9 @@ class Aggregation:
     #     return np.array(noisy_values)
 
     # Run the query using the private reader and input query
-    # Get query response back for singleton queries
-    def run_agg_query(self, df, metadata, query, confidence=0.95):
-        reader = DataFrameReader(metadata, df)
+    # Get query response back
+    def run_agg_query(self, df, metadata, query, confidence):
+        reader = PandasReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
@@ -126,7 +126,7 @@ class Aggregation:
     # Run the query using the private reader and input query
     # Get query response back for multiple dimensions and aggregations
     def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
-        reader = DataFrameReader(metadata, df)
+        reader = PandasReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)

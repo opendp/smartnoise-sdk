@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 
 from burdock.query.sql import MetadataLoader
-from burdock.query.sql.reader import DataFrameReader
+from burdock.query.sql.reader import PandasReader
 
 from .dataset_adapter import DatasetAdapter
 
@@ -48,5 +48,5 @@ class DataverseAdapter(DatasetAdapter):
 
     @staticmethod
     def _load_reader(dataset_document):
-        return DataFrameReader(DataverseAdapter.load_metadata(dataset_document),
+        return PandasReader(DataverseAdapter.load_metadata(dataset_document),
                                DataverseAdapter.load_df(dataset_document))

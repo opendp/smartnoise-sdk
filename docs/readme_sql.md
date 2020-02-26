@@ -25,9 +25,10 @@ Steps:
 - conda activate oss_dp
 - git clone https://github.com/privacytoolsproject/burdock.git
 - cd burdock
-- pip install -e sdk/
-- pip install -r tests/requirements.txt
-- pip install -r service/requirements.txt
+- conda install -c anaconda sqlite
+- python -m pip install -e sdk/
+- python -m pip install -r tests/requirements.txt
+- python -m pip install -r service/requirements.txt
 - python service/app.py
 - python service/modules/sql-module/run_query.py "example" .3 "SELECT COUNT(A) from example.example"
 - pytest tests/
