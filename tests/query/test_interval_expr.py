@@ -4,7 +4,7 @@ import pandas as pd
 from burdock.sql import PandasReader
 from burdock.sql import CollectionMetadata
 from burdock.sql import QueryParser
-from burdock.sql.private_query import PrivateReader
+from burdock.sql.private_reader import PrivateReader
 from burdock.reader.sql.rowset import TypedRowset
 from pandasql import sqldf
 

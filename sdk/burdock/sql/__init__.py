@@ -2,7 +2,7 @@ from burdock.metadata.collection import CollectionMetadata
 from .ast.parse import QueryParser
 from .ast.validate import Validate
 from .private_rewrite import Rewriter
-from .private_query import PrivateReader
+from .private_reader import PrivateReader
 from burdock.reader.sql.pandas import PandasReader
 
 
