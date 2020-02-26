@@ -20,7 +20,7 @@ from .ast.ast import *  # TODO Why?
 class Rewriter:
     def __init__(self, metadata):
         self.metadata = metadata
-        self.tau = 5  # max projection magnitude for an individual
+        self.max_contrib = 5  # max projection magnitude for an individual
 
     """
         Takes an expression for a noisy mean and rewrites
@@ -151,7 +151,7 @@ class Rewriter:
         subquery = self.per_key_random(subquery)
         subquery = [AliasedRelation(subquery, "per_key_random")]
 
-        filtered = Where(BooleanCompare(Column("per_key_random.row_num"), "<=", Literal(str(self.tau), self.tau)))
+        filtered = Where(BooleanCompare(Column("per_key_random.row_num"), "<=", Literal(str(self.max_contrib), self.max_contrib)))
         return Query(select, From(subquery), filtered, query.agg, None, None)
 
     def per_key_random(self, query):

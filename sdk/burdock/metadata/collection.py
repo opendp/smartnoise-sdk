@@ -30,7 +30,7 @@ class Collection:
     Common attributes for a table or a view
 """
 class Table:
-    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=None, sample_max_ids=True, rows_exact=None):
+    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None, clamp_counts=True):
         self.schema = schema
         self.name = name
         self.rowcount = rowcount
@@ -40,6 +40,7 @@ class Table:
         self.rows_exact = rows_exact
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
+        self.clamp_counts = clamp_counts
     def __getitem__(self, colname):
         for cname in self.m_columns.keys():
             col = self.m_columns[cname]
