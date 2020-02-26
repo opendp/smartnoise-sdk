@@ -1,7 +1,7 @@
 import pandas as pd
 
 from burdock.metadata.collection import CollectionMetadata
-from burdock.query.sql.reader import PandasReader
+from burdock.sql import PandasReader
 
 from .dataset_adapter import DatasetAdapter
 

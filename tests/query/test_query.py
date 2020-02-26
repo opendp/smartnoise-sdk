@@ -1,11 +1,11 @@
 import pytest
 import pandas as pd
 
-from burdock.query.sql.reader import PandasReader
-from burdock.query.sql import CollectionMetadata
-from burdock.query.sql import QueryParser
-from burdock.query.sql.private_query import PrivateReader
-from burdock.query.sql.reader.rowset import TypedRowset
+from burdock.sql import PandasReader
+from burdock.sql import CollectionMetadata
+from burdock.sql import QueryParser
+from burdock.sql.private_query import PrivateReader
+from burdock.reader.sql.rowset import TypedRowset
 from pandasql import sqldf
 
 meta_path = "service/datasets/PUMS.yaml"
@@ -91,12 +91,12 @@ class TestQuery:
     def test_count_no_rows_exact_typed(self):
         reader = PandasReader(schema, df)
         query = QueryParser(schema).queries("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100")[0]
-        trs = reader.execute_typed(query)
+        trs = reader.execute_ast_typed(query)
         assert(trs['c'][0] == 0)
     def test_sum_no_rows_exact_typed(self):
         reader = PandasReader(schema, df)
         query = QueryParser(schema).queries("SELECT SUM(age) as c FROM PUMS.PUMS WHERE age > 100")[0]
-        trs = reader.execute_typed(query)
+        trs = reader.execute_ast_typed(query)
         assert(trs['c'][0] == None)
     def test_empty_result_count_typed_notau_prepost(self):
         reader = PandasReader(schema, df)
@@ -109,7 +109,7 @@ class TestQuery:
     def test_sum_noisy(self):
         reader = PandasReader(schema, df)
         query = QueryParser(schema).queries("SELECT SUM(age) as age_total FROM PUMS.PUMS")[0]
-        trs = reader.execute_typed(query)
+        trs = reader.execute_ast_typed(query)
         assert(trs['age_total'][0] > 1000)
     def test_sum_noisy_postprocess(self):
         reader = PandasReader(schema, df)

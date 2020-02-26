@@ -1,5 +1,5 @@
 import pytest
-from burdock.query.sql import QueryParser, CollectionMetadata
+from burdock.sql import QueryParser, CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname

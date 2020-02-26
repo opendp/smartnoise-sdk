@@ -1,11 +1,11 @@
 import pytest
 import pandas as pd
 
-from burdock.query.sql.reader.pandas_reader import PandasReader
-from burdock.query.sql import CollectionMetadata
-from burdock.query.sql import QueryParser
-from burdock.query.sql.private_query import PrivateReader
-from burdock.query.sql.reader.rowset import TypedRowset
+from burdock.sql import PandasReader
+from burdock.sql import CollectionMetadata
+from burdock.sql import QueryParser
+from burdock.sql.private_query import PrivateReader
+from burdock.reader.sql.rowset import TypedRowset
 from pandasql import sqldf
 
 meta_path = "service/datasets/PUMS.yaml"

@@ -1,5 +1,5 @@
 import pytest
-from burdock.query.sql import QueryParser, Validate
+from burdock.sql import QueryParser, Validate
 from burdock.metadata.collection import CollectionMetadata
 
 from os import listdir

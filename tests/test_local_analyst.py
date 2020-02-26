@@ -3,7 +3,7 @@ import sklearn.datasets
 import pandas as pd
 
 
-from burdock.query.sql import PandasReader, execute_private_query
+from burdock.sql import PandasReader, execute_private_query
 from burdock.metadata.collection import CollectionMetadata, Table, Float
 
 def test_sklearn_query():

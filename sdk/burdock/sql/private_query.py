@@ -1,9 +1,9 @@
-from burdock.query.sql import QueryParser, Rewriter
+from burdock.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from burdock.metadata.report import Interval, Intervals, Result
 
-from .reader.rowset import TypedRowset
+from burdock.reader.sql.rowset import TypedRowset
 from .ast.expressions import sql as ast
 
 import numpy as np
@@ -82,7 +82,7 @@ class PrivateReader:
         sens = [s[1].sensitivity() for s in syms]
 
         # execute the subquery against the backend and load in typed rowset
-        db_rs = self.reader.execute_typed(subquery)
+        db_rs = self.reader.execute_ast_typed(subquery)
         return (subquery, query, syms, types, sens, db_rs)
 
     def _postprocess(self, subquery, query, syms, types, sens, db_rs):

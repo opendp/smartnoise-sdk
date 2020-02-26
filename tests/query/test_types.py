@@ -1,6 +1,6 @@
 from os.path import dirname, join
 
-from burdock.query.sql import CollectionMetadata, QueryParser
+from burdock.sql import CollectionMetadata, QueryParser
 
 dir_name = dirname(__file__)
 

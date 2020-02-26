@@ -3,7 +3,7 @@ from .ast.parse import QueryParser
 from .ast.validate import Validate
 from .private_rewrite import Rewriter
 from .private_query import PrivateReader
-from .reader.pandas_reader import PandasReader
+from burdock.reader.sql.pandas import PandasReader
 
 
 def execute_private_query(reader, schema, budget, query):

@@ -1,6 +1,6 @@
 import importlib
 import yaml
-from .name_compare import BaseNameCompare
+from burdock.reader.sql.base import NameCompare
 
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
 
@@ -8,7 +8,7 @@ class CollectionMetadata:
     def __init__(self, tables, engine, compare=None):
         self.m_tables = dict([(t.table_name(), t) for t in tables])
         self.engine = engine if engine is not None else "Unknown"
-        self.compare = BaseNameCompare.get_name_compare(engine) if compare is None else compare
+        self.compare = NameCompare.get_name_compare(engine) if compare is None else compare
 
     def __getitem__(self, tablename):
         schema_name = ''
@@ -60,7 +60,7 @@ class Table:
             col = self.m_columns[cname]
             if self.compare is None:
                 # the database will attach the engine-specific comparer usually
-                self.compare = BaseNameCompare()
+                self.compare = NameCompare()
             if self.compare.identifier_match(colname, col.name):
                 return col
         return None
