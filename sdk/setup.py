@@ -17,6 +17,7 @@ DEPENDENCIES = [
     "numpy",
     "pandas",
     "msrest",
+    "scipy",
     "antlr4-python3-runtime"
 ]
 

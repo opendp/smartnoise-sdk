@@ -1,7 +1,8 @@
 from burdock.query.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
-import burdock.query.sql.ast.expressions.sql as ast
-from burdock.query.sql.reader.rowset import TypedRowset
+
+from .reader.rowset import TypedRowset
+from .ast.expressions import sql as ast
 
 import numpy as np
 
