@@ -102,21 +102,29 @@ class Aggregation:
     #     return np.array(noisy_values)
 
     # Run the query using the private reader and input query
-    # Get query response back
-    def run_agg_query(self, df, metadata, query, confidence):
+    # Get query response back for singleton queries
+    def run_agg_query(self, df, metadata, query, confidence=0.95):
         reader = DataFrameReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
-        
+        actual = srs_orig.rows()[1:]
+        actual = actual[0][1]
+
         noisy_values = []
+        low_bounds = []
+        high_bounds = []
         for idx in range(self.repeat_count):
             srs = TypedRowset(srs_orig.rows(), types, sens)
-            noisy_values.append(private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:][0][0])
-        return np.array(noisy_values)
+            res = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+            interval = res.report[res.colnames[0]].intervals[confidence]
+            low_bounds.append(interval[0].low)
+            high_bounds.append(interval[0].high)
+            noisy_values.append(res.rows()[1:][0][0])
+        return np.array(noisy_values), actual, low_bounds, high_bounds
         
     # Run the query using the private reader and input query
-    # Get query response back
+    # Get query response back for multiple dimensions and aggregations
     def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
         reader = DataFrameReader(metadata, df)
         private_reader = PrivateQuery(reader, metadata, self.epsilon)

@@ -304,31 +304,24 @@ class DPVerification:
     #         self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
     #     return dp_res
 
-    def accuracy_test(self, fD, bounds, confidence=0.95):
+    def accuracy_test(self, actual, low, high, confidence=0.95):
         # Actual mean of aggregation function f on D1 is equal to sample mean
-        n = fD.size
-        lower_bound = bounds[0]
-        upper_bound = bounds[1]
         print("Confidence Level: ", confidence*100, "%")
-        print("Bounds: [", lower_bound, ", ", upper_bound, "]")
-        print("Mean of noisy responses:", np.mean(fD))
-        print("Mean of upper and lower bound:", (lower_bound + upper_bound) / 2.0)
-        lower_bound = [lower_bound] * n
-        upper_bound = [upper_bound] * n
-        within_bounds = np.sum(np.logical_and(np.greater_equal(fD, lower_bound), np.greater_equal(upper_bound, fD)))
+        n = len(low)
+        actual = [actual] * n
+        within_bounds = np.sum(np.logical_and(np.greater_equal(actual, low), np.greater_equal(high, actual)))
         print("Count of times noisy result within bounds:", within_bounds, "/", n)
         print("Count of times noisy result outside bounds:", n - within_bounds, "/", n)
-        return (within_bounds / n >= confidence)
+        return (within_bounds / n >= confidence), within_bounds
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
         
-        fD1 = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
-        fD2 = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
-        #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
-        acc_res = None
+        fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
+        fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
+        acc_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
@@ -382,11 +375,10 @@ class DPVerification:
                 d1_query = query_str + "d1_" + filename + "." + "d1_" + filename
                 d2_query = query_str + "d2_" + filename + "." + "d2_" + filename
                 [d1, d2, d1_metadata, d2_metadata] = ex.neighbor_pair[filename]
-                fD1 = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
-                fD2 = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
-                # Disabling the accuracy test 
-                #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
-                acc_res = None
+                fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
+                fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
+                
+                acc_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
@@ -394,21 +386,22 @@ class DPVerification:
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
                 key = "[" + ','.join(str(e) for e in list(sample)) + "] - " + filename
-                res_list[key] = [dp_res, acc_res]
+                res_list[key] = [dp_res, acc_res, within_bounds]
         
         print("Halton sequence based Powerset Test Result")
         for data, res in res_list.items():
-            print(data, "-", res[0])
+            print(data, "-", res)
 
         dp_res = np.all(np.array([dp_res[0] for dp_res in res_list.values()]))
-        return dp_res
+        acc_res = np.all(np.array([acc_res[1] for acc_res in res_list.values()]))
+        return dp_res, acc_res
 
     # Main method listing all the DP verification steps
     def main(self):
         # COUNT Example
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"

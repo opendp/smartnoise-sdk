@@ -147,7 +147,7 @@ class PrivateQuery:
                 break
         if interval_widths is not None:
             for confidence in interval_widths:
-                print("looking at range: {0}".format(confidence))
+                #print("looking at range: {0}".format(confidence))
                 bind_low = {}
                 bind_high = {}
                 for name in db_rsc.keys():
