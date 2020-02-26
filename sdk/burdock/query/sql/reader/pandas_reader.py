@@ -1,15 +1,18 @@
 from .rowset import TypedRowset
+
 from burdock.metadata.name_compare import BaseNameCompare
 from burdock.metadata.collection import Int
 import copy
 import re
 
 
-class DataFrameReader:
+class PandasReader:
     def __init__(self, metadata, df):
         self.original_column_names = []
         self.df = df
         self.metadata = self._sanitize_metadata(metadata)
+        self.serializer = None
+        self.engine = "Pandas"
 
     def _sanitize_column_name(self, column_name):
         x = re.search(r".*[a-zA-Z0-9()_]", column_name)
@@ -23,7 +26,7 @@ class DataFrameReader:
         metadata = copy.deepcopy(metadata)
         table_names = list(metadata.m_tables.keys())
         if len(table_names) > 1:
-            raise Exception("Only one table is supported for DataFrameReader. {} found.".format(len(table_names)))
+            raise Exception("Only one table is supported for PandasReader. {} found.".format(len(table_names)))
         table_name = table_names[0]
         self.original_column_names = list(metadata.m_tables[table_name].m_columns)
 
@@ -71,7 +74,7 @@ class DataFrameReader:
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
         table_names = list(self.metadata.m_tables.keys())
         if len(table_names) > 1:
-            raise Exception("DataFrameReader only supports one table, {} found.".format(len(table_names)))
+            raise Exception("PandasReader only supports one table, {} found.".format(len(table_names)))
 
         df_name = "df_for_diffpriv1234"
         table_name = table_names[0]
