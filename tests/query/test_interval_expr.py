@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 
 from burdock.query.sql.reader.pandas_reader import PandasReader
-from burdock.query.sql import MetadataLoader
+from burdock.query.sql import CollectionMetadata
 from burdock.query.sql import QueryParser
 from burdock.query.sql.private_query import PrivateQuery
 from burdock.query.sql.reader.rowset import TypedRowset
@@ -10,7 +10,7 @@ from pandasql import sqldf
 
 meta_path = "service/datasets/PUMS.yaml"
 csv_path = "service/datasets/PUMS.csv"
-schema = MetadataLoader(meta_path).read_schema()
+schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
 #   Unit tests

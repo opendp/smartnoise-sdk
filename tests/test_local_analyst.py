@@ -4,7 +4,7 @@ import pandas as pd
 
 
 from burdock.query.sql import PandasReader, execute_private_query
-from burdock.metadata.collection import Collection, Table, Float
+from burdock.metadata.collection import CollectionMetadata, Table, Float
 
 def test_sklearn_query():
    sklearn_dataset = sklearn.datasets.load_iris()
@@ -17,7 +17,7 @@ def test_sklearn_query():
       Float("petal length (cm)", 1, 7),
       Float("petal width (cm)", 0, 3)
    ])
-   schema = Collection([iris], "csv")
+   schema = CollectionMetadata([iris], "csv")
 
    reader = PandasReader(schema, sklearn_df)
    rowset = execute_private_query(reader, schema, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')

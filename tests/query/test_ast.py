@@ -1,5 +1,5 @@
 import pytest
-from burdock.query.sql import QueryParser, MetadataLoader
+from burdock.query.sql import QueryParser, CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname
@@ -8,7 +8,7 @@ from os.path import isfile, join, dirname
 dir_name = dirname(__file__)
 testpath = join(dir_name, "queries") + "/"
 
-metadata = MetadataLoader(join(dir_name, "TestDB.yaml")).read_schema()
+metadata = CollectionMetadata.from_file(join(dir_name, "TestDB.yaml"))
 
 other_dirs = [f for f in listdir(testpath) if not isfile(join(testpath, f)) and f != "parse" ]
 

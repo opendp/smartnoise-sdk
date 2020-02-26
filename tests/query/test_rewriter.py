@@ -1,7 +1,7 @@
 from os import listdir
 from os.path import isfile, join, dirname
 
-from burdock.query.sql import QueryParser, Rewriter, MetadataLoader
+from burdock.query.sql import QueryParser, Rewriter, CollectionMetadata
 
 
 dir_name = dirname(__file__)
@@ -17,7 +17,7 @@ for d in other_dirs:
     other_files = [join(testpath + d + "/", f) for f in listdir(testpath + d) if isfile(join(testpath + d, f))]
     good_files.extend(other_files)
 
-metadata = MetadataLoader(join(dir_name, "Devices.yaml")).read_schema()
+metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
 
 
 #
