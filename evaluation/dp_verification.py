@@ -316,12 +316,12 @@ class DPVerification:
         return (within_bounds / n >= relaxed_conf), float('%.2f'%((within_bounds / n) * 100))
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
-    def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
+    def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
         
-        fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
-        fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
+        fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence, get_exact)
+        fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence, get_exact)
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
@@ -420,15 +420,15 @@ class DPVerification:
         # COUNT Example
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res, acc_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         
         # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res = self.dp_powerset_test(query_str, plot=False, repeat_count=500)
+        dp_res, acc_res = self.dp_powerset_test(query_str, plot=False, repeat_count=500)
 
         # Yarrow Test
         # dataset_root = os.getenv('DATASET_ROOT', '/home/ankit/Documents/github/datasets/')

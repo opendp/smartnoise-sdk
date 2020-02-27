@@ -103,9 +103,12 @@ class Aggregation:
 
     # Run the query using the private reader and input query
     # Get query response back
-    def run_agg_query(self, df, metadata, query, confidence):
+    def run_agg_query(self, df, metadata, query, confidence, get_exact=True):
         reader = PandasReader(metadata, df)
-        actual = reader.execute_typed(query).rows()[1:][0][0]
+        actual = 0.0
+        # VAR not supported in Pandas Reader. So not needed to fetch actual on every aggregation
+        if(get_exact):
+            actual = reader.execute_typed(query).rows()[1:][0][0]
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
