@@ -105,12 +105,11 @@ class Aggregation:
     # Get query response back
     def run_agg_query(self, df, metadata, query, confidence):
         reader = PandasReader(metadata, df)
+        actual = reader.execute_typed(query).rows()[1:][0][0]
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
-        actual = srs_orig.rows()[1:]
-        actual = actual[0][1]
-
+        
         noisy_values = []
         low_bounds = []
         high_bounds = []
@@ -126,9 +125,17 @@ class Aggregation:
     # Run the query using the private reader and input query
     # Get query response back for multiple dimensions and aggregations
     def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
+        # Getting exact result
         reader = PandasReader(metadata, df)
+        exact = reader.execute_typed(query).rows()[1:]
+        exact_res = []
+        for row in exact:
+            exact_res.append(row)
+
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
+
+        # Distinguishing dimension and measure columns
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
         
         srs = TypedRowset(srs_orig.rows(), types, sens)
@@ -143,10 +150,8 @@ class Aggregation:
                 dim_cols.append(col)
             else:
                 num_cols.append(col)
-        
-        if(len(dim_cols) == 0):
-            dim_cols.append("__dim__")
-        
+                
+        # Repeated query and store results along with intervals
         res = []
         for idx in range(self.repeat_count):
             dim_rows = []
@@ -162,9 +167,16 @@ class Aggregation:
                 num_rows.append(list(zip(values, low, high)))
 
             res.extend(list(zip(*dim_rows, *num_rows)))
+
+        exact_df = pd.DataFrame(exact_res, columns=headers)
         noisy_df = pd.DataFrame(res, columns=headers)
         
+        # Add a dummy dimension column for cases where no dimensions available for merging D1 and D2
+        if(len(dim_cols) == 0):
+            dim_cols.append("__dim__")
+
         if(dim_cols[0] == "__dim__"):
+            exact_df[dim_cols[0]] = ["key"]*len(exact_df)
             noisy_df[dim_cols[0]] = ["key"]*len(noisy_df)
 
-        return noisy_df, dim_cols, num_cols
+        return noisy_df, exact_df, dim_cols, num_cols

@@ -309,10 +309,11 @@ class DPVerification:
         print("Confidence Level: ", confidence*100, "%")
         n = len(low)
         actual = [actual] * n
+        relaxed_conf = confidence - 0.05*confidence
         within_bounds = np.sum(np.logical_and(np.greater_equal(actual, low), np.greater_equal(high, actual)))
         print("Count of times noisy result within bounds:", within_bounds, "/", n)
         print("Count of times noisy result outside bounds:", n - within_bounds, "/", n)
-        return (within_bounds / n >= confidence), within_bounds
+        return (within_bounds / n >= relaxed_conf), float('%.2f'%((within_bounds / n) * 100))
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
@@ -321,10 +322,10 @@ class DPVerification:
         
         fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
         fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
-        acc_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+        acc_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, acc_res
@@ -334,44 +335,48 @@ class DPVerification:
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
 
-        d1_res, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
-        d2_res, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
+        d1_res, d1_exact, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
+        d2_res, d2_exact, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
         
         res_list = []
         for col in num_cols:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            exact = d1_exact.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             # Full outer join after flattening the results above to one row per dimension key
             # We cannot be sure if every dimension key has a response in every repeated query run because of tau thresholding
             # That's why we do a full outer join and flatten whatever vector of results we get for the numerical column across repeat runs
             # This is what we use for generating the histogram of results for that dimension key
             d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
+            d1_d2 = d1_d2.merge(exact, on=dim_cols, how='left')
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
-                print(d1_d2.iloc[index, :n_cols - 2])
+                print(d1_d2.iloc[index, :n_cols - 3])
                 print("Column: ", col)
                 # fD1 and fD2 will have the results of the K repeated query results that can be passed through histogram test
                 # These results are for that particular numerical column and the specific dimension key of d1_d2
-                fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 2]])
-                fD2 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 1]])
+                fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 3]])
+                fD2 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 2]])
+                exact_val = d1_d2.iloc[index, n_cols - 1][0]
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
                 print("DP Predicate Test Result: ", dp_res)
-                np.all(np.array(res_list))
-
+                
                 # Accuracy Test
                 low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
                 high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
-                #acc_res, within_bounds = self.accuracy_test(fD1, low, high, confidence)
-                #res_list.append([dp_res, acc_res, within_bounds])
+                acc_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
+                res_list.append([dp_res, acc_res, within_bounds])
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         
-        #dp_res = np.all(np.array([dp_res[0] for dp_res in res_list.values()]))
-        #acc_res = np.all(np.array([acc_res[1] for acc_res in res_list.values()]))
-        return np.all(np.array(res_list))
-        #return dp_res, acc_res
+        for res in res_list:
+            print(res)
+
+        dp_res = np.all(np.array([res[0] for res in res_list]))
+        acc_res = np.all(np.array([res[1] for res in res_list]))
+        return dp_res, acc_res
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, test_cases=5):
@@ -415,7 +420,7 @@ class DPVerification:
         # COUNT Example
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
