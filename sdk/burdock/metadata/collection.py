@@ -1,4 +1,5 @@
-from .name_compare import *
+import importlib
+from .name_compare import BaseNameCompare
 
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
 
@@ -6,13 +7,8 @@ class Collection:
     def __init__(self, tables, engine, compare=None):
         self.m_tables = dict([(t.table_name(), t) for t in tables])
         self.engine = engine if engine is not None else "Unknown"
-        if compare is None:
-            if engine == "Postgres":
-                self.compare = PostgresNameCompare()
-            elif engine == "MSSQL":
-                self.compare = MSSQLNameCompare()
-            else:
-                self.compare = BaseNameCompare()
+        self.compare = BaseNameCompare.get_name_compare(engine) if compare is None else compare
+
     def __getitem__(self, tablename):
         schema_name = ''
         parts = tablename.split('.')
@@ -34,7 +30,7 @@ class Collection:
     Common attributes for a table or a view
 """
 class Table:
-    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=None, sample_max_ids=True, rows_exact=None):
+    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None, clamp_counts=True):
         self.schema = schema
         self.name = name
         self.rowcount = rowcount
@@ -44,6 +40,7 @@ class Table:
         self.rows_exact = rows_exact
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
+        self.clamp_counts = clamp_counts
     def __getitem__(self, colname):
         for cname in self.m_columns.keys():
             col = self.m_columns[cname]

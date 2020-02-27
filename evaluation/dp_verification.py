@@ -283,7 +283,6 @@ class DPVerification:
     #     ag = agg.Aggregation(t=1, repeat_count=repeat_count)
     #     self.dataset_path = dataset_path
     #     d1, d2 = self.generate_neighbors(load_csv=True)
-        
     #     d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
     #     d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
 
