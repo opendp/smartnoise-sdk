@@ -1,8 +1,59 @@
+from .rowset import TypedRowset
+
+class Reader:
+    def __init__(self):
+        self.serializer = None
+        self.compare = NameCompare()
+
+    def execute(self, query):
+        raise NotImplementedError("Execute must be implemented on the inherited class")
+
+    def execute_typed(self, query):
+        if not isinstance(query, str):
+            raise ValueError("Please pass a string to this function.  You can use execute_ast to execute ASTs")
+
+        rows = self.execute(query)
+        if len(rows) < 1:
+            return None
+        sens = [None for i in range(len(rows[0]))]
+        types = ["unknown" for i in range(len(rows[0]))]
+        if len(rows) > 1:
+            row = rows[1]
+            for idx in range(len(row)):
+                val = row[idx]
+                if isinstance(val, int):
+                    types[idx] = "int"
+                elif isinstance(val, float):
+                    types[idx] = "float"
+                elif isinstance(val, bool):
+                    types[idx] = "boolean"
+                else:
+                    types[idx] = "string"
+
+        return TypedRowset(rows, types, sens)
+
+    def execute_ast(self, query):
+        if isinstance(query, str):
+            raise ValueError("Please pass ASTs to execute_ast.  To execute strings, use execute.")
+        if hasattr(self, 'serializer') and self.serializer is not None:
+            query_string = self.serializer.serialize(query)
+        else:
+            query_string = str(query)
+        return self.execute(query_string)
+
+    def execute_ast_typed(self, query):
+        syms = query.all_symbols()
+        types = [s[1].type() for s in syms]
+        sens = [s[1].sensitivity() for s in syms]
+
+        rows = self.execute_ast(query)
+        return TypedRowset(rows, types, sens)
+
 """
     Implements engine-specific identifier matching rules
     for escaped identifiers.
 """
-class BaseNameCompare:
+class NameCompare:
     _name_compare_classes = {}
 
     @classmethod
@@ -14,7 +65,7 @@ class BaseNameCompare:
         if engine in cls._name_compare_classes:
             return cls._name_compare_classes[engine]()
         else:
-            return BaseNameCompare()
+            return NameCompare()
 
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else []

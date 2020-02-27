@@ -1,8 +1,8 @@
 from antlr4 import * #type: ignore
-from burdock.query.sql.parser.SqlSmallLexer import SqlSmallLexer #type: ignore
-from burdock.query.sql.parser.SqlSmallParser import SqlSmallParser #type: ignore
-from burdock.query.sql.parser.SqlSmallVisitor import SqlSmallVisitor #type: ignore
-from burdock.query.sql.parser.SqlSmallErrorListener import SyntaxErrorListener #type: ignore
+from burdock.sql.parser.SqlSmallLexer import SqlSmallLexer #type: ignore
+from burdock.sql.parser.SqlSmallParser import SqlSmallParser #type: ignore
+from burdock.sql.parser.SqlSmallVisitor import SqlSmallVisitor #type: ignore
+from burdock.sql.parser.SqlSmallErrorListener import SyntaxErrorListener #type: ignore
 
 from .ast import *
 from .tokens import *

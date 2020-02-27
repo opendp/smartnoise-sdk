@@ -1,13 +1,13 @@
-from .rowset import TypedRowset
+from .base import Reader, NameCompare
 
-from burdock.metadata.name_compare import BaseNameCompare
 from burdock.metadata.collection import Int
 import copy
 import re
 
 
-class PandasReader:
+class PandasReader(Reader):
     def __init__(self, metadata, df):
+        super().__init__()
         self.original_column_names = []
         self.df = df
         self.metadata = self._sanitize_metadata(metadata)
@@ -98,22 +98,3 @@ class PandasReader:
         df_for_diffpriv1234 = self.df
         q_result = sqldf(clean_query(query), locals())
         return [tuple([col for col in q_result.columns])] + [val[1:] for val in q_result.itertuples()]
-
-    """
-        Executes a parsed AST and returns a typed recordset.
-        Will fix to target approprate dialect. Needs symbols.
-    """
-    def execute_typed(self, query):
-        if isinstance(query, str):
-            raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-
-        syms = query.all_symbols()
-        types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
-
-        if hasattr(self, 'serializer') and self.serializer is not None:
-            query_string = self.serializer.serialize(query)
-        else:
-            query_string = str(query)
-        rows = self.execute(query_string)
-        return TypedRowset(rows, types, sens)

@@ -1,7 +1,7 @@
 import random
 import string
 
-from burdock.query.sql import QueryParser
+from burdock.sql import QueryParser
 
 from .ast.validate import Validate
 from .ast.ast import *  # TODO Why?

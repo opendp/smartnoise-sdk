@@ -1,9 +1,10 @@
-from burdock.query.sql import QueryParser, Rewriter
+from burdock.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from burdock.metadata.report import Interval, Intervals, Result
 
-from .reader.rowset import TypedRowset
+
+from burdock.reader.sql.rowset import TypedRowset
 from .ast.expressions import sql as ast
 
 import numpy as np
@@ -12,7 +13,7 @@ import numpy as np
     Takes a rewritten query, executes against the target backend, then
     adds noise before returning the recordset.
 """
-class PrivateQuery:
+class PrivateReader:
     def __init__(self, reader, metadata, epsilon=1.0, interval_widths=[0.95, 0.985]):
         self.reader = reader
         self.metadata = metadata
@@ -20,6 +21,8 @@ class PrivateQuery:
         self.epsilon = epsilon
         self.max_contrib = 1
         self.interval_widths = interval_widths
+
+        self.metadata.compare = reader.compare
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -82,7 +85,7 @@ class PrivateQuery:
         sens = [s[1].sensitivity() for s in syms]
 
         # execute the subquery against the backend and load in typed rowset
-        db_rs = self.reader.execute_typed(subquery)
+        db_rs = self.reader.execute_ast_typed(subquery)
         return (subquery, query, syms, types, sens, db_rs)
 
     def _postprocess(self, subquery, query, syms, types, sens, db_rs):
@@ -147,7 +150,6 @@ class PrivateQuery:
                 break
         if interval_widths is not None:
             for confidence in interval_widths:
-                print("looking at range: {0}".format(confidence))
                 bind_low = {}
                 bind_high = {}
                 for name in db_rsc.keys():

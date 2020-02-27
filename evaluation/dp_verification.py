@@ -83,7 +83,7 @@ class DPVerification:
         d1_table.schema, d2_table.schema = "d1", "d2"
         d1_table.name, d2_table.name = "d1", "d2"
         d2_table.rowcount = d1_table.rowcount - 1
-        d1_metadata, d2_metadata = Collection([d1_table], "csv"), Collection([d2_table], "csv")
+        d1_metadata, d2_metadata = CollectionMetadata([d1_table], "csv"), CollectionMetadata([d2_table], "csv")
 
         return d1, d2, d1_metadata, d2_metadata
 

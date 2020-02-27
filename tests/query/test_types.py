@@ -1,10 +1,10 @@
 from os.path import dirname, join
 
-from burdock.query.sql import MetadataLoader, QueryParser
+from burdock.sql import CollectionMetadata, QueryParser
 
 dir_name = dirname(__file__)
 
-metadata = MetadataLoader(join(dir_name, "Devices.yaml")).read_schema()
+metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
 
 def qp(query_string):
     return QueryParser().query(query_string)

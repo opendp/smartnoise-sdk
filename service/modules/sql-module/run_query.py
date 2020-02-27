@@ -6,7 +6,7 @@ import pandas as pd
 
 from burdock.client import get_dataset_client
 from burdock.data.adapters import load_reader, load_metadata, load_dataset
-from burdock.query.sql.private_query import PrivateQuery
+from burdock.sql.private_reader import PrivateReader
 from pandasql import sqldf
 
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         dataset = load_dataset(dataset_document)
         reader = load_reader(dataset_document)
         schema = load_metadata(dataset_document)
-        private_reader = PrivateQuery(reader, schema, budget)
+        private_reader = PrivateReader(reader, schema, budget)
         rowset = private_reader.execute(query)
 
         result = {"query_result": rowset}
