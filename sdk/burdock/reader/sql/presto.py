@@ -5,13 +5,13 @@ from burdock.sql.ast.tokens import Literal
 from burdock.sql.ast.expression import Expression
 from burdock.sql.ast.expressions.numeric import BareFunction
 from burdock.sql.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
-from .base import Base, NameCompare
+from .base import Reader, NameCompare
 
 """
     A dumb pipe that gets a rowset back from a database using 
     a SQL string, and converts types to some useful subset
 """
-class PrestoReader(Base):
+class PrestoReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
         import prestodb
         self.api = prestodb.dbapi

@@ -1,11 +1,11 @@
-from .base import Base, NameCompare
+from .base import Reader, NameCompare
 
 from burdock.metadata.collection import Int
 import copy
 import re
 
 
-class PandasReader(Base):
+class PandasReader(Reader):
     def __init__(self, metadata, df):
         self.original_column_names = []
         self.df = df

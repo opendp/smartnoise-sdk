@@ -1,11 +1,11 @@
 import os
 import re
 
-from .base import Base, NameCompare
+from .base import Reader, NameCompare
 from burdock.sql.ast.tokens import Literal
 from burdock.sql.ast.expressions.numeric import BareFunction
 
-class SparkReader(Base):
+class SparkReader(Reader):
     def __init__(self, host, session, user, password=None, port=None):
         from pyspark.sql import SparkSession
         self.api = session

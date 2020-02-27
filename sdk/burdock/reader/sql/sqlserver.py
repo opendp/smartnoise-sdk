@@ -1,7 +1,7 @@
 import pyodbc
 import os
 
-from .base import Base, NameCompare
+from .base import Reader, NameCompare
 from burdock.sql.ast.ast import Relation
 from burdock.sql.ast.tokens import Literal
 from burdock.sql.ast.expression import Expression
@@ -12,7 +12,7 @@ from burdock.sql.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriter
     A dumb pipe that gets a rowset back from a database using 
     a SQL string, and converts types to some useful subset
 """
-class SqlServerReader(Base):
+class SqlServerReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
         self.api = pyodbc
         self.engine = "SqlServer"

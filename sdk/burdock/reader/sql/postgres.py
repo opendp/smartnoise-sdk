@@ -1,12 +1,12 @@
 import os
 
-from .base import Base, NameCompare
+from .base import Reader, NameCompare
 
 """
     A dumb pipe that gets a rowset back from a database using 
     a SQL string, and converts types to some useful subset
 """
-class PostgresReader:
+class PostgresReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
         import psycopg2
         self.api = psycopg2

@@ -1,6 +1,6 @@
 from .rowset import TypedRowset
 
-class Base:
+class Reader:
     def __init__(self):
         self.serializer = None
 
