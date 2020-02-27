@@ -65,7 +65,7 @@ def load_metadata(dataset_document):
 
 def load_reader(dataset_document):
     """
-    rtype: Base
+    rtype: Reader
     """
     return DatasetAdapterLoader.load_reader(dataset_document)
 
