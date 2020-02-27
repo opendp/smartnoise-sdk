@@ -341,23 +341,37 @@ class DPVerification:
         for col in num_cols:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
-            # Full outer join
+            # Full outer join after flattening the results above to one row per dimension key
+            # We cannot be sure if every dimension key has a response in every repeated query run because of tau thresholding
+            # That's why we do a full outer join and flatten whatever vector of results we get for the numerical column across repeat runs
+            # This is what we use for generating the histogram of results for that dimension key
             d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
                 print(d1_d2.iloc[index, :n_cols - 2])
                 print("Column: ", col)
-                fD1 = np.array(d1_d2.iloc[index, n_cols - 2])
-                fD2 = np.array(d1_d2.iloc[index, n_cols - 1])
+                # fD1 and fD2 will have the results of the K repeated query results that can be passed through histogram test
+                # These results are for that particular numerical column and the specific dimension key of d1_d2
+                fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 2]])
+                fD2 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 1]])
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
                 print("DP Predicate Test Result: ", dp_res)
-                res_list.append(dp_res)
+                np.all(np.array(res_list))
+
+                # Accuracy Test
+                low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
+                high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
+                #acc_res, within_bounds = self.accuracy_test(fD1, low, high, confidence)
+                #res_list.append([dp_res, acc_res, within_bounds])
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         
+        #dp_res = np.all(np.array([dp_res[0] for dp_res in res_list.values()]))
+        #acc_res = np.all(np.array([acc_res[1] for acc_res in res_list.values()]))
         return np.all(np.array(res_list))
+        #return dp_res, acc_res
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, test_cases=5):

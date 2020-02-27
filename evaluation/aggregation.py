@@ -149,10 +149,19 @@ class Aggregation:
         
         res = []
         for idx in range(self.repeat_count):
+            dim_rows = []
+            num_rows = []
             srs = TypedRowset(srs_orig.rows(), types, sens)
-            singleres = private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:]
-            for row in singleres:
-                res.append(row)
+            singleres = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+            for col in dim_cols:
+                dim_rows.append(singleres.report[col].values)
+            for col in num_cols:
+                values = singleres.report[col].values
+                low = singleres.report[col].intervals[confidence].low
+                high = singleres.report[col].intervals[confidence].high
+                num_rows.append(list(zip(values, low, high)))
+
+            res.extend(list(zip(*dim_rows, *num_rows)))
         noisy_df = pd.DataFrame(res, columns=headers)
         
         if(dim_cols[0] == "__dim__"):
