@@ -1,13 +1,12 @@
 import os
 
-from burdock.metadata.name_compare import BaseNameCompare
-from .rowset import TypedRowset
+from .base import Reader, NameCompare
 
 """
     A dumb pipe that gets a rowset back from a database using 
     a SQL string, and converts types to some useful subset
 """
-class PostgresReader:
+class PostgresReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
         import psycopg2
         self.api = psycopg2
@@ -43,20 +42,6 @@ class PostgresReader:
         Executes a parsed AST and returns a typed recordset.
         Will fix to target approprate dialect. Needs symbols.
     """
-    def execute_typed(self, query):
-        if isinstance(query, str):
-            raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-
-        syms = query.all_symbols()
-        types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
-
-        if hasattr(self, 'serializer') and self.serializer is not None:
-            query_string = self.serializer.serialize(query)
-        else:
-            query_string = str(query)
-        rows = self.execute(query_string)
-        return TypedRowset(rows, types, sens)
 
     def update_connection_string(self):
         self.connection_string = "user='{0}' host='{1}'".format(self.user, self.host)
@@ -72,7 +57,7 @@ class PostgresSerializer:
     def serialize(self, query):
         return str(query)
 
-class PostgresNameCompare(BaseNameCompare):
+class PostgresNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["public"]
     def identifier_match(self, query, meta):

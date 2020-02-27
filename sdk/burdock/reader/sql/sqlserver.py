@@ -1,19 +1,18 @@
 import pyodbc
 import os
 
-from burdock.metadata.name_compare import BaseNameCompare
-from .rowset import TypedRowset
-from burdock.query.sql.ast.ast import Relation
-from burdock.query.sql.ast.tokens import Literal
-from burdock.query.sql.ast.expression import Expression
-from burdock.query.sql.ast.expressions.numeric import BareFunction
-from burdock.query.sql.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
+from .base import Reader, NameCompare
+from burdock.sql.ast.ast import Relation
+from burdock.sql.ast.tokens import Literal
+from burdock.sql.ast.expression import Expression
+from burdock.sql.ast.expressions.numeric import BareFunction
+from burdock.sql.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
 
 """
     A dumb pipe that gets a rowset back from a database using 
     a SQL string, and converts types to some useful subset
 """
-class SqlServerReader:
+class SqlServerReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
         self.api = pyodbc
         self.engine = "SqlServer"
@@ -45,24 +44,6 @@ class SqlServerReader:
             col_names = [tuple(desc[0] for desc in cursor.description)]
             rows = [row for row in cursor]
             return col_names + rows
-    """
-        Executes a parsed AST and returns a typed recordset.
-        Will fix to target approprate dialect. Needs symbols.
-    """
-    def execute_typed(self, query):
-        if isinstance(query, str):
-            raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-
-        syms = query.all_symbols()
-        types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
-
-        if hasattr(self, 'serializer') and self.serializer is not None:
-            query_string = self.serializer.serialize(query)
-        else:
-            query_string = str(query)
-        rows = self.execute(query_string)
-        return TypedRowset(rows, types, sens)
 
     def update_connection_string(self):
         self.connection_string = "Server={0}{1};UID={2}".format(
@@ -108,7 +89,7 @@ class SqlServerSerializer:
 
         return(str(query))
 
-class SqlServerNameCompare(BaseNameCompare):
+class SqlServerNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["dbo"]
     def identifier_match(self, query, meta):

@@ -1,4 +1,4 @@
-from burdock.query.sql.ast.tokens import *
+from burdock.sql.ast.tokens import *
 import numpy as np
 
 ops = {

@@ -1,5 +1,6 @@
 import pytest
-from burdock.query.sql import QueryParser, Validate, MetadataLoader
+from burdock.sql import QueryParser, Validate
+from burdock.metadata.collection import CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname
@@ -20,7 +21,7 @@ for d in other_dirs:
     good_files.extend(other_files)
 
 
-metadata = MetadataLoader(join(dir_name, "Devices.yaml")).read_schema()
+metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
 
 
 #
