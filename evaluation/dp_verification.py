@@ -306,14 +306,18 @@ class DPVerification:
 
     def accuracy_test(self, actual, low, high, confidence=0.95):
         # Actual mean of aggregation function f on D1 is equal to sample mean
-        print("Confidence Level: ", confidence*100, "%")
         n = len(low)
         actual = [actual] * n
-        relaxed_conf = confidence - 0.05*confidence
+        error_interval = 0.05*confidence
+        relaxed_low = confidence - error_interval
+        relaxed_high = 1 - (confidence + error_interval)
         within_bounds = np.sum(np.logical_and(np.greater_equal(actual, low), np.greater_equal(high, actual)))
+        outside_bounds = n - within_bounds
         print("Count of times noisy result within bounds:", within_bounds, "/", n)
-        print("Count of times noisy result outside bounds:", n - within_bounds, "/", n)
-        return (within_bounds / n >= relaxed_conf), float('%.2f'%((within_bounds / n) * 100))
+        print("Count of times noisy result outside bounds:", outside_bounds, "/", n)
+        acc_res = (within_bounds / n >= relaxed_low)
+        utility_res = (outside_bounds / n >= relaxed_high)
+        return acc_res, utility_res, float('%.2f'%((within_bounds / n) * 100))
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
@@ -325,10 +329,10 @@ class DPVerification:
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-        acc_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
+        acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
-        return dp_res, acc_res
+        return dp_res, acc_res, utility_res
 
     # Allows DP Predicate test on both singleton and GROUP BY queries
     def dp_groupby_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
@@ -366,8 +370,8 @@ class DPVerification:
                 # Accuracy Test
                 low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
                 high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
-                acc_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
-                res_list.append([dp_res, acc_res, within_bounds])
+                acc_res, utility_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
+                res_list.append([dp_res, acc_res, utility_res, within_bounds])
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         
@@ -376,7 +380,7 @@ class DPVerification:
 
         dp_res = np.all(np.array([res[0] for res in res_list]))
         acc_res = np.all(np.array([res[1] for res in res_list]))
-        return dp_res, acc_res
+        return dp_res, acc_res, utility_res
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, test_cases=5):
@@ -397,7 +401,7 @@ class DPVerification:
                 fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
                 fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
                 
-                acc_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
+                acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
@@ -405,7 +409,7 @@ class DPVerification:
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
                 key = "[" + ','.join(str(e) for e in list(sample)) + "] - " + filename
-                res_list[key] = [dp_res, acc_res, within_bounds]
+                res_list[key] = [dp_res, acc_res, utility_res, within_bounds]
         
         print("Halton sequence based Powerset Test Result")
         for data, res in res_list.items():
@@ -413,22 +417,22 @@ class DPVerification:
 
         dp_res = np.all(np.array([dp_res[0] for dp_res in res_list.values()]))
         acc_res = np.all(np.array([acc_res[1] for acc_res in res_list.values()]))
-        return dp_res, acc_res
+        return dp_res, acc_res, utility_res
 
     # Main method listing all the DP verification steps
     def main(self):
         # COUNT Example
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res, acc_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res, acc_res, utility_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res, acc_res, utility_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         
         # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res, acc_res = self.dp_powerset_test(query_str, plot=False, repeat_count=500)
+        dp_res, acc_res, utility_res = self.dp_powerset_test(query_str, plot=False, repeat_count=500)
 
         # Yarrow Test
         # dataset_root = os.getenv('DATASET_ROOT', '/home/ankit/Documents/github/datasets/')
