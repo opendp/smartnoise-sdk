@@ -31,6 +31,9 @@ class NestedExpression(SqlExpr):
         return [Token("("), self.expression, Token(")")]
     def evaluate(self, bindings):
         return self.expression.evaluate(bindings)
+    @property
+    def is_key_count(self):
+        return self.expression.is_key_count
 
 class NamedExpression(SqlExpr):
     """An expression with optional name"""
@@ -55,3 +58,7 @@ class NamedExpression(SqlExpr):
         return [self.expression] + ([Token("AS"), self.name] if self.name is not None else [])
     def evaluate(self, bindings):
         return self.expression.evaluate(bindings)
+    @property
+    def is_key_count(self):
+        return self.expression.is_key_count
+    

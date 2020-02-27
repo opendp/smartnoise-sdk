@@ -44,7 +44,7 @@ class CollectionMetadata:
     Common attributes for a table or a view
 """
 class Table:
-    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None, clamp_counts=True):
+    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None):
         self.schema = schema
         self.name = name
         self.rowcount = rowcount
@@ -54,7 +54,6 @@ class Table:
         self.rows_exact = rows_exact
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
-        self.clamp_counts = clamp_counts
     def __getitem__(self, colname):
         for cname in self.m_columns.keys():
             col = self.m_columns[cname]
@@ -185,18 +184,17 @@ class CollectionYamlLoader:
 
     def load_table(self, schema, table, t):
         rowcount = int(t["rows"]) if "rows" in t else 0
+        rows_exact = int(t["rows_exact"]) if "rows_exact" in t else None
         row_privacy = bool(t["row_privacy"]) if "row_privacy" in t else False
         max_ids = int(t["max_ids"]) if "max_ids" in t else 1
         sample_max_ids = bool(t["sample_max_ids"]) if "sample_max_ids" in t else None
-        rows_exact = int(t["rows_exact"]) if "rows_exact" in t else None
-        clamp_counts = bool(t["clamp_counts"]) if "clamp_counts" in t else True
 
         columns = []
         colnames = [cn for cn in t.keys() if cn != "rows"]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 
-        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, rows_exact, clamp_counts)
+        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, rows_exact)
 
     def load_column(self, column, c):
         is_key = False if "private_id" not in c else bool(c["private_id"])
@@ -243,8 +241,6 @@ class CollectionYamlLoader:
                 table["sample_max_ids"] = t.sample_max_ids
             if t.rows_exact is not None:
                 table["rows_exact"] = t.rows_exact
-            if not t.clamp_counts:
-                table["clamp_counts"] = t.clamp_counts
 
             for c in t.columns():
                 cname = c.name

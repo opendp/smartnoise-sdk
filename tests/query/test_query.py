@@ -79,10 +79,10 @@ class TestQuery:
     def test_yes_tau(self):
         # should usually drop some rows
         reader = PandasReader(schema, df)
-        private_reader = PrivateReader(reader, schema, 0.01)
+        private_reader = PrivateReader(reader, schema, 1.0, 1/10000)
         lengths = []
         for i in range(10):
-            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 GROUP BY educ")
+            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 80 GROUP BY educ")
             lengths.append(len(rs['c']))
         l = lengths[0]
         assert(any([l != ll for ll in lengths]))
