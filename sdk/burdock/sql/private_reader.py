@@ -1,24 +1,24 @@
+import math
+import numpy as np
 from burdock.sql import QueryParser, Rewriter
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from burdock.metadata.report import Interval, Intervals, Result
-
-
 from burdock.reader.sql.rowset import TypedRowset
 from .ast.expressions import sql as ast
-
-import numpy as np
 
 """
     Takes a rewritten query, executes against the target backend, then
     adds noise before returning the recordset.
 """
 class PrivateReader:
-    def __init__(self, reader, metadata, epsilon=1.0, interval_widths=[0.95, 0.985]):
+    def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=[0.95, 0.985], flags=None):
+        self.flags = flags if flags is not None else PrivateReaderFlags()
         self.reader = reader
         self.metadata = metadata
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
+        self.delta = delta
         self.max_contrib = 1
         self.interval_widths = interval_widths
 
@@ -75,10 +75,9 @@ class PrivateReader:
         if isinstance(query, str):
             raise ValueError("Please pass AST to _preprocess.")
 
-        # Preprocess:
-        # 0. Rewrite query and execute subquery
-        # 0b. Serialize to target backend
         subquery, query = self.rewrite_ast(query)
+        self.max_contrib = query.max_ids
+        self.tau = self.max_contrib * (1- ( math.log(2 * self.delta / self.max_contrib) / self.epsilon  ))
 
         syms = subquery.all_symbols()
         types = [s[1].type() for s in syms]
@@ -89,44 +88,38 @@ class PrivateReader:
         return (subquery, query, syms, types, sens, db_rs)
 
     def _postprocess(self, subquery, query, syms, types, sens, db_rs):
-        # Postprocess:
-        # 1. Add Noise to subquery results
-        # 1b. Clamp counts to 0, set SUM = NULL if count = 0
-        # 2. Filter max_contrib thresh
-        # 3. Evaluate outer expression, set AVG = NULL if count = 0
-        # 4. Sort        
-
-        # # if user has selected keycount for outer query, use that instead
-        kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
-        if len(kcc) > 0:
-            db_rs["keycount"] = db_rs[kcc[0][0].lower()]
-
         # add noise to all columns that need noise
         for nsym in subquery.numeric_symbols():
             name, sym = nsym
             name = name.lower()
             sens = sym.sensitivity()
 
+            #if sym.expression in group_expressions:
+            #    continue
+
             # treat null as 0 before adding noise
             db_rs[name] = np.array([v if v is not None else 0.0 for v in db_rs[name]])
 
-            mechanism = Gaussian(self.epsilon, 10E-16, sens, self.max_contrib, self.interval_widths)
+            mechanism = Gaussian(self.epsilon, self.delta, sens, self.max_contrib, self.interval_widths)
             report = mechanism.release(db_rs[name], compute_accuracy=True)
 
             db_rs[name] = report.values
-            #db_rs.intervals[name] = report.intervals
-
             db_rs.report[name] = report
-            db_rs.report[name].values = None  # to avoid duplication of values
 
-            if sym is ast.AggFunction and sym.name == "COUNT" and query.clamp_counts:
+            if (self.flags.clamp_counts is True) and sym.is_key_count:
                 counts = db_rs[name]
                 counts[counts < 0] = 0
                 db_rs[name] = counts
 
+        # make sure all keycounts report same noisy values
+        kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
+        for kc in kcc:
+            db_rs[kc[0].lower()] = db_rs["keycount"] = db_rs[kcc[0][0].lower()]
+            
+
         # censor dimensions for privacy
-        if subquery.agg is not None:
-            db_rs = db_rs.filter("keycount", ">", self.max_contrib ** 2)
+        if subquery.agg is not None and self.flags.censor_dims:
+            db_rs = db_rs.filter("keycount", ">", self.tau)
 
         # get column information for outer query
         syms = query.all_symbols()
@@ -224,3 +217,15 @@ class PrivateReader:
             raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
         subquery_results = self._preprocess(query)
         return self._postprocess(*subquery_results)
+
+class PrivateReaderFlags:
+    def __init__(self, 
+        censor_dims=True, 
+        clamp_counts=True, 
+        reservoir_sample=True, 
+        row_privacy=False):
+
+        self.censor_dims = censor_dims
+        self.clamp_counts = clamp_counts
+        self.reservoir_sample = reservoir_sample
+        self.row_privacy = row_privacy
