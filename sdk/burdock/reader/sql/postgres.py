@@ -8,6 +8,7 @@ from .base import Reader, NameCompare
 """
 class PostgresReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
+        super().__init__()
         import psycopg2
         self.api = psycopg2
         self.engine = "Postgres"

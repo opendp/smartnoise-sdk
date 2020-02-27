@@ -7,6 +7,7 @@ from burdock.sql.ast.expressions.numeric import BareFunction
 
 class SparkReader(Reader):
     def __init__(self, host, session, user, password=None, port=None):
+        super().__init__()
         from pyspark.sql import SparkSession
         self.api = session
         self.engine = "Spark"

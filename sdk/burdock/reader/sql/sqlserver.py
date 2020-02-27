@@ -14,6 +14,7 @@ from burdock.sql.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriter
 """
 class SqlServerReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
+        super().__init__()
         self.api = pyodbc
         self.engine = "SqlServer"
 

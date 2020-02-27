@@ -7,6 +7,7 @@ import re
 
 class PandasReader(Reader):
     def __init__(self, metadata, df):
+        super().__init__()
         self.original_column_names = []
         self.df = df
         self.metadata = self._sanitize_metadata(metadata)

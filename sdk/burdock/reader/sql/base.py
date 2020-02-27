@@ -3,6 +3,7 @@ from .rowset import TypedRowset
 class Reader:
     def __init__(self):
         self.serializer = None
+        self.compare = NameCompare()
 
     def execute(self, query):
         raise NotImplementedError("Execute must be implemented on the inherited class")

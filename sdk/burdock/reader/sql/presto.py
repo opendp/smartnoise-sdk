@@ -13,6 +13,7 @@ from .base import Reader, NameCompare
 """
 class PrestoReader(Reader):
     def __init__(self, host, database, user, password=None, port=None):
+        super().__init__()
         import prestodb
         self.api = prestodb.dbapi
         self.engine = "Presto"
