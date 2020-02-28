@@ -93,7 +93,7 @@ class TestStochastic:
     def test_groupby(self):
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=2000)
         test_logger.debug("Result of DP Predicate Test on GROUP BY and SUM, COUNT aggregate: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on GROUP BY and SUM, COUNT aggregate: " + str(acc_res))
         test_logger.debug("Result of Utility Test on GROUP BY and SUM, COUNT aggregate: " + str(utility_res))
@@ -106,7 +106,7 @@ class TestStochastic:
     def test_groupby_avg(self):
         d1_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=2000)
         test_logger.debug("Result of DP Predicate Test on GROUP BY and AVG aggregate: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on GROUP BY and AVG aggregate: " + str(acc_res))
         test_logger.debug("Result of Utility Test on GROUP BY and AVG aggregate: " + str(utility_res))
