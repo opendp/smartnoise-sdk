@@ -3,13 +3,15 @@ from pyspark.sql import Row
 from pyspark.sql.types import BooleanType
 from burdock.sql import CollectionMetadata
 from burdock.sql import PrivateReader
+from .spark import SparkReader
 from burdock.mechanisms.gaussian import Gaussian
 
 class DatabricksSparkReader:
     def __init__(self, sparkSession, meta_path):
         self.spark = sparkSession
         self.schema = CollectionMetadata.from_file(meta_path)
-        self.private_reader = PrivateReader(None, self.schema, 1.0)
+        dummyReader = SparkReader("", sparkSession, "")
+        self.private_reader = PrivateReader(dummyReader, self.schema, 1.0)
 
     """
         Executes a raw SQL string against the Spark Hive database and returns spark dataframe.

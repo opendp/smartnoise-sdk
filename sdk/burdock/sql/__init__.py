@@ -1,4 +1,4 @@
-from burdock.metadata.collection import CollectionMetadata
+from burdock.metadata import CollectionMetadata
 from .ast.parse import QueryParser
 from .ast.validate import Validate
 from .private_rewrite import Rewriter
