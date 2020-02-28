@@ -325,7 +325,7 @@ class DPVerification:
         actual = [actual] * n
         msd = (np.sum(fD - actual) / n) / actual[0]
         print("Mean signed deviation: ", '%.4f'%(msd))
-        return (abs(msd) < 0.01), msd
+        return (abs(msd) < 0.05), msd
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
