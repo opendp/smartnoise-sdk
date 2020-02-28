@@ -226,13 +226,19 @@ class PrivateReader:
         return self._postprocess(*subquery_results)
 
 class PrivateReaderOptions:
+    """Options that control privacy behavior"""
     def __init__(self, 
         censor_dims=True, 
         clamp_counts=True, 
         reservoir_sample=True,
         clamp_columns=True,
         row_privacy=False):
-
+        """Initialize with options.
+        :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy
+        :param clamp_counts: boolean, set to False to allow noisy counts to be negative
+        :param reservoir_sample: boolean, set to False if the data collection will never have more than max_contrib record per individual
+        :param clamp_columns: boolean, set to False to allow values that exceed lower and higher limit specified in metadata.  May impact privacy
+        :param row_privacy: boolean, True if each row is a separate individual"""
         self.censor_dims = censor_dims
         self.clamp_counts = clamp_counts
         self.reservoir_sample = reservoir_sample
