@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from burdock.sql import QueryParser, Rewriter
+from burdock.sql import QueryParser, Rewriter, RewriterOptions
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from burdock.metadata.report import Interval, Intervals, Result
@@ -12,8 +12,8 @@ from .ast.expressions import sql as ast
     adds noise before returning the recordset.
 """
 class PrivateReader:
-    def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=[0.95, 0.985], flags=None):
-        self.flags = flags if flags is not None else PrivateReaderFlags()
+    def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=[0.95, 0.985], options=None):
+        self.options = options if options is not None else PrivateReaderOptions()
         self.reader = reader
         self.metadata = metadata
         self.rewriter = Rewriter(metadata)
@@ -21,8 +21,13 @@ class PrivateReader:
         self.delta = delta
         self.max_contrib = 1
         self.interval_widths = interval_widths
+        self.refresh_options()
 
-        self.metadata.compare = reader.compare
+    def refresh_options(self):
+        self.rewriter = Rewriter(self.metadata)
+        self.metadata.compare = self.reader.compare
+        self.rewriter.options.reservoir_sample = self.options.reservoir_sample
+        self.rewriter.options.clamp_columns = self.options.clamp_columns
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -37,11 +42,13 @@ class PrivateReader:
         return self.rewrite_ast(query)
 
     def rewrite_ast(self, query):
+        self.refresh_options()
         query = self.rewriter.query(query)
         subquery = query.source.relations[0].primary.query
         return (subquery, query)
 
     def get_privacy_cost(self, query_string):
+        self.refresh_options()
         subquery, query = self.rewrite(query_string)
         return subquery.numeric_symbols()
 
@@ -106,7 +113,7 @@ class PrivateReader:
             db_rs[name] = report.values
             db_rs.report[name] = report
 
-            if (self.flags.clamp_counts is True) and sym.is_key_count:
+            if (self.options.clamp_counts is True) and sym.is_key_count:
                 counts = db_rs[name]
                 counts[counts < 0] = 0
                 db_rs[name] = counts
@@ -118,7 +125,7 @@ class PrivateReader:
             
 
         # censor dimensions for privacy
-        if subquery.agg is not None and self.flags.censor_dims:
+        if subquery.agg is not None and self.options.censor_dims:
             db_rs = db_rs.filter("keycount", ">", self.tau)
 
         # get column information for outer query
@@ -218,14 +225,16 @@ class PrivateReader:
         subquery_results = self._preprocess(query)
         return self._postprocess(*subquery_results)
 
-class PrivateReaderFlags:
+class PrivateReaderOptions:
     def __init__(self, 
         censor_dims=True, 
         clamp_counts=True, 
-        reservoir_sample=True, 
+        reservoir_sample=True,
+        clamp_columns=True,
         row_privacy=False):
 
         self.censor_dims = censor_dims
         self.clamp_counts = clamp_counts
         self.reservoir_sample = reservoir_sample
+        self.clamp_columns = clamp_columns
         self.row_privacy = row_privacy
