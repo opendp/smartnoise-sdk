@@ -1,4 +1,6 @@
-from burdock.sql import QueryParser, Rewriter
+
+from burdock.sql import Rewriter
+from .parse import QueryParser
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from burdock.metadata.report import Interval, Intervals, Result
