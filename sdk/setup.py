@@ -18,7 +18,8 @@ DEPENDENCIES = [
     "pandas",
     "msrest",
     "scipy",
-    "antlr4-python3-runtime"
+    "antlr4-python3-runtime",
+    "pyyaml"
 ]
 
 EXTRAS = { }
