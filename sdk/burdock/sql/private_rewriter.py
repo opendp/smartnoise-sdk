@@ -294,8 +294,8 @@ class Scope:
         self.expressions[proposed] = expression
         return proposed
 
-"""Options that modify rewriter behavior"""
 class RewriterOptions:
+    """Options that modify rewriter behavior"""
     def __init__(self, row_privacy=False, reservoir_sample=True, clamp_columns=True, max_contrib=1):
         """Initialize options before running the rewriter
 
