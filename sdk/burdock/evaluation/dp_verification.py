@@ -377,9 +377,9 @@ class DPVerification:
         for res in res_list:
             print(res)
 
-        dp_res = np.all(np.array([res[0] for res in res_list.values()]))
-        acc_res = np.all(np.array([res[1] for res in res_list.values()]))
-        utility_res = np.all(np.array([res[2] for res in res_list.values()]))
+        dp_res = np.all(np.array([res[0] for res in res_list]))
+        acc_res = np.all(np.array([res[1] for res in res_list]))
+        utility_res = np.all(np.array([res[2] for res in res_list]))
         return dp_res, acc_res, utility_res
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
@@ -415,9 +415,9 @@ class DPVerification:
         for data, res in res_list.items():
             print(data, "-", res)
 
-        dp_res = np.all(np.array([res[0] for res in res_list.values()]))
-        acc_res = np.all(np.array([res[1] for res in res_list.values()]))
-        utility_res = np.all(np.array([res[2] for res in res_list.values()]))
+        dp_res = np.all(np.array([res[0] for res in res_list]))
+        acc_res = np.all(np.array([res[1] for res in res_list]))
+        utility_res = np.all(np.array([res[2] for res in res_list]))
         return dp_res, acc_res, utility_res
 
     # Main method listing all the DP verification steps
