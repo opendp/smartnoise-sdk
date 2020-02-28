@@ -21,6 +21,7 @@ DEPENDENCIES = [
     "scipy",
     "statsmodels"
     "antlr4-python3-runtime==4.8"
+    "statsmodels"
 ]
 
 EXTRAS = { }
