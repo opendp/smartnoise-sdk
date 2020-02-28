@@ -7,26 +7,25 @@
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '../sdk'))
 import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import evaluation.aggregation as agg
-import evaluation.exploration as exp
+import burdock.evaluation.aggregation as agg
+import burdock.evaluation.exploration as exp
 import copy
+
 # import yarrow
 from burdock.metadata.collection import *
 from scipy import stats
 
 class DPVerification:
     # Set the epsilon parameter of differential privacy
-    def __init__(self, epsilon=1.0, dataset_size=10000):
+    def __init__(self, epsilon=1.0, dataset_size=10000, csv_path="."):
         self.epsilon = epsilon
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
-        self.csv_path = r'../service/datasets'
+        self.csv_path = csv_path
         self.df, self.dataset_path, self.file_name, self.metadata = self.create_simulated_dataset()
         print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
@@ -42,7 +41,7 @@ class DPVerification:
         segments = np.random.choice(segment, size=self.dataset_size, p=[0.5, 0.3, 0.2]).tolist()
         usage = np.random.geometric(p=0.5, size=self.dataset_size).tolist()
         df = pd.DataFrame(list(zip(userids, segments, roles, usage)), columns=['UserId', 'Segment', 'Role', 'Usage'])
-        
+
         # Storing the data as a CSV
         file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
         df.to_csv(file_path, sep=',', encoding='utf-8', index=False)

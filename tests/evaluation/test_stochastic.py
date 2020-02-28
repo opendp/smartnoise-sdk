@@ -5,14 +5,15 @@ import logging
 test_logger = logging.getLogger("stochastic-test-logger")
 
 import sys
+import subprocess
 import os
 import pytest
-from evaluation.dp_verification import DPVerification
-from evaluation.exploration import Exploration
-from evaluation.aggregation import Aggregation
-import yarrow
+from burdock.evaluation.dp_verification import DPVerification
+from burdock.evaluation.exploration import Exploration
+from burdock.evaluation.aggregation import Aggregation
 
-dv = DPVerification(dataset_size=1000)
+root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url, "service", "datasets"))
 ag = Aggregation(t=1, repeat_count=1000)
 
 class TestStochastic:
@@ -94,24 +95,28 @@ class TestStochastic:
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_mean(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_mean_res = dv.yarrow_test(test_csv_path, yarrow.dp_mean, 'income', float, epsilon=1.0, minimum=0, maximum=100, num_records=1000)
         assert(dp_yarrow_mean_res == True)
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_variance(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_var_res = dv.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=1.0, minimum=0, maximum=12, num_records=1000)
         assert(dp_yarrow_var_res == True)
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_moment_raw(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_moment_res = dv.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
         assert(dp_yarrow_moment_res == True)
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_covariance(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_covariance_res = dv.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
         assert(dp_yarrow_covariance_res == True)

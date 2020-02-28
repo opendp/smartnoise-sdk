@@ -16,9 +16,11 @@ if os.path.exists("patch.version"):
 DEPENDENCIES = [
     "numpy",
     "pandas",
+    "pandasql",
     "msrest",
     "scipy",
-    "antlr4-python3-runtime"
+    "antlr4-python3-runtime",
+    "statsmodels"
 ]
 
 EXTRAS = { }

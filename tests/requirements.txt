@@ -3,3 +3,7 @@ pyyaml
 pandasql
 mlflow
 connexion
+matplotlib
+statsmodels
+sklearn
+pytest-xdist
