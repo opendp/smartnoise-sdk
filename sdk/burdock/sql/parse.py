@@ -1,11 +1,13 @@
 from antlr4 import * #type: ignore
-from burdock.sql.parser.SqlSmallLexer import SqlSmallLexer #type: ignore
-from burdock.sql.parser.SqlSmallParser import SqlSmallParser #type: ignore
-from burdock.sql.parser.SqlSmallVisitor import SqlSmallVisitor #type: ignore
-from burdock.sql.parser.SqlSmallErrorListener import SyntaxErrorListener #type: ignore
 
-from .ast import *
-from .tokens import *
+from .parser.SqlSmallLexer import SqlSmallLexer #type: ignore
+from .parser.SqlSmallParser import SqlSmallParser #type: ignore
+from .parser.SqlSmallVisitor import SqlSmallVisitor #type: ignore
+from .parser.SqlSmallErrorListener import SyntaxErrorListener #type: ignore
+
+from .ast.tokens import *
+from .ast.ast import *
+
 
 class QueryParser:
     def __init__(self, metadata = None):
