@@ -391,7 +391,7 @@ class DPVerification:
         dp_res = np.all(np.array([res[0] for res in res_list]))
         acc_res = np.all(np.array([res[1] for res in res_list]))
         utility_res = np.all(np.array([res[2] for res in res_list]))
-        bias_res = np.all(np.array([res[3] for res in res_list]))
+        bias_res = np.all(np.array([res[4] for res in res_list]))
         return dp_res, acc_res, utility_res, bias_res
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
@@ -437,6 +437,7 @@ class DPVerification:
         dp_res = np.all(np.array([res[0] for res in res_list.values()]))
         acc_res = np.all(np.array([res[1] for res in res_list.values()]))
         utility_res = np.all(np.array([res[2] for res in res_list.values()]))
+        bias_res = np.all(np.array([res[4] for res in res_list.values()]))
         return dp_res, acc_res, utility_res, bias_res
 >>>>>>> Bias Test:evaluation/dp_verification.py
 
