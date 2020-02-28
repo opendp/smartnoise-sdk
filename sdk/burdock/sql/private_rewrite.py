@@ -1,9 +1,9 @@
 import random
 import string
 
-from burdock.sql import QueryParser
+from .parse import QueryParser
+from .ast import Validate
 
-from .ast.validate import Validate
 from .ast.ast import *  # TODO Why?
 
 

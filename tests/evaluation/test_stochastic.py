@@ -10,7 +10,6 @@ import pytest
 from evaluation.dp_verification import DPVerification
 from evaluation.exploration import Exploration
 from evaluation.aggregation import Aggregation
-import yarrow
 
 dv = DPVerification(dataset_size=1000)
 ag = Aggregation(t=1, repeat_count=1000)

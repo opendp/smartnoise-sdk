@@ -1,7 +1,8 @@
 from os import listdir
 from os.path import isfile, join, dirname
 
-from burdock.sql import QueryParser, Rewriter, CollectionMetadata
+from burdock.sql import Rewriter, CollectionMetadata
+from burdock.sql.parse import QueryParser
 
 
 dir_name = dirname(__file__)
