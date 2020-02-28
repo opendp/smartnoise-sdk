@@ -1,4 +1,4 @@
-ANTLR := java -jar /usr/local/lib/antlr-4.7.2-complete.jar
+ANTLR := java -jar /usr/local/lib/antlr-4.8-complete.jar
 GRUN := java org.antlr.v4.gui.TestRig
 PYTHON := python3
 

@@ -19,8 +19,8 @@ DEPENDENCIES = [
     "pandasql",
     "msrest",
     "scipy",
-    "antlr4-python3-runtime",
     "statsmodels"
+    "antlr4-python3-runtime==4.8"
 ]
 
 EXTRAS = { }
