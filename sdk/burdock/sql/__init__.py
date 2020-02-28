@@ -4,7 +4,7 @@ from .ast.validate import Validate
 from .private_rewrite import Rewriter
 from .private_reader import PrivateReader
 from burdock.reader.sql.pandas import PandasReader
-
+from burdock.reader.sql.databricks import DatabricksSparkReader
 
 def execute_private_query(reader, schema, budget, query):
     schema = reader.metadata if hasattr(reader, "metadata") else schema
@@ -12,4 +12,4 @@ def execute_private_query(reader, schema, budget, query):
     return PrivateReader(reader, schema, budget).execute(query)
 
 __all__ = ["CollectionMetadata", "QueryParser", "Rewriter", "Validate",
-           "PandasReader", "execute_private_query"]
+           "PandasReader", "DatabricksSparkReader", "execute_private_query"]
