@@ -159,7 +159,7 @@ class Rewriter:
             return Query(select, From(subquery), filtered, query.agg, None, None)
         else:
             subquery = self.per_key_clamped(subquery)
-            subquery [AliasedRelation(subquery, "no_random_sample")]
+            subquery = [AliasedRelation(subquery, "per_key_all")]
             return Query(select, From(subquery), None, query.agg, None, None)
 
     def per_key_random(self, query):
@@ -185,18 +185,14 @@ class Rewriter:
 
         relations = query.source.relations
 
+        select = Seq([self.clampExpression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
+        select = Select(None, select)
+        subquery = Query(child_scope.select(), query.source, query.where, None, None, None)
 
         if self.options.clamp_columns:
-            select = Seq([self.clampExpression(ne, relations, child_scope) for ne in query.select.namedExpressions])
-            select = Select(None, select)
-            subquery = Query(child_scope.select(), query.source, query.where, None, None, None)
             subquery = [AliasedRelation(subquery, "clamped")]
         else:
-            select = Seq([NamedExpression(ne.name, ne.expression) for ne in query.select.namedExpressions])
-            select = Select(None, select)
-            subquery = Query(child_scope.select(), query.source, query.where, None, None, None)
             subquery = [AliasedRelation(subquery, "not_clamped")]
-
 
         return Query(select, From(subquery), None, new_agg, None, None)
 
@@ -205,7 +201,7 @@ class Rewriter:
         Lookup the expression referenced in each named expression and
         write a clamped select for it, using the schema
     """
-    def clampExpression(self, ne, relations, scope):
+    def clampExpression(self, ne, relations, scope, do_clamp=True):
         exp = ne.expression
         cols = exp.find_nodes(Column)
         if type(exp) is Column:
@@ -215,7 +211,7 @@ class Rewriter:
             minval = None
             maxval = None
             sym = col.symbol(relations)
-            if sym.valtype in ["float", "int"] and not sym.unbounded:
+            if do_clamp and sym.valtype in ["float", "int"] and not sym.unbounded:
                 minval = sym.minval
                 maxval = sym.maxval
                 if minval is None or sym.is_key:
