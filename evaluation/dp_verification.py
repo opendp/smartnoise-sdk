@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import evaluation.aggregation as agg
 import evaluation.exploration as exp
 import copy
-import yarrow
+# import yarrow
 from burdock.metadata.collection import *
 from scipy import stats
 
@@ -275,96 +275,113 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
 
-    # Verification of aggregation mechanisms implemented in Yarrow
-    # Creating a new function to take in non-keyworded args and keyworded kwargs
-    # This makes it generic to take in any Yarrow aggregate function with any set of parameters
-    # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
-    def yarrow_test(self, dataset_path, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=10000, **kwargs):
-        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
-        self.dataset_path = dataset_path
-        d1, d2, _, _ = self.generate_neighbors(load_csv=True)
+    # # Verification of aggregation mechanisms implemented in Yarrow
+    # # Creating a new function to take in non-keyworded args and keyworded kwargs
+    # # This makes it generic to take in any Yarrow aggregate function with any set of parameters
+    # # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
+    # def yarrow_test(self, dataset_path, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=10000, **kwargs):
+    #     ag = agg.Aggregation(t=1, repeat_count=repeat_count)
+    #     self.dataset_path = dataset_path
+    #     d1, d2 = self.generate_neighbors(load_csv=True)
         
-        d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
-        d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
+    #     d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
+    #     d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
 
-        if(len(args) == 4):
-            fD1 = ag.yarrow_dp_multi_agg(f, d1_file_path, args, kwargs)
-            fD2 = ag.yarrow_dp_multi_agg(f, d2_file_path, args, kwargs)
-        else:
-            fD1 = ag.yarrow_dp_agg(f, d1_file_path, args, kwargs)
-            fD2 = ag.yarrow_dp_agg(f, d2_file_path, args, kwargs)
+    #     if(len(args) == 4):
+    #         fD1 = ag.yarrow_dp_multi_agg(f, d1_file_path, args, kwargs)
+    #         fD2 = ag.yarrow_dp_multi_agg(f, d2_file_path, args, kwargs)
+    #     else:
+    #         fD1 = ag.yarrow_dp_agg(f, d1_file_path, args, kwargs)
+    #         fD2 = ag.yarrow_dp_agg(f, d2_file_path, args, kwargs)
 
-        d1size, d2size = fD1.size, fD2.size
-        d1hist, d2hist, bin_edges = \
-            self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
-        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-        print("DP Predicate Test:", dp_res, "\n")
+    #     d1size, d2size = fD1.size, fD2.size
+    #     d1hist, d2hist, bin_edges = \
+    #         self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
+    #     dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+    #     print("DP Predicate Test:", dp_res, "\n")
         
-        if(plot):
-            self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
-        return dp_res
+    #     if(plot):
+    #         self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
+    #     return dp_res
 
-    def accuracy_test(self, fD, bounds, confidence=0.95):
+    def accuracy_test(self, actual, low, high, confidence=0.95):
         # Actual mean of aggregation function f on D1 is equal to sample mean
-        n = fD.size
-        lower_bound = bounds[0]
-        upper_bound = bounds[1]
-        print("Confidence Level: ", confidence*100, "%")
-        print("Bounds: [", lower_bound, ", ", upper_bound, "]")
-        print("Mean of noisy responses:", np.mean(fD))
-        print("Mean of upper and lower bound:", (lower_bound + upper_bound) / 2.0)
-        lower_bound = [lower_bound] * n
-        upper_bound = [upper_bound] * n
-        within_bounds = np.sum(np.logical_and(np.greater_equal(fD, lower_bound), np.greater_equal(upper_bound, fD)))
+        n = len(low)
+        actual = [actual] * n
+        error_interval = 0.05*confidence
+        relaxed_low = confidence - error_interval
+        relaxed_high = 1 - (confidence + error_interval)
+        within_bounds = np.sum(np.logical_and(np.greater_equal(actual, low), np.greater_equal(high, actual)))
+        outside_bounds = n - within_bounds
         print("Count of times noisy result within bounds:", within_bounds, "/", n)
-        print("Count of times noisy result outside bounds:", n - within_bounds, "/", n)
-        return (within_bounds / n >= confidence)
+        print("Count of times noisy result outside bounds:", outside_bounds, "/", n)
+        acc_res = (within_bounds / n >= relaxed_low)
+        utility_res = (outside_bounds / n >= relaxed_high)
+        return acc_res, utility_res, float('%.2f'%((within_bounds / n) * 100))
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
-    def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
+    def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
         
-        fD1 = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
-        fD2 = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
-        #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
-        acc_res = None
+        fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence, get_exact)
+        fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence, get_exact)
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+        acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
-        return dp_res, acc_res
+        return dp_res, acc_res, utility_res
 
     # Allows DP Predicate test on both singleton and GROUP BY queries
     def dp_groupby_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
 
-        d1_res, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
-        d2_res, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
+        d1_res, d1_exact, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
+        d2_res, d2_exact, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
         
         res_list = []
         for col in num_cols:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
-            # Full outer join
+            exact = d1_exact.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            # Full outer join after flattening the results above to one row per dimension key
+            # We cannot be sure if every dimension key has a response in every repeated query run because of tau thresholding
+            # That's why we do a full outer join and flatten whatever vector of results we get for the numerical column across repeat runs
+            # This is what we use for generating the histogram of results for that dimension key
             d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
+            d1_d2 = d1_d2.merge(exact, on=dim_cols, how='left')
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
-                print(d1_d2.iloc[index, :n_cols - 2])
+                print(d1_d2.iloc[index, :n_cols - 3])
                 print("Column: ", col)
-                fD1 = np.array(d1_d2.iloc[index, n_cols - 2])
-                fD2 = np.array(d1_d2.iloc[index, n_cols - 1])
+                # fD1 and fD2 will have the results of the K repeated query results that can be passed through histogram test
+                # These results are for that particular numerical column and the specific dimension key of d1_d2
+                fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 3]])
+                fD2 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 2]])
+                exact_val = d1_d2.iloc[index, n_cols - 1][0]
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
                 print("DP Predicate Test Result: ", dp_res)
-                res_list.append(dp_res)
+                
+                # Accuracy Test
+                low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
+                high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
+                acc_res, utility_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
+                res_list.append([dp_res, acc_res, utility_res, within_bounds])
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         
-        return np.all(np.array(dp_res))
+        for res in res_list:
+            print(res)
+
+        dp_res = np.all(np.array([res[0] for res in res_list.values()]))
+        acc_res = np.all(np.array([res[1] for res in res_list.values()]))
+        utility_res = np.all(np.array([res[2] for res in res_list.values()]))
+        return dp_res, acc_res, utility_res
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, test_cases=5):
@@ -382,11 +399,10 @@ class DPVerification:
                 d1_query = query_str + "d1_" + filename + "." + "d1_" + filename
                 d2_query = query_str + "d2_" + filename + "." + "d2_" + filename
                 [d1, d2, d1_metadata, d2_metadata] = ex.neighbor_pair[filename]
-                fD1 = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
-                fD2 = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
-                # Disabling the accuracy test 
-                #acc_res = self.accuracy_test(fD1, fD1_bounds, confidence)
-                acc_res = None
+                fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
+                fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
+                
+                acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
@@ -394,55 +410,41 @@ class DPVerification:
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
                 key = "[" + ','.join(str(e) for e in list(sample)) + "] - " + filename
-                res_list[key] = [dp_res, acc_res]
+                res_list[key] = [dp_res, acc_res, utility_res, within_bounds]
         
         print("Halton sequence based Powerset Test Result")
         for data, res in res_list.items():
-            print(data, "-", res[0])
+            print(data, "-", res)
 
-        dp_res = np.all(np.array([dp_res[0] for dp_res in res_list.values()]))
-        return dp_res
+        dp_res = np.all(np.array([res[0] for res in res_list.values()]))
+        acc_res = np.all(np.array([res[1] for res in res_list.values()]))
+        utility_res = np.all(np.array([res[2] for res in res_list.values()]))
+        return dp_res, acc_res, utility_res
 
     # Main method listing all the DP verification steps
     def main(self):
-        ag = agg.Aggregation(t=1, repeat_count=10000)
-
-        # Sample DP Noise addtion mechanism for 4 SQL aggregations
-        dp_exact, ks_exact, ws_exact = dv.aggtest(ag.exact_count, 'UserId', binsize = "unity", bound = False, exact = True)
-        dp_buggy, ks_buggy, ws_buggy = dv.aggtest(ag.buggy_count, 'UserId', binsize="auto", debug=False,bound = True)
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_count, 'UserId', binsize="auto", debug = False)
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_sum, 'Usage', binsize="auto")
-        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mean, 'Usage', binsize="auto", debug=False, plot=False)
-        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_var, 'Usage', binsize="auto", debug=False)
-        
         # COUNT Example
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
+        dp_res, acc_res, utility_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=True, repeat_count=100)
-
-        # Mechanism calls with default Laplace
-        dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", debug = False)
-        dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", debug=False)
-        dp_mean, ks_mean, ws_mean = dv.aggtest(ag.dp_mechanism_mean, 'Usage', binsize="auto", debug=False)
-        dp_var, ks_var, ws_var = dv.aggtest(ag.dp_mechanism_var, 'Usage', binsize="auto", debug=False)
+        dp_res, acc_res, utility_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
         
         # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res = self.dp_powerset_test(query_str, plot=False)
+        dp_res, acc_res, utility_res = self.dp_powerset_test(query_str, plot=False, repeat_count=500)
 
         # Yarrow Test
-        dataset_root = os.getenv('DATASET_ROOT', '/home/ankit/Documents/github/datasets/')
-        test_csv_path = dataset_root + 'data/PUMS_california_demographics_1000/data.csv'
+        # dataset_root = os.getenv('DATASET_ROOT', '/home/ankit/Documents/github/datasets/')
+        # test_csv_path = dataset_root + 'data/PUMS_california_demographics_1000/data.csv'
 
-        dp_yarrow_mean_res = self.yarrow_test(test_csv_path, yarrow.dp_mean, 'income', float, epsilon=self.epsilon, minimum=0, maximum=100, num_records=1000)
-        dp_yarrow_var_res = self.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=self.epsilon, minimum=0, maximum=12, num_records=1000)
-        dp_yarrow_moment_res = self.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
-        dp_yarrow_covariance_res = self.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
-        return dp_yarrow_mean_res
+        # dp_yarrow_mean_res = self.yarrow_test(test_csv_path, yarrow.dp_mean, 'income', float, epsilon=self.epsilon, minimum=0, maximum=100, num_records=1000)
+        # dp_yarrow_var_res = self.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=self.epsilon, minimum=0, maximum=12, num_records=1000)
+        # dp_yarrow_moment_res = self.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
+        # dp_yarrow_covariance_res = self.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
+        return dp_res, acc_res, utility_res
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=1000)

@@ -1,5 +1,5 @@
 from burdock.metadata import CollectionMetadata
-from .ast.parse import QueryParser
+from .parse import QueryParser
 from .ast.validate import Validate
 from .private_rewrite import Rewriter
 from .private_reader import PrivateReader
