@@ -90,7 +90,12 @@ class QueryVisitor(SqlSmallVisitor):
         oc = ctx.orderClause()
         order = OrderVisitor().visit(oc) if oc is not None else None
 
-        return Query(select, source, where, agg, having, order)
+        limit = None
+        if hasattr(ctx, 'limitClause'):
+            lc = ctx.limitClause()
+            limit = LimitVisitor().visit(lc) if lc is not None else None
+
+        return Query(select, source, where, agg, having, order, limit)
 
 class SelectVisitor(SqlSmallVisitor):
     def visitSelectClause(self, ctx):
@@ -98,7 +103,12 @@ class SelectVisitor(SqlSmallVisitor):
         namedExpressions = nev.visit(ctx.namedExpressionSeq())
 
         sq = ctx.setQuantifier()
-        quantifier = None if sq is None else Token(sq.getText())
+        tc = sq.topClause() if sq is not None else None
+        if tc is None:
+            quantifier = None if sq is None else Token(sq.getText())
+        else:
+            quantifier = LimitVisitor().visit(tc)
+
         return Select(quantifier, [ne for ne in namedExpressions if ne is not None])
 
 class FromVisitor(SqlSmallVisitor):
@@ -148,6 +158,12 @@ class OrderVisitor(SqlSmallVisitor):
         else:
             o = None
         return SortItem(expr, o)
+
+class LimitVisitor(SqlSmallVisitor):
+    def visitLimitClause(self, ctx):
+        return Limit(int(ctx.n.getText()))
+    def visitTopClause(self, ctx):
+        return Top(int(ctx.n.getText()))
 
 class RelationVisitor(SqlSmallVisitor):
     def visitRelation(self, ctx):

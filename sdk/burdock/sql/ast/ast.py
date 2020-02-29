@@ -18,13 +18,14 @@ class Batch(Sql):
 
 class Query(SqlRel):
     """A single query"""
-    def __init__(self, select, source, where, agg, having, order) -> None:
+    def __init__(self, select, source, where, agg, having, order, limit) -> None:
         self.select = select
         self.source = source
         self.where = where
         self.agg = agg
         self.having = having
         self.order = order
+        self.limit = limit
 
         self.max_ids = 1
         self.sample_max_ids = True
@@ -90,7 +91,7 @@ class Query(SqlRel):
     def keycount_symbols(self):
         return [s for s in self.all_symbols() if is_key_count(s[1]) ]
     def children(self) -> List[Any]:
-        return [self.select, self.source, self.where, self.agg, self.having, self.order]
+        return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
     def evaluate(self, bindings):
         return [(ne.name, ne.expression.evaluate(bindings)) for ne in self.select.namedExpressions]
 
@@ -145,6 +146,23 @@ class Order(Sql):
     def symbol(self, relations):
         return Order(self.sortItems.symbol(relations))
 
+class Limit(Sql):
+    """Limit"""
+    def __init__(self, n):
+        self.n = n
+    def children(self):
+        return  [Token("LIMIT"), Literal(self.n, str(self.n))]
+    def symbol(self, relations):
+        return self
+
+class Top(Sql):
+    """Top"""
+    def __init__(self, n):
+        self.n = n
+    def children(self):
+        return  [Token("TOP"), Literal(self.n, str(self.n))]
+    def symbol(self, relations):
+        return self
 
 """
     RELATIONS
