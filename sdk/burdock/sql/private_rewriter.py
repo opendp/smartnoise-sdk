@@ -129,11 +129,11 @@ class Rewriter:
         select = Seq([self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
         select = Select(None, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None)
+        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
         subquery = self.exact_aggregates(subquery)
         subquery = [AliasedRelation(subquery, "exact_aggregates")]
 
-        q = Query(select, From(subquery), None, query.agg, None, query.order)
+        q = Query(select, From(subquery), None, query.agg, None, query.order, query.limit)
 
         return QueryParser(self.metadata).query(str(q))
 
@@ -171,7 +171,7 @@ class Rewriter:
         subquery = self.per_key_clamped(query)
         subquery = [AliasedRelation(subquery, "per_key_clamped")]
 
-        return Query(select, From(subquery), None, None, None, None)
+        return Query(select, From(subquery), None, None, None, None, None)
 
 
     def per_key_clamped(self, query):
@@ -194,7 +194,7 @@ class Rewriter:
         else:
             subquery = [AliasedRelation(subquery, "not_clamped")]
 
-        return Query(select, From(subquery), None, new_agg, None, None)
+        return Query(select, From(subquery), None, new_agg, None, None, None)
 
 
     """
