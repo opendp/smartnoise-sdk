@@ -20,37 +20,44 @@ class TestStochastic:
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res, acc_res, utility_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
         test_logger.debug("Result of DP Predicate Test on COUNT Query: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on COUNT Query: " + str(acc_res))
+        test_logger.debug("Result of Utility Test on COUNT Query: " + str(utility_res))
+        test_logger.debug("Result of Bias Test on COUNT Query: " + str(bias_res))
         assert(dp_res == True)
         assert(acc_res == True)
         assert(utility_res == True)
+        assert(bias_res == True)
 
     def test_dp_predicate_sum(self):
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
         d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
-        dp_res, acc_res, utility_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
         test_logger.debug("Result of DP Predicate Test on SUM Query: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on SUM Query: " + str(acc_res))
+        test_logger.debug("Result of Utility Test on SUM Query: " + str(utility_res))
+        test_logger.debug("Result of Bias Test on SUM Query: " + str(bias_res))
         assert(dp_res == True)
         assert(acc_res == True)
         assert(utility_res == True)
+        assert(bias_res == True)
     
     def test_dp_predicate_mean(self):
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT AVG(Usage) AS MeanUsage FROM d1.d1"
         d2_query = "SELECT AVG(Usage) AS MeanUsage FROM d2.d2"
-        dp_res, acc_res, utility_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
         test_logger.debug("Result of DP Predicate Test on MEAN Query: " + str(dp_res))
         assert(dp_res == True)
+        assert(bias_res == True)
 
     def test_dp_predicate_var(self):
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT VAR(Usage) AS UsageVariance FROM d1.d1"
         d2_query = "SELECT VAR(Usage) AS UsageVariance FROM d2.d2"
-        dp_res, acc_res, utility_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=500, get_exact=False)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000, get_exact=False)
         test_logger.debug("Result of DP Predicate Test on VAR Query: " + str(dp_res))
         assert(dp_res == True)
 
@@ -75,22 +82,39 @@ class TestStochastic:
     @pytest.mark.slow
     def test_powerset_sum(self):
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res, acc_res, utility_res = dv.dp_powerset_test(query_str, repeat_count=500, plot=False)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_powerset_test(query_str, repeat_count=500, plot=False)
         test_logger.debug("Result of DP Predicate Test on Powerset SUM: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on Powerset SUM: " + str(acc_res))
         assert(dp_res == True)
         assert(acc_res == True)
         assert(utility_res == True)
+        assert(bias_res == True)
 
     def test_groupby(self):
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res, utility_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=500)
-        test_logger.debug("Result of DP Predicate Test on GROUP BY: " + str(dp_res))
-        test_logger.debug("Result of Accuracy Test on GROUP BY: " + str(acc_res))
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=2000)
+        test_logger.debug("Result of DP Predicate Test on GROUP BY and SUM, COUNT aggregate: " + str(dp_res))
+        test_logger.debug("Result of Accuracy Test on GROUP BY and SUM, COUNT aggregate: " + str(acc_res))
+        test_logger.debug("Result of Utility Test on GROUP BY and SUM, COUNT aggregate: " + str(utility_res))
+        test_logger.debug("Result of Bias Test on GROUP BY and SUM, COUNT aggregate: " + str(bias_res))
         assert(dp_res == True)
         assert(acc_res == True)
         assert(utility_res == True)
+        assert(bias_res == True)
+
+    def test_groupby_avg(self):
+        d1_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d1.d1 GROUP BY Role, Segment"
+        d2_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d2.d2 GROUP BY Role, Segment"
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=2000)
+        test_logger.debug("Result of DP Predicate Test on GROUP BY and AVG aggregate: " + str(dp_res))
+        test_logger.debug("Result of Accuracy Test on GROUP BY and AVG aggregate: " + str(acc_res))
+        test_logger.debug("Result of Utility Test on GROUP BY and AVG aggregate: " + str(utility_res))
+        test_logger.debug("Result of Bias Test on GROUP BY and AVG aggregate: " + str(bias_res))
+        assert(dp_res == True)
+        assert(acc_res == True)
+        assert(utility_res == True)
+        assert(bias_res == True)
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_mean(self):
