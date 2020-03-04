@@ -17,7 +17,10 @@ class AllColumns(SqlExpr):
         if len(sym) == 0:
             raise ValueError("Column cannot be found " + str(self))
         return flatten(sym)
-
+    @property
+    def is_key_count(self):
+        return True
+    
 class AggFunction(SqlExpr):
     """A function such as SUM, COUNT, AVG"""
     def __init__(self, name, quantifier, expression):
@@ -74,6 +77,14 @@ class AggFunction(SqlExpr):
     def evaluate(self, bindings):
         # need to decide what to do with this
         return self.expression.evaluate(bindings)
+    @property
+    def is_key_count(self):
+        if self.name == "SUM":
+            return self.expression.is_key_count
+        elif self.name == "COUNT":
+            return self.expression.is_key_count
+        else:
+            return False
 
 class RankingFunction(SqlExpr):
     def __init__(self, name, over):

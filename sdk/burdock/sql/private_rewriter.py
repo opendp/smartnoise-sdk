@@ -4,12 +4,15 @@ import string
 from .parse import QueryParser
 from .ast import Validate
 
-from .ast.ast import *  # TODO Why?
-
+from .ast.validate import Validate
+from .ast.ast import Select, From, Query, AliasedRelation, Where, Aggregate, Order
+from .ast.ast import Literal, Column, TableColumn, AllColumns
+from .ast.ast import NamedExpression, NestedExpression, Expression, Seq
+from .ast.ast import AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression
 
 """
     Modifies parsed ASTs to augment with information needed
-    to support differential privacy.  Uses a matching Schema
+    to support differential privacy.  Uses a matching 
     object which contains metadata necessary for differential
     privacy, such as min/max, cardinality, and key columns.
 
@@ -18,9 +21,9 @@ from .ast.ast import *  # TODO Why?
 
 """
 class Rewriter:
-    def __init__(self, metadata):
+    def __init__(self, metadata, options=None):
+        self.options = RewriterOptions() if options is None else options
         self.metadata = metadata
-        self.max_contrib = 5  # max projection magnitude for an individual
 
     """
         Takes an expression for a noisy mean and rewrites
@@ -148,11 +151,16 @@ class Rewriter:
         select = Select(None, select)
 
         subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
-        subquery = self.per_key_random(subquery)
-        subquery = [AliasedRelation(subquery, "per_key_random")]
+        if self.options.reservoir_sample:
+            subquery = self.per_key_random(subquery)
+            subquery = [AliasedRelation(subquery, "per_key_random")]
 
-        filtered = Where(BooleanCompare(Column("per_key_random.row_num"), "<=", Literal(str(self.max_contrib), self.max_contrib)))
-        return Query(select, From(subquery), filtered, query.agg, None, None, None)
+            filtered = Where(BooleanCompare(Column("per_key_random.row_num"), "<=", Literal(str(self.options.max_contrib), self.options.max_contrib)))
+            return Query(select, From(subquery), filtered, query.agg, None, None, None)
+        else:
+            subquery = self.per_key_clamped(subquery)
+            subquery = [AliasedRelation(subquery, "per_key_all")]
+            return Query(select, From(subquery), None, query.agg, None, None, None)
 
     def per_key_random(self, query):
         key_col = self.key_col(query)
@@ -167,6 +175,7 @@ class Rewriter:
 
 
     def per_key_clamped(self, query):
+
         key_col = self.key_col(query)
 
         child_scope = Scope()
@@ -176,11 +185,14 @@ class Rewriter:
 
         relations = query.source.relations
 
-        select = Seq([self.clampExpression(ne, relations, child_scope) for ne in query.select.namedExpressions])
+        select = Seq([self.clampExpression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
         select = Select(None, select)
-
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
-        subquery = [AliasedRelation(subquery, "clamped")]
+
+        if self.options.clamp_columns:
+            subquery = [AliasedRelation(subquery, "clamped")]
+        else:
+            subquery = [AliasedRelation(subquery, "not_clamped")]
 
         return Query(select, From(subquery), None, new_agg, None, None, None)
 
@@ -189,7 +201,7 @@ class Rewriter:
         Lookup the expression referenced in each named expression and
         write a clamped select for it, using the schema
     """
-    def clampExpression(self, ne, relations, scope):
+    def clampExpression(self, ne, relations, scope, do_clamp=True):
         exp = ne.expression
         cols = exp.find_nodes(Column)
         if type(exp) is Column:
@@ -199,7 +211,7 @@ class Rewriter:
             minval = None
             maxval = None
             sym = col.symbol(relations)
-            if sym.valtype in ["float", "int"] and not sym.unbounded:
+            if do_clamp and sym.valtype in ["float", "int"] and not sym.unbounded:
                 minval = sym.minval
                 maxval = sym.maxval
                 if minval is None or sym.is_key:
@@ -282,3 +294,18 @@ class Scope:
 
         self.expressions[proposed] = expression
         return proposed
+
+class RewriterOptions:
+    """Options that modify rewriter behavior"""
+    def __init__(self, row_privacy=False, reservoir_sample=True, clamp_columns=True, max_contrib=1):
+        """Initialize options before running the rewriter
+
+        :param row_privacy: boolean, True if each row is a separate individual
+        :param reservoir_sample: boolean, set to False if the data collection will never have more than max_contrib record per individual
+        :param clamp_columns: boolean, set to False to allow values that exceed lower and higher limit specified in metadata.  May impact privacy
+        :param max_contrib: int, set to maximum number of individuals that can appear in any query result.  Affects sensitivity
+        """
+        self.row_privacy = row_privacy
+        self.reservoir_sample = reservoir_sample
+        self.clamp_columns = clamp_columns
+        self.max_contrib = max_contrib

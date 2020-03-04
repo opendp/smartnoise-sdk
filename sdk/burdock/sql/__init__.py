@@ -1,5 +1,5 @@
 from burdock.metadata.collection import CollectionMetadata
-from .private_rewrite import Rewriter
+from .private_rewriter import Rewriter
 from .private_reader import PrivateReader
 from burdock.reader.sql.pandas import PandasReader
 from .parse import QueryParser

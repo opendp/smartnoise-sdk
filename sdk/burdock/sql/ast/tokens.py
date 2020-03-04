@@ -194,6 +194,10 @@ class SqlExpr(Sql):
         if child_col is not None:
             raise ValueError("Symbol not implemented on: " + str(self) + " even though has Sql Column child " + str(child_col))
         return self
+    @property
+    def is_key_count(self):
+        return False
+
 
 class Literal(SqlExpr):
     """A literal used in an expression"""

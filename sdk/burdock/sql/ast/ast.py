@@ -30,7 +30,6 @@ class Query(SqlRel):
         self.max_ids = 1
         self.sample_max_ids = True
         self.row_privacy = False
-        self.clamp_counts = True
 
         # m_symbols includes all columns in the output, including anonymous columns,
         #   equivalent to the result of SELECT * on this name scope.
@@ -75,7 +74,6 @@ class Query(SqlRel):
             self.max_ids = max(tc.max_ids for tc in tables)
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
             self.row_privacy = any(tc.row_privacy for tc in tables)
-            self.clamp_counts = any(tc.clamp_counts for tc in tables)
     """
         returns the expression for an output column in the SELECT statement.
         Query objects do not have aliases, so caller must strip alias first.
@@ -89,7 +87,7 @@ class Query(SqlRel):
     def numeric_symbols(self):
         return [s for s in self.all_symbols() if s[1].type() in ["int", "float"]]
     def keycount_symbols(self):
-        return [s for s in self.all_symbols() if is_key_count(s[1]) ]
+        return [s for s in self.all_symbols() if s[1].is_key_count ]
     def children(self) -> List[Any]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
     def evaluate(self, bindings):
@@ -262,7 +260,6 @@ class Table(SqlRel):
                 max_ids=table.max_ids,
                 sample_max_ids=table.sample_max_ids,
                 row_privacy=table.row_privacy,
-                clamp_counts=table.clamp_counts,
                 compare=metadata.compare)
                 ) for name in tc.keys()]
     def escaped(self):
@@ -325,7 +322,7 @@ class Join(SqlRel):
 #
 class TableColumn(SqlExpr):
     """ A column attached to a fully qualified table """
-    def __init__(self, tablename, colname, valtype="unknown", is_key=False, minval=None, maxval=None, max_ids=1, sample_max_ids=True, row_privacy=False, clamp_counts=True, compare=None):
+    def __init__(self, tablename, colname, valtype="unknown", is_key=False, minval=None, maxval=None, max_ids=1, sample_max_ids=True, row_privacy=False, compare=None):
         self.tablename = tablename
         self.colname = colname
         self.valtype = valtype
@@ -335,7 +332,6 @@ class TableColumn(SqlExpr):
         self.max_ids = max_ids
         self.sample_max_ids = sample_max_ids
         self.row_privacy = row_privacy
-        self.clamp_counts = clamp_counts
         self.unbounded = minval is None or maxval is None
         compare = NameCompare([]) if compare is None else compare
         self.compare = compare
@@ -360,14 +356,6 @@ class TableColumn(SqlExpr):
             return bindings[str(self).lower()]
         else:
             return None
-
-#
-#   Utility functions
-
-def is_key_count(expression):
-    if expression.sensitivity() == 1:
-        while type(expression) is AggFunction:
-            expression = expression.expression
-        return type(expression) is TableColumn and expression.is_key
-    else:
-        return False
+    @property
+    def is_key_count(self):
+        return self.is_key
