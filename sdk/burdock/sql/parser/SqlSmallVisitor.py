@@ -59,6 +59,16 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlSmallParser#limitClause.
+    def visitLimitClause(self, ctx:SqlSmallParser.LimitClauseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#topClause.
+    def visitTopClause(self, ctx:SqlSmallParser.TopClauseContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlSmallParser#joinRelation.
     def visitJoinRelation(self, ctx:SqlSmallParser.JoinRelationContext):
         return self.visitChildren(ctx)

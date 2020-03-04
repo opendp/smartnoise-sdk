@@ -14,6 +14,7 @@ query :
       aggregationClause?
       havingClause?
       orderClause?
+      limitClause?
     ;
 
 subquery : 
@@ -30,7 +31,7 @@ subquery :
 expressionSubquery : subquery;
 
 selectClause
-    : SELECT setQuantifier? namedExpressionSeq
+    : SELECT (setQuantifier)? namedExpressionSeq
     ;
 
 
@@ -52,6 +53,9 @@ orderClause
     : (ORDER BY order+=sortItem (',' order+=sortItem)*)
     ;
 
+limitClause : LIMIT n=number;
+
+topClause : TOP n=number;
 
 joinRelation
     : (joinType) JOIN right=relationPrimary joinCriteria?
@@ -79,6 +83,7 @@ sortItem
 setQuantifier
     : DISTINCT
     | ALL
+    | (topClause)
     ;
 
 relation
@@ -149,9 +154,6 @@ predicate
     | IS NOT? kind=(NULL | TRUE | FALSE) #isCondition
     ;
 
-/*
-    | NOT? kind=IN '(' query ')'
-*/
 comparisonOperator
     : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
     ;
@@ -253,6 +255,7 @@ INTERSECT: I N T E R S E C T;
 IS: I S;
 JOIN: J O I N;
 LEFT: L E F T;
+LIMIT: L I M I T;
 LOG: L O G;
 LOG10: L O G '1' '0';
 MAX: M A X;
@@ -277,6 +280,7 @@ RANK: R A N K;
 RIGHT: R I G H T;
 ROUND: R O U N D;
 ROW_NUMBER: R O W '_' N U M B E R;
+ROWNUM: R O W N U M;
 SELECT: S E L E C T;
 SEMI: S E M I;
 SIGN: S I G N;
@@ -290,6 +294,7 @@ STDDEV: S T D D E V;
 SUM: S U M;
 TAN: T A N;
 THEN: T H E N;
+TOP: T O P;
 TRUE: T R U E;
 UNION: U N I O N; // reserved
 USING: U S I N G;
