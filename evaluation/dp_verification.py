@@ -325,7 +325,7 @@ class DPVerification:
         n = len(fD)
         actual = [actual] * n
         msd = (np.sum(fD - actual) / n) / actual[0]
-        print("Mean signed deviation: ", '%.4f'%(msd))
+        print("Mean signed deviation: ", msd)
         return (abs(msd) < 0.05), msd
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
@@ -356,13 +356,13 @@ class DPVerification:
         for col in num_cols:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
-            exact = d1_exact.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            exact_gp = d1_exact.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             # Full outer join after flattening the results above to one row per dimension key
             # We cannot be sure if every dimension key has a response in every repeated query run because of tau thresholding
             # That's why we do a full outer join and flatten whatever vector of results we get for the numerical column across repeat runs
             # This is what we use for generating the histogram of results for that dimension key
             d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
-            d1_d2 = d1_d2.merge(exact, on=dim_cols, how='left')
+            d1_d2 = d1_d2.merge(exact_gp, on=dim_cols, how='left')
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
                 print(d1_d2.iloc[index, :n_cols - 3])
