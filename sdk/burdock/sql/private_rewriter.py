@@ -1,7 +1,8 @@
 import random
 import string
 
-from burdock.sql import QueryParser
+from .parse import QueryParser
+from .ast import Validate
 
 from .ast.validate import Validate
 from .ast.ast import Select, From, Query, AliasedRelation, Where, Aggregate, Order
@@ -128,11 +129,11 @@ class Rewriter:
         select = Seq([self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
         select = Select(None, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None)
+        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
         subquery = self.exact_aggregates(subquery)
         subquery = [AliasedRelation(subquery, "exact_aggregates")]
 
-        q = Query(select, From(subquery), None, query.agg, None, query.order)
+        q = Query(select, From(subquery), None, query.agg, None, query.order, query.limit)
 
         return QueryParser(self.metadata).query(str(q))
 
@@ -149,17 +150,17 @@ class Rewriter:
         select = Seq([keycount] + [self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
         select = Select(None, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None)
+        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
         if self.options.reservoir_sample:
             subquery = self.per_key_random(subquery)
             subquery = [AliasedRelation(subquery, "per_key_random")]
 
             filtered = Where(BooleanCompare(Column("per_key_random.row_num"), "<=", Literal(str(self.options.max_contrib), self.options.max_contrib)))
-            return Query(select, From(subquery), filtered, query.agg, None, None)
+            return Query(select, From(subquery), filtered, query.agg, None, None, None)
         else:
             subquery = self.per_key_clamped(subquery)
             subquery = [AliasedRelation(subquery, "per_key_all")]
-            return Query(select, From(subquery), None, query.agg, None, None)
+            return Query(select, From(subquery), None, query.agg, None, None, None)
 
     def per_key_random(self, query):
         key_col = self.key_col(query)
@@ -170,7 +171,7 @@ class Rewriter:
         subquery = self.per_key_clamped(query)
         subquery = [AliasedRelation(subquery, "per_key_clamped")]
 
-        return Query(select, From(subquery), None, None, None, None)
+        return Query(select, From(subquery), None, None, None, None, None)
 
 
     def per_key_clamped(self, query):
@@ -186,14 +187,14 @@ class Rewriter:
 
         select = Seq([self.clampExpression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
         select = Select(None, select)
-        subquery = Query(child_scope.select(), query.source, query.where, None, None, None)
+        subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
 
         if self.options.clamp_columns:
             subquery = [AliasedRelation(subquery, "clamped")]
         else:
             subquery = [AliasedRelation(subquery, "not_clamped")]
 
-        return Query(select, From(subquery), None, new_agg, None, None)
+        return Query(select, From(subquery), None, new_agg, None, None, None)
 
 
     """

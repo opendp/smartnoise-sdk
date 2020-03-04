@@ -8,7 +8,7 @@ import mlflow
 import json
 import sys
 import os
-import yarrow
+# import yarrow
 
 from burdock.sql import PandasReader
 from burdock.sql.private_reader import PrivateReader
@@ -79,48 +79,66 @@ class Aggregation:
         sumsq = self.dp_mechanism_sum(df, colname + "squared")
         return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
 
-    # Apply noise to input aggregation function using Yarrow library
-    def yarrow_dp_agg(self, f, dataset_path, args, kwargs):
-        with yarrow.Analysis() as analysis:
-            df = yarrow.Dataset('df', dataset_path)
-            agg = f(df[args], **kwargs)
-        noisy_values = []
-        for x in range(self.repeat_count):
-            analysis.release()
-            noisy_values.append(analysis.release_proto.values[6].values['data'].f64.data[0])
-        return np.array(noisy_values)
+    # # Apply noise to input aggregation function using Yarrow library
+    # def yarrow_dp_agg(self, f, dataset_path, args, kwargs):
+    #     with yarrow.Analysis() as analysis:
+    #         df = yarrow.Dataset('df', dataset_path)
+    #         agg = f(df[args], **kwargs)
+    #     noisy_values = []
+    #     for x in range(self.repeat_count):
+    #         analysis.release()
+    #         noisy_values.append(analysis.release_proto.values[6].values['data'].f64.data[0])
+    #     return np.array(noisy_values)
     
-    # Apply noise to functions like covariance using Yarrow library that work on multiple columns
-    def yarrow_dp_multi_agg(self, f, dataset_path, args, kwargs):
-        with yarrow.Analysis() as analysis:
-            df = yarrow.Dataset('df', dataset_path)
-            agg = f(df[(args[0], args[1])], df[(args[2], args[3])], **kwargs)
-        noisy_values = []
-        for x in range(self.repeat_count):
-            analysis.release()
-            noisy_values.append(analysis.release_proto.values[10].values['data'].f64.data[0])
-        return np.array(noisy_values)
+    # # Apply noise to functions like covariance using Yarrow library that work on multiple columns
+    # def yarrow_dp_multi_agg(self, f, dataset_path, args, kwargs):
+    #     with yarrow.Analysis() as analysis:
+    #         df = yarrow.Dataset('df', dataset_path)
+    #         agg = f(df[(args[0], args[1])], df[(args[2], args[3])], **kwargs)
+    #     noisy_values = []
+    #     for x in range(self.repeat_count):
+    #         analysis.release()
+    #         noisy_values.append(analysis.release_proto.values[10].values['data'].f64.data[0])
+    #     return np.array(noisy_values)
 
     # Run the query using the private reader and input query
     # Get query response back
-    def run_agg_query(self, df, metadata, query, confidence):
+    def run_agg_query(self, df, metadata, query, confidence, get_exact=True):
         reader = PandasReader(metadata, df)
+        actual = 0.0
+        # VAR not supported in Pandas Reader. So not needed to fetch actual on every aggregation
+        if(get_exact):
+            actual = reader.execute_typed(query).rows()[1:][0][0]
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
         
         noisy_values = []
+        low_bounds = []
+        high_bounds = []
         for idx in range(self.repeat_count):
             srs = TypedRowset(srs_orig.rows(), types, sens)
-            noisy_values.append(private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:][0][0])
-        return np.array(noisy_values)
+            res = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+            interval = res.report[res.colnames[0]].intervals[confidence]
+            low_bounds.append(interval[0].low)
+            high_bounds.append(interval[0].high)
+            noisy_values.append(res.rows()[1:][0][0])
+        return np.array(noisy_values), actual, low_bounds, high_bounds
         
     # Run the query using the private reader and input query
-    # Get query response back
+    # Get query response back for multiple dimensions and aggregations
     def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
+        # Getting exact result
         reader = PandasReader(metadata, df)
+        exact = reader.execute_typed(query).rows()[1:]
+        exact_res = []
+        for row in exact:
+            exact_res.append(row)
+
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
+
+        # Distinguishing dimension and measure columns
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
         
         srs = TypedRowset(srs_orig.rows(), types, sens)
@@ -135,19 +153,33 @@ class Aggregation:
                 dim_cols.append(col)
             else:
                 num_cols.append(col)
-        
-        if(len(dim_cols) == 0):
-            dim_cols.append("__dim__")
-        
+                
+        # Repeated query and store results along with intervals
         res = []
         for idx in range(self.repeat_count):
+            dim_rows = []
+            num_rows = []
             srs = TypedRowset(srs_orig.rows(), types, sens)
-            singleres = private_reader._postprocess(subquery, query, syms, types, sens, srs).rows()[1:]
-            for row in singleres:
-                res.append(row)
+            singleres = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+            for col in dim_cols:
+                dim_rows.append(singleres.report[col].values)
+            for col in num_cols:
+                values = singleres.report[col].values
+                low = singleres.report[col].intervals[confidence].low
+                high = singleres.report[col].intervals[confidence].high
+                num_rows.append(list(zip(values, low, high)))
+
+            res.extend(list(zip(*dim_rows, *num_rows)))
+
+        exact_df = pd.DataFrame(exact_res, columns=headers)
         noisy_df = pd.DataFrame(res, columns=headers)
         
+        # Add a dummy dimension column for cases where no dimensions available for merging D1 and D2
+        if(len(dim_cols) == 0):
+            dim_cols.append("__dim__")
+
         if(dim_cols[0] == "__dim__"):
+            exact_df[dim_cols[0]] = ["key"]*len(exact_df)
             noisy_df[dim_cols[0]] = ["key"]*len(noisy_df)
 
-        return noisy_df, dim_cols, num_cols
+        return noisy_df, exact_df, dim_cols, num_cols

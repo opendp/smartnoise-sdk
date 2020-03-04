@@ -1,4 +1,4 @@
-# Generated from SqlSmall.g4 by ANTLR 4.7.2
+# Generated from SqlSmall.g4 by ANTLR 4.8
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .SqlSmallParser import SqlSmallParser
@@ -56,6 +56,16 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#orderClause.
     def visitOrderClause(self, ctx:SqlSmallParser.OrderClauseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#limitClause.
+    def visitLimitClause(self, ctx:SqlSmallParser.LimitClauseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#topClause.
+    def visitTopClause(self, ctx:SqlSmallParser.TopClauseContext):
         return self.visitChildren(ctx)
 
 
