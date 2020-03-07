@@ -1,7 +1,7 @@
-import pyodbc
 import os
 
-from .base import Reader, NameCompare
+from .sql_base import SqlReader, NameCompare
+from .engine import Engine
 from burdock.sql.ast.ast import Relation
 from burdock.sql.ast.tokens import Literal
 from burdock.sql.ast.expression import Expression
@@ -9,15 +9,15 @@ from burdock.sql.ast.expressions.numeric import BareFunction
 from burdock.sql.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
 
 """
-    A dumb pipe that gets a rowset back from a database using 
+    A dumb pipe that gets a rowset back from a database using
     a SQL string, and converts types to some useful subset
 """
-class SqlServerReader(Reader):
+class SqlServerReader(SqlReader):
+    ENGINE = Engine.SQL_SERVER
     def __init__(self, host, database, user, password=None, port=None):
-        super().__init__()
+        super().__init__(SqlServerNameCompare(), SqlServerSerializer())
+        import pyodbc
         self.api = pyodbc
-        self.engine = "SqlServer"
-
         self.host = host
         self.database = database
         self.user = user
@@ -29,9 +29,6 @@ class SqlServerReader(Reader):
         self.password = password
 
         self.update_connection_string()
-
-        self.serializer = SqlServerSerializer()
-        self.compare = SqlServerNameCompare()
 
     def execute(self, query):
         if not isinstance(query, str):
@@ -68,7 +65,7 @@ class SqlServerSerializer:
     def serialize(self, query):
         for re in [n for n in query.find_nodes(BareFunction) if n.name == 'RANDOM']:
             re.name = 'NEWID'
-        
+
         for b in [n for n in query.find_nodes(Literal) if isinstance(n.value, bool)]:
             b.text = "'TRUE'" if b.value else "'FALSE'"
 
@@ -95,4 +92,3 @@ class SqlServerNameCompare(NameCompare):
         self.search_path = search_path if search_path is not None else ["dbo"]
     def identifier_match(self, query, meta):
         return self.strip_escapes(query).lower() == self.strip_escapes(meta).lower()
-
