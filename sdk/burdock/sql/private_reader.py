@@ -5,7 +5,7 @@ from .parse import QueryParser
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from burdock.metadata.report import Interval, Intervals, Result
-from burdock.reader.sql.rowset import TypedRowset
+from burdock.reader.rowset import TypedRowset
 from .ast.expressions import sql as ast
 
 """

@@ -1,7 +1,7 @@
 from .tokens import *
 from .expression import *
 
-from burdock.reader.sql.base import NameCompare
+from burdock.reader.sql.sql_base import NameCompare
 
 """
     AST for parsed Python Query Batch.  Allows validation, normalization, 
@@ -333,8 +333,7 @@ class TableColumn(SqlExpr):
         self.sample_max_ids = sample_max_ids
         self.row_privacy = row_privacy
         self.unbounded = minval is None or maxval is None
-        compare = NameCompare([]) if compare is None else compare
-        self.compare = compare
+        self.compare = NameCompare([]) if compare is None else compare
     def __str__(self):
         return self.tablename + "." + self.colname
     def __eq__(self, other):
