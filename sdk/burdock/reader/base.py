@@ -9,8 +9,8 @@ class Reader:
         self.serializer = serializer
 
     @property
-    def engine(cls):
-        return cls.ENGINE
+    def engine(self):
+        return self.ENGINE
 
     def execute(self, query):
         raise NotImplementedError("Execute must be implemented on the inherited class")
