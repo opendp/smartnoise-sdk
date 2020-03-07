@@ -88,103 +88,82 @@ class PrivateReader:
         self.tau = self.max_contrib * (1- ( math.log(2 * self.delta / self.max_contrib) / self.epsilon  ))
 
         syms = subquery.all_symbols()
-        types = [s[1].type() for s in syms]
+        source_col_names = [s[0] for s in syms]
+
+        # list of sensitivities in column order
         sens = [s[1].sensitivity() for s in syms]
+
+        # tell which ones are key counts, in column order
+        is_key_count = [s[1].is_key_count for s in syms]
+
+        # set sensitivity to None if the column is a grouping key
+        if subquery.agg is not None:
+            group_keys = [ge.expression.name if hasattr(ge.expression, 'name') else None for ge in subquery.agg.groupingExpressions]
+        else:
+            group_keys = []
+        is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
+        for idx in range(len(sens)):
+            if is_group_key[idx]:
+                sens[idx] = None
+
+        kc_pos = None
+        kcc_pos = []
+        for idx in range(len(syms)):
+            sname, sym = syms[idx]
+            if sname == 'keycount':
+                kc_pos = idx
+            elif sym.is_key_count:
+                kcc_pos.append(idx)
+        if kc_pos is None and len(kcc_pos) > 0:
+            kc_pos = kcc_pos.pop()
+
+        # make a list of mechanisms in column order
+        mechs = [Gaussian(self.epsilon, self.delta, s, self.max_contrib, self.interval_widths) if s is not None else None for s in sens]
 
         # execute the subquery against the backend and load in typed rowset
-        db_rs = self.reader.execute_ast_typed(subquery)
-        return (subquery, query, syms, types, sens, db_rs)
+        db_rs = self.reader.execute_ast_typed(subquery).rows()
 
-    def _postprocess(self, subquery, query, syms, types, sens, db_rs):
-        # add noise to all columns that need noise
-        for nsym in subquery.numeric_symbols():
-            name, sym = nsym
-            name = name.lower()
-            sens = sym.sensitivity()
+        def process_row(row):
+            for idx in range(len(row)):
+                if sens[idx] is not None and row[idx] is None:
+                    row[idx] = 0.0
+            out_row = [noise.release([v]).values[0] if noise is not None else v for noise, v in zip(mechs, row)]
+            for idx in kcc_pos:
+                out_row[idx] = out_row[kc_pos]
+            if self.options.clamp_counts:
+                for idx in range(len(row)):
+                    if is_key_count[idx] and row[idx] < 0:
+                        row[idx] = 0
 
-            #if sym.expression in group_expressions:
-            #    continue
+            return out_row
 
-            # treat null as 0 before adding noise
-            db_rs[name] = np.array([v if v is not None else 0.0 for v in db_rs[name]])
 
-            mechanism = Gaussian(self.epsilon, self.delta, sens, self.max_contrib, self.interval_widths)
-            report = mechanism.release(db_rs[name], compute_accuracy=True)
+        out = map(process_row, db_rs[1:])
 
-            db_rs[name] = report.values
-            db_rs.report[name] = report
-
-            if (self.options.clamp_counts is True) and sym.is_key_count:
-                counts = db_rs[name]
-                counts[counts < 0] = 0
-                db_rs[name] = counts
-
-        # make sure all keycounts report same noisy values
-        kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
-        for kc in kcc:
-            db_rs[kc[0].lower()] = db_rs["keycount"] = db_rs[kcc[0][0].lower()]
-            
-
-        # censor dimensions for privacy
         if subquery.agg is not None and self.options.censor_dims:
-            db_rs = db_rs.filter("keycount", ">", self.tau)
+            out = filter(lambda row: row[kc_pos] > self.tau, out)
+
 
         # get column information for outer query
-        syms = query.all_symbols()
-        types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
-        colnames = [s[0] for s in syms]
+        out_syms = query.all_symbols()
+        out_types = [s[1].type() for s in out_syms]
+        out_sens = [s[1].sensitivity() for s in out_syms]
+        out_colnames = [s[0] for s in out_syms]
 
-        db_rsc = db_rs.m_cols
-
-        bindings_list = []
-
-        # first do the noisy values
-        bindings_list.append(dict((name.lower(), db_rsc[name]) for name in db_rsc.keys()))
-
-        # now evaluate all lower and upper
-        interval_widths = None
-        for name in db_rsc.keys():
-            alpha_list = db_rs.report[name].interval_widths if name in db_rs.report else None
-            if alpha_list is not None:
-                interval_widths = alpha_list
-                break
-        if interval_widths is not None:
-            for confidence in interval_widths:
-                bind_low = {}
-                bind_high = {}
-                for name in db_rsc.keys():
-                    if name in db_rs.report and db_rs.report[name].intervals is not None:
-                        bind_low[name.lower()] = db_rs.report[name].intervals[confidence].low
-                        bind_high[name.lower()] = db_rs.report[name].intervals[confidence].high
-                    else:
-                        bind_low[name.lower()] = db_rsc[name]
-                        bind_high[name.lower()] = db_rsc[name]
-                bindings_list.append(bind_low)
-                bindings_list.append(bind_high)
+        def process_out_row(row):
+            #raise ValueError("foo")
+            bindings = dict((name.lower(), val ) for name, val in zip(source_col_names, row))
+            return [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
     
-        cols = []
-        intervals_list = []
-        for c in query.select.namedExpressions:
-            cols.append(c.expression.evaluate(bindings_list[0]))
-
-            ivals = []
-            # initial hack; just evaluate lower and upper for each confidence
-            if interval_widths is not None:
-                for idx in range(len(interval_widths)):
-                    low_idx = idx * 2 + 1
-                    high_idx = idx * 2 + 2
-                    low = c.expression.evaluate(bindings_list[low_idx])
-                    high = c.expression.evaluate(bindings_list[high_idx])
-                    ivals.append(Interval(interval_widths[idx], None, low, high))
-            intervals_list.append(ivals)
+        out_new = map(process_out_row, out)
 
         # make the new recordset
-        newrs = TypedRowset([colnames], types, sens)            
-        for idx in range(len(cols)):
-            colname = newrs.idxcol[idx]
-            newrs[colname] = cols[idx]
-            newrs.report[colname] = Result(None, None, None, cols[idx], None, None, None, None, None, Intervals(intervals_list[idx]), None)
+        newrs = TypedRowset([out_colnames] + list(out_new), out_types, out_sens)         
+
+#        for idx in range(len(cols)):
+#            colname = newrs.idxcol[idx]
+#            newrs[colname] = cols[idx]
+#            newrs.report[colname] = Result(None, None, None, cols[idx], None, None, None, None, None, Intervals(intervals_list[idx]), None)
 
             #newrs.intervals[colname] = Intervals(intervals_list[idx])
 
@@ -223,8 +202,10 @@ class PrivateReader:
         """
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-        subquery_results = self._preprocess(query)
-        return self._postprocess(*subquery_results)
+        #subquery_results = self._preprocess(query)
+        #return self._postprocess(*subquery_results)
+
+        return self._preprocess(query)
 
 class PrivateReaderOptions:
     """Options that control privacy behavior"""

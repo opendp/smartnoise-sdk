@@ -6,7 +6,7 @@ from burdock.sql.ast.tokens import Literal
 from burdock.sql.ast.expressions.numeric import BareFunction
 
 class SparkReader(Reader):
-    def __init__(self, host, session, user, password=None, port=None):
+    def __init__(self, session):
         super().__init__()
         from pyspark.sql import SparkSession
         self.api = session
