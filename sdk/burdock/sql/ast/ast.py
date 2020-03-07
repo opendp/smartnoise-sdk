@@ -1,7 +1,6 @@
 from .tokens import *
 from .expression import *
 
-from burdock.reader.sql.sql_base import NameCompare
 
 """
     AST for parsed Python Query Batch.  Allows validation, normalization, 
@@ -168,9 +167,11 @@ class Top(Sql):
 
 class Relation(SqlRel):
     """A relation such as table, join, or subquery"""
+
     def __init__(self, primary, joins):
         self.primary = primary
         self.joins = joins if joins is not None else []
+
     def load_symbols(self, metadata):
         relations = [self.primary] + [j for j in self.joins]
         for r in relations:
@@ -186,6 +187,7 @@ class Relation(SqlRel):
                             raise ValueError("Join clause uses a join column that doesn't exist in the primary relation: " + str(i))
                         if not i.name.lower() in join_symbols:
                             raise ValueError("Join clause uses a join column that doesn't exist in the joined relation: " + str(i))
+
     def symbol(self, expression):
         if type(expression) is not Column:
             raise ValueError("Tables can only have column symbols: " + str(type(expression)) )
@@ -200,6 +202,7 @@ class Relation(SqlRel):
             raise ValueError("Too many relations matched column, ambiguous: " + str(expression))
         else:
             raise ValueError("Symbol could not be found in any relations: " + str(expression))
+
     def all_symbols(self, expression=None):
         if expression is None:
             expression = AllColumns()
@@ -218,16 +221,19 @@ class Relation(SqlRel):
         if len(syms) == 0:
             raise ValueError("Symbol could not be found in any relations: " + str(expression))
         return syms
+
     def children(self):
         return [self.primary] + self.joins
 
 class Table(SqlRel):
     """A fully qualified table name with optional alias"""
+
     def __init__(self, name, alias):
         self.name = name
         self.alias = alias
         self.m_symbols = None
         self.m_sym_dict = None
+
     def symbol(self, expression):
         if type(expression) is not Column:
             raise ValueError("Tables can only have column symbols: " + str(type(expression)) )
@@ -241,6 +247,7 @@ class Table(SqlRel):
                 return self[name]
             else:
                 return None
+
     def load_symbols(self, metadata):
         self.m_sym_dict = None
         if metadata is None:
@@ -262,55 +269,68 @@ class Table(SqlRel):
                 row_privacy=table.row_privacy,
                 compare=metadata.compare)
                 ) for name in tc.keys()]
+
     def escaped(self):
         # is any part of this identifier escaped?
         parts = str(self).split(".")
         return any([p.startswith('"') or p.startswith('[') for p in parts])
+
     def children(self):
         return [self.name] + ([Token("AS"), self.alias] if self.alias is not None else [])
 
 class AliasedSubquery(SqlRel):
     """A subquery with optional alias"""
+
     def __init__(self, query, alias):
         self.query = query
         self.alias = alias
+
     def symbol(self, expression):
         alias, name = self.split_alias(expression.name)
         return self.query.symbol(Column(name))
+
     def all_symbols(self, expression):
         if type(expression) is not AllColumns:
             raise ValueError("Need to pass in a * or alias.* to get all columns")
         if not self.alias_match(str(expression)):
             raise ValueError("Requesting all coluns with mismatched alias")
         return self.query.all_symbols(AllColumns())
+
     def children(self):
         return [Token("("), self.query, Token(")")] + ([Token("AS"), self.alias] if self.alias is not None else [])
 
 class AliasedRelation(SqlRel):
     """A subrelation (table, join, or subquery) with optional alias"""
+
     def __init__(self, relation, alias):
         self.relation = relation
         self.alias = alias
+
     def symbol(self, expression):
         alias, name = self.split_alias(expression.name)
         return self.relation.symbol(Column(name))
+
     def all_symbols(self, expression):
         if type(expression) is not AllColumns:
             raise ValueError("Need to pass in a * or alias.* to get all columns")
         if not self.alias_match(str(expression)):
             raise ValueError("Requesting all coluns with mismatched alias")
         return self.relation.all_symbols(AllColumns())
+
     def children(self):
         return [Token("("), self.relation, Token(")")] + ([Token("AS"), self.alias] if self.alias is not None else [])
 
 class Join(SqlRel):
     """A join expression attached to a primary relation"""
+
     def __init__(self, joinType, right, criteria):
         self.joinType = joinType
         self.right = right
         self.criteria = criteria
+
     def symbol(self, expression):
         return self.right.symbol(expression)
+
     def all_symbols(self, expression):
         return self.right.all_symbols(expression)
     def children(self):
@@ -333,15 +353,20 @@ class TableColumn(SqlExpr):
         self.sample_max_ids = sample_max_ids
         self.row_privacy = row_privacy
         self.unbounded = minval is None or maxval is None
-        self.compare = NameCompare([]) if compare is None else compare
+        self.compare = compare
+
     def __str__(self):
         return self.tablename + "." + self.colname
+
     def __eq__(self, other):
         return self.tablename == other.tablename and self.colname == other.colname
+
     def __hash__(self):
         return hash((self.tablename, self.colname))
+
     def type(self):
         return self.valtype
+
     def sensitivity(self):
         if self.valtype in ["int", "float"]:
             if self.minval is not None and self.maxval is not None:
@@ -350,11 +375,13 @@ class TableColumn(SqlExpr):
             return 1
         else:
             return None
+
     def evaluate(self, bindings):
         if str(self).lower() in bindings:
             return bindings[str(self).lower()]
         else:
             return None
+
     @property
     def is_key_count(self):
         return self.is_key

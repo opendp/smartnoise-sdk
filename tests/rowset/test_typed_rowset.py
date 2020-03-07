@@ -2,7 +2,7 @@ import pytest
 import string
 import numpy as np
 import random
-from burdock.reader.sql.rowset import TypedRowset
+from burdock.reader.rowset import TypedRowset
 
 """
 Basic unit tests for typed rowset

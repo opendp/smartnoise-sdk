@@ -1,7 +1,6 @@
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 
-from burdock.metadata.collection import Int
 import copy
 import re
 
@@ -40,9 +39,11 @@ class PandasReader(SqlReader):
             if column_name != sanitized_column_name:
                 del metadata.m_tables[table_name].m_columns[column_name]
 
-        if not has_key:
+        if not has_key:  # TODO handle this in metadata to avoid circ dep
             key = "primary_key"
             self.df[key] = range(len(self.df))
+
+            from burdock.metadata.collection import Int
             metadata.m_tables[table_name].m_columns[key] = Int(key,
             minval=0,
             maxval=len(self.df),

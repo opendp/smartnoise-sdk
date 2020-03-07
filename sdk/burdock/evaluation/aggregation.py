@@ -10,9 +10,9 @@ import sys
 import os
 # import yarrow
 
-from burdock.sql import PandasReader
+from burdock.reader.sql import PandasReader
 from burdock.sql.private_reader import PrivateReader
-from burdock.reader.sql.rowset import TypedRowset
+from burdock.reader.rowset import TypedRowset
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
