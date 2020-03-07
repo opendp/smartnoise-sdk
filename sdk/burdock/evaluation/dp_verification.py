@@ -428,18 +428,11 @@ class DPVerification:
         for data, res in res_list.items():
             print(data, "-", res)
 
-<<<<<<< HEAD:sdk/burdock/evaluation/dp_verification.py
         dp_res = np.all(np.array([res[0] for res in res_list]))
         acc_res = np.all(np.array([res[1] for res in res_list]))
         utility_res = np.all(np.array([res[2] for res in res_list]))
-        return dp_res, acc_res, utility_res
-=======
-        dp_res = np.all(np.array([res[0] for res in res_list.values()]))
-        acc_res = np.all(np.array([res[1] for res in res_list.values()]))
-        utility_res = np.all(np.array([res[2] for res in res_list.values()]))
-        bias_res = np.all(np.array([res[4] for res in res_list.values()]))
+        bias_res = np.all(np.array([res[4] for res in res_list]))
         return dp_res, acc_res, utility_res, bias_res
->>>>>>> Bias Test:evaluation/dp_verification.py
 
     # Main method listing all the DP verification steps
     def main(self):
