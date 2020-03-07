@@ -2,7 +2,8 @@ import math
 import numpy as np
 from .private_rewriter import Rewriter
 from .parse import QueryParser
-from .ast.expressions import sql as ast
+
+from burdock.ast.expressions import sql as ast
 
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
