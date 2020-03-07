@@ -388,6 +388,7 @@ class DPVerification:
         for res in res_list:
             print(res)
 
+        res_list = res_list.values() if hasattr(res_list, "values") else res_list  # TODO why is this needed?
         dp_res = np.all(np.array([res[0] for res in res_list]))
         acc_res = np.all(np.array([res[1] for res in res_list]))
         utility_res = np.all(np.array([res[2] for res in res_list]))
