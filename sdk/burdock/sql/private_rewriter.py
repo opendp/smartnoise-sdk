@@ -2,13 +2,13 @@ import random
 import string
 
 from .parse import QueryParser
-from .ast import Validate
+from burdock.ast import Validate
 
-from .ast.validate import Validate
-from .ast.ast import Select, From, Query, AliasedRelation, Where, Aggregate, Order
-from .ast.ast import Literal, Column, TableColumn, AllColumns
-from .ast.ast import NamedExpression, NestedExpression, Expression, Seq
-from .ast.ast import AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression
+from burdock.ast.validate import Validate
+from burdock.ast.ast import Select, From, Query, AliasedRelation, Where, Aggregate, Order
+from burdock.ast.ast import Literal, Column, TableColumn, AllColumns
+from burdock.ast.ast import NamedExpression, NestedExpression, Expression, Seq
+from burdock.ast.ast import AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression
 
 """
     Modifies parsed ASTs to augment with information needed
