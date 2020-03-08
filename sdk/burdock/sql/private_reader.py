@@ -124,14 +124,17 @@ class PrivateReader:
         db_rs = self.reader.execute_ast(subquery)
         print(type(db_rs))
 
-        def process_row(row):
+        clamp_counts = self.options.clamp_counts
+
+        def process_row(row_in):
+            row = [v for v in row_in]
             for idx in range(len(row)):
                 if sens[idx] is not None and row[idx] is None:
                     row[idx] = 0.0
             out_row = [noise.release([v]).values[0] if noise is not None else v for noise, v in zip(mechs, row)]
             for idx in kcc_pos:
                 out_row[idx] = out_row[kc_pos]
-            if self.options.clamp_counts:
+            if clamp_counts:
                 for idx in range(len(row)):
                     if is_key_count[idx] and row[idx] < 0:
                         row[idx] = 0
@@ -140,6 +143,8 @@ class PrivateReader:
         if hasattr(db_rs, 'rdd'):
             # use supplied map method
             print('processing rows with supplied map')
+            #return db_rs.rdd.map(lambda x: x)
+            #return db_rs.rdd.map(process_row)
             out = db_rs.rdd.map(process_row)
         else:
             out = map(process_row, db_rs[1:])
@@ -148,7 +153,8 @@ class PrivateReader:
             if hasattr(out, 'filter'):
                 # use supplied map method
                 print('filtering rows with supplied filter')
-                out = out.filter(lambda row: row[kc_pos] > self.tau)
+                tau = self.tau
+                out = out.filter(lambda row: row[kc_pos] > tau)
             else:
                 out = filter(lambda row: row[kc_pos] > self.tau, out)
 
@@ -173,6 +179,7 @@ class PrivateReader:
         # make the new recordset
         if hasattr(out_new, 'collect'):
             print('Done')
+            return out_new
             return out_new.toDF(out_colnames)
 
         newrs = TypedRowset([out_colnames] + list(out_new), out_types, out_sens)         
