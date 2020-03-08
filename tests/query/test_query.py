@@ -107,9 +107,9 @@ class TestQuery:
         reader = PandasReader(schema, df)
         query = QueryParser(schema).queries("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100")[0]
         private_reader = PrivateReader(reader, schema, 1.0)
-        private_reader._execute(query, True)
+        private_reader._execute_ast(query, True)
         for i in range(3):
-            trs = private_reader._execute(query, True)
+            trs = private_reader._execute_ast(query, True)
             assert(len(trs) == 1)
     def test_sum_noisy(self):
         reader = PandasReader(schema, df)

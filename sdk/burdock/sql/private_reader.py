@@ -83,7 +83,7 @@ class PrivateReader:
         query = self.parse_query_string(query_string)
         return self.execute_ast_typed(query)
 
-    def _execute(self, query, cache_exact=False):
+    def _execute_ast(self, query, cache_exact=False):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute.")
 
@@ -97,8 +97,8 @@ class PrivateReader:
         # list of sensitivities in column order
         sens = [s[1].sensitivity() for s in syms]
 
-        # tell which ones are key counts, in column order
-        is_key_count = [s[1].is_key_count for s in syms]
+        # tell which are counts, in column order
+        is_count = [s[1].is_count for s in syms]
 
         # set sensitivity to None if the column is a grouping key
         if subquery.agg is not None:
@@ -157,8 +157,8 @@ class PrivateReader:
             # clamp counts to be non-negative
             if clamp_counts:
                 for idx in range(len(row)):
-                    if is_key_count[idx] and row[idx] < 0:
-                        row[idx] = 0
+                    if is_count[idx] and out_row[idx] < 0:
+                        out_row[idx] = 0
             return out_row
 
         if hasattr(db_rs, 'rdd'):
@@ -264,7 +264,7 @@ class PrivateReader:
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
 
-        return self._execute(query, False)
+        return self._execute_ast(query, False)
 
 class PrivateReaderOptions:
     """Options that control privacy behavior"""

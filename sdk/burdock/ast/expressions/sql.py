@@ -20,6 +20,9 @@ class AllColumns(SqlExpr):
     @property
     def is_key_count(self):
         return True
+    @property
+    def is_count(self):
+        return True
     
 class AggFunction(SqlExpr):
     """A function such as SUM, COUNT, AVG"""
@@ -83,6 +86,14 @@ class AggFunction(SqlExpr):
             return self.expression.is_key_count
         elif self.name == "COUNT":
             return self.expression.is_key_count
+        else:
+            return False
+    @property
+    def is_count(self):
+        if self.name == "SUM":
+            return self.expression.is_count
+        elif self.name == "COUNT":
+            return True
         else:
             return False
 

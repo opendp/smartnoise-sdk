@@ -197,6 +197,9 @@ class SqlExpr(Sql):
     @property
     def is_key_count(self):
         return False
+    @property
+    def is_count(self):
+        return False
 
 
 class Literal(SqlExpr):
