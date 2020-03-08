@@ -22,6 +22,7 @@ class PrivateReader:
         self.delta = delta
         self.max_contrib = 1
         self.interval_widths = interval_widths
+        self._cached_exact = None
         self.refresh_options()
 
     def refresh_options(self):
@@ -79,9 +80,9 @@ class PrivateReader:
         query = self.parse_query_string(query_string)
         return self.execute_ast_typed(query)
 
-    def _preprocess(self, query):
+    def _execute(self, query, cache_exact=False):
         if isinstance(query, str):
-            raise ValueError("Please pass AST to _preprocess.")
+            raise ValueError("Please pass AST to _execute.")
 
         subquery, query = self.rewrite_ast(query)
         self.max_contrib = query.max_ids
@@ -121,19 +122,31 @@ class PrivateReader:
         mechs = [Gaussian(self.epsilon, self.delta, s, self.max_contrib, self.interval_widths) if s is not None else None for s in sens]
 
         # execute the subquery against the backend and load in tuples
-        db_rs = self.reader.execute_ast(subquery)
-        print(type(db_rs))
+        if cache_exact:
+            # we only execute the exact query once
+            if self._cached_exact is not None:
+                db_rs = self._cached_exact
+            else:
+                db_rs = self.reader.execute_ast(subquery)
+                self._cached_exact = db_rs
+        else:
+            self.cached_exact = None
+            db_rs = self.reader.execute_ast(subquery)
 
         clamp_counts = self.options.clamp_counts
-
         def process_row(row_in):
+            # pull out tuple values
             row = [v for v in row_in]
+            # set null to 0 before adding noise
             for idx in range(len(row)):
                 if sens[idx] is not None and row[idx] is None:
                     row[idx] = 0.0
+            # call all mechanisms to add noise
             out_row = [noise.release([v]).values[0] if noise is not None else v for noise, v in zip(mechs, row)]
+            # ensure all key counts are the same
             for idx in kcc_pos:
                 out_row[idx] = out_row[kc_pos]
+            # clamp counts to be non-negative
             if clamp_counts:
                 for idx in range(len(row)):
                     if is_key_count[idx] and row[idx] < 0:
@@ -141,18 +154,17 @@ class PrivateReader:
             return out_row
 
         if hasattr(db_rs, 'rdd'):
-            # use supplied map method
-            print('processing rows with supplied map')
-            #return db_rs.rdd.map(lambda x: x)
-            #return db_rs.rdd.map(process_row)
+            # it's a dataframe
             out = db_rs.rdd.map(process_row)
+        elif hasattr(db_rs, 'map'):
+            # it's an RDD
+            out = db_rs.map(process_row)
         else:
             out = map(process_row, db_rs[1:])
 
         if subquery.agg is not None and self.options.censor_dims:
             if hasattr(out, 'filter'):
-                # use supplied map method
-                print('filtering rows with supplied filter')
+                # it's an RDD
                 tau = self.tau
                 out = out.filter(lambda row: row[kc_pos] > tau)
             else:
@@ -164,48 +176,65 @@ class PrivateReader:
         out_sens = [s[1].sensitivity() for s in out_syms]
         out_colnames = [s[0] for s in out_syms]
 
+
+        def convert(val, type):
+            if type == 'string' or type == 'unknown':
+                return str(val).replace('"', '').replace("'", '')
+            elif type == 'int':
+                return int(float(str(val).replace('"', '').replace("'", '')))
+            elif type == 'float':
+                return float(str(val).replace('"', '').replace("'", ''))
+            elif type == 'boolean':
+                return bool(str(val).replace('"', '').replace("'", ''))
+            else:
+                raise ValueError("Can't convert type " + type)
+
         def process_out_row(row):
-            #raise ValueError("foo")
             bindings = dict((name.lower(), val ) for name, val in zip(source_col_names, row))
-            return [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
+            row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
+            return [convert(val, type) for val, type in zip(row, out_types)]
     
         if hasattr(out, 'map'):
-            # use supplied map method
-            print('processing output rows with supplied map')
-            out_new = out.map(process_out_row)
+            # it's an RDD
+            out = out.map(process_out_row)
         else:
-            out_new = map(process_out_row, out)
+            out = map(process_out_row, out)
 
-        # make the new recordset
-        if hasattr(out_new, 'collect'):
-            print('Done')
-            return out_new
-            return out_new.toDF(out_colnames)
-
-        newrs = TypedRowset([out_colnames] + list(out_new), out_types, out_sens)         
-
-#        for idx in range(len(cols)):
-#            colname = newrs.idxcol[idx]
-#            newrs[colname] = cols[idx]
-#            newrs.report[colname] = Result(None, None, None, cols[idx], None, None, None, None, None, Intervals(intervals_list[idx]), None)
-
-            #newrs.intervals[colname] = Intervals(intervals_list[idx])
-
-        # Now sort, if it has order by clause
+        # sort it if necessary
         if query.order is not None:
             sort_fields = []
             for si in query.order.sortItems:
                 if type(si.expression) is not ast.Column:
                     raise ValueError("We only know how to sort by column names right now")
                 colname = si.expression.name.lower()
+                if colname not in out_colnames:
+                    raise ValueError("Can't sort by {0}, because it's not in output columns: {1}".format(colname, out_colnames))
+                colidx = out_colnames.index(colname)
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
                     desc = True
-                sf = (colname, desc)
+                if desc and not (out_types[colidx] == "int" or out_types[colidx] == "float"):
+                    raise ValueError("We don't know how to sort descending by " + out_types[colidx])
+                sf = (desc, colidx)
                 sort_fields.append(sf)
-            sf = [("-" if desc else "") + colname for colname, desc in sort_fields]
-            newrs.sort(sf)
-        return newrs
+
+            def sort_func(row):
+                return tuple([row[idx] if not desc else -row[idx] for desc, idx in sort_fields])
+
+            if hasattr(out, 'sortBy'):
+                out = out.sortBy(sort_func)
+            else:
+                out = sorted(out, key=sort_func)
+
+        # output it
+        if hasattr(out, 'toDF'):
+            # Pipeline RDD
+            return out.toDF(out_colnames)
+        elif hasattr(out, 'map'):
+            # Bare RDD
+            return out
+        else:
+            return TypedRowset([out_colnames] + list(out), out_types)
 
     def execute_ast(self, query):
         """Executes an AST representing a SQL query
@@ -226,10 +255,8 @@ class PrivateReader:
         """
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-        #subquery_results = self._preprocess(query)
-        #return self._postprocess(*subquery_results)
 
-        return self._preprocess(query)
+        return self._execute(query, False)
 
 class PrivateReaderOptions:
     """Options that control privacy behavior"""

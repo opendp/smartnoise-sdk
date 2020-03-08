@@ -25,7 +25,7 @@ class TestQuery:
     def test_empty_result_typed(self):
         reader = PandasReader(schema, df)
         rs = reader.execute("SELECT age as a FROM PUMS.PUMS WHERE age > 100")
-        trs = TypedRowset(rs, ['int'], [None])
+        trs = TypedRowset(rs, ['int'])
         assert(len(trs) == 0)
     def test_group_by_exact_order(self):
         reader = PandasReader(schema, df)
@@ -100,9 +100,9 @@ class TestQuery:
         reader = PandasReader(schema, df)
         query = QueryParser(schema).queries("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100")[0]
         private_reader = PrivateReader(reader, schema, 1.0)
-        pre = private_reader._preprocess(query)
+        private_reader._execute(query, True)
         for i in range(3):
-            trs = private_reader._postprocess(*pre)
+            trs = private_reader._execute(query, True)
             assert(len(trs) == 1)
     def test_sum_noisy(self):
         reader = PandasReader(schema, df)

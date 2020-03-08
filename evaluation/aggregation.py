@@ -117,7 +117,7 @@ class Aggregation:
         low_bounds = []
         high_bounds = []
         for idx in range(self.repeat_count):
-            srs = TypedRowset(srs_orig.rows(), types, sens)
+            srs = TypedRowset(srs_orig.rows(), types)
             res = private_reader._postprocess(subquery, query, syms, types, sens, srs)
             interval = res.report[res.colnames[0]].intervals[confidence]
             low_bounds.append(interval[0].low)
@@ -141,7 +141,7 @@ class Aggregation:
         # Distinguishing dimension and measure columns
         subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
         
-        srs = TypedRowset(srs_orig.rows(), types, sens)
+        srs = TypedRowset(srs_orig.rows(), types)
         sample_res = private_reader._postprocess(subquery, query, syms, types, sens, srs)
         headers = sample_res.colnames
 
@@ -159,7 +159,7 @@ class Aggregation:
         for idx in range(self.repeat_count):
             dim_rows = []
             num_rows = []
-            srs = TypedRowset(srs_orig.rows(), types, sens)
+            srs = TypedRowset(srs_orig.rows(), types)
             singleres = private_reader._postprocess(subquery, query, syms, types, sens, srs)
             for col in dim_cols:
                 dim_rows.append(singleres.report[col].values)

@@ -30,7 +30,7 @@ class Reader:
                 else:
                     types[idx] = "string"
 
-        return TypedRowset(rows, types, sens)
+        return TypedRowset(rows, types)
 
     def execute_ast(self, query):
         if isinstance(query, str):
@@ -47,7 +47,7 @@ class Reader:
         sens = [s[1].sensitivity() for s in syms]
 
         rows = self.execute_ast(query)
-        return TypedRowset(rows, types, sens)
+        return TypedRowset(rows, types)
 
 """
     Implements engine-specific identifier matching rules
