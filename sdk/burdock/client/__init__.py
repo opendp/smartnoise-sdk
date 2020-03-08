@@ -49,6 +49,8 @@ def get_dataset_client():
                 msg = "Failure while loading {} with exception {}.".format(
                     entrypoint, e)
                 module_logger.warning(msg)
+    else:
+                module_logger.warning("Multiple client overrides found {}".format(client_overrides))
     return DatasetClient()
 
 def get_execution_client():
