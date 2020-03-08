@@ -25,6 +25,7 @@ class PrivateReader:
         self.max_contrib = 1
         self.interval_widths = interval_widths
         self._cached_exact = None
+        self._cached_ast = None
         self.refresh_options()
 
     def refresh_options(self):
@@ -127,12 +128,17 @@ class PrivateReader:
         if cache_exact:
             # we only execute the exact query once
             if self._cached_exact is not None:
-                db_rs = self._cached_exact
+                if subquery == self._cached_ast:
+                    db_rs = self._cached_exact
+                else:
+                    raise ValueError("Cannot run different query against cached result.  Make a new PrivateReader or else clear the cache with cache = False")
             else:
                 db_rs = self.reader.execute_ast(subquery)
-                self._cached_exact = db_rs
+                self._cached_exact = list(db_rs)
+                self._cached_ast = subquery
         else:
             self.cached_exact = None
+            self.cached_ast = None
             db_rs = self.reader.execute_ast(subquery)
 
         clamp_counts = self.options.clamp_counts
