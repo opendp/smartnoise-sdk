@@ -22,13 +22,15 @@ class SparkReader(Reader):
         
         df = self.api.sql(query)
 
-        if df.columns is None:
-            return []
-        else:
-            col_names = [tuple(c.lower() for c in df.columns)]
-            import pyspark
-            body = [c for c in df.collect() if type(c) is pyspark.sql.types.Row and c is not None] 
-            return col_names + body
+#        if df.columns is None:
+#            return []
+#        else:
+#            col_names = [tuple(c.lower() for c in df.columns)]
+#            import pyspark
+#            body = [c for c in df.collect() if type(c) is pyspark.sql.types.Row and c is not None] 
+#            return col_names + body
+        return df
+        
     def db_name(self):
         return self.database
 

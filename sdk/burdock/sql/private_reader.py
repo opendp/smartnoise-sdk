@@ -120,8 +120,9 @@ class PrivateReader:
         # make a list of mechanisms in column order
         mechs = [Gaussian(self.epsilon, self.delta, s, self.max_contrib, self.interval_widths) if s is not None else None for s in sens]
 
-        # execute the subquery against the backend and load in typed rowset
-        db_rs = self.reader.execute_ast_typed(subquery).rows()
+        # execute the subquery against the backend and load in tuples
+        db_rs = self.reader.execute_ast(subquery)
+        print(type(db_rs))
 
         def process_row(row):
             for idx in range(len(row)):
@@ -134,15 +135,22 @@ class PrivateReader:
                 for idx in range(len(row)):
                     if is_key_count[idx] and row[idx] < 0:
                         row[idx] = 0
-
             return out_row
 
-
-        out = map(process_row, db_rs[1:])
+        if hasattr(db_rs, 'rdd'):
+            # use supplied map method
+            print('processing rows with supplied map')
+            out = db_rs.rdd.map(process_row)
+        else:
+            out = map(process_row, db_rs[1:])
 
         if subquery.agg is not None and self.options.censor_dims:
-            out = filter(lambda row: row[kc_pos] > self.tau, out)
-
+            if hasattr(out, 'filter'):
+                # use supplied map method
+                print('filtering rows with supplied filter')
+                out = out.filter(lambda row: row[kc_pos] > self.tau)
+            else:
+                out = filter(lambda row: row[kc_pos] > self.tau, out)
 
         # get column information for outer query
         out_syms = query.all_symbols()
@@ -155,9 +163,18 @@ class PrivateReader:
             bindings = dict((name.lower(), val ) for name, val in zip(source_col_names, row))
             return [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
     
-        out_new = map(process_out_row, out)
+        if hasattr(out, 'map'):
+            # use supplied map method
+            print('processing output rows with supplied map')
+            out_new = out.map(process_out_row)
+        else:
+            out_new = map(process_out_row, out)
 
         # make the new recordset
+        if hasattr(out_new, 'collect'):
+            print('Done')
+            return out_new.toDF(out_colnames)
+
         newrs = TypedRowset([out_colnames] + list(out_new), out_types, out_sens)         
 
 #        for idx in range(len(cols)):
