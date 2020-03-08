@@ -2,7 +2,7 @@ import pytest
 import string
 import numpy as np
 import random
-from burdock.reader.sql.rowset import TypedRowset
+from burdock.reader.rowset import TypedRowset
 
 """
 Basic unit tests for typed rowset
@@ -17,7 +17,6 @@ rows_1k = [('id', 'temp', 'code', 'bucket')] + [r for r in zip(col1, col2, col3,
 rows_10 = rows_1k[0:11]
 rows_1 = rows_1k[0:2]
 types = ['int', 'float', 'string', 'int']
-sens = [None, None, None, None]
 
 class TestTypedRowset:
     def test_make_1k(self):

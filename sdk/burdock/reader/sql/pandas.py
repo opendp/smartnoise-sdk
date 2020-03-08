@@ -1,18 +1,17 @@
-from .base import Reader, NameCompare
+from .sql_base import SqlReader, NameCompare
+from .engine import Engine
 
-from burdock.metadata.collection import Int
 import copy
 import re
 
 
-class PandasReader(Reader):
+class PandasReader(SqlReader):
+    ENGINE = Engine.PANDAS
+
     def __init__(self, metadata, df):
         super().__init__()
-        self.original_column_names = []
         self.df = df
-        self.metadata = self._sanitize_metadata(metadata)
-        self.serializer = None
-        self.engine = "Pandas"
+        self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
 
     def _sanitize_column_name(self, column_name):
         x = re.search(r".*[a-zA-Z0-9()_]", column_name)
@@ -28,10 +27,10 @@ class PandasReader(Reader):
         if len(table_names) > 1:
             raise Exception("Only one table is supported for PandasReader. {} found.".format(len(table_names)))
         table_name = table_names[0]
-        self.original_column_names = list(metadata.m_tables[table_name].m_columns)
+        original_column_names = list(metadata.m_tables[table_name].m_columns)
 
         has_key = False
-        for column_name in self.original_column_names:
+        for column_name in original_column_names:
             sanitized_column_name = self._sanitize_column_name(column_name)
             metadata.m_tables[table_name].m_columns[sanitized_column_name] = metadata.m_tables[table_name].m_columns[column_name]
             metadata.m_tables[table_name].m_columns[sanitized_column_name].name = sanitized_column_name
@@ -40,14 +39,16 @@ class PandasReader(Reader):
             if column_name != sanitized_column_name:
                 del metadata.m_tables[table_name].m_columns[column_name]
 
-        if not has_key:
+        if not has_key:  # TODO handle this in metadata to avoid circ dep
             key = "primary_key"
             self.df[key] = range(len(self.df))
+
+            from burdock.metadata.collection import Int
             metadata.m_tables[table_name].m_columns[key] = Int(key,
             minval=0,
             maxval=len(self.df),
             is_key=True)
-        return metadata
+        return metadata, original_column_names
 
     def _sanitize_query(self, query):
         for column in self.original_column_names:

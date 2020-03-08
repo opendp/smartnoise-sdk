@@ -1,13 +1,20 @@
-import pytest
-import pandas as pd
+import os
+import subprocess
 
-from burdock.sql import PandasReader, CollectionMetadata, PrivateReader
-from burdock.sql.parse import QueryParser
-from burdock.reader.sql.rowset import TypedRowset
+import pandas as pd
 from pandasql import sqldf
 
-meta_path = "service/datasets/PUMS.yaml"
-csv_path = "service/datasets/PUMS.csv"
+from burdock.metadata import CollectionMetadata
+from burdock.sql import PrivateReader
+from burdock.reader.sql import PandasReader
+from burdock.sql.parse import QueryParser
+from burdock.reader.rowset import TypedRowset
+
+git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+
+meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.yaml"))
+csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.csv"))
+
 schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 

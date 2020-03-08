@@ -9,12 +9,13 @@ import copy
 from statsmodels.tools import sequences
 from burdock.metadata.collection import *
 
+
 class Exploration:
-    def __init__(self, dataset_size = 3):
+    def __init__(self, dataset_size=3, csv_path=r'../service/datasets/evaluation'):  # TODO changed default to "."
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
-        self.csv_path = r'../service/datasets/evaluation'
-        
+        self.csv_path = csv_path
+
         self.numerical_col_name = "Usage"
         self.numerical_col_type = "int"
         self.N = dataset_size
@@ -22,7 +23,7 @@ class Exploration:
         self.corners = np.array([[-1*(10**self.N)]*self.N, [10**self.N]*self.N])
         self.visited = []
         self.neighbor_pair = {}
-    
+
     # Create a dataset with one numerical column on which we shall evaluate DP queries
     def create_small_dataset(self, sample, file_name = "small"):
         userids = list(range(1, self.dataset_size+1))

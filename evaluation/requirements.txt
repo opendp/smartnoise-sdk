@@ -1,7 +1,0 @@
-pandas
-numpy
-matplotlib
-scipy
-mlflow
-pandasql
-statsmodels

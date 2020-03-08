@@ -1,9 +1,11 @@
-from .rowset import TypedRowset
+from burdock.reader.base import Reader
+from burdock.reader.rowset import TypedRowset
 
-class Reader:
-    def __init__(self):
-        self.serializer = None
-        self.compare = NameCompare()
+
+class SqlReader(Reader):
+    def __init__(self, name_compare=None, serializer=None):
+        super().__init__(NameCompare() if name_compare is None else name_compare)
+        self.serializer = serializer
 
     def execute(self, query):
         raise NotImplementedError("Execute must be implemented on the inherited class")
@@ -120,4 +122,3 @@ class NameCompare:
             return False
         else:
             return True
-        
