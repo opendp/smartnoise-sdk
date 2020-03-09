@@ -22,7 +22,6 @@ class PrivateReader:
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
         self.delta = delta
-        self.max_contrib = 1
         self.interval_widths = interval_widths
         self._cached_exact = None
         self._cached_ast = None
@@ -33,6 +32,7 @@ class PrivateReader:
         self.metadata.compare = self.reader.compare
         self.rewriter.options.reservoir_sample = self.options.reservoir_sample
         self.rewriter.options.clamp_columns = self.options.clamp_columns
+        self.rewriter.options.max_contrib = self.options.max_contrib
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -47,6 +47,10 @@ class PrivateReader:
         return self.rewrite_ast(query)
 
     def rewrite_ast(self, query):
+        query_max_contrib = query.max_ids
+        if self.options.max_contrib is None or self.options.max_contrib > query_max_contrib:
+            self.options.max_contrib = query_max_contrib        
+
         self.refresh_options()
         query = self.rewriter.query(query)
         subquery = query.source.relations[0].primary.query
@@ -88,7 +92,6 @@ class PrivateReader:
             raise ValueError("Please pass AST to _execute.")
 
         subquery, query = self.rewrite_ast(query)
-        self.max_contrib = query.max_ids
         self.tau = self.max_contrib * (1- ( math.log(2 * self.delta / self.max_contrib) / self.epsilon  ))
 
         syms = subquery.all_symbols()
@@ -272,7 +275,8 @@ class PrivateReaderOptions:
         clamp_counts=True, 
         reservoir_sample=True,
         clamp_columns=True,
-        row_privacy=False):
+        row_privacy=False,
+        max_contrib=1):
         """Initialize with options.
         :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy
         :param clamp_counts: boolean, set to False to allow noisy counts to be negative
@@ -284,3 +288,4 @@ class PrivateReaderOptions:
         self.reservoir_sample = reservoir_sample
         self.clamp_columns = clamp_columns
         self.row_privacy = row_privacy
+        self.max_contrib = max_contrib
