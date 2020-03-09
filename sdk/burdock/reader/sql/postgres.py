@@ -1,17 +1,19 @@
 import os
 
-from .base import Reader, NameCompare
+from .sql_base import SqlReader, NameCompare
+from .engine import Engine
 
 """
-    A dumb pipe that gets a rowset back from a database using 
+    A dumb pipe that gets a rowset back from a database using
     a SQL string, and converts types to some useful subset
 """
-class PostgresReader(Reader):
+class PostgresReader(SqlReader):
+    ENGINE = Engine.POSTGRES
+
     def __init__(self, host, database, user, password=None, port=None):
-        super().__init__()
+        super().__init__(PostgresNameCompare(), PostgresSerializer())
         import psycopg2
         self.api = psycopg2
-        self.engine = "Postgres"
         self.host = host
         self.database = database
         self.user = user
@@ -23,9 +25,6 @@ class PostgresReader(Reader):
         self.password = password
 
         self.update_connection_string()
-
-        self.serializer = PostgresSerializer()
-        self.compare = PostgresNameCompare()
 
     def execute(self, query):
         if not isinstance(query, str):

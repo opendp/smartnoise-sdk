@@ -1,12 +1,14 @@
 import math
 import numpy as np
-from burdock.sql import Rewriter
+from .private_rewriter import Rewriter
 from .parse import QueryParser
+
+from burdock.ast.expressions import sql as ast
+
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
 from burdock.metadata.report import Interval, Intervals, Result
-from burdock.reader.sql.rowset import TypedRowset
-from .ast.expressions import sql as ast
+from burdock.reader.rowset import TypedRowset
 
 """
     Takes a rewritten query, executes against the target backend, then
