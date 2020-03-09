@@ -319,13 +319,16 @@ class DPVerification:
         return acc_res, utility_res, float('%.2f'%((within_bounds / n) * 100))
 
     # Calculates mean signed deviation from noisy results sample as a ratio of actual value
-    def bias_test(self, actual, fD):
+    def bias_test(self, actual, fD, sig_level = 0.05):
         # Mean signed deviation
         n = len(fD)
         actual = [actual] * n
-        msd = (np.sum(fD - actual) / n) / actual[0]
-        print("Mean signed deviation: ", msd)
-        return (abs(msd) < 0.05), msd
+        diff = fD - actual
+        msd = (np.sum(diff) / n) / actual[0]
+        print("Mean signed deviation ratio to actual: ", msd)
+        # Checking if mean of (difference of noisy response to actual) is zero i.e. unbiased result
+        tset, pval = stats.ttest_1samp(diff, 0.0)
+        return (pval < sig_level), msd
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
