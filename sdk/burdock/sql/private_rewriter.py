@@ -72,7 +72,7 @@ class Rewriter:
     def push_sum_or_count(self, exp, scope):
         new_name = scope.push_name(AggFunction(exp.name, exp.quantifier, exp.expression))
 
-        new_exp = AggFunction("SUM", None, Column(new_name))
+        new_exp = Column(new_name)
         return new_exp
 
     """
@@ -145,9 +145,12 @@ class Rewriter:
 
         keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
         child_scope.push_name(keycount_expr.expression)
+        for ne in query.select.namedExpressions:
+            child_scope.push_name(ne.expression)
+            
         keycount = NamedExpression("keycount", keycount_expr) # need to either treat this as reserved or pass through to outer
 
-        select = Seq([keycount] + [self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
+        select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
 
         subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
@@ -169,32 +172,18 @@ class Rewriter:
         select = Select(None, select)
 
         subquery = self.per_key_clamped(query)
-        subquery = [AliasedRelation(subquery, "per_key_clamped")]
+        subquery = [AliasedRelation(subquery, "clamped" if self.options.clamp_columns else "not_clamped")]
 
         return Query(select, From(subquery), None, None, None, None, None)
 
 
     def per_key_clamped(self, query):
-
-        key_col = self.key_col(query)
-
         child_scope = Scope()
-
-        keygroup = [GroupingExpression(Column(key_col))] + (query.agg.groupingExpressions.seq if query.agg is not None else [])
-        new_agg = Aggregate(Seq(keygroup))
-
         relations = query.source.relations
-
         select = Seq([self.clampExpression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
-
-        if self.options.clamp_columns:
-            subquery = [AliasedRelation(subquery, "clamped")]
-        else:
-            subquery = [AliasedRelation(subquery, "not_clamped")]
-
-        return Query(select, From(subquery), None, new_agg, None, None, None)
+        return subquery
 
 
     """

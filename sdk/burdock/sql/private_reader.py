@@ -181,7 +181,6 @@ class PrivateReader:
         # get column information for outer query
         out_syms = query.all_symbols()
         out_types = [s[1].type() for s in out_syms]
-        out_sens = [s[1].sensitivity() for s in out_syms]
         out_colnames = [s[0] for s in out_syms]
 
 
