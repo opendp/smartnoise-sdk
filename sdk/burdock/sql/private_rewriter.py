@@ -139,22 +139,26 @@ class Rewriter:
 
     def exact_aggregates(self, query):
 
-        key_col = self.key_col(query)
 
         child_scope = Scope()
 
-        keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
-        child_scope.push_name(keycount_expr.expression)
+        if self.options.row_privacy:
+            keycount_expr = AggFunction("COUNT", None,  AllColumns())
+        else:
+            key_col = self.key_col(query)
+            keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
+            child_scope.push_name(keycount_expr.expression)
+
         for ne in query.select.namedExpressions:
             child_scope.push_name(ne.expression)
-            
-        keycount = NamedExpression("keycount", keycount_expr) # need to either treat this as reserved or pass through to outer
+        
+        keycount = NamedExpression("keycount", keycount_expr) 
 
         select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
 
         subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
-        if self.options.reservoir_sample:
+        if self.options.reservoir_sample and not self.options.row_privacy:
             subquery = self.per_key_random(subquery)
             subquery = [AliasedRelation(subquery, "per_key_random")]
 
@@ -225,11 +229,17 @@ class Rewriter:
         keys = [str(tc) for tc in tcsyms if tc.is_key]
         if len(keys) > 1:
             raise ValueError("We only know how to handle tables with one key: " + str(keys))
-        elif len(keys) < 1:
-            raise ValueError("No key column available in query relations")
-
-        kp = keys[0].split(".")
-        return kp[len(kp) - 1]
+        if self.options.row_privacy:
+            if len(keys) > 0:
+                raise ValueError("Row privacy is set, but metadata specifies a private_id")
+            else:
+                return None
+        else:
+            if len(keys) < 1:
+                raise ValueError("No private_id column specified, and row_privacy is not set")
+            else:
+                kp = keys[0].split(".")
+                return kp[len(kp) - 1]
 
 
 

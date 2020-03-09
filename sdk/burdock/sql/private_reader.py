@@ -30,6 +30,7 @@ class PrivateReader:
     def refresh_options(self):
         self.rewriter = Rewriter(self.metadata)
         self.metadata.compare = self.reader.compare
+        self.rewriter.options.row_privacy = self.options.row_privacy
         self.rewriter.options.reservoir_sample = self.options.reservoir_sample
         self.rewriter.options.clamp_columns = self.options.clamp_columns
         self.rewriter.options.max_contrib = self.options.max_contrib
@@ -92,7 +93,8 @@ class PrivateReader:
             raise ValueError("Please pass AST to _execute.")
 
         subquery, query = self.rewrite_ast(query)
-        self.tau = self.max_contrib * (1- ( math.log(2 * self.delta / self.max_contrib) / self.epsilon  ))
+        max_contrib = self.options.max_contrib if self.options.max_contrib is not None else 1
+        self.tau = max_contrib * (1- ( math.log(2 * self.delta / max_contrib) / self.epsilon  ))
 
         syms = subquery.all_symbols()
         source_col_names = [s[0] for s in syms]
@@ -125,7 +127,7 @@ class PrivateReader:
             kc_pos = kcc_pos.pop()
 
         # make a list of mechanisms in column order
-        mechs = [Gaussian(self.epsilon, self.delta, s, self.max_contrib, self.interval_widths) if s is not None else None for s in sens]
+        mechs = [Gaussian(self.epsilon, self.delta, s, max_contrib, self.interval_widths) if s is not None else None for s in sens]
 
         # execute the subquery against the backend and load in tuples
         if cache_exact:
@@ -276,13 +278,15 @@ class PrivateReaderOptions:
         reservoir_sample=True,
         clamp_columns=True,
         row_privacy=False,
-        max_contrib=1):
+        max_contrib=None):
         """Initialize with options.
         :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy
         :param clamp_counts: boolean, set to False to allow noisy counts to be negative
         :param reservoir_sample: boolean, set to False if the data collection will never have more than max_contrib record per individual
         :param clamp_columns: boolean, set to False to allow values that exceed lower and higher limit specified in metadata.  May impact privacy
-        :param row_privacy: boolean, True if each row is a separate individual"""
+        :param row_privacy: boolean, True if each row is a separate individual
+        :param max_contrib: int, set to override the metadata-supplied limit of per-user
+          contribution.  May only revise down; metadata takes precedence if limit is smaller."""
         self.censor_dims = censor_dims
         self.clamp_counts = clamp_counts
         self.reservoir_sample = reservoir_sample
