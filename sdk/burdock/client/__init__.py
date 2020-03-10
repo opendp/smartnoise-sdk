@@ -1,11 +1,14 @@
 import os
 import json
+import logging
+import pkg_resources
 from requests import Session
 
 from .restclient.models.project_run_details import ProjectRunDetails
 from .restclient.rest_client import RestClient
 from .restclient.models.dataset_read_request import DatasetReadRequest
 
+module_logger = logging.getLogger(__name__)
 
 class _MockCredentials(object):
     def signed_session(self, session=None):
@@ -35,6 +38,19 @@ class DatasetClient(object):
 
 
 def get_dataset_client():
+    client_overrides = [entrypoint for entrypoint in pkg_resources.iter_entry_points("opendp_whitenoise_dataset_client")]
+    if len(client_overrides) == 1:
+
+        try:
+            entrypoint = client_overrides[0]
+            extension_class = entrypoint.load()
+            return extension_class()
+        except Exception as e:  # pragma: no cover
+                msg = "Failure while loading {} with exception {}.".format(
+                    entrypoint, e)
+                module_logger.warning(msg)
+    else:
+                module_logger.warning("Multiple client overrides found {}".format(client_overrides))
     return DatasetClient()
 
 def get_execution_client():

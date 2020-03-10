@@ -1,5 +1,9 @@
+import logging
+import pkg_resources
 from .local_csv_adapter import LocalCSVAdapter
 from .dataverse_adapter import DataverseAdapter
+
+module_logger = logging.getLogger(__name__)
 
 
 class DatasetAdapterLoader(object):
@@ -72,3 +76,14 @@ def load_reader(dataset_document):
 
 register_adapter(LocalCSVAdapter)
 register_adapter(DataverseAdapter)
+
+
+for entrypoint in pkg_resources.iter_entry_points("opendp_whitenoise_adapter"):
+    try:
+        extension_class = entrypoint.load()
+        register_adapter(extension_class)
+    except Exception as e:  # pragma: no cover
+            msg = "Failure while loading {} with exception {}.".format(
+                entrypoint, e
+            )
+            module_logger.warning(msg)
