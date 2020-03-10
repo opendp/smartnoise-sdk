@@ -1,6 +1,6 @@
 import pytest
 
-from burdock.client import get_dataset_client
+from opendp_whitenoise.client import get_dataset_client
 
 
 @pytest.fixture(scope="session")

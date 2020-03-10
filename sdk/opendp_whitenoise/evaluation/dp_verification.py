@@ -11,12 +11,12 @@ import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import burdock.evaluation.aggregation as agg
-import burdock.evaluation.exploration as exp
+import opendp_whitenoise.evaluation.aggregation as agg
+import opendp_whitenoise.evaluation.exploration as exp
 import copy
 
 # import yarrow
-from burdock.metadata.collection import *
+from opendp_whitenoise.metadata.collection import *
 from scipy import stats
 
 class DPVerification:
@@ -59,11 +59,11 @@ class DPVerification:
     def generate_neighbors(self, load_csv = False):
         if(load_csv):
             self.df = pd.read_csv(self.dataset_path)
-        
+
         if(self.N == 0):
             print("No records in dataframe to run the test")
             return None, None
-        
+
         d1 = self.df
         drop_idx = np.random.choice(self.df.index, 1, replace=False)
         d2 = self.df.drop(drop_idx)
@@ -76,7 +76,7 @@ class DPVerification:
 
             d1.to_csv(d1_file_path, sep=',', encoding='utf-8', index=False)
             d2.to_csv(d2_file_path, sep=',', encoding='utf-8', index=False)
-        
+
         d1_table = self.metadata
         d2_table = copy.copy(d1_table)
         d1_table.schema, d2_table.schema = "d1", "d2"
@@ -119,13 +119,13 @@ class DPVerification:
         else:
             # Choose bin size of unity
             binlist = np.arange(np.floor(minval),np.ceil(maxval))
-        
+
         # Calculating histograms of fD1 and fD2
         d1hist, bin_edges = np.histogram(d1, bins = binlist, density = False)
         d2hist, bin_edges = np.histogram(d2, bins = binlist, density = False)
 
         return d1hist, d2hist, bin_edges
-    
+
     # Plot histograms given the vectors of repeated aggregation results applied on neighboring datasets
     def plot_histogram_neighbors(self, fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, binlist, bound=True, exact=False):
         plt.figure(figsize=(15,5))
@@ -138,7 +138,7 @@ class DPVerification:
             plt.hist(fD2, width=0.2, alpha=0.5, ec="k", align = "right", bins = 1)
             ax.legend(['D1', 'D2'], loc="upper right")
             return
-        
+
         ax = plt.subplot(1, 2, 1)
         ax.ticklabel_format(useOffset=False)
         plt.xlabel('Bin')
@@ -195,7 +195,7 @@ class DPVerification:
 
         d1histupperbound = d1upper * math.exp(self.epsilon) + self.delta
         d2histupperbound = d2upper * math.exp(self.epsilon) + self.delta
-        
+
         return px, py, d1histupperbound, d2histupperbound, d1histbound, d2histbound, d1lower, d2lower
 
     # Differentially Private Predicate Test
@@ -243,16 +243,16 @@ class DPVerification:
     # Verification of SQL aggregation mechanisms
     def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors()
-        
+
         fD1, fD2 = self.apply_aggregation_neighbors(f, (d1, colname), (d2, colname))
         d1size, d2size = fD1.size, fD2.size
 
         ks_res = self.ks_test(fD1, fD2)
         print("\nKS 2-sample Test Result: ", ks_res, "\n")
-        
+
         #andderson_res = self.anderson_ksamp(fD1, fD2)
         #print("Anderson 2-sample Test Result: ", andderson_res, "\n")
-        
+
         d1hist, d2hist, bin_edges = \
             self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
 
@@ -269,7 +269,7 @@ class DPVerification:
             #kl_res = self.kl_divergence(d1histupperbound, d2lower)
             #print("KL-Divergence: ", kl_res, "\n")
         print("DP Predicate Test:", dp_res, "\n")
-        
+
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
@@ -282,7 +282,7 @@ class DPVerification:
     #     ag = agg.Aggregation(t=1, repeat_count=repeat_count)
     #     self.dataset_path = dataset_path
     #     d1, d2 = self.generate_neighbors(load_csv=True)
-        
+
     #     d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
     #     d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
 
@@ -298,7 +298,7 @@ class DPVerification:
     #         self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
     #     dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
     #     print("DP Predicate Test:", dp_res, "\n")
-        
+
     #     if(plot):
     #         self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
     #     return dp_res
@@ -334,7 +334,7 @@ class DPVerification:
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
-        
+
         fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence, get_exact)
         fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence, get_exact)
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
@@ -353,7 +353,7 @@ class DPVerification:
 
         d1_res, d1_exact, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
         d2_res, d2_exact, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
-        
+
         res_list = []
         for col in num_cols:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
@@ -378,7 +378,7 @@ class DPVerification:
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
                 print("DP Predicate Test Result: ", dp_res)
-                
+
                 # Accuracy Test
                 low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
                 high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
@@ -387,7 +387,7 @@ class DPVerification:
                 res_list.append([dp_res, acc_res, utility_res, within_bounds, bias_res, msd])
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
-        
+
         for res in res_list:
             print(res)
 
@@ -416,7 +416,7 @@ class DPVerification:
                 [d1, d2, d1_metadata, d2_metadata] = ex.neighbor_pair[filename]
                 fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
                 fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
-                
+
                 acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
                 bias_res, msd = self.bias_test(fD1_actual, fD1)
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
@@ -427,7 +427,7 @@ class DPVerification:
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
                 key = "[" + ','.join(str(e) for e in list(sample)) + "] - " + filename
                 res_list[key] = [dp_res, acc_res, utility_res, within_bounds, bias_res, msd]
-        
+
         print("Halton sequence based Powerset Test Result")
         for data, res in res_list.items():
             print(data, "-", res)
@@ -452,7 +452,7 @@ class DPVerification:
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
         dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
-        
+
         # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
         dp_res, acc_res, utility_res, bias_res = self.dp_powerset_test(query_str, plot=False, repeat_count=1000)

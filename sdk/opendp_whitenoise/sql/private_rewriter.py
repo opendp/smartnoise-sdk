@@ -2,17 +2,17 @@ import random
 import string
 
 from .parse import QueryParser
-from burdock.ast import Validate
+from opendp_whitenoise.ast import Validate
 
-from burdock.ast.validate import Validate
-from burdock.ast.ast import Select, From, Query, AliasedRelation, Where, Aggregate, Order
-from burdock.ast.ast import Literal, Column, TableColumn, AllColumns
-from burdock.ast.ast import NamedExpression, NestedExpression, Expression, Seq
-from burdock.ast.ast import AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression
+from opendp_whitenoise.ast.validate import Validate
+from opendp_whitenoise.ast.ast import Select, From, Query, AliasedRelation, Where, Aggregate, Order
+from opendp_whitenoise.ast.ast import Literal, Column, TableColumn, AllColumns
+from opendp_whitenoise.ast.ast import NamedExpression, NestedExpression, Expression, Seq
+from opendp_whitenoise.ast.ast import AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression
 
 """
     Modifies parsed ASTs to augment with information needed
-    to support differential privacy.  Uses a matching 
+    to support differential privacy.  Uses a matching
     object which contains metadata necessary for differential
     privacy, such as min/max, cardinality, and key columns.
 
@@ -151,8 +151,8 @@ class Rewriter:
 
         for ne in query.select.namedExpressions:
             child_scope.push_name(ne.expression)
-        
-        keycount = NamedExpression("keycount", keycount_expr) 
+
+        keycount = NamedExpression("keycount", keycount_expr)
 
         select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
@@ -271,7 +271,7 @@ class Scope:
                 self.expressions[proposed] = expression
                 return proposed
 
-        # see if the expression has been used 
+        # see if the expression has been used
         names = [name for name in self.expressions.keys() if self.expressions[name] == expression]
         if len(names) > 0:
             return names[0]

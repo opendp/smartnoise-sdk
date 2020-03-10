@@ -1,7 +1,7 @@
 from os.path import dirname, join
 
-from burdock.metadata import CollectionMetadata
-from burdock.sql.parse import QueryParser
+from opendp_whitenoise.metadata import CollectionMetadata
+from opendp_whitenoise.sql.parse import QueryParser
 
 dir_name = dirname(__file__)
 
@@ -78,4 +78,3 @@ class TestTypes:
         q.load_symbols(metadata)
         assert q["Temperature"].type() == "float"
         assert q["Temperature"].sensitivity() == 1.0 / 7.0
-        

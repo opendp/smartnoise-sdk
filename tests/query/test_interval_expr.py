@@ -4,11 +4,11 @@ import subprocess
 import pandas as pd
 from pandasql import sqldf
 
-from burdock.metadata import CollectionMetadata
-from burdock.sql import PrivateReader
-from burdock.reader.sql import PandasReader
-from burdock.sql.parse import QueryParser
-from burdock.reader.rowset import TypedRowset
+from opendp_whitenoise.metadata import CollectionMetadata
+from opendp_whitenoise.sql import PrivateReader
+from opendp_whitenoise.reader.sql import PandasReader
+from opendp_whitenoise.sql.parse import QueryParser
+from opendp_whitenoise.reader.rowset import TypedRowset
 
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()

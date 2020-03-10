@@ -1,6 +1,6 @@
 import importlib
 import yaml
-from burdock.reader.sql.sql_base import NameCompare
+from opendp_whitenoise.reader.sql.sql_base import NameCompare
 
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
 
@@ -112,7 +112,7 @@ class Int:
         self.unbounded = minval is None or maxval is None
         self.bounded = bounded
     def __str__(self):
-        bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval) 
+        bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval)
         return ("*" if self.is_key else "") + str(self.name) + " [int] (" + bounds + ")"
     def typename(self):
         return "int"
@@ -126,7 +126,7 @@ class Float:
         self.unbounded = minval is None or maxval is None
         self.bounded = bounded
     def __str__(self):
-        bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval) 
+        bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval)
         return ("*" if self.is_key else "") + str(self.name) + " [float] (" + bounds + ")"
     def typename(self):
         return "float"
@@ -233,11 +233,11 @@ class CollectionYamlLoader:
             schema[table_name] = {}
             table = schema[table_name]
             table["rows"] = t.rowcount
-            if t.row_privacy is not None: 
+            if t.row_privacy is not None:
                 table["row_privacy"] = t.row_privacy
-            if t.max_ids is not None: 
+            if t.max_ids is not None:
                 table["max_ids"] = t.max_ids
-            if t.sample_max_ids is not None: 
+            if t.sample_max_ids is not None:
                 table["sample_max_ids"] = t.sample_max_ids
             if t.rows_exact is not None:
                 table["rows_exact"] = t.rows_exact
@@ -277,4 +277,3 @@ class CollectionYamlLoader:
         db["engine"] = collection_metadata.engine
         with open(self.filename, 'w') as outfile:
             yaml.dump(db, outfile)
-

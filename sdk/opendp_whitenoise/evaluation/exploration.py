@@ -1,5 +1,5 @@
-# This file contains methods to set and scan a search space of datasets that we shall be using for DP evaluation. 
-# We need to search databases, neighboring pairs and queries for running the DP predicate test. 
+# This file contains methods to set and scan a search space of datasets that we shall be using for DP evaluation.
+# We need to search databases, neighboring pairs and queries for running the DP predicate test.
 # We shall start a small 3-row databases to create our 12 neighboring pairs per database
 # Then we shall use halton sequence to generate a set of such 3 row databases randomly in a 3-D log-space
 import numpy as np
@@ -7,7 +7,7 @@ import pandas as pd
 import os
 import copy
 from statsmodels.tools import sequences
-from burdock.metadata.collection import *
+from opendp_whitenoise.metadata.collection import *
 
 
 class Exploration:

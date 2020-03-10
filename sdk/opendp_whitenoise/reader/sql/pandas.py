@@ -43,7 +43,7 @@ class PandasReader(SqlReader):
             key = "primary_key"
             self.df[key] = range(len(self.df))
 
-            from burdock.metadata.collection import Int
+            from opendp_whitenoise.metadata.collection import Int
             metadata.m_tables[table_name].m_columns[key] = Int(key,
             minval=0,
             maxval=len(self.df),

@@ -1,7 +1,7 @@
 import pandas as pd
 
-from burdock.metadata.collection import CollectionMetadata
-from burdock.reader.sql import PandasReader
+from opendp_whitenoise.metadata.collection import CollectionMetadata
+from opendp_whitenoise.reader.sql import PandasReader
 
 from .dataset_adapter import DatasetAdapter
 

@@ -1,9 +1,9 @@
 from os import listdir
 from os.path import isfile, join, dirname
 
-from burdock.metadata import CollectionMetadata
-from burdock.sql import Rewriter
-from burdock.sql.parse import QueryParser
+from opendp_whitenoise.metadata import CollectionMetadata
+from opendp_whitenoise.sql import Rewriter
+from opendp_whitenoise.sql.parse import QueryParser
 
 
 dir_name = dirname(__file__)

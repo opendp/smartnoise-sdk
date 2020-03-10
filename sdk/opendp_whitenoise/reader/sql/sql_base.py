@@ -1,5 +1,5 @@
-from burdock.reader.base import Reader
-from burdock.reader.rowset import TypedRowset
+from opendp_whitenoise.reader.base import Reader
+from opendp_whitenoise.reader.rowset import TypedRowset
 
 
 class SqlReader(Reader):

@@ -1,4 +1,4 @@
-from burdock.metadata.collection import *
+from opendp_whitenoise.metadata.collection import *
 import copy
 
 class TestDSMetadataLiteral:

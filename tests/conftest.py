@@ -13,8 +13,8 @@ import pytest
 
 from requests import Session
 
-from burdock.client.restclient.rest_client import RestClient
-from burdock.client.restclient.models.secret import Secret
+from opendp_whitenoise.client.restclient.rest_client import RestClient
+from opendp_whitenoise.client.restclient.models.secret import Secret
 DATAVERSE_TOKEN_ENV_VAR = "BURDOCK_DATAVERSE_TEST_TOKEN"
 
 # Add the utils directory to the path
@@ -41,4 +41,3 @@ def client():
 
 def test_client(client):
     pass
-

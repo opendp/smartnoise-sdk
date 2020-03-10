@@ -3,12 +3,12 @@ import numpy as np
 from .private_rewriter import Rewriter
 from .parse import QueryParser
 
-from burdock.ast.expressions import sql as ast
+from opendp_whitenoise.ast.expressions import sql as ast
 
-from burdock.mechanisms.laplace import Laplace
-from burdock.mechanisms.gaussian import Gaussian
-from burdock.report import Interval, Intervals, Result
-from burdock.reader.rowset import TypedRowset
+from opendp_whitenoise.mechanisms.laplace import Laplace
+from opendp_whitenoise.mechanisms.gaussian import Gaussian
+from opendp_whitenoise.report import Interval, Intervals, Result
+from opendp_whitenoise.reader.rowset import TypedRowset
 
 """
     Takes a rewritten query, executes against the target backend, then
@@ -50,7 +50,7 @@ class PrivateReader:
     def rewrite_ast(self, query):
         query_max_contrib = query.max_ids
         if self.options.max_contrib is None or self.options.max_contrib > query_max_contrib:
-            self.options.max_contrib = query_max_contrib        
+            self.options.max_contrib = query_max_contrib
 
         self.refresh_options()
         query = self.rewriter.query(query)
@@ -208,7 +208,7 @@ class PrivateReader:
             bindings = dict((name.lower(), val ) for name, val in zip(source_col_names, row))
             row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
             return [convert(val, type) for val, type in zip(row, out_types)]
-    
+
         if hasattr(out, 'map'):
             # it's an RDD
             out = out.map(process_out_row)
@@ -275,9 +275,9 @@ class PrivateReader:
 
 class PrivateReaderOptions:
     """Options that control privacy behavior"""
-    def __init__(self, 
-        censor_dims=True, 
-        clamp_counts=True, 
+    def __init__(self,
+        censor_dims=True,
+        clamp_counts=True,
         reservoir_sample=True,
         clamp_columns=True,
         row_privacy=False,

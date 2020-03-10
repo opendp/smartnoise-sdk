@@ -1,8 +1,8 @@
 import pytest
 
-from burdock.reader.base import Reader
-from burdock.reader.sql.engine import Engine
-from burdock.reader.sql import PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
+from opendp_whitenoise.reader.base import Reader
+from opendp_whitenoise.reader.sql.engine import Engine
+from opendp_whitenoise.reader.sql import PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
 
 READERS = PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
 

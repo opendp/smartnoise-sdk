@@ -1,10 +1,10 @@
 import os
 
-from burdock.ast.ast import Relation
-from burdock.ast.tokens import Literal
-from burdock.ast.expression import Expression
-from burdock.ast.expressions.numeric import BareFunction
-from burdock.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
+from opendp_whitenoise.ast.ast import Relation
+from opendp_whitenoise.ast.tokens import Literal
+from opendp_whitenoise.ast.expression import Expression
+from opendp_whitenoise.ast.expressions.numeric import BareFunction
+from opendp_whitenoise.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 

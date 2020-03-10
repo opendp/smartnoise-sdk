@@ -1,7 +1,7 @@
 import pytest
-from burdock.ast import Validate
-from burdock.sql.parse import QueryParser
-from burdock.metadata import CollectionMetadata
+from opendp_whitenoise.ast import Validate
+from opendp_whitenoise.sql.parse import QueryParser
+from opendp_whitenoise.metadata import CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname

@@ -1,11 +1,11 @@
 import os
 import pytest
 
-from burdock.data import dataverse_loader
+from opendp_whitenoise.data import dataverse_loader
 
 
 #  example dataset
-#  https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/E9QKIZ/TRLS9U 
+#  https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/E9QKIZ/TRLS9U
 
 @pytest.mark.parametrize("dataverse_details", [
         {"host": "https://dataverse.harvard.edu", "token": os.environ.get("BURDOCK_DATAVERSE_TEST_TOKEN"), "doi": "doi:10.7910/DVN/E9QKIZ/TRLS9U"},

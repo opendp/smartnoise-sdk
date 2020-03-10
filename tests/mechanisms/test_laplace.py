@@ -2,14 +2,14 @@ import pytest
 import math
 import numpy as np
 from scipy.stats import norm
-from burdock.mechanisms.laplace import Laplace
+from opendp_whitenoise.mechanisms.laplace import Laplace
 
 #
 #   Unit tests
 #
 class TestLaplace:
     def test_simple_lap(self):
-        g = Laplace(0.1) # epsilon of 0.1        
+        g = Laplace(0.1) # epsilon of 0.1
         x = range(10000)
         y = g.release(x).values
         assert(round(np.sum(x) / 10E+6) == round(np.sum(y) / 10E+6))

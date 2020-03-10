@@ -31,14 +31,14 @@ HISTORY = ""
 inline_license = ""
 
 setup(
-    name="burdock",
+    name="opendp_whitenoise",
 
     version=SELFVERSION,
 
     description="",
     long_description=README + "\n\n" + HISTORY,
     long_description_content_type="text/x-rst",
-    author="burdock",
+    author="opendp_whitenoise",
     license=inline_license,
     packages=find_packages(exclude=["*.tests"]),
 

@@ -3,7 +3,7 @@ import datetime
 import operator
 from numpy import inf
 
-from burdock.report import Report
+from opendp_whitenoise.report import Report
 
 """
     Represents a typed rowset supporting the types used in differentially private
@@ -15,7 +15,7 @@ class TypedRowset:
 
         :param rows: A list of tuples representing rows, with the first tuple being the
             column names, and the rest being the rows of the rowset.
-        :param types: A list of types for the columns 
+        :param types: A list of types for the columns
     """
     def __init__(self, rows, types):
         header = [c.lower() for c in rows[0]]

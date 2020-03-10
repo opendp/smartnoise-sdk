@@ -4,8 +4,8 @@ import re
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 
-from burdock.ast.tokens import Literal
-from burdock.ast.expressions.numeric import BareFunction
+from opendp_whitenoise.ast.tokens import Literal
+from opendp_whitenoise.ast.expressions.numeric import BareFunction
 
 
 class SparkReader(SqlReader):

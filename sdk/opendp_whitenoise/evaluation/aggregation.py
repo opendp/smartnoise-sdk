@@ -10,11 +10,11 @@ import sys
 import os
 # import yarrow
 
-from burdock.reader.sql import PandasReader
-from burdock.sql.private_reader import PrivateReader
-from burdock.reader.rowset import TypedRowset
-from burdock.mechanisms.laplace import Laplace
-from burdock.mechanisms.gaussian import Gaussian
+from opendp_whitenoise.reader.sql import PandasReader
+from opendp_whitenoise.sql.private_reader import PrivateReader
+from opendp_whitenoise.reader.rowset import TypedRowset
+from opendp_whitenoise.mechanisms.laplace import Laplace
+from opendp_whitenoise.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 class Aggregation:
@@ -89,7 +89,7 @@ class Aggregation:
     #         analysis.release()
     #         noisy_values.append(analysis.release_proto.values[6].values['data'].f64.data[0])
     #     return np.array(noisy_values)
-    
+
     # # Apply noise to functions like covariance using Yarrow library that work on multiple columns
     # def yarrow_dp_multi_agg(self, f, dataset_path, args, kwargs):
     #     with yarrow.Analysis() as analysis:
@@ -111,9 +111,9 @@ class Aggregation:
             actual = reader.execute_typed(query).rows()[1:][0][0]
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
-        
+
         srs_orig = private_reader.reader.execute_ast_typed(query_ast)
-        
+
         noisy_values = []
         low_bounds = []
         high_bounds = []
@@ -125,7 +125,7 @@ class Aggregation:
             high_bounds.append(interval[0].high)
             noisy_values.append(res.rows()[1:][0][0])
         return np.array(noisy_values), actual, low_bounds, high_bounds
-        
+
     # Run the query using the private reader and input query
     # Get query response back for multiple dimensions and aggregations
     def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
@@ -154,7 +154,7 @@ class Aggregation:
                 dim_cols.append(col)
             else:
                 num_cols.append(col)
-                
+
         # Repeated query and store results along with intervals
         res = []
         for idx in range(self.repeat_count):
@@ -174,7 +174,7 @@ class Aggregation:
 
         exact_df = pd.DataFrame(exact_res, columns=headers)
         noisy_df = pd.DataFrame(res, columns=headers)
-        
+
         # Add a dummy dimension column for cases where no dimensions available for merging D1 and D2
         if(len(dim_cols) == 0):
             dim_cols.append("__dim__")

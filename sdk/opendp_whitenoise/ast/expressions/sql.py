@@ -1,4 +1,4 @@
-from burdock.ast.tokens import *
+from opendp_whitenoise.ast.tokens import *
 
 """
     SQL-specific expressions
@@ -23,7 +23,7 @@ class AllColumns(SqlExpr):
     @property
     def is_count(self):
         return True
-    
+
 class AggFunction(SqlExpr):
     """A function such as SUM, COUNT, AVG"""
     def __init__(self, name, quantifier, expression):

@@ -1,4 +1,4 @@
-from burdock.ast.tokens import *
+from opendp_whitenoise.ast.tokens import *
 
 import numpy as np
 

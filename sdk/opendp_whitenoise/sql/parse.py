@@ -5,8 +5,8 @@ from .parser.SqlSmallParser import SqlSmallParser #type: ignore
 from .parser.SqlSmallVisitor import SqlSmallVisitor #type: ignore
 from .parser.SqlSmallErrorListener import SyntaxErrorListener #type: ignore
 
-from burdock.ast.tokens import *
-from burdock.ast.ast import *
+from opendp_whitenoise.ast.tokens import *
+from opendp_whitenoise.ast.ast import *
 
 
 class QueryParser:
