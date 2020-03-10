@@ -25,13 +25,9 @@ class SparkReader(SqlReader):
         return df
 
     def execute_typed(self, query):
-        if not isinstance(query, str):
-            raise ValueError("Please pass strings to execute_typed.")
+        return self.execute(query)
 
-        df = self.api.sql(query)
-        return df
-
-    def db_name(self):
+      def db_name(self):
         return self.database
 
 class SparkSerializer:

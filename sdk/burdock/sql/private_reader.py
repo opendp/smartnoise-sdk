@@ -197,7 +197,10 @@ class PrivateReader:
             elif type == 'float':
                 return float(str(val).replace('"', '').replace("'", ''))
             elif type == 'boolean':
-                return bool(str(val).replace('"', '').replace("'", ''))
+                if isinstance(val, int):
+                    return val != 0
+                else:
+                    return bool(str(val).replace('"', '').replace("'", ''))
             else:
                 raise ValueError("Can't convert type " + type)
 
@@ -225,13 +228,13 @@ class PrivateReader:
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
                     desc = True
-                if desc and not (out_types[colidx] == "int" or out_types[colidx] == "float"):
+                if desc and not (out_types[colidx] in ["int", "float", "boolean"]):
                     raise ValueError("We don't know how to sort descending by " + out_types[colidx])
                 sf = (desc, colidx)
                 sort_fields.append(sf)
 
             def sort_func(row):
-                return tuple([row[idx] if not desc else -row[idx] for desc, idx in sort_fields])
+                return tuple([row[idx] if not desc else not row[idx] if out_types[idx] == "boolean" else -row[idx] for desc, idx in sort_fields])
 
             if hasattr(out, 'sortBy'):
                 out = out.sortBy(sort_func)
