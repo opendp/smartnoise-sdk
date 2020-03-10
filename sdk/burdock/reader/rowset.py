@@ -2,7 +2,8 @@ import numpy as np
 import datetime
 import operator
 from numpy import inf
-from burdock.metadata.report import Report
+
+from burdock.report import Report
 
 """
     Represents a typed rowset supporting the types used in differentially private
