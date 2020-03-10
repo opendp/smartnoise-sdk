@@ -6,7 +6,9 @@ The WhiteNoise tools allow researchers and analysts to:
 * Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy buget
 * Perform black-box stochastic testing against differential privacy modules
 
-The WhiteNoise system is currently aimed at scenarios where the researcher is trusted by the data owner.  Furture releases will focus on hardened scenarios where the researcher or analyst is untrusted.
+The WhiteNoise system is currently aimed at scenarios where the researcher is trusted by the data owner.  Future releases will focus on hardened scenarios where the researcher or analyst is untrusted.  
+
+New mechanisms and algorithms will be avaialable in coming weeks.
 
 
 ## Data Access
