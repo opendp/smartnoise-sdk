@@ -26,8 +26,8 @@ class SparkReader(SqlReader):
 
     def execute_typed(self, query):
         return self.execute(query)
-        
-    def db_name(self):
+
+      def db_name(self):
         return self.database
 
 class SparkSerializer:
