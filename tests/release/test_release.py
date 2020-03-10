@@ -1,5 +1,5 @@
 import pytest
-from burdock.metadata.report import Result, Report, Interval, Intervals
+from burdock.report import Result, Report, Interval, Intervals
 
 class TestRelease:
     def test_release(self):

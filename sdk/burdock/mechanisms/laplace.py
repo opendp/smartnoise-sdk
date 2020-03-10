@@ -1,7 +1,7 @@
 from .rand import laplace as rand_laplace
 from .base import AdditiveNoiseMechanism
 from scipy.stats import laplace
-from burdock.metadata.report import Result, Interval, Intervals
+from burdock.report import Result, Interval, Intervals
 
 
 class Laplace(AdditiveNoiseMechanism):
