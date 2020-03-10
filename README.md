@@ -1,7 +1,25 @@
-# WhiteNoise: A library and service for creating Differentially Private Releases from data <may be worth breaking the below paragraph into bullet points>
-Core to the burdock library is our DP SQL functionality, where SQL queries<make link> are executed with pre and post processing that makes the released Rowset Differentially Private.Burdock also provides a client service architecture for running prepackaged Modules<link to modules> on a Dataset to make a Differentially Private Release. The architecture allows for service interactions with the SQL functionality, but also extends support for external libraries including yarrow<link> a DP execution engine that supports validation of DP gaurantees and diffprivlib<link>  which is referenced <here> for a DP LogisticRegression Module that releases a DP Model.
-  
-While architecting burdock we realized the need for a tracking store, to store the Release, Parameters, and Metrics from the DP  Modules. Given the success of Mlflow, we have integrated with it's tracking store and provide a reference implementation of the Execution Service component that utilizes mlflow's project run paradigm.
+# WhiteNoise: Tools for Differential Privacy
+
+The WhiteNoise tools allow researchers and analysts to: 
+
+* Use SQL dialect to ceate differentially private results over tabular data stores
+* Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy buget
+* Perform black-box stochastic testing against differential privacy modules
+
+The WhiteNoise system is currently aimed at scenarios where the researcher is trusted by the data owner.  Furture releases will focus on hardened scenarios where the researcher or analyst is untrusted.
+
+
+## Data Access
+
+The data access library intercepts SQL queries and processes the queries to return differentially private results.  It is implemented in Python and designed to operate like any ODBC or DBAPI source.  We provide support for PostgreSQL, SQL Server, Spark, Presto, and Pandas. Detailed documentation, as well as information about plugging in to other database backends, can be found here.
+
+## Service
+
+The reference execution service provides a REST endpoint that can serve requests against shared data sources.  It is designed to allow pluggable composition of many heterogeneous differential privacy modules.  Heterogeneous requests against the same data source will compose privacy budget.  We include SQL dialect, differentially-private graph (core), and a Logistic Regression module from IBM's diffprivlib.  More information, including information about creating and integrating your own privacy modules, can be found here.
+
+## Evaluator
+
+The stochastic evaluator drives black-box privacy algorithms, checking for privacy violations, accuracy, and bias.  It was inspired by Google's stochastic evaluator, and is implemented in Python.  Future releases will support more intelligent search of query input and data input space.
 
 ## Installation:
 The burdock library can be installed from PyPi:
