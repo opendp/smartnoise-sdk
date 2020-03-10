@@ -1,5 +1,5 @@
 import pytest
-from burdock.metadata.report import Interval, Intervals
+from burdock.report import Interval, Intervals
 
 
 class TestIntervals:

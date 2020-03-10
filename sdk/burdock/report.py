@@ -34,7 +34,7 @@ class IntervalRange:
         return (self.low >= other.low and self.low <= other.high) or (self.high >= other.low and self.high <= other.high)
     def __iter__(self):
         return iter([self.low, self.high])
-    
+
 
 """A vector of CIs for a single column and confidence."""
 class Interval:

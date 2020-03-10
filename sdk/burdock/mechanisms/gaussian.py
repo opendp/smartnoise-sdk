@@ -3,7 +3,7 @@ import math
 from .rand import normal as rand_normal
 from .base import AdditiveNoiseMechanism
 from scipy.stats import norm
-from burdock.metadata.report import Result, Interval, Intervals
+from burdock.report import Result, Interval, Intervals
 
 
 class Gaussian(AdditiveNoiseMechanism):
