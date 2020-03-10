@@ -23,7 +23,14 @@ class SparkReader(SqlReader):
 
         df = self.api.sql(query)
         return df
-        
+
+    def execute_typed(self, query):
+        if not isinstance(query, str):
+            raise ValueError("Please pass strings to execute_typed.")
+
+        df = self.api.sql(query)
+        return df
+
     def db_name(self):
         return self.database
 
