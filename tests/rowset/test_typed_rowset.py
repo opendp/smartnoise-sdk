@@ -17,18 +17,17 @@ rows_1k = [('id', 'temp', 'code', 'bucket')] + [r for r in zip(col1, col2, col3,
 rows_10 = rows_1k[0:11]
 rows_1 = rows_1k[0:2]
 types = ['int', 'float', 'string', 'int']
-sens = [None, None, None, None]
 
 class TestTypedRowset:
     def test_make_1k(self):
-        trs = TypedRowset(rows_1k, types, sens)
+        trs = TypedRowset(rows_1k, types)
         assert(len(trs) == 1000)
     def test_make_10(self):
-        trs = TypedRowset(rows_10, types, sens)
+        trs = TypedRowset(rows_10, types)
         assert(len(trs) == 10)
     def test_make_1(self):
-        trs = TypedRowset(rows_1, types, sens)
+        trs = TypedRowset(rows_1, types)
         assert(len(trs) == 1)
     def test_make_empty(self):
-        trs = TypedRowset(rows_1[0:1], types, sens)
+        trs = TypedRowset(rows_1[0:1], types)
         assert(len(trs) == 0)

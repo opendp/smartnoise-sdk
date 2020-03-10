@@ -17,7 +17,6 @@ class SqlReader(Reader):
         rows = self.execute(query)
         if len(rows) < 1:
             return None
-        sens = [None for i in range(len(rows[0]))]
         types = ["unknown" for i in range(len(rows[0]))]
         if len(rows) > 1:
             row = rows[1]
@@ -32,7 +31,7 @@ class SqlReader(Reader):
                 else:
                     types[idx] = "string"
 
-        return TypedRowset(rows, types, sens)
+        return TypedRowset(rows, types)
 
     def execute_ast(self, query):
         if isinstance(query, str):
@@ -46,10 +45,9 @@ class SqlReader(Reader):
     def execute_ast_typed(self, query):
         syms = query.all_symbols()
         types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
 
         rows = self.execute_ast(query)
-        return TypedRowset(rows, types, sens)
+        return TypedRowset(rows, types)
 
 """
     Implements engine-specific identifier matching rules

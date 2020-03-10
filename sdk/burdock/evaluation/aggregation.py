@@ -111,14 +111,15 @@ class Aggregation:
             actual = reader.execute_typed(query).rows()[1:][0][0]
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
-        subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
+        
+        srs_orig = private_reader.reader.execute_ast_typed(query_ast)
         
         noisy_values = []
         low_bounds = []
         high_bounds = []
         for idx in range(self.repeat_count):
-            srs = TypedRowset(srs_orig.rows(), types, sens)
-            res = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+            srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
+            res = private_reader._execute_ast(query_ast, True)
             interval = res.report[res.colnames[0]].intervals[confidence]
             low_bounds.append(interval[0].low)
             high_bounds.append(interval[0].high)
@@ -139,10 +140,10 @@ class Aggregation:
         query_ast = private_reader.parse_query_string(query)
 
         # Distinguishing dimension and measure columns
-        subquery, query, syms, types, sens, srs_orig = private_reader._preprocess(query_ast)
-        
-        srs = TypedRowset(srs_orig.rows(), types, sens)
-        sample_res = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+        srs_orig = private_reader.reader.execute_ast_typed(query_ast)
+        srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
+
+        sample_res = private_reader._execute_ast(query_ast, True)
         headers = sample_res.colnames
 
         dim_cols = []
@@ -159,8 +160,8 @@ class Aggregation:
         for idx in range(self.repeat_count):
             dim_rows = []
             num_rows = []
-            srs = TypedRowset(srs_orig.rows(), types, sens)
-            singleres = private_reader._postprocess(subquery, query, syms, types, sens, srs)
+            srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
+            singleres = private_reader._execute_ast(query_ast, True)
             for col in dim_cols:
                 dim_rows.append(singleres.report[col].values)
             for col in num_cols:

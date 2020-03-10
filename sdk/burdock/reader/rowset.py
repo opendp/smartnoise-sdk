@@ -15,9 +15,8 @@ class TypedRowset:
         :param rows: A list of tuples representing rows, with the first tuple being the
             column names, and the rest being the rows of the rowset.
         :param types: A list of types for the columns 
-        :param sens: A list of sensitivities
     """
-    def __init__(self, rows, types, sens):
+    def __init__(self, rows, types):
         header = [c.lower() for c in rows[0]]
         body = rows[1:]
         self.n_rows = len(body)
@@ -27,7 +26,6 @@ class TypedRowset:
         cur_col = 1
 
         self.types = {}
-        self.sens = {}
         self.colnames = []
         self.report = Report()
 
@@ -37,7 +35,6 @@ class TypedRowset:
                 cname = prefix + str(cur_col)
                 cur_col += 1
             self.types[cname] = types[idx]
-            self.sens[cname] = sens[idx]
             self.colnames.append(cname)
         # for quick lookup
         self.colidx = dict(list(zip(self.colnames, range(len(self.colnames)))))
@@ -117,32 +114,13 @@ class TypedRowset:
         '=': operator.eq}
         col = self[colname]
         types = [self.types[name] for name in self.colnames]
-        sens = [self.sens[name] for name in self.colnames]
         rows = [tuple(self.colnames)]
         for idx in range(self.n_rows):
             if ops[relation](col[idx], value):
                 rows.append(tuple(self[name][idx] for name in self.colnames))
-        filtered_rs = TypedRowset(rows, types, sens)
+        filtered_rs = TypedRowset(rows, types)
         filtered_rs.report = self.report
         return filtered_rs
-
-    def sort(self, sortcols):
-        body = self.rows(False)
-        for sf in reversed(sortcols):
-            desc = sf.startswith("-")
-            if desc:
-                sf = sf[1:]
-            colnum = self.colidx[sf]
-            body = sorted(body, key=operator.itemgetter(colnum), reverse=desc)
-        tmpcol = {}
-        for name in self.colnames:
-            tmpcol[name] = []
-
-        for r in body:
-            for cidx in range(len(self.colnames)):
-                tmpcol[self.idxcol[cidx]].append(r[cidx])
-        for name in self.colnames:
-            self[name] = tmpcol[name]
 
     def rows(self, header = True):
         return ([self.colnames] if header else []) + [tuple(self.m_cols[name][idx] for name in self.colnames) for idx in range(self.n_rows)]

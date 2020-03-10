@@ -385,3 +385,6 @@ class TableColumn(SqlExpr):
     @property
     def is_key_count(self):
         return self.is_key
+    @property
+    def is_count(self):
+        return False

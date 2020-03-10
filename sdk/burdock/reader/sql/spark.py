@@ -11,32 +11,21 @@ from burdock.ast.expressions.numeric import BareFunction
 class SparkReader(SqlReader):
     ENGINE = Engine.SPARK
 
-    def __init__(self, host, session, user, password=None, port=None):
+    def __init__(self, session):
         super().__init__(SparkNameCompare(), SparkSerializer())
         from pyspark.sql import SparkSession
         self.api = session
         self.database = "Spark Session"
-        self.update_connection_string()
 
     def execute(self, query):
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
 
         df = self.api.sql(query)
-
-        if df.columns is None:
-            return []
-        else:
-            col_names = [tuple(c.lower() for c in df.columns)]
-            import pyspark
-            body = [c for c in df.collect() if type(c) is pyspark.sql.types.Row and c is not None]
-            return col_names + body
+        return df
+        
     def db_name(self):
         return self.database
-
-    def update_connection_string(self):
-        self.connection_string = None
-        pass
 
 class SparkSerializer:
     def serialize(self, query):

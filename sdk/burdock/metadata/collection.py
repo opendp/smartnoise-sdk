@@ -190,7 +190,7 @@ class CollectionYamlLoader:
         sample_max_ids = bool(t["sample_max_ids"]) if "sample_max_ids" in t else None
 
         columns = []
-        colnames = [cn for cn in t.keys() if cn != "rows"]
+        colnames = [cn for cn in t.keys() if cn not in ["rows", "rows_exact", "row_privacy", "max_ids", "sample_max_ids"]]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 

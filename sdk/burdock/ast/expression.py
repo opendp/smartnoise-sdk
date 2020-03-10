@@ -34,6 +34,9 @@ class NestedExpression(SqlExpr):
     @property
     def is_key_count(self):
         return self.expression.is_key_count
+    @property
+    def is_count(self):
+        return self.expression.is_count
 
 class NamedExpression(SqlExpr):
     """An expression with optional name"""
@@ -61,4 +64,7 @@ class NamedExpression(SqlExpr):
     @property
     def is_key_count(self):
         return self.expression.is_key_count
+    @property
+    def is_count(self):
+        return self.expression.is_count
     

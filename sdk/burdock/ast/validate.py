@@ -44,17 +44,12 @@ class QueryConstraints:
         exp = [c.expression for c in nes]
         agg = [e for e in exp if type(e) == AggFunction and e.is_aggregate()]
 
-#        no_agg = [e for e in exp if e not in agg and e not in gc]
-#        if (len(no_agg)) > 0:
-#            raise ValueError("Query cannot return non-aggregate columns: " + ", ".join([str(n) for n in no_agg]))
-#        if (len(agg)) == 0:
-#            raise ValueError("Query must return at least one aggregate value")
-
 
     def check_groupkey(self):
         agg = self.query.agg
         gc = agg.groupedColumns() if agg is not None else []
-        gbk = [g for g in gc if g.name.lower() == self.keycol.lower()]
+        keycol = self.keycol.lower() if self.keycol is not None else None
+        gbk = [g for g in gc if g.name.lower() == keycol]
         if (len(gbk) > 0) and (len(gbk) == len(gc)):
             raise ValueError("GROUP BY must include more than key columns: " + ", ".join([str(g) for g in gc]))
 
@@ -64,7 +59,8 @@ class QueryConstraints:
             raise ValueError("Query must reference only one relation")
 
         relation = relations[0]
-        self.walk_relations(relation)
+        if not self.query.row_privacy:
+            self.walk_relations(relation)
 
     def walk_relations(self, r):
         if type(r) is Query or type(r) is Table or type(r) is AliasedRelation or type(r) is AliasedSubquery:
@@ -92,8 +88,12 @@ class QueryConstraints:
         keys = [str(tc) for tc in tcsyms if tc.is_key]
         if len(keys) > 1:
             raise ValueError("We only know how to handle tables with one key: " + str(keys))
-        elif len(keys) < 1:
-            raise ValueError("No key column available in query relations")
-
-        kp = keys[0].split(".")
-        return kp[len(kp) - 1]
+        
+        if query.row_privacy:
+            if len(keys) > 0:
+                raise ValueError("Row privacy is set, but metadata specifies a private_id")
+            else:
+                return None
+        else:
+            kp = keys[0].split(".")
+            return kp[len(kp) - 1]

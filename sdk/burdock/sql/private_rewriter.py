@@ -72,7 +72,7 @@ class Rewriter:
     def push_sum_or_count(self, exp, scope):
         new_name = scope.push_name(AggFunction(exp.name, exp.quantifier, exp.expression))
 
-        new_exp = AggFunction("SUM", None, Column(new_name))
+        new_exp = Column(new_name)
         return new_exp
 
     """
@@ -139,19 +139,26 @@ class Rewriter:
 
     def exact_aggregates(self, query):
 
-        key_col = self.key_col(query)
 
         child_scope = Scope()
 
-        keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
-        child_scope.push_name(keycount_expr.expression)
-        keycount = NamedExpression("keycount", keycount_expr) # need to either treat this as reserved or pass through to outer
+        if self.options.row_privacy:
+            keycount_expr = AggFunction("COUNT", None,  AllColumns())
+        else:
+            key_col = self.key_col(query)
+            keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
+            child_scope.push_name(keycount_expr.expression)
 
-        select = Seq([keycount] + [self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
+        for ne in query.select.namedExpressions:
+            child_scope.push_name(ne.expression)
+        
+        keycount = NamedExpression("keycount", keycount_expr) 
+
+        select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
 
         subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
-        if self.options.reservoir_sample:
+        if self.options.reservoir_sample and not self.options.row_privacy:
             subquery = self.per_key_random(subquery)
             subquery = [AliasedRelation(subquery, "per_key_random")]
 
@@ -169,32 +176,18 @@ class Rewriter:
         select = Select(None, select)
 
         subquery = self.per_key_clamped(query)
-        subquery = [AliasedRelation(subquery, "per_key_clamped")]
+        subquery = [AliasedRelation(subquery, "clamped" if self.options.clamp_columns else "not_clamped")]
 
         return Query(select, From(subquery), None, None, None, None, None)
 
 
     def per_key_clamped(self, query):
-
-        key_col = self.key_col(query)
-
         child_scope = Scope()
-
-        keygroup = [GroupingExpression(Column(key_col))] + (query.agg.groupingExpressions.seq if query.agg is not None else [])
-        new_agg = Aggregate(Seq(keygroup))
-
         relations = query.source.relations
-
         select = Seq([self.clampExpression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
-
-        if self.options.clamp_columns:
-            subquery = [AliasedRelation(subquery, "clamped")]
-        else:
-            subquery = [AliasedRelation(subquery, "not_clamped")]
-
-        return Query(select, From(subquery), None, new_agg, None, None, None)
+        return subquery
 
 
     """
@@ -236,11 +229,17 @@ class Rewriter:
         keys = [str(tc) for tc in tcsyms if tc.is_key]
         if len(keys) > 1:
             raise ValueError("We only know how to handle tables with one key: " + str(keys))
-        elif len(keys) < 1:
-            raise ValueError("No key column available in query relations")
-
-        kp = keys[0].split(".")
-        return kp[len(kp) - 1]
+        if self.options.row_privacy:
+            if len(keys) > 0:
+                raise ValueError("Row privacy is set, but metadata specifies a private_id")
+            else:
+                return None
+        else:
+            if len(keys) < 1:
+                raise ValueError("No private_id column specified, and row_privacy is not set")
+            else:
+                kp = keys[0].split(".")
+                return kp[len(kp) - 1]
 
 
 

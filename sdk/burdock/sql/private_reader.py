@@ -22,15 +22,18 @@ class PrivateReader:
         self.rewriter = Rewriter(metadata)
         self.epsilon = epsilon
         self.delta = delta
-        self.max_contrib = 1
         self.interval_widths = interval_widths
+        self._cached_exact = None
+        self._cached_ast = None
         self.refresh_options()
 
     def refresh_options(self):
         self.rewriter = Rewriter(self.metadata)
         self.metadata.compare = self.reader.compare
+        self.rewriter.options.row_privacy = self.options.row_privacy
         self.rewriter.options.reservoir_sample = self.options.reservoir_sample
         self.rewriter.options.clamp_columns = self.options.clamp_columns
+        self.rewriter.options.max_contrib = self.options.max_contrib
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -45,6 +48,10 @@ class PrivateReader:
         return self.rewrite_ast(query)
 
     def rewrite_ast(self, query):
+        query_max_contrib = query.max_ids
+        if self.options.max_contrib is None or self.options.max_contrib > query_max_contrib:
+            self.options.max_contrib = query_max_contrib        
+
         self.refresh_options()
         query = self.rewriter.query(query)
         subquery = query.source.relations[0].primary.query
@@ -81,130 +88,165 @@ class PrivateReader:
         query = self.parse_query_string(query_string)
         return self.execute_ast_typed(query)
 
-    def _preprocess(self, query):
+    def _execute_ast(self, query, cache_exact=False):
         if isinstance(query, str):
-            raise ValueError("Please pass AST to _preprocess.")
+            raise ValueError("Please pass AST to _execute.")
 
         subquery, query = self.rewrite_ast(query)
-        self.max_contrib = query.max_ids
-        self.tau = self.max_contrib * (1- ( math.log(2 * self.delta / self.max_contrib) / self.epsilon  ))
+        max_contrib = self.options.max_contrib if self.options.max_contrib is not None else 1
+        self.tau = max_contrib * (1- ( math.log(2 * self.delta / max_contrib) / self.epsilon  ))
 
         syms = subquery.all_symbols()
-        types = [s[1].type() for s in syms]
+        source_col_names = [s[0] for s in syms]
+
+        # list of sensitivities in column order
         sens = [s[1].sensitivity() for s in syms]
 
-        # execute the subquery against the backend and load in typed rowset
-        db_rs = self.reader.execute_ast_typed(subquery)
-        return (subquery, query, syms, types, sens, db_rs)
+        # tell which are counts, in column order
+        is_count = [s[1].is_count for s in syms]
 
-    def _postprocess(self, subquery, query, syms, types, sens, db_rs):
-        # add noise to all columns that need noise
-        for nsym in subquery.numeric_symbols():
-            name, sym = nsym
-            name = name.lower()
-            sens = sym.sensitivity()
+        # set sensitivity to None if the column is a grouping key
+        if subquery.agg is not None:
+            group_keys = [ge.expression.name if hasattr(ge.expression, 'name') else None for ge in subquery.agg.groupingExpressions]
+        else:
+            group_keys = []
+        is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
+        for idx in range(len(sens)):
+            if is_group_key[idx]:
+                sens[idx] = None
 
-            #if sym.expression in group_expressions:
-            #    continue
+        kc_pos = None
+        kcc_pos = []
+        for idx in range(len(syms)):
+            sname, sym = syms[idx]
+            if sname == 'keycount':
+                kc_pos = idx
+            elif sym.is_key_count:
+                kcc_pos.append(idx)
+        if kc_pos is None and len(kcc_pos) > 0:
+            kc_pos = kcc_pos.pop()
 
-            # treat null as 0 before adding noise
-            db_rs[name] = np.array([v if v is not None else 0.0 for v in db_rs[name]])
+        # make a list of mechanisms in column order
+        mechs = [Gaussian(self.epsilon, self.delta, s, max_contrib, self.interval_widths) if s is not None else None for s in sens]
 
-            mechanism = Gaussian(self.epsilon, self.delta, sens, self.max_contrib, self.interval_widths)
-            report = mechanism.release(db_rs[name], compute_accuracy=True)
+        # execute the subquery against the backend and load in tuples
+        if cache_exact:
+            # we only execute the exact query once
+            if self._cached_exact is not None:
+                if subquery == self._cached_ast:
+                    db_rs = self._cached_exact
+                else:
+                    raise ValueError("Cannot run different query against cached result.  Make a new PrivateReader or else clear the cache with cache = False")
+            else:
+                db_rs = self.reader.execute_ast(subquery)
+                self._cached_exact = list(db_rs)
+                self._cached_ast = subquery
+        else:
+            self.cached_exact = None
+            self.cached_ast = None
+            db_rs = self.reader.execute_ast(subquery)
 
-            db_rs[name] = report.values
-            db_rs.report[name] = report
+        clamp_counts = self.options.clamp_counts
+        def process_row(row_in):
+            # pull out tuple values
+            row = [v for v in row_in]
+            # set null to 0 before adding noise
+            for idx in range(len(row)):
+                if sens[idx] is not None and row[idx] is None:
+                    row[idx] = 0.0
+            # call all mechanisms to add noise
+            out_row = [noise.release([v]).values[0] if noise is not None else v for noise, v in zip(mechs, row)]
+            # ensure all key counts are the same
+            for idx in kcc_pos:
+                out_row[idx] = out_row[kc_pos]
+            # clamp counts to be non-negative
+            if clamp_counts:
+                for idx in range(len(row)):
+                    if is_count[idx] and out_row[idx] < 0:
+                        out_row[idx] = 0
+            return out_row
 
-            if (self.options.clamp_counts is True) and sym.is_key_count:
-                counts = db_rs[name]
-                counts[counts < 0] = 0
-                db_rs[name] = counts
+        if hasattr(db_rs, 'rdd'):
+            # it's a dataframe
+            out = db_rs.rdd.map(process_row)
+        elif hasattr(db_rs, 'map'):
+            # it's an RDD
+            out = db_rs.map(process_row)
+        else:
+            out = map(process_row, db_rs[1:])
 
-        # make sure all keycounts report same noisy values
-        kcc = [kc for kc in subquery.keycount_symbols() if kc[0] != "keycount"]
-        for kc in kcc:
-            db_rs[kc[0].lower()] = db_rs["keycount"] = db_rs[kcc[0][0].lower()]
-            
-
-        # censor dimensions for privacy
         if subquery.agg is not None and self.options.censor_dims:
-            db_rs = db_rs.filter("keycount", ">", self.tau)
+            if hasattr(out, 'filter'):
+                # it's an RDD
+                tau = self.tau
+                out = out.filter(lambda row: row[kc_pos] > tau)
+            else:
+                out = filter(lambda row: row[kc_pos] > self.tau, out)
 
         # get column information for outer query
-        syms = query.all_symbols()
-        types = [s[1].type() for s in syms]
-        sens = [s[1].sensitivity() for s in syms]
-        colnames = [s[0] for s in syms]
+        out_syms = query.all_symbols()
+        out_types = [s[1].type() for s in out_syms]
+        out_colnames = [s[0] for s in out_syms]
 
-        db_rsc = db_rs.m_cols
 
-        bindings_list = []
+        def convert(val, type):
+            if type == 'string' or type == 'unknown':
+                return str(val).replace('"', '').replace("'", '')
+            elif type == 'int':
+                return int(float(str(val).replace('"', '').replace("'", '')))
+            elif type == 'float':
+                return float(str(val).replace('"', '').replace("'", ''))
+            elif type == 'boolean':
+                return bool(str(val).replace('"', '').replace("'", ''))
+            else:
+                raise ValueError("Can't convert type " + type)
 
-        # first do the noisy values
-        bindings_list.append(dict((name.lower(), db_rsc[name]) for name in db_rsc.keys()))
-
-        # now evaluate all lower and upper
-        interval_widths = None
-        for name in db_rsc.keys():
-            alpha_list = db_rs.report[name].interval_widths if name in db_rs.report else None
-            if alpha_list is not None:
-                interval_widths = alpha_list
-                break
-        if interval_widths is not None:
-            for confidence in interval_widths:
-                bind_low = {}
-                bind_high = {}
-                for name in db_rsc.keys():
-                    if name in db_rs.report and db_rs.report[name].intervals is not None:
-                        bind_low[name.lower()] = db_rs.report[name].intervals[confidence].low
-                        bind_high[name.lower()] = db_rs.report[name].intervals[confidence].high
-                    else:
-                        bind_low[name.lower()] = db_rsc[name]
-                        bind_high[name.lower()] = db_rsc[name]
-                bindings_list.append(bind_low)
-                bindings_list.append(bind_high)
+        def process_out_row(row):
+            bindings = dict((name.lower(), val ) for name, val in zip(source_col_names, row))
+            row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
+            return [convert(val, type) for val, type in zip(row, out_types)]
     
-        cols = []
-        intervals_list = []
-        for c in query.select.namedExpressions:
-            cols.append(c.expression.evaluate(bindings_list[0]))
+        if hasattr(out, 'map'):
+            # it's an RDD
+            out = out.map(process_out_row)
+        else:
+            out = map(process_out_row, out)
 
-            ivals = []
-            # initial hack; just evaluate lower and upper for each confidence
-            if interval_widths is not None:
-                for idx in range(len(interval_widths)):
-                    low_idx = idx * 2 + 1
-                    high_idx = idx * 2 + 2
-                    low = c.expression.evaluate(bindings_list[low_idx])
-                    high = c.expression.evaluate(bindings_list[high_idx])
-                    ivals.append(Interval(interval_widths[idx], None, low, high))
-            intervals_list.append(ivals)
-
-        # make the new recordset
-        newrs = TypedRowset([colnames], types, sens)            
-        for idx in range(len(cols)):
-            colname = newrs.idxcol[idx]
-            newrs[colname] = cols[idx]
-            newrs.report[colname] = Result(None, None, None, cols[idx], None, None, None, None, None, Intervals(intervals_list[idx]), None)
-
-            #newrs.intervals[colname] = Intervals(intervals_list[idx])
-
-        # Now sort, if it has order by clause
+        # sort it if necessary
         if query.order is not None:
             sort_fields = []
             for si in query.order.sortItems:
                 if type(si.expression) is not ast.Column:
                     raise ValueError("We only know how to sort by column names right now")
                 colname = si.expression.name.lower()
+                if colname not in out_colnames:
+                    raise ValueError("Can't sort by {0}, because it's not in output columns: {1}".format(colname, out_colnames))
+                colidx = out_colnames.index(colname)
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
                     desc = True
-                sf = (colname, desc)
+                if desc and not (out_types[colidx] == "int" or out_types[colidx] == "float"):
+                    raise ValueError("We don't know how to sort descending by " + out_types[colidx])
+                sf = (desc, colidx)
                 sort_fields.append(sf)
-            sf = [("-" if desc else "") + colname for colname, desc in sort_fields]
-            newrs.sort(sf)
-        return newrs
+
+            def sort_func(row):
+                return tuple([row[idx] if not desc else -row[idx] for desc, idx in sort_fields])
+
+            if hasattr(out, 'sortBy'):
+                out = out.sortBy(sort_func)
+            else:
+                out = sorted(out, key=sort_func)
+
+        # output it
+        if hasattr(out, 'toDF'):
+            # Pipeline RDD
+            return out.toDF(out_colnames)
+        elif hasattr(out, 'map'):
+            # Bare RDD
+            return out
+        else:
+            return TypedRowset([out_colnames] + list(out), out_types)
 
     def execute_ast(self, query):
         """Executes an AST representing a SQL query
@@ -225,8 +267,8 @@ class PrivateReader:
         """
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-        subquery_results = self._preprocess(query)
-        return self._postprocess(*subquery_results)
+
+        return self._execute_ast(query, False)
 
 class PrivateReaderOptions:
     """Options that control privacy behavior"""
@@ -235,15 +277,19 @@ class PrivateReaderOptions:
         clamp_counts=True, 
         reservoir_sample=True,
         clamp_columns=True,
-        row_privacy=False):
+        row_privacy=False,
+        max_contrib=None):
         """Initialize with options.
         :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy
         :param clamp_counts: boolean, set to False to allow noisy counts to be negative
         :param reservoir_sample: boolean, set to False if the data collection will never have more than max_contrib record per individual
         :param clamp_columns: boolean, set to False to allow values that exceed lower and higher limit specified in metadata.  May impact privacy
-        :param row_privacy: boolean, True if each row is a separate individual"""
+        :param row_privacy: boolean, True if each row is a separate individual
+        :param max_contrib: int, set to override the metadata-supplied limit of per-user
+          contribution.  May only revise down; metadata takes precedence if limit is smaller."""
         self.censor_dims = censor_dims
         self.clamp_counts = clamp_counts
         self.reservoir_sample = reservoir_sample
         self.clamp_columns = clamp_columns
         self.row_privacy = row_privacy
+        self.max_contrib = max_contrib
