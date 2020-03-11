@@ -58,7 +58,7 @@ def register(dataset):
     
     # Add budget if possible 
     if dataset["budget"]:
-        b = float(dataset["budget"])
+        b = dataset["budget"]
         if b <= 0.0: abort(403, "Budget must be greater than 0.")
         dataset["budget"] = b
     else:
@@ -90,15 +90,10 @@ def register(dataset):
         abort(409, "Dataset must specify either local_path or local_metadata_path.")
     
     if dataset["type"] == "dataverse":
-        # There's a more elegant way to do this
-        try:
-            # get throws exception if non-existant secret
-            secrets_get(name="dataverse:{}".format(info["dataset_name"]))["value"]
-            abort(410, "Duplicated secret - not allowed to register the same dataset twice.")
-        except:
-            # TODO: Temp secret - not sure where to grab it from
-            sec = {"name":dataset_name, "value":0}
-            secrets_put(sec)
+        if dataset["token"]:
+            secrets_put(dataset["token"])
+        else:
+            abort(410, "DatasetDocument must contain a token field with a secret.")
     
     # If everything looks good, register it.
     DATASETS[dataset_name] = dataset
@@ -110,7 +105,8 @@ new_dataset = {
     "host": "https://me.com",
     "schema": '{"fake_schema": "schema"}',
     "budget": 3.0,
-    "key": "dataverse_details"
+    "key": "dataverse_details",
+    "token": {"name":"new", "value":0}
 }
 
 register(new_dataset)
