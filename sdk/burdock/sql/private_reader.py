@@ -4,6 +4,7 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 
 from burdock.ast.expressions import sql as ast
+from burdock.reader import Reader
 
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
@@ -11,10 +12,11 @@ from burdock.report import Interval, Intervals, Result
 from burdock.reader.rowset import TypedRowset
 
 
-class PrivateReader:
+
+class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results 
     """
-    def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=None, options=None):
+    def __init__(self, metadata, reader, epsilon=1.0, delta=10E-16, interval_widths=None, options=None):
         """Create a new private reader.
 
             :param reader: The data reader to wrap, such as a SqlServerReader, PandasReader, or SparkReader
@@ -36,6 +38,10 @@ class PrivateReader:
         self._cached_exact = None
         self._cached_ast = None
         self.refresh_options()
+
+    @property
+    def engine(self):
+        return self.reader.engine
 
     def refresh_options(self):
         self.rewriter = Rewriter(self.metadata)
@@ -60,7 +66,7 @@ class PrivateReader:
     def rewrite_ast(self, query):
         query_max_contrib = query.max_ids
         if self.options.max_contrib is None or self.options.max_contrib > query_max_contrib:
-            self.options.max_contrib = query_max_contrib        
+            self.options.max_contrib = query_max_contrib
 
         self.refresh_options()
         query = self.rewriter.query(query)
