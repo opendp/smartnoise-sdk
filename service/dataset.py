@@ -86,9 +86,9 @@ def register(dset):
     elif "schema" in dset:
         # Remote dataset
         if dset["schema"]:
-            wf_dset["schema"] = dset["schema"]
+            wf_dset["schema"] = json.dumps(dset["schema"])
         else:
-            abort(407, "Schema {} does not exist.".format(str(dset["schema"])))
+            abort(407, "Schema {} must be valid json.".format(str(dset["schema"])))
         
         # Specify host
         if dset["host"]:
