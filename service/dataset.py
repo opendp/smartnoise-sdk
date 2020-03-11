@@ -16,6 +16,13 @@ DATASETS = {"example": {"type": "local_csv",
 
 
 def read(info):
+    """Get information needed to load the dataset
+
+    :param info: The dataset to read and budget to use.
+    :type info: dict {"dataset_name": str, "budget":int}
+    :return: A dataset document that contains the type and info of the dataset
+    :rtype: dict{"dataset_type": str, dataset_key: dict}
+    """
     dataset_name = info["dataset_name"]
 
     if dataset_name not in DATASETS:
