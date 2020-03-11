@@ -4,7 +4,7 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 
 from burdock.ast.expressions import sql as ast
-from burdock.reader import Reader
+from burdock.reader.base import Reader
 
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian

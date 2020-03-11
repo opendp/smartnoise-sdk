@@ -3,11 +3,11 @@ from .private_rewriter import Rewriter
 from .private_reader import PrivateReader
 from .parse import QueryParser
 
-from .pandas import PandasReader
-from .presto import PrestoReader
-from .postgres import PostgresReader
-from .sql_server import SqlServerReader
-from .spark import SparkReader
+from .reader.pandas import PandasReader
+from .reader.presto import PrestoReader
+from .reader.postgres import PostgresReader
+from .reader.sql_server import SqlServerReader
+from .reader.spark import SparkReader
 
 __all__ = ["PandasReader",
            "PostgresReader",

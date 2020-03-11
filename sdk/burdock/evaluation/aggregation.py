@@ -10,7 +10,7 @@ import sys
 import os
 # import yarrow
 
-from burdock.reader.sql import PandasReader
+from burdock.sql import PandasReader
 from burdock.sql.private_reader import PrivateReader
 from burdock.reader.rowset import TypedRowset
 from burdock.mechanisms.laplace import Laplace

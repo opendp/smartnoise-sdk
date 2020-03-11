@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 
 from burdock.metadata import CollectionMetadata
-from burdock.reader.sql import PandasReader
+from burdock.sql import PandasReader
 
 from .dataset_adapter import DatasetAdapter
 

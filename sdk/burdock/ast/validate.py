@@ -16,7 +16,7 @@ class Validate(object):
             requirements for differential privacy queries.
         """
         qc = QueryConstraints(query, metadata)
-        qc.check_all()
+        qc.validate_all()
 
 
 class QueryConstraints:
@@ -31,7 +31,7 @@ class QueryConstraints:
         self.query = query
         self.metadata = metadata
 
-    def check_all(self):
+    def validate_all(self):
         # will throw if more or less than one key
         self.keycol = self.key_col(self.query)
 

@@ -2,7 +2,7 @@ import pytest
 
 from burdock.reader.base import Reader
 from burdock.sql.reader.engine import Engine
-from burdock.sql.reader import PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
+from burdock.sql import PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
 
 READERS = PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
 
