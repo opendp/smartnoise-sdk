@@ -10,13 +10,23 @@ from burdock.mechanisms.gaussian import Gaussian
 from burdock.report import Interval, Intervals, Result
 from burdock.reader.rowset import TypedRowset
 
-class PrivateReader:
-    """
-        Takes a rewritten query, executes against the target backend, then
-        adds noise before returning the recordset.
-    """
 
-    def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=[0.95, 0.985], options=None):
+
+class PrivateReader:
+    """Executes SQL queries against tabular data sources and returns differentially private results 
+    """
+    def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=None, options=None):
+        """Create a new private reader.
+
+            :param reader: The data reader to wrap, such as a SqlServerReader, PandasReader, or SparkReader
+                The PrivateReader intercepts queries to the underlying reader and ensures differential privacy.
+            :param metadata: The CollectionMetadata object with information about all tables referenced in this query
+            :param epsilon: The privacy budget to spend for each column in the query
+            :param delta: The delta privacy parameter
+            :param interval_widths: If supplied, returns confidence intervals of the specified width, e.g. [0.95, 0.75]
+            :param options: A PrivateReaderOptions with flags that change the behavior of the privacy
+                engine.
+        """
         self.options = options if options is not None else PrivateReaderOptions()
         self.reader = reader
         self.metadata = metadata

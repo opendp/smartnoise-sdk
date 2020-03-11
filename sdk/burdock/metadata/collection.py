@@ -5,7 +5,14 @@ from burdock.reader.sql.sql_base import NameCompare
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
 
 class CollectionMetadata:
+    """Information about a collection of tabular data sources"""
     def __init__(self, tables, engine, compare=None):
+        """Instantiate a metadata object with information about tabular data sources
+
+        :param tables: A list of Table descriptions
+        :param engine: The name of the database engine used to query these tables.  Used for engine-
+            specific name escaping and comparison.  Set to None to use default semantics.
+        """
         self.m_tables = dict([(t.table_name(), t) for t in tables])
         self.engine = engine if engine is not None else "Unknown"
         self.compare = NameCompare.get_name_compare(engine) if compare is None else compare
@@ -28,15 +35,18 @@ class CollectionMetadata:
 
     @staticmethod
     def from_file(filename):
+        """Load the metadata about this collection from a YAML file"""
         ys = CollectionYamlLoader(filename)
         return ys.read_file()
 
     @staticmethod
     def from_dict(schema_dict):
+        """Load the metadata from a dict object"""
         ys = CollectionYamlLoader("dummy")
         return ys._create_metadata_object(schema_dict)
 
     def to_file(self, filename, collection_name):
+        """Save collection metadata to a YAML file"""
         ys = CollectionYamlLoader(filename)
         ys.write_file(self, collection_name)
 
@@ -44,7 +54,17 @@ class CollectionMetadata:
     Common attributes for a table or a view
 """
 class Table:
+    """Information about a single tabular data source"""
     def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None):
+        """Instantiate information about a tabular data source.
+
+        :param schema: The schema is the SQL-92 schema used for disambiguating table names.  See
+            documentation for more information about schema search path and resolution.
+        :param name: The table name that will be used by SQL queries to reference data
+            in this table.
+        :param rowcount: The rough number of rows in this table.  Should not be the exact number, and does not need to be accurate
+        :param columns: A list of Column objects with information about each column in the table.
+        """
         self.schema = schema
         self.name = name
         self.rowcount = rowcount
@@ -73,6 +93,7 @@ class Table:
         return (self.schema + "." if len(self.schema.strip()) > 0 else "") + self.name
 
 class String:
+    """A column with string data"""
     def __init__(self, name, card, is_key = False, bounded = False):
         self.name = name
         self.card = card
@@ -84,6 +105,7 @@ class String:
         return "string"
 
 class Boolean:
+    """A column with True/False data"""
     def __init__(self, name, is_key = False, bounded = False):
         self.name = name
         self.is_key = is_key
@@ -94,6 +116,7 @@ class Boolean:
         return "boolean"
 
 class DateTime:
+    """A date/time column"""
     def __init__(self, name, is_key = False, bounded = False):
         self.name = name
         self.is_key = is_key
@@ -104,6 +127,7 @@ class DateTime:
         return "datetime"
 
 class Int:
+    """A column with integer data"""
     def __init__(self, name, minval = None, maxval = None, is_key = False, bounded = False):
         self.name = name
         self.minval = minval
@@ -118,6 +142,7 @@ class Int:
         return "int"
 
 class Float:
+    """A floating point column"""
     def __init__(self, name, minval = None, maxval = None, is_key = False, bounded = False):
         self.name = name
         self.minval = minval
@@ -132,6 +157,7 @@ class Float:
         return "float"
 
 class Unknown:
+    """Column is unknown type.  Will be ignored.  May not be used in queries."""
     def __init__(self, name):
         self.name = name
         self.is_key = False
