@@ -19,6 +19,7 @@ DATASETS = {"example": {"type": "local_csv",
                                "host": "https://demo.dataverse.org/api/access/datafile/395811",
                                "budget":3.0}}
 
+# Do we need to add an ability to register these?
 KNOWN_DATASET_KEYS = ["csv_details", "dataverse_details"]
 
 def read(info):
