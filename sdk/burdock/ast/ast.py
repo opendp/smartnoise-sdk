@@ -12,11 +12,13 @@ class Batch(Sql):
     """A batch of queries"""
     def __init__(self, queries : List['Query']) -> None:
         self.queries = queries
+
     def children(self):
         return self.queries
 
 class Query(SqlRel):
     """A single query"""
+
     def __init__(self, select, source, where, agg, having, order, limit) -> None:
         self.select = select
         self.source = source
@@ -73,91 +75,118 @@ class Query(SqlRel):
             self.max_ids = max(tc.max_ids for tc in tables)
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
             self.row_privacy = any(tc.row_privacy for tc in tables)
-    """
-        returns the expression for an output column in the SELECT statement.
-        Query objects do not have aliases, so caller must strip alias first.
-    """
+
     def symbol(self, expression):
+        """
+            returns the expression for an output column in the SELECT statement.
+            Query objects do not have aliases, so caller must strip alias first.
+        """
         if not self.has_symbols():
             raise ValueError("Attempted to get symbol from query with no symbols loaded.")
         if type(expression) is not Column:
             raise ValueError("Can only request output columns from a query: " + str(type(expression)) )
         return self[expression.name]
+
     def numeric_symbols(self):
         return [s for s in self.all_symbols() if s[1].type() in ["int", "float"]]
+
     def keycount_symbols(self):
         return [s for s in self.all_symbols() if s[1].is_key_count ]
+
     def children(self) -> List[Any]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
+
     def evaluate(self, bindings):
         return [(ne.name, ne.expression.evaluate(bindings)) for ne in self.select.namedExpressions]
 
 class Select(Sql):
     """Result Columns"""
+
     def __init__(self, quantifier, namedExpressions):
         self.quantifier = quantifier
         self.namedExpressions = Seq(namedExpressions)
+
     def functions(self):
         return [c for c in self.namedExpressions if type(c.expression) is AggFunction]
+
     def aggregates(self):
         return [f for f in self.functions() if f.is_aggregate()]
+
     def children(self):
         return [Token("SELECT"), self.quantifier, self.namedExpressions]
 
 class From(Sql):
     """From"""
+
     def __init__(self, relations):
         self.relations = Seq(relations)
+
     def children(self):
         return [Token("FROM"), self.relations]
 
 class Where(Sql):
     """Predicates."""
+
     def __init__(self, condition):
         self.condition = condition
+
     def children(self):
         return [Token("WHERE"), self.condition]
 
 class Aggregate(Sql):
     """Group By"""
+
     def __init__(self, groupingExpressions):
         self.groupingExpressions = Seq(groupingExpressions)
+
     def groupedColumns(self):
         return [ge.expression for ge in self.groupingExpressions if type(ge.expression) == Column]
+
     def children(self):
         return [Token("GROUP"), Token("BY"), self.groupingExpressions]
 
 class Having(Sql):
     """Having clause"""
+
     def __init__(self, condition):
         self.condition = condition
+
     def children(self):
         return [Token("HAVING"), self.condition]
 
 class Order(Sql):
     """Order By"""
+
     def __init__(self, sortItems):
         self.sortItems = Seq(sortItems)
+
     def children(self):
         return [Token("ORDER"), Token("BY"), self.sortItems]
+
     def symbol(self, relations):
         return Order(self.sortItems.symbol(relations))
 
 class Limit(Sql):
     """Limit"""
+
     def __init__(self, n):
         self.n = n
+
     def children(self):
         return  [Token("LIMIT"), Literal(self.n, str(self.n))]
+
     def symbol(self, relations):
         return self
 
 class Top(Sql):
     """Top"""
+
     def __init__(self, n):
         self.n = n
+
     def children(self):
         return  [Token("TOP"), Literal(self.n, str(self.n))]
+
     def symbol(self, relations):
         return self
 

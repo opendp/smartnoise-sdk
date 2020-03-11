@@ -5,32 +5,33 @@ class Validate(object):
         Checks a batch AST for any violations of our query requirements
         and returns error messages.
     """
-    def validateBatch(self, batch, metadata):
+
+    def validate_batch(self, batch, metadata):
         for q in batch:
-            self.validateQuery(q, metadata)
+            self.validate_query(q, metadata)
 
-    """
-        Checks the AST for a SELECT query to ensure conformance with
-        requirements for differential privacy queries.
-    """
-    def validateQuery(self, query, metadata):
+    def validate_query(self, query, metadata):
+        """
+            Checks the AST for a SELECT query to ensure conformance with
+            requirements for differential privacy queries.
+        """
         qc = QueryConstraints(query, metadata)
-        qc.checkAll()
+        qc.check_all()
 
 
-"""
-    A collection of boolean functions that check for validity of
-    a parsed Query AST.  Create the object by passing in the AST,
-    then call any or all check functions.  Each check function returns
-    either (False, "Message") or (True, "")
-"""
 class QueryConstraints:
+    """
+        A collection of boolean functions that check for validity of
+        a parsed Query AST.  Create the object by passing in the AST,
+        then call any or all check functions.  Each check function returns
+        either (False, "Message") or (True, "")
+    """
+
     def __init__(self, query, metadata):
         self.query = query
         self.metadata = metadata
 
-
-    def checkAll(self):
+    def check_all(self):
         # will throw if more or less than one key
         self.keycol = self.key_col(self.query)
 
@@ -43,7 +44,6 @@ class QueryConstraints:
         gc = agg.groupedColumns() if agg is not None else []
         exp = [c.expression for c in nes]
         agg = [e for e in exp if type(e) == AggFunction and e.is_aggregate()]
-
 
     def check_groupkey(self):
         agg = self.query.agg
@@ -88,7 +88,7 @@ class QueryConstraints:
         keys = [str(tc) for tc in tcsyms if tc.is_key]
         if len(keys) > 1:
             raise ValueError("We only know how to handle tables with one key: " + str(keys))
-        
+
         if query.row_privacy:
             if len(keys) > 0:
                 raise ValueError("Row privacy is set, but metadata specifies a private_id")

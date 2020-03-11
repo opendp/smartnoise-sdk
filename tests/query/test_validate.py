@@ -51,7 +51,7 @@ class GoodQueryTester:
         for qs in self.queries:
             print(qs)
             q = QueryParser(metadata).query(qs)
-            Validate().validateQuery(q, metadata)
+            Validate().validate_query(q, metadata)
 
 
 class BadQueryTester:
@@ -70,4 +70,4 @@ class BadQueryTester:
 
     def validateSingle(self, q):
         with pytest.raises(ValueError):
-            Validate().validateQuery(q, metadata)
+            Validate().validate_query(q, metadata)
