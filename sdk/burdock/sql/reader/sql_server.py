@@ -2,21 +2,25 @@ import os
 
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
+
 from burdock.ast.ast import Relation
 from burdock.ast.tokens import Literal
 from burdock.ast.expression import Expression
 from burdock.ast.expressions.numeric import BareFunction
 from burdock.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
 
-"""
-    A dumb pipe that gets a rowset back from a database using
-    a SQL string, and converts types to some useful subset
-"""
+
 class SqlServerReader(SqlReader):
+    """
+        A dumb pipe that gets a rowset back from a database using
+        a SQL string, and converts types to some useful subset
+    """
     ENGINE = Engine.SQL_SERVER
+
     def __init__(self, host, database, user, password=None, port=None):
         super().__init__(SqlServerNameCompare(), SqlServerSerializer())
-        import pyodbc
+        import pyodbc  # TODO do we add all reader dependencies as whitenoise-sdk dependencies?
+        # this reader would break in the module code as is
         self.api = pyodbc
         self.host = host
         self.database = database
@@ -87,8 +91,10 @@ class SqlServerSerializer:
 
         return(str(query))
 
+
 class SqlServerNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["dbo"]
+
     def identifier_match(self, query, meta):
         return self.strip_escapes(query).lower() == self.strip_escapes(meta).lower()

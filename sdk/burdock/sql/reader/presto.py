@@ -9,11 +9,11 @@ from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 
 
-"""
-    A dumb pipe that gets a rowset back from a database using
-    a SQL string, and converts types to some useful subset
-"""
 class PrestoReader(SqlReader):
+    """
+        A dumb pipe that gets a rowset back from a database using
+        a SQL string, and converts types to some useful subset
+    """
     ENGINE = Engine.PRESTO
 
     def __init__(self, host, database, user, password=None, port=None):
@@ -32,12 +32,13 @@ class PrestoReader(SqlReader):
         self.password = password
 
         self.update_connection_string()
-    """
-        Executes a raw SQL string against the database and returns
-        tuples for rows.  This will NOT fix the query to target the
-        specific SQL dialect.  Call execute_typed to fix dialect.
-    """
+
     def execute(self, query):
+        """
+            Executes a raw SQL string against the database and returns
+            tuples for rows.  This will NOT fix the query to target the
+            specific SQL dialect.  Call execute_typed to fix dialect.
+        """
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
         cnxn = self.api.connect(

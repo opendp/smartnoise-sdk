@@ -1,6 +1,3 @@
-import os
-import re
-
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 
@@ -13,7 +10,7 @@ class SparkReader(SqlReader):
 
     def __init__(self, session):
         super().__init__(SparkNameCompare(), SparkSerializer())
-        from pyspark.sql import SparkSession
+        from pyspark.sql import SparkSession  # TODO how do we deal with reader dependencies
         self.api = session
         self.database = "Spark Session"
 
@@ -30,18 +27,21 @@ class SparkReader(SqlReader):
     def db_name(self):
         return self.database
 
+
 class SparkSerializer:
     def serialize(self, query):
-        for re in [n for n in query.find_nodes(BareFunction) if n.name == 'RANDOM']:
-            re.name = 'rand'
+        for r_e in [n for n in query.find_nodes(BareFunction) if n.name == 'RANDOM']:
+            r_e.name = 'rand'
 
         for b in [n for n in query.find_nodes(Literal) if isinstance(n.value, bool)]:
             b.text = "'True'" if b.value else "'False'"
 
         return(str(query))
 
+
 class SparkNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["dbo"]
+
     def identifier_match(self, query, meta):
         return self.strip_escapes(query).lower() == self.strip_escapes(meta).lower()
