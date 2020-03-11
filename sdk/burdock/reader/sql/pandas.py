@@ -56,19 +56,21 @@ class PandasReader(SqlReader):
             for column_form in ["'{}'".format(column), '"{}"'.format(column), column]:
                 query = query.replace(column_form, sanitized_column)
         return query
-    """
-        Get the database associated with this connection
-    """
+
     def db_name(self):
+        """
+            Get the database associated with this connection
+        """
         sql = "SELECT current_database();"
         dbname = self.execute(sql)[1][0]
         return dbname
-    """
-        Executes a raw SQL string against the database and returns
-        tuples for rows.  This will NOT fix the query to target the
-        specific SQL dialect.  Call execute_typed to fix dialect.
-    """
+
     def execute(self, query):
+        """
+            Executes a raw SQL string against the database and returns
+            tuples for rows.  This will NOT fix the query to target the
+            specific SQL dialect.  Call execute_typed to fix dialect.
+        """
         query = self._sanitize_query(query)
         from pandasql import sqldf
         if not isinstance(query, str):

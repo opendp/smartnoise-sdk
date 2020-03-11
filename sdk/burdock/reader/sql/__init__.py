@@ -1,9 +1,9 @@
 
-from burdock.reader.sql.pandas import PandasReader
-from burdock.reader.sql.presto import PrestoReader
-from burdock.reader.sql.postgres import PostgresReader
-from burdock.reader.sql.sql_server import SqlServerReader
-from burdock.reader.sql.spark import SparkReader
+from .pandas import PandasReader
+from .presto import PrestoReader
+from .postgres import PostgresReader
+from .sql_server import SqlServerReader
+from .spark import SparkReader
 
 __all__ = ["PandasReader",
            "PostgresReader",

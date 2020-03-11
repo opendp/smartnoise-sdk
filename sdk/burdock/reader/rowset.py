@@ -1,23 +1,24 @@
 import numpy as np
 import datetime
 import operator
-from numpy import inf
 
 from burdock.report import Report
 
-"""
-    Represents a typed rowset supporting the types used in differentially private
-    query.
-"""
+
 class TypedRowset:
     """
-        Initialize rowset
-
-        :param rows: A list of tuples representing rows, with the first tuple being the
-            column names, and the rest being the rows of the rowset.
-        :param types: A list of types for the columns 
+        Represents a typed rowset supporting the types used in differentially private
+        query.
     """
+
     def __init__(self, rows, types):
+        """
+            Initialize rowset
+
+            :param rows: A list of tuples representing rows, with the first tuple being the
+                column names, and the rest being the rows of the rowset.
+            :param types: A list of types for the columns
+        """
         header = [c.lower() for c in rows[0]]
         body = rows[1:]
         self.n_rows = len(body)
@@ -109,10 +110,10 @@ class TypedRowset:
 
     def filter(self, colname, relation, value):
         ops = {'>': operator.gt,
-        '<': operator.lt,
-        '>=': operator.ge,
-        '<=': operator.le,
-        '=': operator.eq}
+               '<': operator.lt,
+               '>=': operator.ge,
+               '<=': operator.le,
+               '=': operator.eq}
         col = self[colname]
         types = [self.types[name] for name in self.colnames]
         rows = [tuple(self.colnames)]
@@ -123,7 +124,7 @@ class TypedRowset:
         filtered_rs.report = self.report
         return filtered_rs
 
-    def rows(self, header = True):
+    def rows(self, header=True):
         return ([self.colnames] if header else []) + [tuple(self.m_cols[name][idx] for name in self.colnames) for idx in range(self.n_rows)]
 
     def get_width(self, colname):

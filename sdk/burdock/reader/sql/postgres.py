@@ -3,11 +3,11 @@ import os
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 
-"""
-    A dumb pipe that gets a rowset back from a database using
-    a SQL string, and converts types to some useful subset
-"""
 class PostgresReader(SqlReader):
+    """
+        A dumb pipe that gets a rowset back from a database using
+        a SQL string, and converts types to some useful subset
+    """
     ENGINE = Engine.POSTGRES
 
     def __init__(self, host, database, user, password=None, port=None):
@@ -38,12 +38,12 @@ class PostgresReader(SqlReader):
             col_names = [tuple(desc[0] for desc in cursor.description)]
             rows = [row for row in cursor]
             return col_names + rows
-    """
-        Executes a parsed AST and returns a typed recordset.
-        Will fix to target approprate dialect. Needs symbols.
-    """
 
     def update_connection_string(self):
+        """
+            Executes a parsed AST and returns a typed recordset.
+            Will fix to target approprate dialect. Needs symbols.
+        """
         self.connection_string = "user='{0}' host='{1}'".format(self.user, self.host)
         self.connection_string += " dbname='{0}'".format(self.database) if self.database is not None else ""
         self.connection_string += " port={0}".format(self.port) if self.port is not None else ""
@@ -53,13 +53,14 @@ class PostgresReader(SqlReader):
         sql = "\\c " + dbname
         self.execute(sql)
 
-class PostgresSerializer:
-    def serialize(self, query):
-        return str(query)
+    class PostgresSerializer:
+        def serialize(self, query):
+            return str(query)
 
 class PostgresNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["public"]
+
     def identifier_match(self, query, meta):
         query = self.clean_escape(query)
         meta = self.clean_escape(meta)
@@ -70,6 +71,7 @@ class PostgresNameCompare(NameCompare):
         if self.is_escaped(query) and query.lower() == query:
             query = query.lower().replace('"','')
         return meta == query
+
     def should_escape(self, identifier):
         if self.is_escaped(identifier):
             return False
