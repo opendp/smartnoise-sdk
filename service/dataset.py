@@ -1,8 +1,9 @@
 #%%
 import os
+import json
 from flask import abort
-from secrets import get as secrets_get
-from secrets import put as secrets_put
+from secretsc import get as secrets_get
+from secretsc import put as secrets_put
 
 
 DATASETS = {"example": {"type": "local_csv",
@@ -18,10 +19,7 @@ DATASETS = {"example": {"type": "local_csv",
                                "host": "https://demo.dataverse.org/api/access/datafile/395811",
                                "budget":3.0}}
 
-#%%
-def query_type_budget(q_type):
-    # Dumb function for now
-    return 1.0
+KNOWN_DATASET_KEYS = ["csv_details", "dataverse_details"]
 
 def read(info):
     dataset_name = info["dataset_name"]
@@ -38,7 +36,7 @@ def read(info):
     # Check/Decrement the budget before returning dataset
     # Unclear what behaviour budget decrementing should have
     # - should it check the type of query, and decrement accordingly?
-    adjusted_budget = dataset["budget"] - query_type_budget(info["query_type"]) 
+    adjusted_budget = dataset["budget"] - info["budget"]
     if adjusted_budget >= 0.0:
         dataset["budget"] = adjusted_budget
     else:
@@ -47,58 +45,50 @@ def read(info):
     return {"dataset_type": dataset["type"], dataset["key"]: dataset}
 
 #%%
-def register(dset):
-    dataset_name = dset["dataset_name"]
+def register(dataset):
+    dataset_name = dataset["dataset_name"]
 
     if dataset_name in DATASETS:
         abort(401, "Dataset id {} already exists. Identifies must be unique".format(dataset_name))
-    
-    # Well-formed dset, post checks
-    wf_dset = {}
 
     # Add key if possible
-    if dset["key"] is "csv_details" or "dataverse_details":
-        wf_dset["key"] = dset["key"]
-    else:
-        abort(402, "Given key was {}, must be either csv_details or dataverse_details.".format(str(dset["key"])))
+    if dataset["key"] not in KNOWN_DATASET_KEYS:
+        abort(402, "Given key was {}, must be either csv_details or dataverse_details.".format(str(dataset["key"])))
     
     # Add budget if possible 
-    if dset["budget"]:
-        b = float(dset["budget"])
+    if dataset["budget"]:
+        b = float(dataset["budget"])
         if b <= 0.0: abort(403, "Budget must be greater than 0.")
-        wf_dset["budget"] = float(dset["budget"])
+        dataset["budget"] = b
     else:
         abort(403, "Must specify a budget")
     
      # Add type if possible
-    if dset["type"] is "local_csv" or "dataverse":
-        wf_dset["type"] = dset["type"]
-    else:
-        abort(405, "Given type was {}, must be either local_csv or dataverse.".format(str(dset["type"])))
+    if not (dataset["type"] is "local_csv" or "dataverse"):
+        abort(405, "Given type was {}, must be either local_csv or dataverse.".format(str(dataset["type"])))
 
     # Add checks
-    if "local_path" in dset:
+    if "local_path" in dataset:
         # Local dataset
-        if os.path.isfile(dset["local_path"]):
-            wf_dset["local_path"] = dset["local_path"]
-        else:
-            abort(406, "Local file path {} does not exist.".format(str(dset["local_path"])))
-    elif "schema" in dset:
+        if not os.path.isfile(dataset["local_path"]):
+            abort(406, "Local file path {} does not exist.".format(str(dataset["local_path"])))
+    elif "schema" in dataset:
         # Remote dataset
-        if dset["schema"]:
-            wf_dset["schema"] = json.dumps(dset["schema"])
+        if dataset["schema"]:
+            try:
+                dataset["schema"] = json.dumps(dataset["schema"])
+            except:
+                abort(407, "Schema {} must be valid json.".format(str(dataset["schema"])))
         else:
-            abort(407, "Schema {} must be valid json.".format(str(dset["schema"])))
+            abort(414, "Schema must exist.")
         
         # Specify host
-        if dset["host"]:
-            wf_dset["host"] = dset["host"]
-        else:
-            abort(408, "Must specify host, {} is malformed.".format(str(dset["host"])))
+        if not dataset["host"]:
+            abort(408, "Must specify host, {} is malformed.".format(str(dataset["host"])))
     else:
         abort(409, "Dataset must specify either local_path or local_metadata_path.")
     
-    if wf_dset["type"] == "dataverse":
+    if dataset["type"] == "dataverse":
         # There's a more elegant way to do this
         try:
             # get throws exception if non-existant secret
@@ -110,17 +100,18 @@ def register(dset):
             secrets_put(sec)
     
     # If everything looks good, register it.
-    DATASETS[dataset_name] = wf_dset
+    DATASETS[dataset_name] = dataset
         
 #%%
 new_dataset = {
     "dataset_name": "new",
     "type": "dataverse",
     "host": "https://me.com",
-    "schema": "fake_schema",
+    "schema": '{"fake_schema": "schema"}',
     "budget": 3.0,
     "key": "dataverse_details"
 }
 
 register(new_dataset)
 print(DATASETS)
+
