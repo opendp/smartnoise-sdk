@@ -4,6 +4,7 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 
 from burdock.ast.expressions import sql as ast
+from burdock.reader import Reader
 
 from burdock.mechanisms.laplace import Laplace
 from burdock.mechanisms.gaussian import Gaussian
@@ -14,8 +15,8 @@ from burdock.reader.rowset import TypedRowset
     Takes a rewritten query, executes against the target backend, then
     adds noise before returning the recordset.
 """
-class PrivateReader:
-    def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=[0.95, 0.985], options=None):
+class PrivateReader(Reader):
+    def __init__(self, metadata, reader, epsilon=1.0, delta=10E-16, interval_widths=[0.95, 0.985], options=None):
         self.options = options if options is not None else PrivateReaderOptions()
         self.reader = reader
         self.metadata = metadata
@@ -26,6 +27,10 @@ class PrivateReader:
         self._cached_exact = None
         self._cached_ast = None
         self.refresh_options()
+
+    @property
+    def engine(self):
+        return self.reader.engine
 
     def refresh_options(self):
         self.rewriter = Rewriter(self.metadata)
@@ -50,7 +55,7 @@ class PrivateReader:
     def rewrite_ast(self, query):
         query_max_contrib = query.max_ids
         if self.options.max_contrib is None or self.options.max_contrib > query_max_contrib:
-            self.options.max_contrib = query_max_contrib        
+            self.options.max_contrib = query_max_contrib
 
         self.refresh_options()
         query = self.rewriter.query(query)

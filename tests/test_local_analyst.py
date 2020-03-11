@@ -3,8 +3,7 @@ import sklearn.datasets
 import pandas as pd
 
 
-from burdock.sql import execute_private_query
-from burdock.reader.sql import PandasReader
+from burdock.sql import execute_private_query, PandasReader
 from burdock.metadata import CollectionMetadata
 from burdock.metadata.collection import Table, Float
 
@@ -22,7 +21,7 @@ def test_sklearn_query():
    schema = CollectionMetadata([iris], "csv")
 
    reader = PandasReader(schema, sklearn_df)
-   rowset = execute_private_query(reader, schema, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
+   rowset = execute_private_query(schema, reader, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
    df = pd.DataFrame(rowset[1:], columns=rowset[0])
    assert df is not None
    assert len(df) == 1
