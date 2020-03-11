@@ -2,8 +2,8 @@
 import os
 import json
 from flask import abort
-from secretsc import get as secrets_get
-from secretsc import put as secrets_put
+from secrets import get as secrets_get
+from secrets import put as secrets_put
 
 
 DATASETS = {"example": {"type": "local_csv",
