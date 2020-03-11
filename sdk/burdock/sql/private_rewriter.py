@@ -10,26 +10,27 @@ from burdock.ast.ast import Literal, Column, TableColumn, AllColumns
 from burdock.ast.ast import NamedExpression, NestedExpression, Expression, Seq
 from burdock.ast.ast import AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression
 
-"""
-    Modifies parsed ASTs to augment with information needed
-    to support differential privacy.  Uses a matching 
-    object which contains metadata necessary for differential
-    privacy, such as min/max, cardinality, and key columns.
-
-    This routine is intended to be used prior to post-processing
-    with random noise generation.
-
-"""
 class Rewriter:
+    """
+        Modifies parsed ASTs to augment with information needed
+        to support differential privacy.  Uses a matching
+        object which contains metadata necessary for differential
+        privacy, such as min/max, cardinality, and key columns.
+
+        This routine is intended to be used prior to post-processing
+        with random noise generation.
+
+    """
+
     def __init__(self, metadata, options=None):
         self.options = RewriterOptions() if options is None else options
         self.metadata = metadata
 
-    """
-        Takes an expression for a noisy mean and rewrites
-        to a noisy sum and a noisy count
-    """
     def calculate_avg(self, exp, scope):
+        """
+            Takes an expression for a noisy mean and rewrites
+            to a noisy sum and a noisy count
+        """
         expr = exp.expression
         quant = exp.quantifier
 
@@ -39,11 +40,11 @@ class Rewriter:
         new_exp = NestedExpression(ArithmeticExpression(sum_expr, "/", count_expr))
         return new_exp
 
-    """
-        Takes an expression for a noisy mean and rewrites
-        to a noisy sum and a noisy count
-    """
     def calculate_variance(self, exp, scope):
+        """
+            Takes an expression for a noisy mean and rewrites
+            to a noisy sum and a noisy count
+        """
         expr = exp.expression
         quant = exp.quantifier
 
@@ -54,33 +55,33 @@ class Rewriter:
         new_exp = ArithmeticExpression(avg_of_square, "-", avg_squared)
         return new_exp
 
-    """
-        Takes an expression for a noisy mean and rewrites
-        to a noisy sum and a noisy count
-    """
     def calculate_stddev(self, exp, scope):
+        """
+            Takes an expression for a noisy mean and rewrites
+            to a noisy sum and a noisy count
+        """
         expr = AggFunction('STD', exp.quantifier, exp.expression)
         var_expr = self.calculate_variance(expr, scope)
 
         new_exp = MathFunction("SQRT", var_expr)
         return new_exp
 
-    """
-        Push a sum or count expression to child scope
-        and convert to a sum
-    """
     def push_sum_or_count(self, exp, scope):
+        """
+            Push a sum or count expression to child scope
+            and convert to a sum
+        """
         new_name = scope.push_name(AggFunction(exp.name, exp.quantifier, exp.expression))
 
         new_exp = Column(new_name)
         return new_exp
 
-    """
-        rewrite AVG, VAR, etc. and push all sum or count
-        to child scope, preserving all other portions of
-        expression
-    """
     def rewrite_outer_named_expression(self, ne, scope):
+        """
+            rewrite AVG, VAR, etc. and push all sum or count
+            to child scope, preserving all other portions of
+            expression
+        """
         name = ne.name
         exp = ne.expression
         if type(exp) is not AggFunction:
@@ -118,7 +119,7 @@ class Rewriter:
 
     def query(self, query):
         query = QueryParser(self.metadata).query(str(query))
-        Validate().validateQuery(query, self.metadata)
+        Validate().validate_query(query, self.metadata)
 
         child_scope = Scope()
         # we make sure aggregates are in select scope for subqueries
@@ -138,8 +139,6 @@ class Rewriter:
         return QueryParser(self.metadata).query(str(q))
 
     def exact_aggregates(self, query):
-
-
         child_scope = Scope()
 
         if self.options.row_privacy:
@@ -151,8 +150,8 @@ class Rewriter:
 
         for ne in query.select.namedExpressions:
             child_scope.push_name(ne.expression)
-        
-        keycount = NamedExpression("keycount", keycount_expr) 
+
+        keycount = NamedExpression("keycount", keycount_expr)
 
         select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
@@ -180,21 +179,19 @@ class Rewriter:
 
         return Query(select, From(subquery), None, None, None, None, None)
 
-
     def per_key_clamped(self, query):
         child_scope = Scope()
         relations = query.source.relations
-        select = Seq([self.clampExpression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
+        select = Seq([self.clamp_expression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
         return subquery
 
-
-    """
-        Lookup the expression referenced in each named expression and
-        write a clamped select for it, using the schema
-    """
-    def clampExpression(self, ne, relations, scope, do_clamp=True):
+    def clamp_expression(self, ne, relations, scope, do_clamp=True):
+        """
+            Lookup the expression referenced in each named expression and
+            write a clamped select for it, using the schema
+        """
         exp = ne.expression
         cols = exp.find_nodes(Column)
         if type(exp) is Column:
@@ -220,10 +217,10 @@ class Rewriter:
             col.name = ce_name
         return ne
 
-    """
-        Return the key column, given a from clause
-    """
     def key_col(self, query):
+        """
+            Return the key column, given a from clause
+        """
         rsyms = query.source.relations[0].all_symbols(AllColumns())
         tcsyms = [r for name, r in rsyms if type(r) is TableColumn]
         keys = [str(tc) for tc in tcsyms if tc.is_key]
@@ -243,23 +240,24 @@ class Rewriter:
 
 
 
-"""
-    A name scope for a select query
-"""
 class Scope:
+    """
+        A name scope for a select query
+    """
+
     def __init__(self):
         self.expressions = {}
 
     def select(self, quantifier=None):
         return Select(quantifier, [NamedExpression(name, self.expressions[name]) for name in self.expressions.keys()])
 
-    """
-        Returns a named expression from an expression, using
-        an existing name if already provided in this scope,
-        or generating a new name and adding to the names
-        dictionary if the expression does not exist in scope.
-    """
     def push_name(self, expression, proposed=None):
+        """
+            Returns a named expression from an expression, using
+            an existing name if already provided in this scope,
+            or generating a new name and adding to the names
+            dictionary if the expression does not exist in scope.
+        """
         # see if the proposed name is taken
         if proposed is not None:
             if proposed in self.expressions:
@@ -271,7 +269,7 @@ class Scope:
                 self.expressions[proposed] = expression
                 return proposed
 
-        # see if the expression has been used 
+        # see if the expression has been used
         names = [name for name in self.expressions.keys() if self.expressions[name] == expression]
         if len(names) > 0:
             return names[0]
@@ -296,6 +294,7 @@ class Scope:
 
 class RewriterOptions:
     """Options that modify rewriter behavior"""
+
     def __init__(self, row_privacy=False, reservoir_sample=True, clamp_columns=True, max_contrib=1):
         """Initialize options before running the rewriter
 

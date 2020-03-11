@@ -10,11 +10,12 @@ from burdock.mechanisms.gaussian import Gaussian
 from burdock.report import Interval, Intervals, Result
 from burdock.reader.rowset import TypedRowset
 
-"""
-    Takes a rewritten query, executes against the target backend, then
-    adds noise before returning the recordset.
-"""
 class PrivateReader:
+    """
+        Takes a rewritten query, executes against the target backend, then
+        adds noise before returning the recordset.
+    """
+
     def __init__(self, reader, metadata, epsilon=1.0, delta=10E-16, interval_widths=[0.95, 0.985], options=None):
         self.options = options if options is not None else PrivateReaderOptions()
         self.reader = reader
@@ -50,7 +51,7 @@ class PrivateReader:
     def rewrite_ast(self, query):
         query_max_contrib = query.max_ids
         if self.options.max_contrib is None or self.options.max_contrib > query_max_contrib:
-            self.options.max_contrib = query_max_contrib        
+            self.options.max_contrib = query_max_contrib
 
         self.refresh_options()
         query = self.rewriter.query(query)
@@ -136,7 +137,8 @@ class PrivateReader:
                 if subquery == self._cached_ast:
                     db_rs = self._cached_exact
                 else:
-                    raise ValueError("Cannot run different query against cached result.  Make a new PrivateReader or else clear the cache with cache = False")
+                    raise ValueError("Cannot run different query against cached result.  "
+                                     "Make a new PrivateReader or else clear the cache with cache = False")
             else:
                 db_rs = self.reader.execute_ast(subquery)
                 self._cached_exact = list(db_rs)
@@ -147,6 +149,7 @@ class PrivateReader:
             db_rs = self.reader.execute_ast(subquery)
 
         clamp_counts = self.options.clamp_counts
+
         def process_row(row_in):
             # pull out tuple values
             row = [v for v in row_in]
@@ -187,7 +190,6 @@ class PrivateReader:
         out_syms = query.all_symbols()
         out_types = [s[1].type() for s in out_syms]
         out_colnames = [s[0] for s in out_syms]
-
 
         def convert(val, type):
             if type == 'string' or type == 'unknown':
@@ -273,23 +275,28 @@ class PrivateReader:
 
         return self._execute_ast(query, False)
 
+
 class PrivateReaderOptions:
     """Options that control privacy behavior"""
-    def __init__(self, 
-        censor_dims=True, 
-        clamp_counts=True, 
-        reservoir_sample=True,
-        clamp_columns=True,
-        row_privacy=False,
-        max_contrib=None):
+
+    def __init__(self,
+                 censor_dims=True,
+                 clamp_counts=True,
+                 reservoir_sample=True,
+                 clamp_columns=True,
+                 row_privacy=False,
+                 max_contrib=None):
         """Initialize with options.
+
         :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy
         :param clamp_counts: boolean, set to False to allow noisy counts to be negative
         :param reservoir_sample: boolean, set to False if the data collection will never have more than max_contrib record per individual
         :param clamp_columns: boolean, set to False to allow values that exceed lower and higher limit specified in metadata.  May impact privacy
         :param row_privacy: boolean, True if each row is a separate individual
         :param max_contrib: int, set to override the metadata-supplied limit of per-user
-          contribution.  May only revise down; metadata takes precedence if limit is smaller."""
+          contribution.  May only revise down; metadata takes precedence if limit is smaller.
+        """
+
         self.censor_dims = censor_dims
         self.clamp_counts = clamp_counts
         self.reservoir_sample = reservoir_sample
