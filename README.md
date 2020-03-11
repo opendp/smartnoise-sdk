@@ -8,7 +8,7 @@ The WhiteNoise tools allow researchers and analysts to:
 
 The WhiteNoise system is currently aimed at scenarios where the researcher is trusted by the data owner.  Future releases will focus on hardened scenarios where the researcher or analyst is untrusted.  
 
-New mechanisms and algorithms will be avaialable in coming weeks.
+New mechanisms and algorithms will be available in coming weeks.
 
 
 ## Data Access
