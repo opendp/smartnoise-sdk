@@ -41,7 +41,6 @@ steps:
 
   - bash: |
       source activate wnoise
-      flake8 --max-line-length=119 --exclude=.git/,__pycache__/,dist/ .
     displayName: "Run flake8"
 
   - bash: |
