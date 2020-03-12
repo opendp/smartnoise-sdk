@@ -5,7 +5,7 @@ steps:
 
   - bash: |
       source activate wnoise
-      conda install -c anaconda sqlite
+      conda install --yes -c anaconda sqlite
     displayName: Install Anaconda packages
 
   - bash: |
