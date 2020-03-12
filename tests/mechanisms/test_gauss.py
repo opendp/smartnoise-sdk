@@ -1,13 +1,13 @@
 import pytest
 import numpy as np
 from scipy.stats import norm
-from burdock.mechanisms.gaussian import Gaussian
+from opendp.whitenoise.mechanisms.gaussian import Gaussian
 
 #   Unit tests
 #
 class TestGauss:
     def test_simple_norm(self):
-        g = Gaussian(0.1) # epsilon of 0.1        
+        g = Gaussian(0.1) # epsilon of 0.1
         x = range(10000)
         y = g.release(x).values
         assert(round(np.sum(x) / 10E+6) == round(np.sum(y) / 10E+6))
@@ -40,7 +40,7 @@ class TestGauss:
         # check that outer bounds enclose inner bounds
         g = Gaussian(4.0, interval_widths=[0.95, 0.97]) # epsilon of 4.0, tighter bounds
         lower1, upper1 = g.bounds(False)[0]
-        lower1b, upper1b = g.bounds(True)[0] 
+        lower1b, upper1b = g.bounds(True)[0]
         lower2, upper2 = g.bounds(False)[1]
         lower2b, upper2b = g.bounds(True)[1]
         assert(lower2 < lower1)

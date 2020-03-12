@@ -1,5 +1,5 @@
 import pytest
-from burdock.report import Interval, Intervals
+from opendp.whitenoise.report import Interval, Intervals
 
 
 class TestIntervals:
@@ -34,5 +34,3 @@ class TestIntervals:
             assert(a == b)
         for a, b in zip(ival2, ival_b):
             assert(a == b)
-
-       
