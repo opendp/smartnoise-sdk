@@ -4,3 +4,4 @@ pandasql
 mlflow
 connexion
 sklearn
+matplotlib
