@@ -1,7 +1,7 @@
 import pytest
-from burdock.ast import Validate
-from burdock.sql.parse import QueryParser
-from burdock.metadata import CollectionMetadata
+from opendp.whitenoise.ast import Validate
+from opendp.whitenoise.sql.parse import QueryParser
+from opendp.whitenoise.metadata import CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname
@@ -51,7 +51,7 @@ class GoodQueryTester:
         for qs in self.queries:
             print(qs)
             q = QueryParser(metadata).query(qs)
-            Validate().validate_query(q, metadata)
+            Validate().validateQuery(q, metadata)
 
 
 class BadQueryTester:
@@ -70,4 +70,4 @@ class BadQueryTester:
 
     def validateSingle(self, q):
         with pytest.raises(ValueError):
-            Validate().validate_query(q, metadata)
+            Validate().validateQuery(q, metadata)
