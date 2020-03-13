@@ -1,0 +1,19 @@
+# install needed packages
+steps:
+  - bash: conda create --yes --quiet --name wnoise python=3.6
+    displayName: Create Anaconda environment
+
+  - bash: |
+      source activate wnoise
+      conda install --yes -c anaconda sqlite
+    displayName: Install Anaconda packages
+
+  - bash: |
+      source activate wnoise
+      pip install --upgrade pip
+    displayName: Upgrade pip to latest
+
+  - bash: |
+      source activate wnoise
+      pip install -r tests/requirements.txt
+    displayName: Install required pip packages

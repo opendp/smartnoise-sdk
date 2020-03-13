@@ -13,9 +13,9 @@ import pytest
 
 from requests import Session
 
-from burdock.client.restclient.rest_client import RestClient
-from burdock.client.restclient.models.secret import Secret
-DATAVERSE_TOKEN_ENV_VAR = "BURDOCK_DATAVERSE_TEST_TOKEN"
+from opendp.whitenoise.client.restclient.rest_client import RestClient
+from opendp.whitenoise.client.restclient.models.secret import Secret
+DATAVERSE_TOKEN_ENV_VAR = "WHITENOISE_DATAVERSE_TEST_TOKEN"
 
 # Add the utils directory to the path
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -26,7 +26,7 @@ from service_utils import run_app  # NOQA
 
 @pytest.fixture(scope="session")
 def client():
-    port = int(os.environ.get("BURDOCK_SERVICE_PORT", 5000))
+    port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5000))
 
     class Credentials():
         def signed_session(self, session=None):
@@ -41,4 +41,3 @@ def client():
 
 def test_client(client):
     pass
-

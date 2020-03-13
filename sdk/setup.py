@@ -18,7 +18,9 @@ DEPENDENCIES = [
     "pandas",
     "msrest",
     "scipy",
-    "antlr4-python3-runtime==4.8"
+    "antlr4-python3-runtime==4.8",
+    "pandasql",
+    "statsmodels"
 ]
 
 EXTRAS = { }
@@ -29,14 +31,14 @@ HISTORY = ""
 inline_license = ""
 
 setup(
-    name="burdock",
+    name="opendp-whitenoise",
 
     version=SELFVERSION,
 
     description="",
     long_description=README + "\n\n" + HISTORY,
     long_description_content_type="text/x-rst",
-    author="burdock",
+    author="opendp-whitenoise",
     license=inline_license,
     packages=find_packages(exclude=["*.tests"]),
 

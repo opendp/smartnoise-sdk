@@ -5,14 +5,15 @@ import logging
 test_logger = logging.getLogger("stochastic-test-logger")
 
 import sys
+import subprocess
 import os
 import pytest
-from evaluation.dp_verification import DPVerification
-from evaluation.exploration import Exploration
-from evaluation.aggregation import Aggregation
-import yarrow
+from opendp.whitenoise.evaluation.dp_verification import DPVerification
+from opendp.whitenoise.evaluation.exploration import Exploration
+from opendp.whitenoise.evaluation.aggregation import Aggregation
 
-dv = DPVerification(dataset_size=1000)
+root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url, "service", "datasets"))
 ag = Aggregation(t=1, repeat_count=1000)
 
 class TestStochastic:
@@ -43,7 +44,7 @@ class TestStochastic:
         assert(acc_res == True)
         assert(utility_res == True)
         assert(bias_res == True)
-    
+
     def test_dp_predicate_mean(self):
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT AVG(Usage) AS MeanUsage FROM d1.d1"
@@ -68,17 +69,17 @@ class TestStochastic:
     def test_dp_laplace_mechanism_sum(self):
         dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum == True)
-    
+
     def test_dp_gaussian_mechanism_count(self):
         ag = Aggregation(t=1, repeat_count=500, mechanism = "Gaussian")
         dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", plot=False, debug = False)
         assert(dp_count == True)
-    
+
     def test_dp_gaussian_mechanism_sum(self):
         ag = Aggregation(t=1, repeat_count=500, mechanism = "Gaussian")
         dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum == True)
-    
+
     @pytest.mark.slow
     def test_powerset_sum(self):
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
@@ -118,24 +119,28 @@ class TestStochastic:
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_mean(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_mean_res = dv.yarrow_test(test_csv_path, yarrow.dp_mean, 'income', float, epsilon=1.0, minimum=0, maximum=100, num_records=1000)
         assert(dp_yarrow_mean_res == True)
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_variance(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_var_res = dv.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=1.0, minimum=0, maximum=12, num_records=1000)
         assert(dp_yarrow_var_res == True)
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_moment_raw(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_moment_res = dv.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
         assert(dp_yarrow_moment_res == True)
 
     @pytest.mark.skip(reason="Yarrow response error while calling")
     def test_yarrow_dp_covariance(self):
+        import yarrow
         test_csv_path = 'service/datasets/PUMS.csv'
         dp_yarrow_covariance_res = dv.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
         assert(dp_yarrow_covariance_res == True)
