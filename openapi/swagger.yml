@@ -53,6 +53,25 @@ paths:
            description: Successfully return the dataset information
            schema:
             $ref: '#/definitions/DatasetDocument'
+  /register:
+    post:
+      operationId: dataset.register
+      tags:
+        - datasetRegister
+      summary: Register a new dataset with budget
+      description: Posts dataset info, creates new entry in remote dict
+      parameters:
+        - name: dataset
+          in: body
+          description: Well formed dataset for adding to dict
+          required: True
+          schema:
+            $ref: '#/definitions/DatasetDocument'
+      responses:
+         200:
+           description: Successfully registered a new dataset
+           schema:
+            $ref: '#/definitions/DatasetDocument'
   /secrets:
     post:
       operationId: secrets.put
@@ -114,6 +133,31 @@ definitions:
         $ref: '#/definitions/LocalCSVDetails'
       dataverse_details:
         $ref: '#/definitions/DataverseDetails'
+  DatasetPutDocument:
+    type: object
+    properties:
+      dataset_name:
+        type: string
+        description: Name of dataset to register
+      dataset_type:
+        type: string
+        description: The type of dataset being registered (local_csv or dataverse)
+      host:
+        type: string
+        description: Host of dataset, if dataverse
+      schema:
+        type: string
+        description: Schema (formatted json)
+      budget:
+        type: number
+        format: float
+        description: Available budget for the dataset registered
+      key:
+        type: string
+        description: Key for dataset
+      token:
+        type: string
+        description: Contains the datasets secret, with name and value
   Secret:
     type: object
     properties:

@@ -76,9 +76,12 @@ class RestClient(object):
          deserialized response
         :param operation_config: :ref:`Operation configuration
          overrides<msrest:optionsforoperations>`.
-        :return: ExecuterunOKResponse or ClientRawResponse if raw=true
-        :rtype: ~restclient.models.ExecuterunOKResponse or
-         ~msrest.pipeline.ClientRawResponse
+        :return:
+         Paths12dv92bexecutepostresponses200contentapplicationJsonschema or
+         ClientRawResponse if raw=true
+        :rtype:
+         ~restclient.models.Paths12dv92bexecutepostresponses200contentapplicationJsonschema
+         or ~msrest.pipeline.ClientRawResponse
         :raises:
          :class:`HttpOperationError<msrest.exceptions.HttpOperationError>`
         """
@@ -108,7 +111,7 @@ class RestClient(object):
         deserialized = None
 
         if response.status_code == 200:
-            deserialized = self._deserialize('ExecuterunOKResponse', response)
+            deserialized = self._deserialize('Paths12dv92bexecutepostresponses200contentapplicationJsonschema', response)
 
         if raw:
             client_raw_response = ClientRawResponse(deserialized, response)
@@ -170,6 +173,60 @@ class RestClient(object):
 
         return deserialized
     datasetread.metadata = {'url': '/dataset'}
+
+    def datasetregister(
+            self, dataset, custom_headers=None, raw=False, **operation_config):
+        """Register a new dataset with budget.
+
+        Posts dataset info, creates new entry in remote dict.
+
+        :param dataset: Well formed dataset for adding to dict
+        :type dataset: ~restclient.models.DatasetDocument
+        :param dict custom_headers: headers that will be added to the request
+        :param bool raw: returns the direct response alongside the
+         deserialized response
+        :param operation_config: :ref:`Operation configuration
+         overrides<msrest:optionsforoperations>`.
+        :return: DatasetDocument or ClientRawResponse if raw=true
+        :rtype: ~restclient.models.DatasetDocument or
+         ~msrest.pipeline.ClientRawResponse
+        :raises:
+         :class:`HttpOperationError<msrest.exceptions.HttpOperationError>`
+        """
+        # Construct URL
+        url = self.datasetregister.metadata['url']
+
+        # Construct parameters
+        query_parameters = {}
+
+        # Construct headers
+        header_parameters = {}
+        header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+        if custom_headers:
+            header_parameters.update(custom_headers)
+
+        # Construct body
+        body_content = self._serialize.body(dataset, 'DatasetDocument')
+
+        # Construct and send request
+        request = self._client.post(url, query_parameters)
+        response = self._client.send(
+            request, header_parameters, body_content, stream=False, **operation_config)
+
+        if response.status_code not in [200]:
+            raise HttpOperationError(self._deserialize, response)
+
+        deserialized = None
+
+        if response.status_code == 200:
+            deserialized = self._deserialize('DatasetDocument', response)
+
+        if raw:
+            client_raw_response = ClientRawResponse(deserialized, response)
+            return client_raw_response
+
+        return deserialized
+    datasetregister.metadata = {'url': '/register'}
 
     def secretsput(
             self, secret, custom_headers=None, raw=False, **operation_config):

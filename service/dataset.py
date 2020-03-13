@@ -65,8 +65,8 @@ def register(dataset):
         abort(403, "Must specify a budget")
     
      # Add type if possible
-    if not (dataset["type"] is "local_csv" or "dataverse"):
-        abort(405, "Given type was {}, must be either local_csv or dataverse.".format(str(dataset["type"])))
+    if not (dataset["dataset_type"] is "local_csv" or "dataverse"):
+        abort(405, "Given type was {}, must be either local_csv or dataverse.".format(str(dataset["dataset_type"])))
 
     # Add checks
     if "local_path" in dataset:
@@ -89,26 +89,13 @@ def register(dataset):
     else:
         abort(409, "Dataset must specify either local_path or local_metadata_path.")
     
-    if dataset["type"] == "dataverse":
+    if dataset["dataset_type"] == "dataverse":
         if dataset["token"]:
-            secrets_put(dataset["token"])
+            secrets_put(json.loads(dataset["token"]))
         else:
             abort(410, "DatasetDocument must contain a token field with a secret.")
     
     # If everything looks good, register it.
     DATASETS[dataset_name] = dataset
-        
-#%%
-new_dataset = {
-    "dataset_name": "new",
-    "type": "dataverse",
-    "host": "https://me.com",
-    "schema": '{"fake_schema": "schema"}',
-    "budget": 3.0,
-    "key": "dataverse_details",
-    "token": {"name":"new", "value":0}
-}
 
-register(new_dataset)
-print(DATASETS)
-
+    return dataset

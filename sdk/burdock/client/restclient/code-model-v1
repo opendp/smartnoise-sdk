@@ -1,0 +1,1481 @@
+{
+ "$id": "1",
+ "modelTypes": [
+  {
+   "$id": "2",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "3",
+     "isReadOnly": false,
+     "realPath": [
+      "local_path"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "4",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "5",
+      "fixed": false,
+      "raw": "Path to the csv on diskThe type of the dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "6",
+      "fixed": false,
+      "raw": "local_path"
+     },
+     "serializedName": "local_path",
+     "modelType": {
+      "$id": "7",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "8",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "LocalCSVDetails",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "9",
+    "fixed": false,
+    "raw": "LocalCSVDetails"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "LocalCSVDetails",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/LocalCSVDetails"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "10",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "11",
+     "isReadOnly": false,
+     "realPath": [
+      "local_metadata_path"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "12",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "13",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "14",
+      "fixed": false,
+      "raw": "local_metadata_path"
+     },
+     "serializedName": "local_metadata_path",
+     "modelType": {
+      "$id": "15",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "16",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "17",
+     "isReadOnly": false,
+     "realPath": [
+      "token"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "18",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "19",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "20",
+      "fixed": false,
+      "raw": "token"
+     },
+     "serializedName": "token",
+     "modelType": {
+      "$id": "21",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "22",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "23",
+     "isReadOnly": false,
+     "realPath": [
+      "host"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "24",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "25",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "26",
+      "fixed": false,
+      "raw": "host"
+     },
+     "serializedName": "host",
+     "modelType": {
+      "$id": "27",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "28",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "DataverseDetails",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "29",
+    "fixed": false,
+    "raw": "DataverseDetails"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DataverseDetails",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/DataverseDetails"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "30",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "31",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_type"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "32",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "33",
+      "fixed": false,
+      "raw": "The type of the dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "34",
+      "fixed": false,
+      "raw": "dataset_type"
+     },
+     "serializedName": "dataset_type",
+     "modelType": {
+      "$id": "35",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "36",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "37",
+     "isReadOnly": false,
+     "realPath": [
+      "csv_details"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "38",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "39",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "40",
+      "fixed": false,
+      "raw": "csv_details"
+     },
+     "serializedName": "csv_details",
+     "modelType": {
+      "$ref": "2"
+     }
+    },
+    {
+     "$id": "41",
+     "isReadOnly": false,
+     "realPath": [
+      "dataverse_details"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "42",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "43",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "44",
+      "fixed": false,
+      "raw": "dataverse_details"
+     },
+     "serializedName": "dataverse_details",
+     "modelType": {
+      "$ref": "10"
+     }
+    }
+   ],
+   "serializedName": "DatasetDocument",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "45",
+    "fixed": false,
+    "raw": "DatasetDocument"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DatasetDocument",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/DatasetDocument"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "46",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "47",
+     "isReadOnly": false,
+     "realPath": [
+      "result"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "48",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "49",
+      "fixed": false,
+      "raw": "Json string result,  TODO release document"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "50",
+      "fixed": false,
+      "raw": "result"
+     },
+     "serializedName": "result",
+     "modelType": {
+      "$id": "51",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "52",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "paths·12dv92b·execute·post·responses·200·content·application-json·schema",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "53",
+    "fixed": false,
+    "raw": "paths·12dv92b·execute·post·responses·200·content·application-json·schema"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "paths·12dv92b·execute·post·responses·200·content·application-json·schema",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/paths·12dv92b·execute·post·responses·200·content·application-json·schema"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "54",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "55",
+     "isReadOnly": false,
+     "realPath": [
+      "project_uri"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "56",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "57",
+      "fixed": false,
+      "raw": "Git url of the project"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "58",
+      "fixed": false,
+      "raw": "project_uri"
+     },
+     "serializedName": "project_uri",
+     "modelType": {
+      "$id": "59",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "60",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "61",
+     "isReadOnly": false,
+     "realPath": [
+      "params"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "62",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "63",
+      "fixed": false,
+      "raw": "Input parameters of the project"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "64",
+      "fixed": false,
+      "raw": "params"
+     },
+     "serializedName": "params",
+     "modelType": {
+      "$id": "65",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "66",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "ProjectRunDetails",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "67",
+    "fixed": false,
+    "raw": "ProjectRunDetails"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "ProjectRunDetails",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/ProjectRunDetails"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "68",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "69",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "70",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "71",
+      "fixed": false,
+      "raw": "The name for the dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "72",
+      "fixed": false,
+      "raw": "dataset_name"
+     },
+     "serializedName": "dataset_name",
+     "modelType": {
+      "$id": "73",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "74",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "DatasetReadRequest",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "75",
+    "fixed": false,
+    "raw": "DatasetReadRequest"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DatasetReadRequest",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/DatasetReadRequest"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "76",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "77",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "78",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "79",
+      "fixed": false,
+      "raw": "Name of dataset to register"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "80",
+      "fixed": false,
+      "raw": "dataset_name"
+     },
+     "serializedName": "dataset_name",
+     "modelType": {
+      "$id": "81",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "82",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "83",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_type"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "84",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "85",
+      "fixed": false,
+      "raw": "The type of dataset being registered (local_csv or dataverse)"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "86",
+      "fixed": false,
+      "raw": "dataset_type"
+     },
+     "serializedName": "dataset_type",
+     "modelType": {
+      "$id": "87",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "88",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "89",
+     "isReadOnly": false,
+     "realPath": [
+      "host"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "90",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "91",
+      "fixed": false,
+      "raw": "Host of dataset, if dataverse"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "92",
+      "fixed": false,
+      "raw": "host"
+     },
+     "serializedName": "host",
+     "modelType": {
+      "$id": "93",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "94",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "95",
+     "isReadOnly": false,
+     "realPath": [
+      "schema"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "96",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "97",
+      "fixed": false,
+      "raw": "Schema (formatted json)"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "98",
+      "fixed": false,
+      "raw": "schema"
+     },
+     "serializedName": "schema",
+     "modelType": {
+      "$id": "99",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "100",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "101",
+     "isReadOnly": false,
+     "realPath": [
+      "budget"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "102",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "103",
+      "fixed": false,
+      "raw": "Available budget for the dataset registered"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "104",
+      "fixed": false,
+      "raw": "budget"
+     },
+     "serializedName": "budget",
+     "modelType": {
+      "$id": "105",
+      "$type": "PrimaryType",
+      "format": "float",
+      "knownPrimaryType": "double",
+      "name": {
+       "$id": "106",
+       "fixed": false,
+       "raw": "Double"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "107",
+     "isReadOnly": false,
+     "realPath": [
+      "key"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "108",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "109",
+      "fixed": false,
+      "raw": "Key for dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "110",
+      "fixed": false,
+      "raw": "key"
+     },
+     "serializedName": "key",
+     "modelType": {
+      "$id": "111",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "112",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "113",
+     "isReadOnly": false,
+     "realPath": [
+      "token"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "114",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "115",
+      "fixed": false,
+      "raw": "Contains the datasets secret, with name and value"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "116",
+      "fixed": false,
+      "raw": "token"
+     },
+     "serializedName": "token",
+     "modelType": {
+      "$id": "117",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "118",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "DatasetPutDocument",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "119",
+    "fixed": false,
+    "raw": "DatasetPutDocument"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DatasetPutDocument",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/DatasetPutDocument"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "120",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "121",
+     "isReadOnly": false,
+     "realPath": [
+      "name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "122",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "123",
+      "fixed": false,
+      "raw": "The name of the secret"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "124",
+      "fixed": false,
+      "raw": "name"
+     },
+     "serializedName": "name",
+     "modelType": {
+      "$id": "125",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "126",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "127",
+     "isReadOnly": false,
+     "realPath": [
+      "value"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "128",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "129",
+      "fixed": false,
+      "raw": "The secret"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "130",
+      "fixed": false,
+      "raw": "value"
+     },
+     "serializedName": "value",
+     "modelType": {
+      "$id": "131",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "132",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "Secret",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "133",
+    "fixed": false,
+    "raw": "Secret"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "Secret",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/Secret"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "134",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "135",
+     "isReadOnly": false,
+     "realPath": [
+      "name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "136",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "137",
+      "fixed": false,
+      "raw": "The name of the secret"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "138",
+      "fixed": false,
+      "raw": "name"
+     },
+     "serializedName": "name",
+     "modelType": {
+      "$id": "139",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "140",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "SecretPutSuccess",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "141",
+    "fixed": false,
+    "raw": "SecretPutSuccess"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "SecretPutSuccess",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/schemas/SecretPutSuccess"
+     ]
+    }
+   },
+   "deprecated": false
+  }
+ ],
+ "name": "RestClient",
+ "namespace": "Restclient",
+ "modelsName": "Models",
+ "apiVersion": "0.0.1",
+ "baseUrl": "/api",
+ "documentation": "This is the Open API specification of the Burdock execution service.",
+ "operations": [
+  {
+   "$id": "142",
+   "methods": [
+    {
+     "$id": "143",
+     "parameters": [
+      {
+       "$id": "144",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "145",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "146",
+        "fixed": false,
+        "raw": "Configuration for the module run."
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·1c3o36a·execute·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/requestBodies/paths·1c3o36a·execute·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "details"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "147",
+        "fixed": false,
+        "raw": "details"
+       },
+       "serializedName": "details",
+       "modelType": {
+        "$ref": "54"
+       }
+      }
+     ],
+     "name": {
+      "$id": "148",
+      "fixed": false,
+      "raw": "execute.run"
+     },
+     "group": {
+      "$id": "149",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "execute.run",
+     "url": "/execute",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "150",
+       "body": {
+        "$ref": "46"
+       },
+       "extensions": {
+        "$id": "151",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·xg3uxr·execute·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/responses/paths·xg3uxr·execute·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "152",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "153",
+      "body": {
+       "$ref": "46"
+      },
+      "isNullable": true
+     },
+     "description": "Create a run of the specified module and return the results.",
+     "summary": "Execute a differentially private module",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "154",
+     "parameters": [
+      {
+       "$id": "155",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "156",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "157",
+        "fixed": false,
+        "raw": "Get the dataset read info"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·18thysi·dataset·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/requestBodies/paths·18thysi·dataset·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "info"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "158",
+        "fixed": false,
+        "raw": "info"
+       },
+       "serializedName": "info",
+       "modelType": {
+        "$ref": "68"
+       }
+      }
+     ],
+     "name": {
+      "$id": "159",
+      "fixed": false,
+      "raw": "dataset.read"
+     },
+     "group": {
+      "$id": "160",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "dataset.read",
+     "url": "/dataset",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "161",
+       "body": {
+        "$ref": "30"
+       },
+       "extensions": {
+        "$id": "162",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·1p1x7jo·dataset·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/responses/paths·1p1x7jo·dataset·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "163",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "164",
+      "body": {
+       "$ref": "30"
+      },
+      "isNullable": true
+     },
+     "description": "Return the details of the requested dataset",
+     "summary": "Read the details for reading the dataset",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "165",
+     "parameters": [
+      {
+       "$id": "166",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "167",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "168",
+        "fixed": false,
+        "raw": "Well formed dataset for adding to dict"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·uq06o2·register·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/requestBodies/paths·uq06o2·register·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "dataset"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "169",
+        "fixed": false,
+        "raw": "dataset"
+       },
+       "serializedName": "dataset",
+       "modelType": {
+        "$ref": "30"
+       }
+      }
+     ],
+     "name": {
+      "$id": "170",
+      "fixed": false,
+      "raw": "dataset.register"
+     },
+     "group": {
+      "$id": "171",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "dataset.register",
+     "url": "/register",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "172",
+       "body": {
+        "$ref": "30"
+       },
+       "extensions": {
+        "$id": "173",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·xnb45z·register·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/responses/paths·xnb45z·register·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "174",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "175",
+      "body": {
+       "$ref": "30"
+      },
+      "isNullable": true
+     },
+     "description": "Posts dataset info, creates new entry in remote dict",
+     "summary": "Register a new dataset with budget",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "176",
+     "parameters": [
+      {
+       "$id": "177",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "178",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "179",
+        "fixed": false,
+        "raw": "Add a secret"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·5ug4j7·secrets·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/requestBodies/paths·5ug4j7·secrets·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "secret"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "180",
+        "fixed": false,
+        "raw": "secret"
+       },
+       "serializedName": "secret",
+       "modelType": {
+        "$ref": "120"
+       }
+      }
+     ],
+     "name": {
+      "$id": "181",
+      "fixed": false,
+      "raw": "secrets.put"
+     },
+     "group": {
+      "$id": "182",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "secrets.put",
+     "url": "/secrets",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "183",
+       "body": {
+        "$ref": "134"
+       },
+       "extensions": {
+        "$id": "184",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·v1efgs·secrets·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/responses/paths·v1efgs·secrets·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "185",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "186",
+      "body": {
+       "$ref": "134"
+      },
+      "isNullable": true
+     },
+     "description": "Add the secret to the secret store",
+     "summary": "Add a secret to the secret store",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    }
+   ],
+   "name": {
+    "$id": "187",
+    "fixed": false,
+    "raw": ""
+   },
+   "typeName": {
+    "$id": "188",
+    "fixed": false
+   },
+   "nameForProperty": "RestClient"
+  }
+ ]
+}

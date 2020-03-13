@@ -5,6 +5,7 @@ from requests import Session
 from .restclient.models.project_run_details import ProjectRunDetails
 from .restclient.rest_client import RestClient
 from .restclient.models.dataset_read_request import DatasetReadRequest
+from .restclient.models.dataset_put_document import DatasetPutDocument
 
 
 class _MockCredentials(object):
@@ -28,16 +29,21 @@ class ExecutionClient(object):
         return client.executerun(details)
 
 class DatasetClient(object):
+    def register(self, dataset):
+        client = _get_client()
+        register_request = DatasetPutDocument(dataset_name=dataset['dataset_name'], dataset_type=dataset['dataset_type'], host=dataset['host'], schema=dataset['schema'], budget=dataset['budget'], key=dataset['key'], token=dataset['token'])
+        return client.datasetregister(register_request)
+
     def read(self, dataset_name, budget):
         client = _get_client()
         read_request = DatasetReadRequest(dataset_name=dataset_name)
         return client.datasetread(read_request)
-
 
 def get_dataset_client():
     return DatasetClient()
 
 def get_execution_client():
     return ExecutionClient()
+
 
 __all__ = ["get_dataset_client", "get_execution_client"]
