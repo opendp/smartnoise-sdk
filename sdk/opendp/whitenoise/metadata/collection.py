@@ -176,7 +176,7 @@ class CollectionYamlLoader:
             try:
                 c_s = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
-                print(exc)
+                raise
         return self._create_metadata_object(c_s)
 
     def _create_metadata_object(self, c_s):
