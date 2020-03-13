@@ -121,13 +121,13 @@ class RestClient(object):
     executerun.metadata = {'url': '/execute'}
 
     def datasetread(
-            self, info, custom_headers=None, raw=False, **operation_config):
+            self, dataset_request, custom_headers=None, raw=False, **operation_config):
         """Read the details for reading the dataset.
 
         Return the details of the requested dataset.
 
-        :param info: Get the dataset read info
-        :type info: ~restclient.models.DatasetReadRequest
+        :param dataset_request: Get the dataset read request
+        :type dataset_request: ~restclient.models.DatasetReadRequest
         :param dict custom_headers: headers that will be added to the request
         :param bool raw: returns the direct response alongside the
          deserialized response
@@ -152,7 +152,7 @@ class RestClient(object):
             header_parameters.update(custom_headers)
 
         # Construct body
-        body_content = self._serialize.body(info, 'DatasetReadRequest')
+        body_content = self._serialize.body(dataset_request, 'DatasetReadRequest')
 
         # Construct and send request
         request = self._client.post(url, query_parameters)

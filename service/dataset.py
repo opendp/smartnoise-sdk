@@ -22,8 +22,8 @@ DATASETS = {"example": {"type": "local_csv",
 # TODO: Do we need to add an ability to register these?
 KNOWN_DATASET_KEYS = ["csv_details", "dataverse_details"]
 
-def read(info):
-    dataset_name = info["dataset_name"]
+def read(dataset_request):
+    dataset_name = dataset_request["dataset_name"]
 
     if dataset_name not in DATASETS:
         abort(400, "Dataset id {} not found.".format(dataset_name))
@@ -32,12 +32,12 @@ def read(info):
 
     # Validate the secret, extract token
     if dataset["type"] == "dataverse":
-        dataset["token"] = secrets_get(name="dataverse:{}".format(info["dataset_name"]))["value"]
+        dataset["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
 
     # Check/Decrement the budget before returning dataset
     # Unclear what behaviour budget decrementing should have
     # - should it check the type of query, and decrement accordingly?
-    adjusted_budget = dataset["budget"] - info["budget"]
+    adjusted_budget = dataset["budget"] - dataset_request["budget"]
     if adjusted_budget >= 0.0:
         dataset["budget"] = adjusted_budget
     else:

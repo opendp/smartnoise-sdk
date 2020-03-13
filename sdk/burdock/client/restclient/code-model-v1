@@ -1185,7 +1185,7 @@
        "documentation": {
         "$id": "163",
         "fixed": false,
-        "raw": "Get the dataset read info"
+        "raw": "Get the dataset read request"
        },
        "extensions": {
         "x-ms-metadata": {
@@ -1200,16 +1200,16 @@
           "file:///C:/Users/lurosenb/burdock/burdock_fork/burdock/openapi/swagger.yml#/components/requestBodies/paths·18thysi·dataset·post·requestbody"
          ]
         },
-        "x-ms-requestBody-name": "info"
+        "x-ms-requestBody-name": "dataset_request"
        },
        "isRequired": true,
        "isConstant": false,
        "name": {
         "$id": "164",
         "fixed": false,
-        "raw": "info"
+        "raw": "dataset_request"
        },
-       "serializedName": "info",
+       "serializedName": "dataset_request",
        "modelType": {
         "$ref": "68"
        }

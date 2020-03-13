@@ -42,9 +42,9 @@ paths:
       summary: Read the details for reading the dataset
       description: Return the details of the requested dataset
       parameters:
-        - name: info
+        - name: dataset_request
           in: body
-          description: Get the dataset read info
+          description: Get the dataset read request
           required: True
           schema:
             $ref: '#/definitions/DatasetReadRequest'
