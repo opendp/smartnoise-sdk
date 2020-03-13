@@ -181,7 +181,7 @@ class RestClient(object):
         Posts dataset info, creates new entry in remote dict.
 
         :param dataset: Well formed dataset for adding to dict
-        :type dataset: ~restclient.models.DatasetDocument
+        :type dataset: ~restclient.models.DatasetPutDocument
         :param dict custom_headers: headers that will be added to the request
         :param bool raw: returns the direct response alongside the
          deserialized response
@@ -206,7 +206,7 @@ class RestClient(object):
             header_parameters.update(custom_headers)
 
         # Construct body
-        body_content = self._serialize.body(dataset, 'DatasetDocument')
+        body_content = self._serialize.body(dataset, 'DatasetPutDocument')
 
         # Construct and send request
         request = self._client.post(url, query_parameters)
