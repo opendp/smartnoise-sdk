@@ -36,7 +36,7 @@ class DatasetClient(object):
 
     def read(self, dataset_name, budget):
         client = _get_client()
-        read_request = DatasetReadRequest(dataset_name=dataset_name)
+        read_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
         return client.datasetread(read_request)
 
 def get_dataset_client():

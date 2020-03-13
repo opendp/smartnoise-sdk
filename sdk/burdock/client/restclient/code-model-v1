@@ -530,12 +530,50 @@
       },
       "deprecated": false
      }
+    },
+    {
+     "$id": "75",
+     "isReadOnly": false,
+     "realPath": [
+      "budget"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "76",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "77",
+      "fixed": false,
+      "raw": "Budget used by this read request"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "78",
+      "fixed": false,
+      "raw": "budget"
+     },
+     "serializedName": "budget",
+     "modelType": {
+      "$id": "79",
+      "$type": "PrimaryType",
+      "format": "float",
+      "knownPrimaryType": "double",
+      "name": {
+       "$id": "80",
+       "fixed": false,
+       "raw": "Double"
+      },
+      "deprecated": false
+     }
     }
    ],
    "serializedName": "DatasetReadRequest",
    "containsConstantProperties": false,
    "name": {
-    "$id": "75",
+    "$id": "81",
     "fixed": false,
     "raw": "DatasetReadRequest"
    },
@@ -556,51 +594,14 @@
    "deprecated": false
   },
   {
-   "$id": "76",
+   "$id": "82",
    "$type": "CompositeType",
    "properties": [
-    {
-     "$id": "77",
-     "isReadOnly": false,
-     "realPath": [
-      "dataset_name"
-     ],
-     "collectionFormat": "none",
-     "defaultValue": {
-      "$id": "78",
-      "fixed": false
-     },
-     "deprecated": false,
-     "documentation": {
-      "$id": "79",
-      "fixed": false,
-      "raw": "Name of dataset to register"
-     },
-     "isRequired": false,
-     "isConstant": false,
-     "name": {
-      "$id": "80",
-      "fixed": false,
-      "raw": "dataset_name"
-     },
-     "serializedName": "dataset_name",
-     "modelType": {
-      "$id": "81",
-      "$type": "PrimaryType",
-      "knownPrimaryType": "string",
-      "name": {
-       "$id": "82",
-       "fixed": false,
-       "raw": "String"
-      },
-      "deprecated": false
-     }
-    },
     {
      "$id": "83",
      "isReadOnly": false,
      "realPath": [
-      "dataset_type"
+      "dataset_name"
      ],
      "collectionFormat": "none",
      "defaultValue": {
@@ -611,16 +612,16 @@
      "documentation": {
       "$id": "85",
       "fixed": false,
-      "raw": "The type of dataset being registered (local_csv or dataverse)"
+      "raw": "Name of dataset to register"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
       "$id": "86",
       "fixed": false,
-      "raw": "dataset_type"
+      "raw": "dataset_name"
      },
-     "serializedName": "dataset_type",
+     "serializedName": "dataset_name",
      "modelType": {
       "$id": "87",
       "$type": "PrimaryType",
@@ -637,7 +638,7 @@
      "$id": "89",
      "isReadOnly": false,
      "realPath": [
-      "host"
+      "dataset_type"
      ],
      "collectionFormat": "none",
      "defaultValue": {
@@ -648,16 +649,16 @@
      "documentation": {
       "$id": "91",
       "fixed": false,
-      "raw": "Host of dataset, if dataverse"
+      "raw": "The type of dataset being registered (local_csv or dataverse)"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
       "$id": "92",
       "fixed": false,
-      "raw": "host"
+      "raw": "dataset_type"
      },
-     "serializedName": "host",
+     "serializedName": "dataset_type",
      "modelType": {
       "$id": "93",
       "$type": "PrimaryType",
@@ -674,7 +675,7 @@
      "$id": "95",
      "isReadOnly": false,
      "realPath": [
-      "schema"
+      "host"
      ],
      "collectionFormat": "none",
      "defaultValue": {
@@ -685,16 +686,16 @@
      "documentation": {
       "$id": "97",
       "fixed": false,
-      "raw": "Schema (formatted json)"
+      "raw": "Host of dataset, if dataverse"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
       "$id": "98",
       "fixed": false,
-      "raw": "schema"
+      "raw": "host"
      },
-     "serializedName": "schema",
+     "serializedName": "host",
      "modelType": {
       "$id": "99",
       "$type": "PrimaryType",
@@ -711,7 +712,7 @@
      "$id": "101",
      "isReadOnly": false,
      "realPath": [
-      "budget"
+      "schema"
      ],
      "collectionFormat": "none",
      "defaultValue": {
@@ -722,25 +723,24 @@
      "documentation": {
       "$id": "103",
       "fixed": false,
-      "raw": "Available budget for the dataset registered"
+      "raw": "Schema (formatted json)"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
       "$id": "104",
       "fixed": false,
-      "raw": "budget"
+      "raw": "schema"
      },
-     "serializedName": "budget",
+     "serializedName": "schema",
      "modelType": {
       "$id": "105",
       "$type": "PrimaryType",
-      "format": "float",
-      "knownPrimaryType": "double",
+      "knownPrimaryType": "string",
       "name": {
        "$id": "106",
        "fixed": false,
-       "raw": "Double"
+       "raw": "String"
       },
       "deprecated": false
      }
@@ -749,7 +749,7 @@
      "$id": "107",
      "isReadOnly": false,
      "realPath": [
-      "key"
+      "budget"
      ],
      "collectionFormat": "none",
      "defaultValue": {
@@ -760,24 +760,25 @@
      "documentation": {
       "$id": "109",
       "fixed": false,
-      "raw": "Key for dataset"
+      "raw": "Available budget for the dataset registered"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
       "$id": "110",
       "fixed": false,
-      "raw": "key"
+      "raw": "budget"
      },
-     "serializedName": "key",
+     "serializedName": "budget",
      "modelType": {
       "$id": "111",
       "$type": "PrimaryType",
-      "knownPrimaryType": "string",
+      "format": "float",
+      "knownPrimaryType": "double",
       "name": {
        "$id": "112",
        "fixed": false,
-       "raw": "String"
+       "raw": "Double"
       },
       "deprecated": false
      }
@@ -786,7 +787,7 @@
      "$id": "113",
      "isReadOnly": false,
      "realPath": [
-      "token"
+      "key"
      ],
      "collectionFormat": "none",
      "defaultValue": {
@@ -797,16 +798,16 @@
      "documentation": {
       "$id": "115",
       "fixed": false,
-      "raw": "Contains the datasets secret, with name and value"
+      "raw": "Key for dataset"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
       "$id": "116",
       "fixed": false,
-      "raw": "token"
+      "raw": "key"
      },
-     "serializedName": "token",
+     "serializedName": "key",
      "modelType": {
       "$id": "117",
       "$type": "PrimaryType",
@@ -818,12 +819,49 @@
       },
       "deprecated": false
      }
+    },
+    {
+     "$id": "119",
+     "isReadOnly": false,
+     "realPath": [
+      "token"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "120",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "121",
+      "fixed": false,
+      "raw": "Contains the datasets secret, with name and value"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "122",
+      "fixed": false,
+      "raw": "token"
+     },
+     "serializedName": "token",
+     "modelType": {
+      "$id": "123",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "124",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
     }
    ],
    "serializedName": "DatasetPutDocument",
    "containsConstantProperties": false,
    "name": {
-    "$id": "119",
+    "$id": "125",
     "fixed": false,
     "raw": "DatasetPutDocument"
    },
@@ -844,51 +882,14 @@
    "deprecated": false
   },
   {
-   "$id": "120",
+   "$id": "126",
    "$type": "CompositeType",
    "properties": [
-    {
-     "$id": "121",
-     "isReadOnly": false,
-     "realPath": [
-      "name"
-     ],
-     "collectionFormat": "none",
-     "defaultValue": {
-      "$id": "122",
-      "fixed": false
-     },
-     "deprecated": false,
-     "documentation": {
-      "$id": "123",
-      "fixed": false,
-      "raw": "The name of the secret"
-     },
-     "isRequired": false,
-     "isConstant": false,
-     "name": {
-      "$id": "124",
-      "fixed": false,
-      "raw": "name"
-     },
-     "serializedName": "name",
-     "modelType": {
-      "$id": "125",
-      "$type": "PrimaryType",
-      "knownPrimaryType": "string",
-      "name": {
-       "$id": "126",
-       "fixed": false,
-       "raw": "String"
-      },
-      "deprecated": false
-     }
-    },
     {
      "$id": "127",
      "isReadOnly": false,
      "realPath": [
-      "value"
+      "name"
      ],
      "collectionFormat": "none",
      "defaultValue": {
@@ -899,16 +900,16 @@
      "documentation": {
       "$id": "129",
       "fixed": false,
-      "raw": "The secret"
+      "raw": "The name of the secret"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
       "$id": "130",
       "fixed": false,
-      "raw": "value"
+      "raw": "name"
      },
-     "serializedName": "value",
+     "serializedName": "name",
      "modelType": {
       "$id": "131",
       "$type": "PrimaryType",
@@ -920,12 +921,49 @@
       },
       "deprecated": false
      }
+    },
+    {
+     "$id": "133",
+     "isReadOnly": false,
+     "realPath": [
+      "value"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "134",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "135",
+      "fixed": false,
+      "raw": "The secret"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "136",
+      "fixed": false,
+      "raw": "value"
+     },
+     "serializedName": "value",
+     "modelType": {
+      "$id": "137",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "138",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
     }
    ],
    "serializedName": "Secret",
    "containsConstantProperties": false,
    "name": {
-    "$id": "133",
+    "$id": "139",
     "fixed": false,
     "raw": "Secret"
    },
@@ -946,40 +984,40 @@
    "deprecated": false
   },
   {
-   "$id": "134",
+   "$id": "140",
    "$type": "CompositeType",
    "properties": [
     {
-     "$id": "135",
+     "$id": "141",
      "isReadOnly": false,
      "realPath": [
       "name"
      ],
      "collectionFormat": "none",
      "defaultValue": {
-      "$id": "136",
+      "$id": "142",
       "fixed": false
      },
      "deprecated": false,
      "documentation": {
-      "$id": "137",
+      "$id": "143",
       "fixed": false,
       "raw": "The name of the secret"
      },
      "isRequired": false,
      "isConstant": false,
      "name": {
-      "$id": "138",
+      "$id": "144",
       "fixed": false,
       "raw": "name"
      },
      "serializedName": "name",
      "modelType": {
-      "$id": "139",
+      "$id": "145",
       "$type": "PrimaryType",
       "knownPrimaryType": "string",
       "name": {
-       "$id": "140",
+       "$id": "146",
        "fixed": false,
        "raw": "String"
       },
@@ -990,7 +1028,7 @@
    "serializedName": "SecretPutSuccess",
    "containsConstantProperties": false,
    "name": {
-    "$id": "141",
+    "$id": "147",
     "fixed": false,
     "raw": "SecretPutSuccess"
    },
@@ -1019,22 +1057,22 @@
  "documentation": "This is the Open API specification of the Burdock execution service.",
  "operations": [
   {
-   "$id": "142",
+   "$id": "148",
    "methods": [
     {
-     "$id": "143",
+     "$id": "149",
      "parameters": [
       {
-       "$id": "144",
+       "$id": "150",
        "location": "body",
        "collectionFormat": "none",
        "defaultValue": {
-        "$id": "145",
+        "$id": "151",
         "fixed": false
        },
        "deprecated": false,
        "documentation": {
-        "$id": "146",
+        "$id": "152",
         "fixed": false,
         "raw": "Configuration for the module run."
        },
@@ -1056,7 +1094,7 @@
        "isRequired": true,
        "isConstant": false,
        "name": {
-        "$id": "147",
+        "$id": "153",
         "fixed": false,
         "raw": "details"
        },
@@ -1067,12 +1105,12 @@
       }
      ],
      "name": {
-      "$id": "148",
+      "$id": "154",
       "fixed": false,
       "raw": "execute.run"
      },
      "group": {
-      "$id": "149",
+      "$id": "155",
       "fixed": false,
       "raw": ""
      },
@@ -1082,12 +1120,12 @@
      "httpMethod": "post",
      "responses": {
       "OK": {
-       "$id": "150",
+       "$id": "156",
        "body": {
         "$ref": "46"
        },
        "extensions": {
-        "$id": "151",
+        "$id": "157",
         "x-ms-metadata": {
          "apiVersions": [
           "0.0.1"
@@ -1105,11 +1143,11 @@
       }
      },
      "defaultResponse": {
-      "$id": "152",
+      "$id": "158",
       "isNullable": true
      },
      "returnType": {
-      "$id": "153",
+      "$id": "159",
       "body": {
        "$ref": "46"
       },
@@ -1133,19 +1171,19 @@
      "hidden": false
     },
     {
-     "$id": "154",
+     "$id": "160",
      "parameters": [
       {
-       "$id": "155",
+       "$id": "161",
        "location": "body",
        "collectionFormat": "none",
        "defaultValue": {
-        "$id": "156",
+        "$id": "162",
         "fixed": false
        },
        "deprecated": false,
        "documentation": {
-        "$id": "157",
+        "$id": "163",
         "fixed": false,
         "raw": "Get the dataset read info"
        },
@@ -1167,7 +1205,7 @@
        "isRequired": true,
        "isConstant": false,
        "name": {
-        "$id": "158",
+        "$id": "164",
         "fixed": false,
         "raw": "info"
        },
@@ -1178,12 +1216,12 @@
       }
      ],
      "name": {
-      "$id": "159",
+      "$id": "165",
       "fixed": false,
       "raw": "dataset.read"
      },
      "group": {
-      "$id": "160",
+      "$id": "166",
       "fixed": false,
       "raw": ""
      },
@@ -1193,12 +1231,12 @@
      "httpMethod": "post",
      "responses": {
       "OK": {
-       "$id": "161",
+       "$id": "167",
        "body": {
         "$ref": "30"
        },
        "extensions": {
-        "$id": "162",
+        "$id": "168",
         "x-ms-metadata": {
          "apiVersions": [
           "0.0.1"
@@ -1216,11 +1254,11 @@
       }
      },
      "defaultResponse": {
-      "$id": "163",
+      "$id": "169",
       "isNullable": true
      },
      "returnType": {
-      "$id": "164",
+      "$id": "170",
       "body": {
        "$ref": "30"
       },
@@ -1244,19 +1282,19 @@
      "hidden": false
     },
     {
-     "$id": "165",
+     "$id": "171",
      "parameters": [
       {
-       "$id": "166",
+       "$id": "172",
        "location": "body",
        "collectionFormat": "none",
        "defaultValue": {
-        "$id": "167",
+        "$id": "173",
         "fixed": false
        },
        "deprecated": false,
        "documentation": {
-        "$id": "168",
+        "$id": "174",
         "fixed": false,
         "raw": "Well formed dataset for adding to dict"
        },
@@ -1278,23 +1316,23 @@
        "isRequired": true,
        "isConstant": false,
        "name": {
-        "$id": "169",
+        "$id": "175",
         "fixed": false,
         "raw": "dataset"
        },
        "serializedName": "dataset",
        "modelType": {
-        "$ref": "76"
+        "$ref": "82"
        }
       }
      ],
      "name": {
-      "$id": "170",
+      "$id": "176",
       "fixed": false,
       "raw": "dataset.register"
      },
      "group": {
-      "$id": "171",
+      "$id": "177",
       "fixed": false,
       "raw": ""
      },
@@ -1304,12 +1342,12 @@
      "httpMethod": "post",
      "responses": {
       "OK": {
-       "$id": "172",
+       "$id": "178",
        "body": {
         "$ref": "30"
        },
        "extensions": {
-        "$id": "173",
+        "$id": "179",
         "x-ms-metadata": {
          "apiVersions": [
           "0.0.1"
@@ -1327,11 +1365,11 @@
       }
      },
      "defaultResponse": {
-      "$id": "174",
+      "$id": "180",
       "isNullable": true
      },
      "returnType": {
-      "$id": "175",
+      "$id": "181",
       "body": {
        "$ref": "30"
       },
@@ -1355,19 +1393,19 @@
      "hidden": false
     },
     {
-     "$id": "176",
+     "$id": "182",
      "parameters": [
       {
-       "$id": "177",
+       "$id": "183",
        "location": "body",
        "collectionFormat": "none",
        "defaultValue": {
-        "$id": "178",
+        "$id": "184",
         "fixed": false
        },
        "deprecated": false,
        "documentation": {
-        "$id": "179",
+        "$id": "185",
         "fixed": false,
         "raw": "Add a secret"
        },
@@ -1389,23 +1427,23 @@
        "isRequired": true,
        "isConstant": false,
        "name": {
-        "$id": "180",
+        "$id": "186",
         "fixed": false,
         "raw": "secret"
        },
        "serializedName": "secret",
        "modelType": {
-        "$ref": "120"
+        "$ref": "126"
        }
       }
      ],
      "name": {
-      "$id": "181",
+      "$id": "187",
       "fixed": false,
       "raw": "secrets.put"
      },
      "group": {
-      "$id": "182",
+      "$id": "188",
       "fixed": false,
       "raw": ""
      },
@@ -1415,12 +1453,12 @@
      "httpMethod": "post",
      "responses": {
       "OK": {
-       "$id": "183",
+       "$id": "189",
        "body": {
-        "$ref": "134"
+        "$ref": "140"
        },
        "extensions": {
-        "$id": "184",
+        "$id": "190",
         "x-ms-metadata": {
          "apiVersions": [
           "0.0.1"
@@ -1438,13 +1476,13 @@
       }
      },
      "defaultResponse": {
-      "$id": "185",
+      "$id": "191",
       "isNullable": true
      },
      "returnType": {
-      "$id": "186",
+      "$id": "192",
       "body": {
-       "$ref": "134"
+       "$ref": "140"
       },
       "isNullable": true
      },
@@ -1467,12 +1505,12 @@
     }
    ],
    "name": {
-    "$id": "187",
+    "$id": "193",
     "fixed": false,
     "raw": ""
    },
    "typeName": {
-    "$id": "188",
+    "$id": "194",
     "fixed": false
    },
    "nameForProperty": "RestClient"

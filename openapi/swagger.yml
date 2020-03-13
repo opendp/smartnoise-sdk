@@ -108,6 +108,10 @@ definitions:
       dataset_name:
         type: string
         description: The name for the dataset
+      budget:
+        type: number
+        format: float
+        description: Budget used by this read request
   LocalCSVDetails:
     type: object
     properties:
