@@ -30,10 +30,7 @@ paths:
         200:
           description: Successfully executed the run
           schema:
-            properties:
-              result:
-                type: string
-                description: Json string result,  TODO release document
+            $ref: '#/definitions/ExecuterunOKResponse'
   /dataset:
     post:
       operationId: dataset.read
@@ -177,3 +174,10 @@ definitions:
       name:
         type: string
         description: The name of the secret
+  ExecuterunOKResponse:
+    type: object
+    properties:
+      result:
+        type: string
+        description: Json string result,  TODO release document
+

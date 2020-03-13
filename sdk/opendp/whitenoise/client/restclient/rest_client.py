@@ -76,12 +76,9 @@ class RestClient(object):
          deserialized response
         :param operation_config: :ref:`Operation configuration
          overrides<msrest:optionsforoperations>`.
-        :return:
-         Paths12dv92bexecutepostresponses200contentapplicationJsonschema or
-         ClientRawResponse if raw=true
-        :rtype:
-         ~restclient.models.Paths12dv92bexecutepostresponses200contentapplicationJsonschema
-         or ~msrest.pipeline.ClientRawResponse
+        :return: ExecuterunOKResponse or ClientRawResponse if raw=true
+        :rtype: ~restclient.models.ExecuterunOKResponse or
+         ~msrest.pipeline.ClientRawResponse
         :raises:
          :class:`HttpOperationError<msrest.exceptions.HttpOperationError>`
         """
@@ -111,7 +108,7 @@ class RestClient(object):
         deserialized = None
 
         if response.status_code == 200:
-            deserialized = self._deserialize('Paths12dv92bexecutepostresponses200contentapplicationJsonschema', response)
+            deserialized = self._deserialize('ExecuterunOKResponse', response)
 
         if raw:
             client_raw_response = ClientRawResponse(deserialized, response)

@@ -86,13 +86,6 @@ class QueryConstraints:
         rsyms = query.source.relations[0].all_symbols(AllColumns())
         tcsyms = [r for name, r in rsyms if type(r) is TableColumn]
         keys = [str(tc) for tc in tcsyms if tc.is_key]
-
-        # TODO: dumb fix
-        if not keys:
-            k = tcsyms[1]
-            k.is_key = True
-            keys = [str(k)]
-
         if len(keys) > 1:
             raise ValueError("We only know how to handle tables with one key: " + str(keys))
 
