@@ -3,3 +3,5 @@ pyyaml
 pandasql
 mlflow
 connexion
+sklearn
+matplotlib

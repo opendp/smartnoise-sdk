@@ -14,3 +14,8 @@ Database:
         type: int
         lower: 0
         upper: 1
+      d:
+        type: int
+        lower: 0
+        upper: 1000
+        private_id: True

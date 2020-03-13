@@ -1,0 +1,58 @@
+trigger: none
+pr:
+  - master
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  artifactFeed: whitenoise-feed
+
+steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+
+  - template: templates/create-env-template.yml
+
+  - bash: |
+      source activate wnoise
+      pip install -e ./sdk
+    displayName: Install opendp-whitenoise
+
+  - bash: |
+      source activate wnoise
+      pip install --upgrade setuptools wheel twine
+      cd ./python
+      python setup.py bdist_wheel
+      cd ..
+    displayName: Create a wheel
+
+  - task: TwineAuthenticate@0
+    displayName: Configure twine authentication
+    inputs:
+      artifactFeeds: $(artifactFeed)
+
+  - bash: |
+      source activate wnoise
+      cd ./sdk
+      twine upload -r $(artifactFeed) --config-file $(PYPIRC_PATH) dist/*
+      cd ..
+    displayName: Publish artifacts
+
+  - bash: |
+      source activate wnoise
+    displayName: "Run flake8"
+
+  - bash: |
+      source activate wnoise
+      pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
+      python -m pytest tests/sdk --junitxml=./TEST-TEST.xml
+    displayName: "Run tests"
+
+  - task: PublishTestResults@2
+    displayName: "Publish Test Results **/TEST-*.xml"
+    condition: succeededOrFailed()
+
+  - publish: $(System.DefaultWorkingDirectory)/pip_freeze.txt
+    artifact: PipFreeze
+
