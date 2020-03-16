@@ -13,8 +13,6 @@ class DataverseDetails(Model):
 
     :param local_metadata_path:
     :type local_metadata_path: str
-    :param token: Contains the datasets secret, with name and value
-    :type token: str
     :param host: Host of dataset, if dataverse
     :type host: str
     :param schema: Schema of dataset, well formed json
@@ -23,14 +21,12 @@ class DataverseDetails(Model):
 
     _attribute_map = {
         'local_metadata_path': {'key': 'local_metadata_path', 'type': 'str'},
-        'token': {'key': 'token', 'type': 'str'},
         'host': {'key': 'host', 'type': 'str'},
         'schema': {'key': 'schema', 'type': 'str'},
     }
 
-    def __init__(self, local_metadata_path=None, token=None, host=None, schema=None):
+    def __init__(self, local_metadata_path=None, host=None, schema=None):
         super(DataverseDetails, self).__init__()
         self.local_metadata_path = local_metadata_path
-        self.token = token
         self.host = host
         self.schema = schema

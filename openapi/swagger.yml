@@ -120,9 +120,6 @@ definitions:
     properties:
       local_metadata_path:
         type: string
-      token:
-        type: string
-        description: Contains the datasets secret, with name and value
       host:
         type: string
         description: Host of dataset, if dataverse

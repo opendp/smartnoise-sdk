@@ -38,13 +38,18 @@ def read(dataset_request):
 
     if dataset_name not in DATASETS:
         abort(400, "Dataset id {} not found.".format(dataset_name))
-    
+        
     dataset = DATASETS[dataset_name]
 
     # Validate the secret, extract token
-    if dataset["dataset_type"] == "dataverse_details":
-        dataset["dataset_type"]["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
-
+    try:
+        if dataset["dataset_type"] == "dataverse_details":
+            dataset["dataset_type"]["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
+    except:
+        # TODO: Temp fix for testing - Do better cleanup if secret missing
+        # dataset["dataset_type"]["token"] = {'name':dataset_name,'value':42}
+        pass 
+    
     # Check/Decrement the budget before returning dataset
     adjusted_budget = dataset["budget"] - dataset_request["budget"]
     if adjusted_budget >= 0.0:
@@ -74,11 +79,11 @@ def register(dataset):
         abort(403, "Must specify a budget")
 
     # Type specific registration
-    if dataset["dataset_type"] is "csv_details":
+    if dataset["dataset_type"] == "csv_details":
         # Local dataset
         if not os.path.isfile(dataset["csv_details"]["local_path"]):
             abort(406, "Local file path {} does not exist.".format(str(dataset["dataset_type"])))
-    elif dataset["dataset_type"] is "dataverse_details":
+    elif dataset["dataset_type"] == "dataverse_details":
         # Validate Json schema
         if dataset["dataverse_details"]["schema"]:
             try:
@@ -92,11 +97,6 @@ def register(dataset):
         if not dataset["dataverse_details"]["host"]:
             abort(408, "Must specify host, {} is malformed.".format(str(dataset["dataverse_details"]["host"])))
 
-        # Remote dataset
-        if dataset["dataverse_details"]["token"]:
-            secrets_put(json.loads(dataset["dataverse_details"]["token"]))
-        else:
-            abort(410, "DatasetDocument must contain a token field with a secret.")
     # TODO: Add support for other types of datasets
 
 

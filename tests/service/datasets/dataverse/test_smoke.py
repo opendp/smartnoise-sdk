@@ -7,8 +7,9 @@ from opendp.whitenoise.client import get_dataset_client
 from opendp.whitenoise.data.adapters import load_dataset
 
 @pytest.mark.parametrize("dataset_name", ["demo_dataverse"])
-def test_read_local_csv(dataset_client, dataset_name):
-    dataset_document = dataset_client.read(dataset_name, None)
+@pytest.mark.parametrize("budget", [1.0])
+def test_read_dataverse(dataset_client, dataset_name, budget):
+    dataset_document = dataset_client.read(dataset_name, budget)
     details = dataset_document.dataverse_details
 
     with open(details.local_metadata_path, "r") as stream:
@@ -17,7 +18,8 @@ def test_read_local_csv(dataset_client, dataset_name):
 
 
 @pytest.mark.parametrize("dataset_name", ["demo_dataverse"])
-def test_load_dataverse_dataset_file(dataset_client, dataset_name):
-    dataset_document = dataset_client.read(dataset_name, None)
+@pytest.mark.parametrize("budget", [1.0])
+def test_load_dataverse_dataset_file(dataset_client, dataset_name, budget):
+    dataset_document = dataset_client.read(dataset_name, budget)
     df = load_dataset(dataset_document)
     assert isinstance(df, pd.pandas.core.frame.DataFrame)
