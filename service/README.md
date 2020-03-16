@@ -10,12 +10,12 @@ In order to add dataset.py service calls (to be supported by both the client and
 1. Follow the steps in the swagger readme (under openapi/readme.md) and ensure that you can regenerate the restclient from the swagger.yml file using the autorest npm package. Regenerating it once ensures that any future errors are your fault : )
 2. Add a new path to the openapi/swagger.yml file. You can use one of the existing paths as a template, but make sure to modify each field and specify the api functionality carefully. Refer to online documentation for examples (https://swagger.io/docs/specification/describing-request-body/ is a good place to start) 
 3. As you define your new path, make sure to add schema definition that fits your specific use case under "definitions:" in the swagger.yml file. For example, /register takes in a very specific schema, which is defined in "DatasetPutDocument".
-4. Regenerate the swagger, and verify that the sdk/burdock/client/restclient contains your new path definition and sdk/burdock/client/restclient/models contains your new schema definition. (the names should be reflective of specifications from the swagger.yml file)
+4. Regenerate the swagger, and verify that the sdk/opendp/whitenoise/client/restclient contains your new path definition and sdk/opendp/whitenoise/client/restclient/models contains your new schema definition. (the names should be reflective of specifications from the swagger.yml file)
 
 ## Putting the two together:
 Now we must link together the service functionality you wrote with the api call.
 
-1. Navigate to sdk/burdock/client/__init__.py.
+1. Navigate to sdk/opendp/whitenoise/client/__init__.py.
 2. Inside __init__.py, you'll see classes for the various Clients that the service supports. If you are adding a dataset.py function, you will add a new definition under the DatasetClient class.
 3. Note (Ignore if adding to existing client): if you are adding an entirely new client, you will need to make a new client class, and add a "get"-er for that class, to be called in the service module you expose.
 4. Use the existing client methods as a template, and perform an additional processing to the dictionary received from the module. For example, in the case of /register, the dictionary passed in by the user is unpacked to fit the DatasetPutDocument schema specified in the swagger.

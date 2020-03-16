@@ -36,7 +36,7 @@ def test_budget_exceeded(dataset_client, dataset_name, budget):
                         "dataset_name": "another_csv",
                         "dataset_type": "csv_details",
                         "csv_details": {
-                            "local_path": os.path.join(os.path.dirname(__file__), "test_data", "example.csv")
+                            "local_path": os.path.join(os.path.dirname(__file__), "test_datasets", "example.csv")
                         },
                         "budget":3.0}])
 def test_register_csv(dataset_client, dataset):

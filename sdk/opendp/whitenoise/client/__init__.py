@@ -11,6 +11,8 @@ from .restclient.models.dataset_document import DatasetDocument
 
 module_logger = logging.getLogger(__name__)
 
+KNOWN_DATASET_TYPE_KEYS = ["csv_details", "dataverse_details"]
+
 class _MockCredentials(object):
     def signed_session(self, session=None):
         return session if session is not None else Session()
@@ -35,10 +37,9 @@ class DatasetClient(object):
     def register(self, dataset):
         client = _get_client()
 
-        if not 'csv_details' in dataset:
-            dataset['csv_details']=None
-        if not 'dataverse_details' in dataset:
-            dataset['dataverse_details']=None
+        for key in KNOWN_DATASET_TYPE_KEYS:
+            if not key in dataset:
+                dataset[key]=None
 
         register_request = DatasetDocument(dataset_name=dataset['dataset_name'], \
             dataset_type=dataset['dataset_type'], \

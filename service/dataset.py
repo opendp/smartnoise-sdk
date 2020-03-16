@@ -72,9 +72,7 @@ def register(dataset):
     
     # Add budget if possible 
     if dataset["budget"]:
-        b = dataset["budget"]
-        if b <= 0.0: abort(403, "Budget must be greater than 0.")
-        dataset["budget"] = b
+        if dataset["budget"] <= 0.0: abort(403, "Budget must be greater than 0.")
     else:
         abort(403, "Must specify a budget")
 
