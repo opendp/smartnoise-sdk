@@ -7,7 +7,7 @@ from .dataset_adapter import DatasetAdapter
 
 
 class LocalCSVAdapter(DatasetAdapter):
-    KEY = "local_csv"
+    KEY = "csv_details"
 
     @staticmethod
     def validate_document(document):

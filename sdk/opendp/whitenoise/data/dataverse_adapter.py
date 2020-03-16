@@ -30,7 +30,7 @@ def dataverse_loader(host, doi=None, token=None):
 
 
 class DataverseAdapter(DatasetAdapter):
-    KEY = "dataverse"
+    KEY = "dataverse_details"
 
     @staticmethod
     def validate_document(document):
