@@ -8,17 +8,17 @@
 from msrest.serialization import Model
 
 
-class LocalCSVDetails(Model):
-    """LocalCSVDetails.
+class RegisterOKResponse(Model):
+    """RegisterOKResponse.
 
-    :param local_path: Path to the csv on disk
-    :type local_path: str
+    :param result: DatasetName
+    :type result: str
     """
 
     _attribute_map = {
-        'local_path': {'key': 'local_path', 'type': 'str'},
+        'result': {'key': 'result', 'type': 'str'},
     }
 
-    def __init__(self, local_path=None):
-        super(LocalCSVDetails, self).__init__()
-        self.local_path = local_path
+    def __init__(self, result=None):
+        super(RegisterOKResponse, self).__init__()
+        self.result = result

@@ -5,22 +5,26 @@ from flask import abort
 from secrets import get as secrets_get
 from secrets import put as secrets_put
 
-
-DATASETS = {"example": {"type": "local_csv",
-                        "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv"),
-                        "key": "csv_details",
+DATASETS = {"example_csv": {
+                        "dataset_type": "csv_details",
+                        "csv_details": {
+                            "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv")
+                        },
                         "budget":3.0},
-            "demo_dataverse": {"type": "dataverse",
-                               "local_metadata_path": os.path.join(os.path.dirname(__file__),
-                                                                   "datasets",
-                                                                   "dataverse",
-                                                                   "demo_dataverse.yml"),
-                               "key": "dataverse_details",
-                               "host": "https://demo.dataverse.org/api/access/datafile/395811",
-                               "budget":3.0}}
+            "demo_dataverse": {
+                        "dataset_type": "dataverse_details",
+                        "dataverse_details": {
+                            "local_metadata_path": os.path.join(os.path.dirname(__file__),
+                                                                "datasets",
+                                                                "dataverse",
+                                                                "demo_dataverse.yml"),
+                            "host": "https://demo.dataverse.org/api/access/datafile/395811",
+                            "schema": '{"fake":"schema"}'
+                        },
+                        "budget":3.0}}
 
-# TODO: Do we need to add an ability to register these?
-KNOWN_DATASET_KEYS = ["csv_details", "dataverse_details"]
+
+KNOWN_DATASET_TYPE_KEYS = ["csv_details", "dataverse_details"]
 
 def read(dataset_request):
     """Get information needed to load the dataset
@@ -38,19 +42,17 @@ def read(dataset_request):
     dataset = DATASETS[dataset_name]
 
     # Validate the secret, extract token
-    if dataset["type"] == "dataverse":
-        dataset["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
+    if dataset["dataset_type"] == "dataverse_details":
+        dataset["dataset_type"]["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
 
     # Check/Decrement the budget before returning dataset
-    # Unclear what behaviour budget decrementing should have
-    # - should it check the type of query, and decrement accordingly?
     adjusted_budget = dataset["budget"] - dataset_request["budget"]
     if adjusted_budget >= 0.0:
         dataset["budget"] = adjusted_budget
     else:
         abort(412, "Not enough budget for read. Remaining budget: {}".format(dataset_name))
 
-    return {"dataset_type": dataset["type"], dataset["key"]: dataset}
+    return dataset
 
 #%%
 def register(dataset):
@@ -60,8 +62,8 @@ def register(dataset):
         abort(401, "Dataset id {} already exists. Identifies must be unique".format(dataset_name))
 
     # Add key if possible
-    if dataset["key"] not in KNOWN_DATASET_KEYS:
-        abort(402, "Given key was {}, must be either csv_details or dataverse_details.".format(str(dataset["key"])))
+    if dataset["dataset_type"] not in KNOWN_DATASET_TYPE_KEYS:
+        abort(402, "Given type was {}, must be either csv_details or dataverse_details.".format(str(dataset["dataset_type"])))
     
     # Add budget if possible 
     if dataset["budget"]:
@@ -70,39 +72,38 @@ def register(dataset):
         dataset["budget"] = b
     else:
         abort(403, "Must specify a budget")
-    
-     # Add type if possible
-    if not (dataset["dataset_type"] is "local_csv" or "dataverse"):
-        abort(405, "Given type was {}, must be either local_csv or dataverse.".format(str(dataset["dataset_type"])))
 
-    # Add checks
-    if "local_path" in dataset:
+    # Type specific registration
+    if dataset["dataset_type"] is "csv_details":
         # Local dataset
-        if not os.path.isfile(dataset["local_path"]):
-            abort(406, "Local file path {} does not exist.".format(str(dataset["local_path"])))
-    elif "schema" in dataset:
-        # Remote dataset
-        if dataset["schema"]:
+        if not os.path.isfile(dataset["csv_details"]["local_path"]):
+            abort(406, "Local file path {} does not exist.".format(str(dataset["dataset_type"])))
+    elif dataset["dataset_type"] is "dataverse_details":
+        # Validate Json schema
+        if dataset["dataverse_details"]["schema"]:
             try:
-                dataset["schema"] = json.dumps(dataset["schema"])
+                dataset["dataverse_details"]["schema"] = json.dumps(dataset["dataverse_details"]["schema"])
             except:
-                abort(407, "Schema {} must be valid json.".format(str(dataset["schema"])))
+                abort(407, "Schema {} must be valid json.".format(str(dataset["dataverse_details"]["schema"])))
         else:
             abort(414, "Schema must exist.")
-        
+
         # Specify host
-        if not dataset["host"]:
-            abort(408, "Must specify host, {} is malformed.".format(str(dataset["host"])))
-    else:
-        abort(409, "Dataset must specify either local_path or local_metadata_path.")
-    
-    if dataset["dataset_type"] == "dataverse":
-        if dataset["token"]:
-            secrets_put(json.loads(dataset["token"]))
+        if not dataset["dataverse_details"]["host"]:
+            abort(408, "Must specify host, {} is malformed.".format(str(dataset["dataverse_details"]["host"])))
+
+        # Remote dataset
+        if dataset["dataverse_details"]["token"]:
+            secrets_put(json.loads(dataset["dataverse_details"]["token"]))
         else:
             abort(410, "DatasetDocument must contain a token field with a secret.")
-    
+    # TODO: Add support for other types of datasets
+
+
     # If everything looks good, register it.
     DATASETS[dataset_name] = dataset
 
-    return dataset
+    print(DATASETS.keys())
+
+    return {"result":dataset_name}
+

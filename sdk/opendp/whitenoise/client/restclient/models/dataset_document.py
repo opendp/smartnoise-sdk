@@ -11,8 +11,12 @@ from msrest.serialization import Model
 class DatasetDocument(Model):
     """DatasetDocument.
 
+    :param dataset_name: The name for the dataset
+    :type dataset_name: str
     :param dataset_type: The type of the dataset
     :type dataset_type: str
+    :param budget: Available budget for the dataset registered
+    :type budget: float
     :param csv_details:
     :type csv_details: ~restclient.models.LocalCSVDetails
     :param dataverse_details:
@@ -20,13 +24,17 @@ class DatasetDocument(Model):
     """
 
     _attribute_map = {
+        'dataset_name': {'key': 'dataset_name', 'type': 'str'},
         'dataset_type': {'key': 'dataset_type', 'type': 'str'},
+        'budget': {'key': 'budget', 'type': 'float'},
         'csv_details': {'key': 'csv_details', 'type': 'LocalCSVDetails'},
         'dataverse_details': {'key': 'dataverse_details', 'type': 'DataverseDetails'},
     }
 
-    def __init__(self, dataset_type=None, csv_details=None, dataverse_details=None):
+    def __init__(self, dataset_name=None, dataset_type=None, budget=None, csv_details=None, dataverse_details=None):
         super(DatasetDocument, self).__init__()
+        self.dataset_name = dataset_name
         self.dataset_type = dataset_type
+        self.budget = budget
         self.csv_details = csv_details
         self.dataverse_details = dataverse_details

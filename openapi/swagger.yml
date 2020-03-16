@@ -63,12 +63,12 @@ paths:
           description: Well formed dataset for adding to dict
           required: True
           schema:
-            $ref: '#/definitions/DatasetPutDocument'
+            $ref: '#/definitions/DatasetDocument'
       responses:
          200:
            description: Successfully registered a new dataset
            schema:
-            $ref: '#/definitions/DatasetDocument'
+            $ref: '#/definitions/RegisterOKResponse'
   /secrets:
     post:
       operationId: secrets.put
@@ -114,7 +114,7 @@ definitions:
     properties:
       local_path:
         type: string
-        description: Path to the csv on diskThe type of the dataset
+        description: Path to the csv on disk
   DataverseDetails:
     type: object
     properties:
@@ -122,43 +122,30 @@ definitions:
         type: string
       token:
         type: string
-      host:
-        type: string
-  DatasetDocument:
-    type: object
-    properties:
-      dataset_type:
-        type: string
-        description: The type of the dataset
-      csv_details:
-        $ref: '#/definitions/LocalCSVDetails'
-      dataverse_details:
-        $ref: '#/definitions/DataverseDetails'
-  DatasetPutDocument:
-    type: object
-    properties:
-      dataset_name:
-        type: string
-        description: Name of dataset to register
-      dataset_type:
-        type: string
-        description: The type of dataset being registered (local_csv or dataverse)
+        description: Contains the datasets secret, with name and value
       host:
         type: string
         description: Host of dataset, if dataverse
       schema:
         type: string
-        description: Schema (formatted json)
+        description: Schema of dataset, well formed json
+  DatasetDocument:
+    type: object
+    properties:
+      dataset_name:
+        type: string
+        description: The name for the dataset
+      dataset_type:
+        type: string
+        description: The type of the dataset
       budget:
         type: number
         format: float
         description: Available budget for the dataset registered
-      key:
-        type: string
-        description: Key for dataset
-      token:
-        type: string
-        description: Contains the datasets secret, with name and value
+      csv_details:
+        $ref: '#/definitions/LocalCSVDetails'
+      dataverse_details:
+        $ref: '#/definitions/DataverseDetails'
   Secret:
     type: object
     properties:
@@ -180,4 +167,10 @@ definitions:
       result:
         type: string
         description: Json string result,  TODO release document
+  RegisterOKResponse:
+    type: object
+    properties:
+      result:
+        type: string
+        description: DatasetName
 

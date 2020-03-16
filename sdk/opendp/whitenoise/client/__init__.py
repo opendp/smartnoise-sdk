@@ -7,7 +7,7 @@ from requests import Session
 from .restclient.models.project_run_details import ProjectRunDetails
 from .restclient.rest_client import RestClient
 from .restclient.models.dataset_read_request import DatasetReadRequest
-from .restclient.models.dataset_put_document import DatasetPutDocument
+from .restclient.models.dataset_document import DatasetDocument
 
 module_logger = logging.getLogger(__name__)
 
@@ -34,7 +34,17 @@ class ExecutionClient(object):
 class DatasetClient(object):
     def register(self, dataset):
         client = _get_client()
-        register_request = DatasetPutDocument(dataset_name=dataset['dataset_name'], dataset_type=dataset['dataset_type'], host=dataset['host'], schema=dataset['schema'], budget=dataset['budget'], key=dataset['key'], token=dataset['token'])
+
+        if not 'csv_details' in dataset:
+            dataset['csv_details']=None
+        if not 'dataverse_details' in dataset:
+            dataset['dataverse_details']=None
+
+        register_request = DatasetDocument(dataset_name=dataset['dataset_name'], \
+            dataset_type=dataset['dataset_type'], \
+            budget=dataset['budget'], \
+            csv_details=dataset['csv_details'], \
+            dataverse_details=dataset['dataverse_details'])
         return client.datasetregister(register_request)
 
     def read(self, dataset_name, budget):

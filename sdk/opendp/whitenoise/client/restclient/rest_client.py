@@ -178,14 +178,14 @@ class RestClient(object):
         Posts dataset info, creates new entry in remote dict.
 
         :param dataset: Well formed dataset for adding to dict
-        :type dataset: ~restclient.models.DatasetPutDocument
+        :type dataset: ~restclient.models.DatasetDocument
         :param dict custom_headers: headers that will be added to the request
         :param bool raw: returns the direct response alongside the
          deserialized response
         :param operation_config: :ref:`Operation configuration
          overrides<msrest:optionsforoperations>`.
-        :return: DatasetDocument or ClientRawResponse if raw=true
-        :rtype: ~restclient.models.DatasetDocument or
+        :return: RegisterOKResponse or ClientRawResponse if raw=true
+        :rtype: ~restclient.models.RegisterOKResponse or
          ~msrest.pipeline.ClientRawResponse
         :raises:
          :class:`HttpOperationError<msrest.exceptions.HttpOperationError>`
@@ -203,7 +203,7 @@ class RestClient(object):
             header_parameters.update(custom_headers)
 
         # Construct body
-        body_content = self._serialize.body(dataset, 'DatasetPutDocument')
+        body_content = self._serialize.body(dataset, 'DatasetDocument')
 
         # Construct and send request
         request = self._client.post(url, query_parameters)
@@ -216,7 +216,7 @@ class RestClient(object):
         deserialized = None
 
         if response.status_code == 200:
-            deserialized = self._deserialize('DatasetDocument', response)
+            deserialized = self._deserialize('RegisterOKResponse', response)
 
         if raw:
             client_raw_response = ClientRawResponse(deserialized, response)
