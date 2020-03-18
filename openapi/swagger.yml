@@ -50,6 +50,44 @@ paths:
            description: Successfully return the dataset information
            schema:
             $ref: '#/definitions/DatasetDocument'
+  /read-released:
+    post:
+      operationId: dataset.readreleased
+      tags:
+        - datasetReadRelease
+      summary: Read a released dataset
+      description: Return the details of the requested dataset, decrement the budget
+      parameters:
+        - name: dataset_request
+          in: body
+          description: Get the dataset read request
+          required: True
+          schema:
+            $ref: '#/definitions/DatasetReadRequest'
+      responses:
+         200:
+           description: Successfully return the dataset information
+           schema:
+            $ref: '#/definitions/DatasetDocument'
+  /release:
+    post:
+      operationId: dataset.release
+      tags:
+        - datasetRelease
+      summary: Release a registered dataset 
+      description: Return the details of the released dataset
+      parameters:
+        - name: dataset
+          in: body
+          description: Dataset for release
+          required: True
+          schema:
+            $ref: '#/definitions/DatasetReleaseRequest'
+      responses:
+         200:
+           description: Successfully return the released dataset
+           schema:
+            $ref: '#/definitions/DatasetDocument'
   /register:
     post:
       operationId: dataset.register
@@ -109,6 +147,16 @@ definitions:
         type: number
         format: float
         description: Budget used by this read request
+  DatasetReleaseRequest:
+    type: object
+    properties:
+      dataset_name:
+        type: string
+        description: The name for the dataset
+      budget:
+        type: number
+        format: float
+        description: Override budget for the released dataset
   LocalCSVDetails:
     type: object
     properties:
@@ -139,6 +187,9 @@ definitions:
         type: number
         format: float
         description: Available budget for the dataset registered
+      released:
+        type: boolean
+        description: Has this dataset been released
       csv_details:
         $ref: '#/definitions/LocalCSVDetails'
       dataverse_details:

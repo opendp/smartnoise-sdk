@@ -34,6 +34,17 @@ class ExecutionClient(object):
         return client.executerun(details)
 
 class DatasetClient(object):
+    def readreleased(self, dataset_name, budget):
+        client = _get_client()
+        read_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
+        return client.datasetread(read_request)
+
+    def release(self, dataset_name, budget=None):
+        client = _get_client()
+        release_request = DatasetDocument(dataset_name=dataset_name, \
+            budget=budget)
+        return client.datasetregister(release_request)
+
     def register(self, dataset):
         client = _get_client()
 
@@ -45,7 +56,8 @@ class DatasetClient(object):
             dataset_type=dataset['dataset_type'], \
             budget=dataset['budget'], \
             csv_details=dataset['csv_details'], \
-            dataverse_details=dataset['dataverse_details'])
+            dataverse_details=dataset['dataverse_details'], \
+            released=False)
         return client.datasetregister(register_request)
 
     def read(self, dataset_name, budget):

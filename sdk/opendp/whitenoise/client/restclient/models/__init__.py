@@ -5,22 +5,24 @@
 # regenerated.
 # --------------------------------------------------------------------------
 
+from .project_run_details import ProjectRunDetails
+from .dataset_read_request import DatasetReadRequest
+from .dataset_release_request import DatasetReleaseRequest
 from .local_csv_details import LocalCSVDetails
 from .dataverse_details import DataverseDetails
 from .dataset_document import DatasetDocument
-from .project_run_details import ProjectRunDetails
-from .dataset_read_request import DatasetReadRequest
 from .secret import Secret
 from .secret_put_success import SecretPutSuccess
 from .executerun_ok_response import ExecuterunOKResponse
 from .register_ok_response import RegisterOKResponse
 
 __all__ = [
+    'ProjectRunDetails',
+    'DatasetReadRequest',
+    'DatasetReleaseRequest',
     'LocalCSVDetails',
     'DataverseDetails',
     'DatasetDocument',
-    'ProjectRunDetails',
-    'DatasetReadRequest',
     'Secret',
     'SecretPutSuccess',
     'ExecuterunOKResponse',

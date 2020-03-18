@@ -1,0 +1,1735 @@
+{
+ "$id": "1",
+ "modelTypes": [
+  {
+   "$id": "2",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "3",
+     "isReadOnly": false,
+     "realPath": [
+      "project_uri"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "4",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "5",
+      "fixed": false,
+      "raw": "Git url of the project"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "6",
+      "fixed": false,
+      "raw": "project_uri"
+     },
+     "serializedName": "project_uri",
+     "modelType": {
+      "$id": "7",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "8",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "9",
+     "isReadOnly": false,
+     "realPath": [
+      "params"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "10",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "11",
+      "fixed": false,
+      "raw": "Input parameters of the project"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "12",
+      "fixed": false,
+      "raw": "params"
+     },
+     "serializedName": "params",
+     "modelType": {
+      "$id": "13",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "14",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "ProjectRunDetails",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "15",
+    "fixed": false,
+    "raw": "ProjectRunDetails"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "ProjectRunDetails",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/ProjectRunDetails"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "16",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "17",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "18",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "19",
+      "fixed": false,
+      "raw": "The name for the dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "20",
+      "fixed": false,
+      "raw": "dataset_name"
+     },
+     "serializedName": "dataset_name",
+     "modelType": {
+      "$id": "21",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "22",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "23",
+     "isReadOnly": false,
+     "realPath": [
+      "budget"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "24",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "25",
+      "fixed": false,
+      "raw": "Budget used by this read request"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "26",
+      "fixed": false,
+      "raw": "budget"
+     },
+     "serializedName": "budget",
+     "modelType": {
+      "$id": "27",
+      "$type": "PrimaryType",
+      "format": "float",
+      "knownPrimaryType": "double",
+      "name": {
+       "$id": "28",
+       "fixed": false,
+       "raw": "Double"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "DatasetReadRequest",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "29",
+    "fixed": false,
+    "raw": "DatasetReadRequest"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DatasetReadRequest",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/DatasetReadRequest"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "30",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "31",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "32",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "33",
+      "fixed": false,
+      "raw": "The name for the dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "34",
+      "fixed": false,
+      "raw": "dataset_name"
+     },
+     "serializedName": "dataset_name",
+     "modelType": {
+      "$id": "35",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "36",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "37",
+     "isReadOnly": false,
+     "realPath": [
+      "budget"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "38",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "39",
+      "fixed": false,
+      "raw": "Override budget for the released dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "40",
+      "fixed": false,
+      "raw": "budget"
+     },
+     "serializedName": "budget",
+     "modelType": {
+      "$id": "41",
+      "$type": "PrimaryType",
+      "format": "float",
+      "knownPrimaryType": "double",
+      "name": {
+       "$id": "42",
+       "fixed": false,
+       "raw": "Double"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "DatasetReleaseRequest",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "43",
+    "fixed": false,
+    "raw": "DatasetReleaseRequest"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DatasetReleaseRequest",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/DatasetReleaseRequest"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "44",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "45",
+     "isReadOnly": false,
+     "realPath": [
+      "local_path"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "46",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "47",
+      "fixed": false,
+      "raw": "Path to the csv on disk"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "48",
+      "fixed": false,
+      "raw": "local_path"
+     },
+     "serializedName": "local_path",
+     "modelType": {
+      "$id": "49",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "50",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "LocalCSVDetails",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "51",
+    "fixed": false,
+    "raw": "LocalCSVDetails"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "LocalCSVDetails",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/LocalCSVDetails"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "52",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "53",
+     "isReadOnly": false,
+     "realPath": [
+      "local_metadata_path"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "54",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "55",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "56",
+      "fixed": false,
+      "raw": "local_metadata_path"
+     },
+     "serializedName": "local_metadata_path",
+     "modelType": {
+      "$id": "57",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "58",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "59",
+     "isReadOnly": false,
+     "realPath": [
+      "host"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "60",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "61",
+      "fixed": false,
+      "raw": "Host of dataset, if dataverse"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "62",
+      "fixed": false,
+      "raw": "host"
+     },
+     "serializedName": "host",
+     "modelType": {
+      "$id": "63",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "64",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "65",
+     "isReadOnly": false,
+     "realPath": [
+      "schema"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "66",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "67",
+      "fixed": false,
+      "raw": "Schema of dataset, well formed json"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "68",
+      "fixed": false,
+      "raw": "schema"
+     },
+     "serializedName": "schema",
+     "modelType": {
+      "$id": "69",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "70",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "DataverseDetails",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "71",
+    "fixed": false,
+    "raw": "DataverseDetails"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DataverseDetails",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/DataverseDetails"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "72",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "73",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "74",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "75",
+      "fixed": false,
+      "raw": "The name for the dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "76",
+      "fixed": false,
+      "raw": "dataset_name"
+     },
+     "serializedName": "dataset_name",
+     "modelType": {
+      "$id": "77",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "78",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "79",
+     "isReadOnly": false,
+     "realPath": [
+      "dataset_type"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "80",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "81",
+      "fixed": false,
+      "raw": "The type of the dataset"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "82",
+      "fixed": false,
+      "raw": "dataset_type"
+     },
+     "serializedName": "dataset_type",
+     "modelType": {
+      "$id": "83",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "84",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "85",
+     "isReadOnly": false,
+     "realPath": [
+      "budget"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "86",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "87",
+      "fixed": false,
+      "raw": "Available budget for the dataset registered"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "88",
+      "fixed": false,
+      "raw": "budget"
+     },
+     "serializedName": "budget",
+     "modelType": {
+      "$id": "89",
+      "$type": "PrimaryType",
+      "format": "float",
+      "knownPrimaryType": "double",
+      "name": {
+       "$id": "90",
+       "fixed": false,
+       "raw": "Double"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "91",
+     "isReadOnly": false,
+     "realPath": [
+      "released"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "92",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "93",
+      "fixed": false,
+      "raw": "Has this dataset been released"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "94",
+      "fixed": false,
+      "raw": "released"
+     },
+     "serializedName": "released",
+     "modelType": {
+      "$id": "95",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "boolean",
+      "name": {
+       "$id": "96",
+       "fixed": false,
+       "raw": "Boolean"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "97",
+     "isReadOnly": false,
+     "realPath": [
+      "csv_details"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "98",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "99",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "100",
+      "fixed": false,
+      "raw": "csv_details"
+     },
+     "serializedName": "csv_details",
+     "modelType": {
+      "$ref": "44"
+     }
+    },
+    {
+     "$id": "101",
+     "isReadOnly": false,
+     "realPath": [
+      "dataverse_details"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "102",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "103",
+      "fixed": false
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "104",
+      "fixed": false,
+      "raw": "dataverse_details"
+     },
+     "serializedName": "dataverse_details",
+     "modelType": {
+      "$ref": "52"
+     }
+    }
+   ],
+   "serializedName": "DatasetDocument",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "105",
+    "fixed": false,
+    "raw": "DatasetDocument"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "DatasetDocument",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/DatasetDocument"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "106",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "107",
+     "isReadOnly": false,
+     "realPath": [
+      "name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "108",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "109",
+      "fixed": false,
+      "raw": "The name of the secret"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "110",
+      "fixed": false,
+      "raw": "name"
+     },
+     "serializedName": "name",
+     "modelType": {
+      "$id": "111",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "112",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    },
+    {
+     "$id": "113",
+     "isReadOnly": false,
+     "realPath": [
+      "value"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "114",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "115",
+      "fixed": false,
+      "raw": "The secret"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "116",
+      "fixed": false,
+      "raw": "value"
+     },
+     "serializedName": "value",
+     "modelType": {
+      "$id": "117",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "118",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "Secret",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "119",
+    "fixed": false,
+    "raw": "Secret"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "Secret",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/Secret"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "120",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "121",
+     "isReadOnly": false,
+     "realPath": [
+      "name"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "122",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "123",
+      "fixed": false,
+      "raw": "The name of the secret"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "124",
+      "fixed": false,
+      "raw": "name"
+     },
+     "serializedName": "name",
+     "modelType": {
+      "$id": "125",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "126",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "SecretPutSuccess",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "127",
+    "fixed": false,
+    "raw": "SecretPutSuccess"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "SecretPutSuccess",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/SecretPutSuccess"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "128",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "129",
+     "isReadOnly": false,
+     "realPath": [
+      "result"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "130",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "131",
+      "fixed": false,
+      "raw": "Json string result,  TODO release document"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "132",
+      "fixed": false,
+      "raw": "result"
+     },
+     "serializedName": "result",
+     "modelType": {
+      "$id": "133",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "134",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "ExecuterunOKResponse",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "135",
+    "fixed": false,
+    "raw": "ExecuterunOKResponse"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "ExecuterunOKResponse",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/ExecuterunOKResponse"
+     ]
+    }
+   },
+   "deprecated": false
+  },
+  {
+   "$id": "136",
+   "$type": "CompositeType",
+   "properties": [
+    {
+     "$id": "137",
+     "isReadOnly": false,
+     "realPath": [
+      "result"
+     ],
+     "collectionFormat": "none",
+     "defaultValue": {
+      "$id": "138",
+      "fixed": false
+     },
+     "deprecated": false,
+     "documentation": {
+      "$id": "139",
+      "fixed": false,
+      "raw": "DatasetName"
+     },
+     "isRequired": false,
+     "isConstant": false,
+     "name": {
+      "$id": "140",
+      "fixed": false,
+      "raw": "result"
+     },
+     "serializedName": "result",
+     "modelType": {
+      "$id": "141",
+      "$type": "PrimaryType",
+      "knownPrimaryType": "string",
+      "name": {
+       "$id": "142",
+       "fixed": false,
+       "raw": "String"
+      },
+      "deprecated": false
+     }
+    }
+   ],
+   "serializedName": "RegisterOKResponse",
+   "containsConstantProperties": false,
+   "name": {
+    "$id": "143",
+    "fixed": false,
+    "raw": "RegisterOKResponse"
+   },
+   "extensions": {
+    "x-ms-metadata": {
+     "apiVersions": [
+      "0.0.1"
+     ],
+     "filename": [
+      "mem:///113?oai3.shaken.json"
+     ],
+     "name": "RegisterOKResponse",
+     "originalLocations": [
+      "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/schemas/RegisterOKResponse"
+     ]
+    }
+   },
+   "deprecated": false
+  }
+ ],
+ "name": "RestClient",
+ "namespace": "Restclient",
+ "modelsName": "Models",
+ "apiVersion": "0.0.1",
+ "baseUrl": "/api",
+ "documentation": "This is the Open API specification of the Burdock execution service.",
+ "operations": [
+  {
+   "$id": "144",
+   "methods": [
+    {
+     "$id": "145",
+     "parameters": [
+      {
+       "$id": "146",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "147",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "148",
+        "fixed": false,
+        "raw": "Configuration for the module run."
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·1c3o36a·execute·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/requestBodies/paths·1c3o36a·execute·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "details"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "149",
+        "fixed": false,
+        "raw": "details"
+       },
+       "serializedName": "details",
+       "modelType": {
+        "$ref": "2"
+       }
+      }
+     ],
+     "name": {
+      "$id": "150",
+      "fixed": false,
+      "raw": "execute.run"
+     },
+     "group": {
+      "$id": "151",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "execute.run",
+     "url": "/execute",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "152",
+       "body": {
+        "$ref": "128"
+       },
+       "extensions": {
+        "$id": "153",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·xg3uxr·execute·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/responses/paths·xg3uxr·execute·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "154",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "155",
+      "body": {
+       "$ref": "128"
+      },
+      "isNullable": true
+     },
+     "description": "Create a run of the specified module and return the results.",
+     "summary": "Execute a differentially private module",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "156",
+     "parameters": [
+      {
+       "$id": "157",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "158",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "159",
+        "fixed": false,
+        "raw": "Get the dataset read request"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·18thysi·dataset·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/requestBodies/paths·18thysi·dataset·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "dataset_request"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "160",
+        "fixed": false,
+        "raw": "dataset_request"
+       },
+       "serializedName": "dataset_request",
+       "modelType": {
+        "$ref": "16"
+       }
+      }
+     ],
+     "name": {
+      "$id": "161",
+      "fixed": false,
+      "raw": "dataset.read"
+     },
+     "group": {
+      "$id": "162",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "dataset.read",
+     "url": "/dataset",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "163",
+       "body": {
+        "$ref": "72"
+       },
+       "extensions": {
+        "$id": "164",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·1p1x7jo·dataset·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/responses/paths·1p1x7jo·dataset·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "165",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "166",
+      "body": {
+       "$ref": "72"
+      },
+      "isNullable": true
+     },
+     "description": "Return the details of the requested dataset",
+     "summary": "Read the details for reading the dataset",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "167",
+     "parameters": [
+      {
+       "$id": "168",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "169",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "170",
+        "fixed": false,
+        "raw": "Get the dataset read request"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·13woxk·read_released·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/requestBodies/paths·13woxk·read_released·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "dataset_request"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "171",
+        "fixed": false,
+        "raw": "dataset_request"
+       },
+       "serializedName": "dataset_request",
+       "modelType": {
+        "$ref": "16"
+       }
+      }
+     ],
+     "name": {
+      "$id": "172",
+      "fixed": false,
+      "raw": "dataset.readreleased"
+     },
+     "group": {
+      "$id": "173",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "dataset.readreleased",
+     "url": "/read-released",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "174",
+       "body": {
+        "$ref": "72"
+       },
+       "extensions": {
+        "$id": "175",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·1fcunvu·read_released·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/responses/paths·1fcunvu·read_released·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "176",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "177",
+      "body": {
+       "$ref": "72"
+      },
+      "isNullable": true
+     },
+     "description": "Return the details of the requested dataset, decrement the budget",
+     "summary": "Read a released dataset",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "178",
+     "parameters": [
+      {
+       "$id": "179",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "180",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "181",
+        "fixed": false,
+        "raw": "Dataset for release"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·1gxenzk·release·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/requestBodies/paths·1gxenzk·release·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "dataset"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "182",
+        "fixed": false,
+        "raw": "dataset"
+       },
+       "serializedName": "dataset",
+       "modelType": {
+        "$ref": "30"
+       }
+      }
+     ],
+     "name": {
+      "$id": "183",
+      "fixed": false,
+      "raw": "dataset.release"
+     },
+     "group": {
+      "$id": "184",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "dataset.release",
+     "url": "/release",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "185",
+       "body": {
+        "$ref": "72"
+       },
+       "extensions": {
+        "$id": "186",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·skv4r·release·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/responses/paths·skv4r·release·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "187",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "188",
+      "body": {
+       "$ref": "72"
+      },
+      "isNullable": true
+     },
+     "description": "Return the details of the released dataset",
+     "summary": "Release a registered dataset",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "189",
+     "parameters": [
+      {
+       "$id": "190",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "191",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "192",
+        "fixed": false,
+        "raw": "Well formed dataset for adding to dict"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·uq06o2·register·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/requestBodies/paths·uq06o2·register·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "dataset"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "193",
+        "fixed": false,
+        "raw": "dataset"
+       },
+       "serializedName": "dataset",
+       "modelType": {
+        "$ref": "72"
+       }
+      }
+     ],
+     "name": {
+      "$id": "194",
+      "fixed": false,
+      "raw": "dataset.register"
+     },
+     "group": {
+      "$id": "195",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "dataset.register",
+     "url": "/register",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "196",
+       "body": {
+        "$ref": "136"
+       },
+       "extensions": {
+        "$id": "197",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·xnb45z·register·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/responses/paths·xnb45z·register·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "198",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "199",
+      "body": {
+       "$ref": "136"
+      },
+      "isNullable": true
+     },
+     "description": "Posts dataset info, creates new entry in remote dict",
+     "summary": "Register a new dataset with budget",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    },
+    {
+     "$id": "200",
+     "parameters": [
+      {
+       "$id": "201",
+       "location": "body",
+       "collectionFormat": "none",
+       "defaultValue": {
+        "$id": "202",
+        "fixed": false
+       },
+       "deprecated": false,
+       "documentation": {
+        "$id": "203",
+        "fixed": false,
+        "raw": "Add a secret"
+       },
+       "extensions": {
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·5ug4j7·secrets·post·requestbody",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/requestBodies/paths·5ug4j7·secrets·post·requestbody"
+         ]
+        },
+        "x-ms-requestBody-name": "secret"
+       },
+       "isRequired": true,
+       "isConstant": false,
+       "name": {
+        "$id": "204",
+        "fixed": false,
+        "raw": "secret"
+       },
+       "serializedName": "secret",
+       "modelType": {
+        "$ref": "106"
+       }
+      }
+     ],
+     "name": {
+      "$id": "205",
+      "fixed": false,
+      "raw": "secrets.put"
+     },
+     "group": {
+      "$id": "206",
+      "fixed": false,
+      "raw": ""
+     },
+     "serializedName": "secrets.put",
+     "url": "/secrets",
+     "isAbsoluteUrl": false,
+     "httpMethod": "post",
+     "responses": {
+      "OK": {
+       "$id": "207",
+       "body": {
+        "$ref": "120"
+       },
+       "extensions": {
+        "$id": "208",
+        "x-ms-metadata": {
+         "apiVersions": [
+          "0.0.1"
+         ],
+         "filename": [
+          "mem:///113?oai3.shaken.json"
+         ],
+         "name": "paths·v1efgs·secrets·post·responses·200",
+         "originalLocations": [
+          "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/responses/paths·v1efgs·secrets·post·responses·200"
+         ]
+        }
+       },
+       "isNullable": true
+      }
+     },
+     "defaultResponse": {
+      "$id": "209",
+      "isNullable": true
+     },
+     "returnType": {
+      "$id": "210",
+      "body": {
+       "$ref": "120"
+      },
+      "isNullable": true
+     },
+     "description": "Add the secret to the secret store",
+     "summary": "Add a secret to the secret store",
+     "requestContentType": "application/json; charset=utf-8",
+     "responseContentTypes": [
+      "application/json"
+     ],
+     "extensions": {
+      "servers": [
+       {
+        "url": "/api"
+       }
+      ],
+      "x-ms-requestBody-index": "0"
+     },
+     "deprecated": false,
+     "hidden": false
+    }
+   ],
+   "name": {
+    "$id": "211",
+    "fixed": false,
+    "raw": ""
+   },
+   "typeName": {
+    "$id": "212",
+    "fixed": false
+   },
+   "nameForProperty": "RestClient"
+  }
+ ]
+}

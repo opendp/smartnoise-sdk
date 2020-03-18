@@ -17,6 +17,8 @@ class DatasetDocument(Model):
     :type dataset_type: str
     :param budget: Available budget for the dataset registered
     :type budget: float
+    :param released: Has this dataset been released
+    :type released: bool
     :param csv_details:
     :type csv_details: ~restclient.models.LocalCSVDetails
     :param dataverse_details:
@@ -27,14 +29,16 @@ class DatasetDocument(Model):
         'dataset_name': {'key': 'dataset_name', 'type': 'str'},
         'dataset_type': {'key': 'dataset_type', 'type': 'str'},
         'budget': {'key': 'budget', 'type': 'float'},
+        'released': {'key': 'released', 'type': 'bool'},
         'csv_details': {'key': 'csv_details', 'type': 'LocalCSVDetails'},
         'dataverse_details': {'key': 'dataverse_details', 'type': 'DataverseDetails'},
     }
 
-    def __init__(self, dataset_name=None, dataset_type=None, budget=None, csv_details=None, dataverse_details=None):
+    def __init__(self, dataset_name=None, dataset_type=None, budget=None, released=None, csv_details=None, dataverse_details=None):
         super(DatasetDocument, self).__init__()
         self.dataset_name = dataset_name
         self.dataset_type = dataset_type
         self.budget = budget
+        self.released = released
         self.csv_details = csv_details
         self.dataverse_details = dataverse_details
