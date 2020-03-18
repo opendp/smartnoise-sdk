@@ -1401,7 +1401,7 @@
        "documentation": {
         "$id": "181",
         "fixed": false,
-        "raw": "Dataset for release"
+        "raw": "Request to release a specified dataset"
        },
        "extensions": {
         "x-ms-metadata": {
@@ -1416,16 +1416,16 @@
           "file:///C:/Users/lurosenb/whitenoise/fork/whitenoise-system/openapi/swagger.yml#/components/requestBodies/paths·1gxenzk·release·post·requestbody"
          ]
         },
-        "x-ms-requestBody-name": "dataset"
+        "x-ms-requestBody-name": "release_request"
        },
        "isRequired": true,
        "isConstant": false,
        "name": {
         "$id": "182",
         "fixed": false,
-        "raw": "dataset"
+        "raw": "release_request"
        },
-       "serializedName": "dataset",
+       "serializedName": "release_request",
        "modelType": {
         "$ref": "30"
        }

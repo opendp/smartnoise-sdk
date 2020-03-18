@@ -55,23 +55,27 @@ def readreleased(dataset_request):
         dataset["budget"] = adjusted_budget
     else:
         abort(412, "Not enough budget for read. Remaining budget: {}".format(dataset["budget"]))
+    
+    return dataset
 
-def release(dataset):
-    dataset_name = dataset["dataset_name"]
+def release(release_request):
+    dataset_name = release_request["dataset_name"]
 
     if dataset_name not in DATASETS:
         abort(401, "Dataset id {} doesn't exist.".format(dataset_name))
 
     # Check secret here, to make sure this comes from service
 
+    dataset = DATASETS[dataset_name]
+
     if dataset_name not in RELEASED_DATASETS:
-        DATASETS[dataset_name]["released"] = True
+        dataset["released"] = True
 
         RELEASED_DATASETS.append(dataset_name)
     else:
         abort(401, "Dataset id {} has already been released.".format(dataset_name))
 
-    return {"result": dataset_name}
+    return dataset
 
 def read(dataset_request):
     """Get information needed to load the dataset

@@ -77,9 +77,9 @@ paths:
       summary: Release a registered dataset 
       description: Return the details of the released dataset
       parameters:
-        - name: dataset
+        - name: release_request
           in: body
-          description: Dataset for release
+          description: Request to release a specified dataset
           required: True
           schema:
             $ref: '#/definitions/DatasetReleaseRequest'

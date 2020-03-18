@@ -8,6 +8,7 @@ from .restclient.models.project_run_details import ProjectRunDetails
 from .restclient.rest_client import RestClient
 from .restclient.models.dataset_read_request import DatasetReadRequest
 from .restclient.models.dataset_document import DatasetDocument
+from .restclient.models.dataset_release_request import DatasetReleaseRequest
 
 module_logger = logging.getLogger(__name__)
 
@@ -36,14 +37,14 @@ class ExecutionClient(object):
 class DatasetClient(object):
     def readreleased(self, dataset_name, budget):
         client = _get_client()
-        read_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
-        return client.datasetread(read_request)
+        read_released_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
+        return client.datasetreadreleased(read_released_request)
 
     def release(self, dataset_name, budget=None):
         client = _get_client()
-        release_request = DatasetDocument(dataset_name=dataset_name, \
+        release_request = DatasetReleaseRequest(dataset_name=dataset_name, \
             budget=budget)
-        return client.datasetregister(release_request)
+        return client.datasetrelease(release_request)
 
     def register(self, dataset):
         client = _get_client()
@@ -60,7 +61,7 @@ class DatasetClient(object):
             released=False)
         return client.datasetregister(register_request)
 
-    def read(self, dataset_name, budget):
+    def read(self, dataset_name, budget=None):
         client = _get_client()
         read_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
         return client.datasetread(read_request)

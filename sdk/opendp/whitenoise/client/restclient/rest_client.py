@@ -226,13 +226,13 @@ class RestClient(object):
     datasetreadreleased.metadata = {'url': '/read-released'}
 
     def datasetrelease(
-            self, dataset, custom_headers=None, raw=False, **operation_config):
+            self, release_request, custom_headers=None, raw=False, **operation_config):
         """Release a registered dataset.
 
         Return the details of the released dataset.
 
-        :param dataset: Dataset for release
-        :type dataset: ~restclient.models.DatasetReleaseRequest
+        :param release_request: Request to release a specified dataset
+        :type release_request: ~restclient.models.DatasetReleaseRequest
         :param dict custom_headers: headers that will be added to the request
         :param bool raw: returns the direct response alongside the
          deserialized response
@@ -257,7 +257,7 @@ class RestClient(object):
             header_parameters.update(custom_headers)
 
         # Construct body
-        body_content = self._serialize.body(dataset, 'DatasetReleaseRequest')
+        body_content = self._serialize.body(release_request, 'DatasetReleaseRequest')
 
         # Construct and send request
         request = self._client.post(url, query_parameters)
