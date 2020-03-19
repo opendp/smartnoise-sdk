@@ -4,9 +4,9 @@ import sys
 
 import pandas as pd
 
-from burdock.client import get_dataset_client
-from burdock.data.adapters import load_reader, load_metadata, load_dataset
-from burdock.sql.private_reader import PrivateReader
+from opendp.whitenoise.client import get_dataset_client
+from opendp.whitenoise.data.adapters import load_reader, load_metadata, load_dataset
+from opendp.whitenoise.sql.private_reader import PrivateReader
 from pandasql import sqldf
 
 
