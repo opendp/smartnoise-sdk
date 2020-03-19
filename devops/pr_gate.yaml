@@ -48,9 +48,11 @@ steps:
       pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
       python -m pytest tests/sdk --junitxml=./TEST-TEST.xml
     displayName: "Run sdk tests"
-    
+
   - bash: |
       source activate wnoise
+      python service/app.py &
+      sleep 30
       pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
       python -m pytest tests/service/datasets/test_smoke.py --junitxml=./TEST-SERVICE.xml
     displayName: "Run service tests"
