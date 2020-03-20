@@ -56,7 +56,7 @@ def policy_laplace(df, eps, delta, max_contrib):
         items = group["group_cols"]
 
         if len(items) > max_contrib:
-            items = sys_rand.uniform(items, max_contrib)
+            items = sys_rand.sample(items, max_contrib)
 
         cost_dict = {}
         for item in items:
