@@ -7,6 +7,8 @@ from collections import defaultdict
 from opendp.whitenoise.sql.parse import QueryParser
 from opendp.whitenoise.mechanisms.rand import laplace
 
+sys_rand = random.SystemRandom()
+
 def preprocess_df_from_query(schema, df, query):
     """
     Returns a dataframe with user_id | tuple based on query grouping keys.
@@ -23,18 +25,6 @@ def preprocess_df_from_query(schema, df, query):
     preprocessed_df["group_cols"] = tuple(df[group_cols].values.tolist())
 
     return preprocessed_df
-
-def reservoir_sample(iterable, max_contrib):
-    reservoir = []
-    for i, item in enumerate(iterable):
-        if i < max_contrib:
-            reservoir.append(item)
-        else:
-            m = random.randint(0, i)
-            if m < max_contrib:
-                reservoir[m] = item
-
-    return reservoir
 
 def policy_laplace(df, eps, delta, max_contrib):
     """
@@ -66,7 +56,7 @@ def policy_laplace(df, eps, delta, max_contrib):
         items = group["group_cols"]
 
         if len(items) > max_contrib:
-            items = reservoir_sample(items, max_contrib)
+            items = sys_rand.uniform(items, max_contrib)
 
         cost_dict = {}
         for item in items:
