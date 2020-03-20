@@ -7,8 +7,8 @@ import logging
 import numpy as np
 import pandas as pd
 
-from burdock.client import get_dataset_client
-from burdock.data.adapters import load_metadata, load_dataset
+from opendp.whitenoise.client import get_dataset_client
+from opendp.whitenoise.data.adapters import load_metadata, load_dataset
 
 from burdock.models import DPLinearRegression
 #  TODO add a test for both this and log_reg module in smoke tests
