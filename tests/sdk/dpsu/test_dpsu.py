@@ -28,7 +28,9 @@ class TestDPSU:
     def test_dpsu_df(self):
         query = "SELECT married, educ FROM PUMS.PUMS GROUP BY married, educ"
         final_df = run_dpsu(schema, df, query, 3.0)
+        print(final_df.columns)
 
         assert final_df is not None
+        assert list(final_df) == list(df)
         assert not final_df.equals(df)
         assert len(final_df) < len(df)

@@ -76,8 +76,7 @@ def policy_laplace(df, eps, delta, max_contrib):
         budget = 1
         k = len(cost_dict)
 
-        cost_dict = {k: v for k, v in sorted(cost_dict.items(), key=lambda item: item[1])}
-        sorted_items = list(cost_dict.keys())
+        sorted_items = [k for k, v in sorted(cost_dict.items(), key=lambda item: item[1])]
 
         for idx, curr_item in enumerate(sorted_items):
             cost = cost_dict[curr_item] * k # cost of increasing weights of remaining k items by cost_dict[curr_item]
@@ -114,4 +113,4 @@ def run_dpsu(schema, input_df, query, eps, delta=math.exp(-10), max_contrib=5):
     output_df = pd.merge(input_df, dpsu_df, on=dpsu_df.columns[0])
     output_df.drop(["group_cols", "hash"], axis=1, inplace=True)
 
-    return dpsu_df
+    return output_df
