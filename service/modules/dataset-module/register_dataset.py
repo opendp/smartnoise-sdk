@@ -10,6 +10,11 @@ from opendp.whitenoise.data.adapters import load_reader, load_metadata, load_dat
 from opendp.whitenoise.sql.private_reader import PrivateReader
 from pandasql import sqldf
 
+"""
+Sample Command line:
+
+python register_dataset.py private_csv csv_details 10.0 False local_path=serverside/path/to/example.csv
+"""
 
 if __name__ == "__main__":
     dataset_name = sys.argv[1]
@@ -21,10 +26,11 @@ if __name__ == "__main__":
 
     # If json flag, assume 5th argument is valid json
     # Else, load each specified detail
-    if json_flag:
-        with open(sys.argv[4], "r") as f:
+    if json_flag == "True":
+        with open(sys.argv[5], "r") as f:
             details = json.load(f)
     else:
+        # Args split by spaces, then key=value
         for arg in sys.argv[5:]:
             details[arg.split("=")[0]] = arg.split("=")[1]
     
