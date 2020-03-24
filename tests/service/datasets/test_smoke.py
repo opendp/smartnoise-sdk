@@ -30,17 +30,30 @@ def test_load_local_csv(dataset_client, dataset_name):
     df = load_dataset(dataset_document)
     assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
-@pytest.mark.parametrize("dataset_name", ["example_csv"])
-@pytest.mark.parametrize("budget", [10.0])
-def test_release_local_csv(dataset_client, dataset_name, budget):
+@pytest.mark.parametrize("release_request", [{
+                        "dataset_name": "another_released_demo_dataverse",
+                        "dataset_type": "dataverse_details",
+                        "dataverse_details": {
+                            "local_metadata_path": os.path.join(os.path.dirname(__file__),
+                                                                "datasets",
+                                                                "dataverse",
+                                                                "demo_dataverse.yml"),
+                            "host": "https://demo.dataverse.org/api/access/datafile/395811",
+                            "schema": '{"fake":"schema"}'
+                        },
+                        "budget":10.0,
+                        "authorized_users":['mock_creds']}])
+def test_release_registered_csv(dataset_client, release_request):
     """
     RELEASE TEST
-    Checks that the service can release a dataset
+    Checks that the service can release a dataset (newly registered csv)
     """
-    response = dataset_client.release(dataset_name, budget)
-    assert response.budget == budget
+    dataset_client._guid = 'different_owner'
+    response = dataset_client.release(release_request)
+    assert response.dataset_name == release_request["dataset_name"]
+    
 
-@pytest.mark.parametrize("dataset_name", ["example_csv"])
+@pytest.mark.parametrize("dataset_name", ["example_released_csv"])
 @pytest.mark.parametrize("budget", [1.0])
 def test_readrelease_budget(dataset_client, dataset_name, budget):
     """
@@ -52,7 +65,7 @@ def test_readrelease_budget(dataset_client, dataset_name, budget):
     df = load_dataset(dataset_document)
     assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
-@pytest.mark.parametrize("dataset_name", ["demo_dataverse"])
+@pytest.mark.parametrize("dataset_name", ["another_released_demo_dataverse"])
 @pytest.mark.parametrize("budget", [100.0])
 def test_readrelease_budget_exceeded(dataset_client, dataset_name, budget):
     """
@@ -65,12 +78,12 @@ def test_readrelease_budget_exceeded(dataset_client, dataset_name, budget):
     
     assert error.typename == "HttpOperationError"
 
-@pytest.mark.parametrize("dataset_name", ["example_csv"])
+@pytest.mark.parametrize("dataset_name", ["example_released_csv"])
 @pytest.mark.parametrize("budget", [100.0])
 def test_readrelease_no_penalty(dataset_client, dataset_name, budget):
     """
     READ (RELEASE) TEST
-    Further readrelease calls do not incure budget
+    Further readrelease calls do not incur budget
     """
     dataset_client._guid = 'mock_creds'
     dataset_document = dataset_client.readreleased(dataset_name, budget)
@@ -93,26 +106,27 @@ def test_register_csv(dataset_client, dataset):
     response = get_dataset_client().register(dataset)
     assert response.result == dataset['dataset_name']
 
-@pytest.mark.parametrize("dataset_name", ["another_csv"])
-@pytest.mark.parametrize("budget", [100.0])
-def test_release_registered_csv(dataset_client, dataset_name, budget):
-    """
-    RELEASE TEST
-    Checks that the service can release a dataset (newly registered csv)
-    """
-    dataset_client._guid = 'mock_creds'
-    response = dataset_client.release(dataset_name, budget)
-    assert response.dataset_name == dataset_name
-
-@pytest.mark.parametrize("dataset_name", ["another_csv"])
-def test_release_exception_rerelease(dataset_client, dataset_name):
+@pytest.mark.parametrize("release_request", [{
+                        "dataset_name": "another_released_demo_dataverse",
+                        "dataset_type": "dataverse_details",
+                        "dataverse_details": {
+                            "local_metadata_path": os.path.join(os.path.dirname(__file__),
+                                                                "datasets",
+                                                                "dataverse",
+                                                                "demo_dataverse.yml"),
+                            "host": "https://demo.dataverse.org/api/access/datafile/395811",
+                            "schema": '{"fake":"schema"}'
+                        },
+                        "budget":100.0,
+                        "authorized_users":['mock_creds']}])
+def test_release_exception_rerelease(dataset_client, release_request):
     """
     RELEASE TEST
     Checks an exception when trying to re release a released dataset
     """
     dataset_client._guid = 'mock_creds'
     with pytest.raises(Exception) as error:
-        response = dataset_client.release(dataset_name, 10.0)
+        response = dataset_client.release(release_request)
     
     assert error.typename == "HttpOperationError"
 
@@ -137,16 +151,6 @@ def test_register_dataverse(dataset_client, dataset):
     """
     response = get_dataset_client().register(dataset)
     assert response.result == dataset['dataset_name']
-
-@pytest.mark.parametrize("dataset_name", ["another_dataverse"])
-def test_release_dataverse(dataset_client, dataset_name):
-    """
-    RELEASE TEST
-    Checks that the service can release a dataset (newly registered dataverse)
-    """
-    dataset_client._guid = 'mock_creds'
-    response = dataset_client.release(dataset_name, 10.0)
-    assert response.dataset_name == dataset_name
 
 @pytest.mark.parametrize("dataset", [{
                         "dataset_name": "authorized_csv",
@@ -178,32 +182,39 @@ def test_auth_register_release_csv(dataset):
     response = service_client.register(dataset)
     assert response.result == dataset['dataset_name']
 
+    # Fake DP Perturb
+    release_dataset = dataset.copy()
+    release_dataset["dataset_name"] = "release_authorize_csv"
+
     # Release dataset
-    response = service_client.release(dataset['dataset_name'], 100.0)
-    assert response.dataset_name == dataset['dataset_name']
+    response = service_client.release(release_dataset)
+    assert response.dataset_name == release_dataset['dataset_name']
+
+    # Should have same authorized users
+    assert response.authorized_users == valid_guids
 
     # Attempt to read from released dataset with valid clients
     for c in valid_clients:
-        dataset_document = c.readreleased(dataset['dataset_name'], 1.0)
+        dataset_document = c.readreleased(release_dataset['dataset_name'], 1.0)
         df = load_dataset(dataset_document)
         assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
     # Attempt to read from released dataset with invalid clients
     for c in invalid_clients:
         with pytest.raises(Exception) as error:
-            service_client.readreleased(dataset['dataset_name'], 1.0)
+            c.readreleased(release_dataset['dataset_name'], 1.0)
         
         assert error.typename == "HttpOperationError"
     
-    prev_budget = service_client.read(dataset['dataset_name']).budget
+    prev_budget = service_client.readreleased(release_dataset['dataset_name'], 0.0).budget
 
     # Execute a second read with the same clients - should not incur budget
     for c in valid_clients:
-        dataset_document = c.readreleased(dataset['dataset_name'], 1.0)
+        dataset_document = c.readreleased(release_dataset['dataset_name'], 1.0)
         df = load_dataset(dataset_document)
         assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
-    assert prev_budget == service_client.read(dataset['dataset_name']).budget
+    assert prev_budget == service_client.readreleased(release_dataset['dataset_name'], 0.0).budget
 
 # TODO: Add register exception tests
 # TODO: Add release exception tests

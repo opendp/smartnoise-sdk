@@ -11,7 +11,6 @@ from .restclient.models.dataset_read_request import DatasetReadRequest
 from .restclient.models.dataset_document import DatasetDocument
 from .restclient.models.release_dataset_document import ReleaseDatasetDocument
 from .restclient.models.dataset_read_release_request import DatasetReadReleaseRequest
-from .restclient.models.dataset_release_request import DatasetReleaseRequest
 
 module_logger = logging.getLogger(__name__)
 
@@ -23,8 +22,14 @@ class _MockCredentials(object):
 
 
 def _get_client():
-    url = os.environ.get("BURDOCK_SERVICE_URL", "localhost")
-    port = int(os.environ.get("BURDOCK_SERVICE_PORT", 5000))
+    """
+    Spins up a RestClient Instance
+
+    :return: A RestClient tuned to the WHITENOISE port
+    :rtype: RestClient()
+    """
+    url = os.environ.get("WHITENOISE_SERVICE_URL", "localhost")
+    port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5000))
 
     base_url = "http://{}:{}/api/".format(url, port)
     client = RestClient(_MockCredentials(), base_url)
@@ -47,36 +52,68 @@ class ExecutionClient(object):
         return client.executerun(details)
 
 class DatasetClient(object):
+    """
+    A client for registering, reading and releasing differentially private
+    datasets using the opendp-whitenoise service
+    """
     def __init__(self):
         # Tag requests with this custom header for now
         self._guid = _guid_header()
 
     def readreleased(self, dataset_name, budget):
+        """
+        Generates a DatasetReadReleaseRequest and sends it to the service.
+        Tags the request with Client guid.
+        """
         client = _get_client()
         read_released_request = DatasetReadReleaseRequest(dataset_name=dataset_name, budget=budget)
         return client.datasetreadreleased(read_released_request, custom_headers={'client_guid': self._guid})
 
-    def release(self, dataset_name, budget):
-        client = _get_client()
-        release_request = DatasetReleaseRequest(dataset_name=dataset_name, budget=budget)
-        return client.datasetrelease(release_request, custom_headers={'client_guid': self._guid})
-
-    def register(self, dataset):
-        client = _get_client()
-
+    def _register_release_request_helper(self, dataset):
+        """
+        Helper for register/release, 
+        both of which use DatasetDocuments as request formats
+        """
         for key in KNOWN_DATASET_TYPE_KEYS:
             if not key in dataset:
                 dataset[key]=None
 
-        register_request = DatasetDocument(dataset_name=dataset['dataset_name'], \
+        request = DatasetDocument(dataset_name=dataset['dataset_name'], \
             dataset_type=dataset['dataset_type'], \
             budget=dataset['budget'], \
             csv_details=dataset['csv_details'], \
             dataverse_details=dataset['dataverse_details'], \
             authorized_users=dataset['authorized_users'])
+        
+        return request
+
+    def release(self, dataset):
+        """
+        Generates a DatasetDocument and sends it to the service.
+        Requests the release of a Differentially Private DatasetDocument, with budget
+        (to authorized users)
+        Tags the request with Client guid.
+        """
+        client = _get_client()
+        release_request = self._register_release_request_helper(dataset)
+        return client.datasetrelease(release_request, custom_headers={'client_guid': self._guid})
+
+    def register(self, dataset):
+        """
+        Generates a DatasetDocument and sends it to the service.
+        Requests the registration of this private DatasetDocument
+        Tags the request with Client guid.
+        """
+        client = _get_client()
+        register_request = self._register_release_request_helper(dataset)
         return client.datasetregister(register_request, custom_headers={'client_guid': self._guid})
 
     def read(self, dataset_name):
+        """
+        Generates a DatasetReadRequest and sends it to the service.
+        Reads from a private DatasetDocument
+        Tags the request with Client guid.
+        """
         client = _get_client()
         read_request = DatasetReadRequest(dataset_name=dataset_name)
         return client.datasetread(read_request, custom_headers={'client_guid': self._guid})

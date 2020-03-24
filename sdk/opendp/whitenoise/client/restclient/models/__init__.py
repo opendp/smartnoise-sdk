@@ -8,7 +8,6 @@
 from .project_run_details import ProjectRunDetails
 from .dataset_read_request import DatasetReadRequest
 from .dataset_read_release_request import DatasetReadReleaseRequest
-from .dataset_release_request import DatasetReleaseRequest
 from .local_csv_details import LocalCSVDetails
 from .dataverse_details import DataverseDetails
 from .release_dataset_document import ReleaseDatasetDocument
@@ -22,7 +21,6 @@ __all__ = [
     'ProjectRunDetails',
     'DatasetReadRequest',
     'DatasetReadReleaseRequest',
-    'DatasetReleaseRequest',
     'LocalCSVDetails',
     'DataverseDetails',
     'ReleaseDatasetDocument',
