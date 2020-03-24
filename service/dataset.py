@@ -9,13 +9,15 @@ from secrets import put as secrets_put
 from opendp.whitenoise.data.adapters import load_dataset
 
 DATASETS = {"example_csv": {
+                        "dataset_name": "example_csv",
                         "dataset_type": "csv_details",
                         "csv_details": {
                             "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv")
                         },
                         "budget":3.0,
-                        "authorized_users":[]},
+                        "authorized_users":['mock_creds']},
             "demo_dataverse": {
+                        "dataset_name": "demo_dataverse",
                         "dataset_type": "dataverse_details",
                         "dataverse_details": {
                             "local_metadata_path": os.path.join(os.path.dirname(__file__),
@@ -26,7 +28,7 @@ DATASETS = {"example_csv": {
                             "schema": '{"fake":"schema"}'
                         },
                         "budget":3.0,
-                        "authorized_users":[]}}
+                        "authorized_users":['mock_creds']}}
 
 RELEASED_DATASETS = {"example_released_csv": {
                         "dataset_name": "example_released_csv",
@@ -39,7 +41,7 @@ RELEASED_DATASETS = {"example_released_csv": {
 
 KNOWN_DATASET_TYPE_KEYS = ["csv_details", "dataverse_details"]
 
-KNOWN_USERS = {'ab30c2f7-d97b-42b5-9e74-f9ed05b43839': defaultdict(int)}
+KNOWN_USERS = {'ab30c2f7-d97b-42b5-9e74-f9ed05b43839': defaultdict(int), 'mock_creds': defaultdict(int, {'example_csv': 1, 'demo_dataverse': 1})}
 
 def _read_helper(dataset_request):
     dataset_name = dataset_request["dataset_name"]
