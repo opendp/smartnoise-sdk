@@ -1,5 +1,6 @@
 import os
 import json
+import uuid
 import logging
 import pkg_resources
 from requests import Session
@@ -8,6 +9,8 @@ from .restclient.models.project_run_details import ProjectRunDetails
 from .restclient.rest_client import RestClient
 from .restclient.models.dataset_read_request import DatasetReadRequest
 from .restclient.models.dataset_document import DatasetDocument
+from .restclient.models.release_dataset_document import ReleaseDatasetDocument
+from .restclient.models.dataset_read_release_request import DatasetReadReleaseRequest
 from .restclient.models.dataset_release_request import DatasetReleaseRequest
 
 module_logger = logging.getLogger(__name__)
@@ -27,6 +30,15 @@ def _get_client():
     client = RestClient(_MockCredentials(), base_url)
     return client
 
+def _guid_header():
+    """
+    Generates a guid header for client, to be tracked by client/server.
+
+    :return: A UUID
+    :rtype: str
+    """
+    return str(uuid.uuid4())
+
 class ExecutionClient(object):
     def submit(self, params, uri):
         client = _get_client()
@@ -35,16 +47,19 @@ class ExecutionClient(object):
         return client.executerun(details)
 
 class DatasetClient(object):
+    def __init__(self):
+        # Tag requests with this custom header for now
+        self._guid = _guid_header()
+
     def readreleased(self, dataset_name, budget):
         client = _get_client()
-        read_released_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
-        return client.datasetreadreleased(read_released_request)
+        read_released_request = DatasetReadReleaseRequest(dataset_name=dataset_name, budget=budget)
+        return client.datasetreadreleased(read_released_request, custom_headers={'client_guid': self._guid})
 
-    def release(self, dataset_name, budget=None):
+    def release(self, dataset_name, budget):
         client = _get_client()
-        release_request = DatasetReleaseRequest(dataset_name=dataset_name, \
-            budget=budget)
-        return client.datasetrelease(release_request)
+        release_request = DatasetReleaseRequest(dataset_name=dataset_name, budget=budget)
+        return client.datasetrelease(release_request, custom_headers={'client_guid': self._guid})
 
     def register(self, dataset):
         client = _get_client()
@@ -58,13 +73,13 @@ class DatasetClient(object):
             budget=dataset['budget'], \
             csv_details=dataset['csv_details'], \
             dataverse_details=dataset['dataverse_details'], \
-            released=False)
-        return client.datasetregister(register_request)
+            authorized_users=dataset['authorized_users'])
+        return client.datasetregister(register_request, custom_headers={'client_guid': self._guid})
 
-    def read(self, dataset_name, budget=None):
+    def read(self, dataset_name):
         client = _get_client()
-        read_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
-        return client.datasetread(read_request)
+        read_request = DatasetReadRequest(dataset_name=dataset_name)
+        return client.datasetread(read_request, custom_headers={'client_guid': self._guid})
 
 def get_dataset_client():
     client_overrides = [entrypoint for entrypoint in pkg_resources.iter_entry_points("opendp_whitenoise_dataset_client")]

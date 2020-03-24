@@ -12,30 +12,40 @@ from pandasql import sqldf
 
 
 if __name__ == "__main__":
-    dataset_name = sys.argv[1]
-    dataset_type = sys.argv[2]
-    budget = sys.argv[3]
-    json_flag = sys.argv[4]
+    # Playground
+    dataset_name = "example_csv"
+    client = get_dataset_client()
+    response = client.release(dataset_name)
+    print(response)
+    dataset_document = client.readreleased(dataset_name, 1.0)
+    df = load_dataset(dataset_document)
 
-    details = {}
+    ###
 
-    if json_flag:
-        # Dump the json
-        pass
-    else:
-        for arg in sys.argv[5:]:
-            details[arg.split("=")[0]] = arg.split("=")[1]
+    # dataset_name = sys.argv[1]
+    # dataset_type = sys.argv[2]
+    # budget = sys.argv[3]
+    # json_flag = sys.argv[4]
 
-    with mlflow.start_run():
-        # Optionally load the schema from a json? 
-        new_dataset = {
-            "dataset_name": dataset_name,
-            "dataset_type": dataset_type,
-            dataset_type: details,
-            "budget": budget
-        }
+    # details = {}
 
-        dataset_document = get_dataset_client().register(new_dataset)
+    # if json_flag:
+    #     # Dump the json
+    #     pass
+    # else:
+    #     for arg in sys.argv[5:]:
+    #         details[arg.split("=")[0]] = arg.split("=")[1]
+
+    # with mlflow.start_run():
+    #     # Optionally load the schema from a json? 
+    #     new_dataset = {
+    #         "dataset_name": dataset_name,
+    #         "dataset_type": dataset_type,
+    #         dataset_type: details,
+    #         "budget": budget
+    #     }
+
+    #     dataset_document = get_dataset_client().register(new_dataset)
 
         # with open("result.json", "w") as stream:
         #     json.dump(df.to_dict(), stream)

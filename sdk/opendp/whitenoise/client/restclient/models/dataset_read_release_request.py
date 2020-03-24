@@ -8,12 +8,12 @@
 from msrest.serialization import Model
 
 
-class DatasetReleaseRequest(Model):
-    """DatasetReleaseRequest.
+class DatasetReadReleaseRequest(Model):
+    """DatasetReadReleaseRequest.
 
     :param dataset_name: The name for the dataset
     :type dataset_name: str
-    :param budget: Set budget for the released dataset
+    :param budget: Budget used by this read request
     :type budget: float
     """
 
@@ -23,6 +23,6 @@ class DatasetReleaseRequest(Model):
     }
 
     def __init__(self, dataset_name=None, budget=None):
-        super(DatasetReleaseRequest, self).__init__()
+        super(DatasetReadReleaseRequest, self).__init__()
         self.dataset_name = dataset_name
         self.budget = budget
