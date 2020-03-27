@@ -2,6 +2,7 @@ import mlflow
 import json
 import sys
 import os
+import yaml
 
 import pandas as pd
 
@@ -17,32 +18,39 @@ python register_dataset.py private_csv csv_details 10.0 False local_path=servers
 """
 
 if __name__ == "__main__":
-    dataset_name = sys.argv[1]
-    dataset_type = sys.argv[2]
+    private_dataset_name = sys.argv[1]
+    release_dataset_name = sys.argv[2]
     budget = sys.argv[3]
-    json_flag = sys.argv[4]
-
-    details = {}
-
-    # If json flag, assume 5th argument is valid json
-    # Else, load each specified detail
-    if json_flag == "True":
-        with open(sys.argv[5], "r") as f:
-            details = json.load(f)
-    else:
-        # Args split by spaces, then key=value
-        for arg in sys.argv[5:]:
-            details[arg.split("=")[0]] = arg.split("=")[1]
     
     with mlflow.start_run():
+        service_client = get_dataset_client()
+        dataset_document = service_client.read(private_dataset_name, budget)
+
+        input_dataframe = load_dataset(dataset_document)
+        new_dataframe = pd.DataFrame(input_dataframe) # DP stuff here? "make_new_df"?
+
+        prev_path = dataset_document['csv_details']['path']
+        new_path = os.path.join(os.path.dirname(prev_path), release_dataset_name + '.csv')
+        
+        prev_schema = dataset_document['csv_details']['schema']
+        new_schema = os.path.join(os.path.dirname(prev_schema), release_dataset_name + '.yaml')
+
+        new_dataframe.to_csv(new_path, index=False)
+        with open(prev_schema, 'w') as yaml_path:
+            yaml.dump(prev_schema, yaml_path, default_flow_style=False)
+
+        # Create the new details
+        # TODO: Add type inference
         new_dataset = {
-            "dataset_name": dataset_name,
-            "dataset_type": dataset_type,
-            dataset_type: details,
+            "dataset_name": release_dataset_name,
+            "dataset_type": "local_csv",
+            "local_csv": {},
             "budget": budget,
             "authorized_users": []
         }
 
-        dataset_document = get_dataset_client().register(new_dataset)
+        with open("result.json", "w") as stream:
+            json.dump({"released_dataset_name": release_dataset_name}, stream)
 
         # TODO: Perform basic dataset_document validation
+        service_client.register(new_dataset)

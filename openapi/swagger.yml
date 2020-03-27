@@ -74,12 +74,12 @@ paths:
       operationId: dataset.release
       tags:
         - datasetRelease
-      summary: Release a registered dataset 
+      summary: Release a differentially private dataset
       description: Return the details of the released dataset
       parameters:
         - name: release_request
           in: body
-          description: Request to release a specified dataset
+          description: Request to make a dataset release
           required: True
           schema:
             $ref: '#/definitions/DatasetDocument'
@@ -143,16 +143,16 @@ definitions:
       dataset_name:
         type: string
         description: The name for the dataset
+      budget:
+        type: number
+        format: float
+        description: Budget used by this read request
   DatasetReadReleaseRequest:
     type: object
     properties:
       dataset_name:
         type: string
         description: The name for the dataset
-      budget:
-        type: number
-        format: float
-        description: Budget used by this read request
   LocalCSVDetails:
     type: object
     properties:
@@ -204,6 +204,10 @@ definitions:
         type: number
         format: float
         description: Available budget for the dataset registered
+      release_cost:
+        type: number
+        format: float
+        description: Cost of creating a release
       authorized_users:
         type: array
         items: 

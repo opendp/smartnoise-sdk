@@ -55,6 +55,8 @@ KNOWN_DATASET_TYPE_KEYS = ["csv_details", "dataverse_details"]
 
 KNOWN_USERS = {'ab30c2f7-d97b-42b5-9e74-f9ed05b43839': defaultdict(int), 'mock_creds': defaultdict(int, {'example_released_csv': 1})}
 
+USERS_RELEASED = {"example_csv": defaultdict(int)}
+
 # NOTE: This could be tracked inside datasets as well, although
 # potentially safer to only track owners service side
 OWNERS = {'ab30c2f7-d97b-42b5-9e74-f9ed05b43839': ["example_csv"]}
@@ -101,6 +103,7 @@ def readreleased(dataset_request):
     :rtype: dict{"dataset_type": str, dataset_key: dict}
     """
     dataset = _read_helper(dataset_request, RELEASED_DATASETS)
+    dataset_name = dataset["dataset_name"]
 
     client_guid = request.headers.get('client_guid')
 
@@ -110,31 +113,21 @@ def readreleased(dataset_request):
         if dataset_request["dataset_name"] in OWNERS[client_guid]:
             return dataset
 
-    # NOTE: Should not happen
-    if 'authorized_users' not in dataset:
-        abort(411, "Released dataset must specify authorized users.")
+    # Checks to see if authorized users specified
+    if 'authorized_users' in dataset and len(dataset['authorized_users']) > 0:
+        if client_guid not in dataset['authorized_users']:
+            abort(404, "User not authorized to access this dataset.")
 
-    if client_guid not in dataset['authorized_users']:
-        abort(404, "User not authorized to access this dataset.")
-
-    # Check/Decrement the budget before returning dataset
-    # Note: We are guaranteed that client_guid in KNOWN_USERS
-    if client_guid not in KNOWN_USERS:
-        abort(419, "Something went seriously wrong. Check registration validity.")
+    # Track readrelease
+    USERS_RELEASED[dataset_name][client_guid] += 1
 
     # Decrement budget if this is a users first read
-    if KNOWN_USERS[client_guid][dataset["dataset_name"]] == 1:
+    if USERS_RELEASED[dataset_name][client_guid] > 1:
         adjusted_budget = dataset["budget"] - dataset_request["budget"]
         if adjusted_budget >= 0.0:
             dataset["budget"] = adjusted_budget
         else:
             abort(412, "Not enough budget for read. Remaining budget: {}".format(dataset["budget"]))
-    elif KNOWN_USERS[client_guid][dataset["dataset_name"]] == 0:
-        abort(418, "Client does not have access to this dataset.")
-
-    # Increment user count for every read. Reads past the first
-    # do not incur budget for now.
-    KNOWN_USERS[client_guid][dataset["dataset_name"]] += 1
     
     return dataset
 
@@ -221,16 +214,11 @@ def _release_register_helper(dataset_request, dataset_storage, track_users):
         # Before we register/release officially,
         # Track user dataset registrations (count)
         # Tracking Spec:
-        # UserDict -> {User -> {dataset -> count}}
-        # If count is 0, User has never been given access to this dset
-        # If count is 1, User has access to this dataset, but has never read from it
+        # DatasetDict -> {dataset -> {user -> count}}
+        # If count is 0, user has never been given access to this dset
+        # If count is 1, user has access to this dataset, but has never read from it
         # Else, count == (# of reads + 1)
-        if dataset_request["authorized_users"]:
-            for user in dataset_request["authorized_users"]:
-                if user not in KNOWN_USERS:
-                    KNOWN_USERS[user] = defaultdict(int)
-                
-                KNOWN_USERS[user][dataset_name] += 1
+        USERS_RELEASED[dataset_name][client_guid] += 1
 
     # If everything looks good, register it.
     dataset_storage[dataset_name] = dataset_request

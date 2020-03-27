@@ -54,39 +54,36 @@ def test_release_registered_csv(dataset_client, release_request):
     
 
 @pytest.mark.parametrize("dataset_name", ["example_released_csv"])
-@pytest.mark.parametrize("budget", [1.0])
-def test_readrelease_budget(dataset_client, dataset_name, budget):
+def test_read_release_budget(dataset_client, dataset_name):
     """
     READ (RELEASE) TEST
-    Checks that a new user can load a released dataset, incurring budget
+    Checks that a new user can load a released dataset
     """
     dataset_client._guid = 'mock_creds'
-    dataset_document = dataset_client.readreleased(dataset_name, budget)
+    dataset_document = dataset_client.read_released(dataset_name)
     df = load_dataset(dataset_document)
     assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
 @pytest.mark.parametrize("dataset_name", ["another_released_demo_dataverse"])
-@pytest.mark.parametrize("budget", [100.0])
-def test_readrelease_budget_exceeded(dataset_client, dataset_name, budget):
+def test_readrelease_budget_exceeded(dataset_client, dataset_name):
     """
     READ (RELEASE) TEST
     Checks that a new user who attempts to use too much budget raises exception
     """
     dataset_client._guid = 'mock_creds'
     with pytest.raises(Exception) as error:
-        dataset_client.readreleased(dataset_name, budget)
+        dataset_client.read_released(dataset_name)
     
     assert error.typename == "HttpOperationError"
 
 @pytest.mark.parametrize("dataset_name", ["example_released_csv"])
-@pytest.mark.parametrize("budget", [100.0])
 def test_readrelease_no_penalty(dataset_client, dataset_name, budget):
     """
     READ (RELEASE) TEST
     Further readrelease calls do not incur budget
     """
     dataset_client._guid = 'mock_creds'
-    dataset_document = dataset_client.readreleased(dataset_name, budget)
+    dataset_document = dataset_client.read_released(dataset_name)
     df = load_dataset(dataset_document)
     assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
@@ -117,6 +114,7 @@ def test_register_csv(dataset_client, dataset):
                             "host": "https://demo.dataverse.org/api/access/datafile/395811",
                             "schema": '{"fake":"schema"}'
                         },
+                        "release_cost":10.0,
                         "budget":100.0,
                         "authorized_users":['mock_creds']}])
 def test_release_exception_rerelease(dataset_client, release_request):
@@ -142,7 +140,8 @@ def test_release_exception_rerelease(dataset_client, release_request):
                             "schema": '{"fake":"schema"}',
                             "token": {'name':'another_dataverse', 'value': 42}
                         },
-                        "budget":3.0,
+                        "release_cost":3.0,
+                        "budget":10.0,
                         "authorized_users":['mock_creds']}])
 def test_register_dataverse(dataset_client, dataset):
     """
@@ -195,26 +194,26 @@ def test_auth_register_release_csv(dataset):
 
     # Attempt to read from released dataset with valid clients
     for c in valid_clients:
-        dataset_document = c.readreleased(release_dataset['dataset_name'], 1.0)
+        dataset_document = c.read_released(release_dataset['dataset_name'], 1.0)
         df = load_dataset(dataset_document)
         assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
     # Attempt to read from released dataset with invalid clients
     for c in invalid_clients:
         with pytest.raises(Exception) as error:
-            c.readreleased(release_dataset['dataset_name'], 1.0)
+            c.read_released(release_dataset['dataset_name'], 1.0)
         
         assert error.typename == "HttpOperationError"
     
-    prev_budget = service_client.readreleased(release_dataset['dataset_name'], 0.0).budget
+    prev_budget = service_client.read_released(release_dataset['dataset_name'], 0.0).budget
 
     # Execute a second read with the same clients - should not incur budget
     for c in valid_clients:
-        dataset_document = c.readreleased(release_dataset['dataset_name'], 1.0)
+        dataset_document = c.read_released(release_dataset['dataset_name'], 1.0)
         df = load_dataset(dataset_document)
         assert isinstance(df, pd.pandas.core.frame.DataFrame)
 
-    assert prev_budget == service_client.readreleased(release_dataset['dataset_name'], 0.0).budget
+    assert prev_budget == service_client.read_released(release_dataset['dataset_name'], 0.0).budget
 
 # TODO: Add register exception tests
 # TODO: Add release exception tests

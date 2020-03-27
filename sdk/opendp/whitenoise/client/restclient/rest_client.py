@@ -227,11 +227,11 @@ class RestClient(object):
 
     def datasetrelease(
             self, release_request, custom_headers=None, raw=False, **operation_config):
-        """Release a registered dataset.
+        """Release a differentially private dataset.
 
         Return the details of the released dataset.
 
-        :param release_request: Request to release a specified dataset
+        :param release_request: Request to make a dataset release
         :type release_request: ~restclient.models.DatasetDocument
         :param dict custom_headers: headers that will be added to the request
         :param bool raw: returns the direct response alongside the

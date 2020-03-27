@@ -7,5 +7,5 @@ entry_points:
     parameters:
       dataset_name: str
       budget: double
-      query: str
+      query: str released dataset name
     command: "python run_query.py {dataset_name} {budget} {query}"
