@@ -56,7 +56,7 @@ class DatasetClient(object):
 
 def get_dataset_client():
     client_overrides = [entrypoint for entrypoint in pkg_resources.iter_entry_points("opendp_whitenoise_dataset_client")]
-    if len(client_overrides) <= 1:
+    if len(client_overrides) == 1:
         try:
             entrypoint = client_overrides[0]
             extension_class = entrypoint.load()
@@ -66,6 +66,7 @@ def get_dataset_client():
                     entrypoint, e)
                 module_logger.warning(msg)
     else:
+        if len(client_overrides) > 1:
                 module_logger.warning("Multiple client overrides found {}".format(client_overrides))
     return DatasetClient()
 
