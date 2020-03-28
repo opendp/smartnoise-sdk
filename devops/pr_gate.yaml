@@ -50,10 +50,10 @@ steps:
     displayName: "Run sdk tests"
   - bash: |
       source activate wnoise
-      python service/application.py &
+      python service/application.py > logs &
       sleep 30
       pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
-      python -m pytest -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
+      python -m pytest service -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
     displayName: "Run service tests"
 
   - task: PublishTestResults@2
