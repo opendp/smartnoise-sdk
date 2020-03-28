@@ -4,10 +4,10 @@ Database:
       rows: 15000
       COUNTRY:
         type: int
-        is_key: True
+        private_id: True
         min: 0
         max: 5
-      CORRELATION:
+      CORRELAT:
         type: int
         min: -1000
         max: 1000

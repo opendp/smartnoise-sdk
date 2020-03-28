@@ -1,6 +1,8 @@
 import json
 import os
 
+from flask import abort 
+
 import mlflow
 from mlflow.tracking.client import MlflowClient
 
@@ -16,14 +18,21 @@ def run(details):
 
     params = json.loads(details["params"])
     project_uri = details["project_uri"]  # TODO only support whitenoise modules
-    if not(project_uri.startswith("http://") or project_uri.startswith("https://")):
-        assert project_uri.replace(".", "").replace("/", "").startswith("modules"), "Only support modules dir"
+    if project_uri.startswith("http://") or project_uri.startswith("https://"):
+        abort(400, "Only modules are supported uri {} is not".format(project_uri))
 
-        project_uri = os.path.join(os.path.dirname(__file__), project_uri)
+    if not project_uri.replace(".", "").replace("/", "").startswith("modules"):
+        abort(400, "Only modules are located at ./modules, {} is not located in ./modules")
 
-    submitted_run = mlflow.projects.run(project_uri,
-                                        parameters=params,
-                                        use_conda=False)
+    project_uri = os.path.join(os.path.dirname(__file__), project_uri)
+
+    try:
+        submitted_run = mlflow.projects.run(project_uri,
+                                            parameters=params,
+                                            use_conda=False)
+    except Exception as e:
+        abort(400, "Failed executing with exception: {}".format(e))
+
     path = MlflowClient().download_artifacts(submitted_run.run_id, "result.json")  # TODO move to report.json
     with open(path, "r") as stream:
         json_str = stream.read()
