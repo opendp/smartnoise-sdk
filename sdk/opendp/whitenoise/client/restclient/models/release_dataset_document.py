@@ -17,6 +17,8 @@ class ReleaseDatasetDocument(Model):
     :type dataset_type: str
     :param budget: Available budget for the dataset registered
     :type budget: float
+    :param release_cost: Cost of creating a release
+    :type release_cost: float
     :param authorized_users:
     :type authorized_users: list[str]
     :param csv_details:
@@ -29,16 +31,18 @@ class ReleaseDatasetDocument(Model):
         'dataset_name': {'key': 'dataset_name', 'type': 'str'},
         'dataset_type': {'key': 'dataset_type', 'type': 'str'},
         'budget': {'key': 'budget', 'type': 'float'},
+        'release_cost': {'key': 'release_cost', 'type': 'float'},
         'authorized_users': {'key': 'authorized_users', 'type': '[str]'},
         'csv_details': {'key': 'csv_details', 'type': 'LocalCSVDetails'},
         'dataverse_details': {'key': 'dataverse_details', 'type': 'DataverseDetails'},
     }
 
-    def __init__(self, dataset_name=None, dataset_type=None, budget=None, authorized_users=None, csv_details=None, dataverse_details=None):
+    def __init__(self, dataset_name=None, dataset_type=None, budget=None, release_cost=None, authorized_users=None, csv_details=None, dataverse_details=None):
         super(ReleaseDatasetDocument, self).__init__()
         self.dataset_name = dataset_name
         self.dataset_type = dataset_type
         self.budget = budget
+        self.release_cost = release_cost
         self.authorized_users = authorized_users
         self.csv_details = csv_details
         self.dataverse_details = dataverse_details

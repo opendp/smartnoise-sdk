@@ -56,15 +56,6 @@ class DatasetClient(object):
         self._guid = _guid_header()
         self.custom_headers = {'client_guid': self._guid}
 
-    def read_released(self, dataset_name):
-        """
-        Generates a DatasetReadReleaseRequest and sends it to the service.
-        Tags the request with Client guid.
-        """
-        client = _get_client()
-        read_released_request = DatasetReadReleaseRequest(dataset_name=dataset_name)
-        return client.datasetreadreleased(read_released_request, custom_headers=self.custom_headers)
-
     def _register_release_request_helper(self, dataset):
         """
         Helper for register/release, 
@@ -77,6 +68,7 @@ class DatasetClient(object):
         request = DatasetDocument(dataset_name=dataset['dataset_name'], \
             dataset_type=dataset['dataset_type'], \
             budget=dataset['budget'], \
+            release_cost=dataset['release_cost'], \
             csv_details=dataset['csv_details'], \
             dataverse_details=dataset['dataverse_details'], \
             authorized_users=dataset['authorized_users'])
@@ -113,6 +105,15 @@ class DatasetClient(object):
         client = _get_client()
         read_request = DatasetReadRequest(dataset_name=dataset_name, budget=budget)
         return client.datasetread(read_request, custom_headers=self.custom_headers)
+    
+    def read_released(self, dataset_name):
+        """
+        Generates a DatasetReadReleaseRequest and sends it to the service.
+        Tags the request with Client guid.
+        """
+        client = _get_client()
+        read_released_request = DatasetReadReleaseRequest(dataset_name=dataset_name)
+        return client.datasetreadreleased(read_released_request, custom_headers=self.custom_headers)
 
 def get_dataset_client():
     client_overrides = [entrypoint for entrypoint in pkg_resources.iter_entry_points("opendp_whitenoise_dataset_client")]

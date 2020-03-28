@@ -8,16 +8,20 @@ from secrets import get as secrets_get
 from secrets import put as secrets_put
 
 DATASETS = {"example": {
+                        "dataset_name": "example",
                         "dataset_type": "csv_details",
                         "csv_details": {
                             "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv")
                         },
+                        "release_cost":1.0,
                         "budget":3.0},
             "iris": {
+                        "dataset_name": "iris",
                         "dataset_type": "csv_details",
                         "csv_details": {
                             "local_path": os.path.join(os.path.dirname(__file__), "datasets", "iris.csv")
                         },
+                        "release_cost":10.0,
                         "budget":300.0},
             "demo_dataverse": {
                         "dataset_name": "demo_dataverse",
@@ -30,8 +34,9 @@ DATASETS = {"example": {
                             "host": "https://demo.dataverse.org/api/access/datafile/395811",
                             "schema": '{"fake":"schema"}'
                         },
+                        "release_cost":1.0,
                         "budget":3.0,
-                        "authorized_users":['mock_creds']}}
+                        "authorized_users":['mock_user_guid']}}
 
 RELEASED_DATASETS = {"example_released_csv": {
                         "dataset_name": "example_released_csv",
@@ -39,8 +44,9 @@ RELEASED_DATASETS = {"example_released_csv": {
                         "csv_details": {
                             "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv")
                         },
+                        "release_cost":1.0,
                         "budget":10.0,
-                        "authorized_users":['cb20a2f9-d97b-42b5-9e74-f9ed05b43839', 'mock_creds']},
+                        "authorized_users":['mock_user_guid']},
                     "demo_released_dataverse": {
                         "dataset_name": "demo_released_dataverse",
                         "dataset_type": "dataverse_details",
@@ -52,18 +58,28 @@ RELEASED_DATASETS = {"example_released_csv": {
                             "host": "https://demo.dataverse.org/api/access/datafile/395811",
                             "schema": '{"fake":"schema"}'
                         },
-                        "budget":10.0,
-                        "authorized_users":['mock_creds']}}
+                        "release_cost":1.0,
+                        "budget":4.0,
+                        "authorized_users":['mock_user_guid']}}
 
 KNOWN_DATASET_TYPE_KEYS = ["csv_details", "dataverse_details"]
 
-KNOWN_USERS = {'ab30c2f7-d97b-42b5-9e74-f9ed05b43839': defaultdict(int), 'mock_creds': defaultdict(int, {'example_released_csv': 1})}
+# Construct nested default dict
+int_default_dict = lambda: defaultdict(int)
 
-USERS_RELEASED = {"example_csv": defaultdict(int)}
+# Track dataset released to known users
+# Tracking Spec:
+# USERS_RELEASED -> {dataset -> {user -> count}}
+# If count is 0, user has never been given access to this dset
+# If count is 1, user has access to this dataset, but has never read from it
+# Else, count == (# of reads + 1)
+USERS_RELEASED = defaultdict(int_default_dict) 
+USERS_RELEASED['example_released_csv']['mock_user_guid'] += 1
 
 # NOTE: This could be tracked inside datasets as well, although
 # potentially safer to only track owners service side
-OWNERS = {'ab30c2f7-d97b-42b5-9e74-f9ed05b43839': ["example_csv"]}
+OWNERS = defaultdict(int_default_dict) 
+OWNERS['mock_user_guid']['example_released_csv'] += 1
 
 def _read_helper(dataset_request, dataset_storage):
     dataset_name = dataset_request["dataset_name"]
@@ -93,7 +109,16 @@ def read(dataset_request):
     :return: A dataset document that contains the type and info of the dataset
     :rtype: dict{"dataset_type": str, dataset_key: dict}
     """
-    return _read_helper(dataset_request, DATASETS)
+    dataset = _read_helper(dataset_request, DATASETS)
+
+    # Decrement budget if possible, private read called from module
+    adjusted_budget = dataset["budget"] - dataset_request["budget"]
+    if adjusted_budget >= 0.0:
+        dataset["budget"] = adjusted_budget
+    else:
+        abort(412, "Not enough budget for read. Remaining budget: {}".format(dataset["budget"]))
+
+    return dataset
 
 def readreleased(dataset_request):
     """
@@ -115,6 +140,7 @@ def readreleased(dataset_request):
     # private read
     if client_guid in OWNERS:
         if dataset_request["dataset_name"] in OWNERS[client_guid]:
+            USERS_RELEASED[dataset_name][client_guid] += 1
             return dataset
 
     # Checks to see if authorized users specified
@@ -124,14 +150,6 @@ def readreleased(dataset_request):
 
     # Track readrelease
     USERS_RELEASED[dataset_name][client_guid] += 1
-
-    # Decrement budget if this is a users first read
-    if USERS_RELEASED[dataset_name][client_guid] > 1:
-        adjusted_budget = dataset["budget"] - dataset_request["budget"]
-        if adjusted_budget >= 0.0:
-            dataset["budget"] = adjusted_budget
-        else:
-            abort(412, "Not enough budget for read. Remaining budget: {}".format(dataset["budget"]))
     
     return dataset
 
@@ -167,9 +185,17 @@ def register(dataset):
 
     return {"result": dataset["dataset_name"]}
 
-def _release_register_helper(dataset_request, dataset_storage, track_users):
+def _release_register_helper(dataset_request, dataset_storage, release_check):
     # Dataset name, for convenience
     dataset_name = dataset_request["dataset_name"]
+
+    if release_check:
+        # Decrement budget by release cost, if possible
+        adjusted_budget = dataset_request["budget"] - dataset_request["release_cost"]
+        if adjusted_budget >= 0.0:
+            dataset_request["budget"] = adjusted_budget
+        else:
+            abort(412, "Not enough budget for read. Remaining budget: {}".format(dataset_request["budget"]))
 
     # Check secret here, to make sure this comes from service
 
@@ -191,7 +217,7 @@ def _release_register_helper(dataset_request, dataset_storage, track_users):
     if dataset_request["dataset_type"] == "csv_details":
         # Local dataset
         if not os.path.isfile(dataset_request["csv_details"]["local_path"]):
-            abort(406, "Local file path {} does not exist.".format(str(dataset_request["dataset_type"])))
+            abort(406, "Local file path {} does not exist.".format(str(dataset_request["csv_details"]["local_path"])))
     elif dataset_request["dataset_type"] == "dataverse_details":
         # Validate Json schema
         if dataset_request["dataverse_details"]["schema"]:
@@ -208,21 +234,11 @@ def _release_register_helper(dataset_request, dataset_storage, track_users):
 
     # Track owner
     client_guid = request.headers.get('client_guid')
-    if client_guid in OWNERS:
-        OWNERS[client_guid].append(dataset_name)
-    else:
-        OWNERS[client_guid] = [dataset_name]
+    OWNERS[client_guid][dataset_name] += 1
 
-    # This flag is currently only on for released datasets
-    if track_users:
-        # Before we register/release officially,
-        # Track user dataset registrations (count)
-        # Tracking Spec:
-        # DatasetDict -> {dataset -> {user -> count}}
-        # If count is 0, user has never been given access to this dset
-        # If count is 1, user has access to this dataset, but has never read from it
-        # Else, count == (# of reads + 1)
-        USERS_RELEASED[dataset_name][client_guid] += 1
+    # Before we register/release officially,
+    # Track user dataset registrations (count)
+    USERS_RELEASED[dataset_name][client_guid] += 1
 
     # If everything looks good, register it.
     dataset_storage[dataset_name] = dataset_request
