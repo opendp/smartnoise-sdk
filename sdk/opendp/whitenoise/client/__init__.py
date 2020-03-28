@@ -22,16 +22,11 @@ class _MockCredentials(object):
 
 
 def _get_client():
-    """
-    Spins up a RestClient Instance
+    port = os.environ.get("WHITENOISE_SERVICE_PORT", "5000")
+    url = os.environ.get("WHITENOISE_SERVICE_URL", "localhost:{}".format(port))
 
-    :return: A RestClient tuned to the WHITENOISE port
-    :rtype: RestClient()
-    """
-    url = os.environ.get("WHITENOISE_SERVICE_URL", "localhost")
-    port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5000))
-
-    base_url = "http://{}:{}/api/".format(url, port)
+    base_url = "{}/api/".format(url)
+    base_url = base_url if base_url.startswith("http") else "http://" + base_url
     client = RestClient(_MockCredentials(), base_url)
     return client
 
@@ -122,7 +117,6 @@ class DatasetClient(object):
 def get_dataset_client():
     client_overrides = [entrypoint for entrypoint in pkg_resources.iter_entry_points("opendp_whitenoise_dataset_client")]
     if len(client_overrides) == 1:
-
         try:
             entrypoint = client_overrides[0]
             extension_class = entrypoint.load()
@@ -132,6 +126,7 @@ def get_dataset_client():
                     entrypoint, e)
                 module_logger.warning(msg)
     else:
+        if len(client_overrides) > 1:
                 module_logger.warning("Multiple client overrides found {}".format(client_overrides))
     return DatasetClient()
 

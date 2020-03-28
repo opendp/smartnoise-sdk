@@ -7,7 +7,10 @@
 
 from .project_run_details import ProjectRunDetails
 from .dataset_read_request import DatasetReadRequest
+<<<<<<< HEAD
 from .dataset_read_release_request import DatasetReadReleaseRequest
+=======
+>>>>>>> master
 from .local_csv_details import LocalCSVDetails
 from .dataverse_details import DataverseDetails
 from .release_dataset_document import ReleaseDatasetDocument
@@ -20,7 +23,10 @@ from .register_ok_response import RegisterOKResponse
 __all__ = [
     'ProjectRunDetails',
     'DatasetReadRequest',
+<<<<<<< HEAD
     'DatasetReadReleaseRequest',
+=======
+>>>>>>> master
     'LocalCSVDetails',
     'DataverseDetails',
     'ReleaseDatasetDocument',

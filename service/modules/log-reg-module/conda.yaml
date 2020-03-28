@@ -6,4 +6,4 @@ dependencies:
     - mlflow
     - pandas
     - diffprivlib
-    - git+https://github.com/privacytoolsproject/burdock.git#subdirectory=sdk
+    - opendp-whitenoise

@@ -10,7 +10,7 @@ import pandas as pd
 from opendp.whitenoise.client import get_dataset_client
 from opendp.whitenoise.data.adapters import load_metadata, load_dataset
 
-from burdock.models import DPLinearRegression
+from opendp.whitenoise.models import DPLinearRegression
 #  TODO add a test for both this and log_reg module in smoke tests
 
 
@@ -42,22 +42,23 @@ if __name__ == "__main__":
 
         # Find ranges for X and ranges for y
         table_name = dataset_name + "." + dataset_name
-        x_range_dict = dict([(col, schema[table_name][col].maxval - schema[table_name][col].minval)
+        x_range_dict = dict([(col, schema.m_tables[table_name][col].maxval - schema.m_tables[table_name][col].minval)
                              for col in x_features])
-        y_range_dict = dict([(col, schema[table_name][col].maxval - schema[table_name][col].minval)
+        y_range_dict = dict([(col, schema.m_tables[table_name][col].maxval - schema.m_tables[table_name][col].minval)
                              for col in y_targets])
         x_range = pd.Series(data=x_range_dict)
         y_range = pd.Series(data=y_range_dict)
 
-        data_range = pd.DataFrame([[schema[table_name][col].minval, schema[table_name][col].maxval] for col in
+        data_range = pd.DataFrame([[schema.m_tables[table_name][col].minval, schema.m_tables[table_name][col].maxval] for col in
                                    (x_features+y_targets)], index=(x_features+y_targets)).transpose()
 
         # Try multiple times because sometimes noise makes cov matrix not positive definite
         model = None
-        try:
-            model = DPLinearRegression().fit(X, y, data_range, budget)
-        except:
-            pass
+        for i in range(10):
+            try:
+                model = DPLinearRegression().fit(X, y, data_range, budget)
+            except:
+                pass
 
         if model is None:
             raise Exception("The added noise made your covariance matrix no longer positive definite.")

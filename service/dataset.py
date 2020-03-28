@@ -7,14 +7,18 @@ from flask import request
 from secrets import get as secrets_get
 from secrets import put as secrets_put
 
-DATASETS = {"example_csv": {
-                        "dataset_name": "example_csv",
+DATASETS = {"example": {
                         "dataset_type": "csv_details",
                         "csv_details": {
                             "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv")
                         },
-                        "budget":3.0,
-                        "authorized_users":['mock_creds']},
+                        "budget":3.0},
+            "iris": {
+                        "dataset_type": "csv_details",
+                        "csv_details": {
+                            "local_path": os.path.join(os.path.dirname(__file__), "datasets", "iris.csv")
+                        },
+                        "budget":300.0},
             "demo_dataverse": {
                         "dataset_name": "demo_dataverse",
                         "dataset_type": "dataverse_details",
@@ -72,7 +76,7 @@ def _read_helper(dataset_request, dataset_storage):
     # Validate the secret, extract token
     try:
         if dataset["dataset_type"] == "dataverse_details":
-            dataset["dataset_type"]["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
+            dataset[dataset["dataset_type"]]["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
     except:
         # TODO: Temp fix for testing - Do better cleanup if secret missing
         # dataset["dataset_type"]["token"] = {'name':dataset_name,'value':42}
