@@ -123,6 +123,9 @@ definitions:
       host:
         type: string
         description: Host of dataset, if dataverse
+      token:
+        type: string
+        description: The token for the dataverse
       schema:
         type: string
         description: Schema of dataset, well formed json

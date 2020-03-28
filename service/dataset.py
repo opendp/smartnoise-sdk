@@ -5,12 +5,18 @@ from flask import abort
 from secrets import get as secrets_get
 from secrets import put as secrets_put
 
-DATASETS = {"example_csv": {
+DATASETS = {"example": {
                         "dataset_type": "csv_details",
                         "csv_details": {
                             "local_path": os.path.join(os.path.dirname(__file__), "datasets", "example.csv")
                         },
                         "budget":3.0},
+            "iris": {
+                        "dataset_type": "csv_details",
+                        "csv_details": {
+                            "local_path": os.path.join(os.path.dirname(__file__), "datasets", "iris.csv")
+                        },
+                        "budget":300.0},
             "demo_dataverse": {
                         "dataset_type": "dataverse_details",
                         "dataverse_details": {
@@ -38,18 +44,18 @@ def read(dataset_request):
 
     if dataset_name not in DATASETS:
         abort(400, "Dataset id {} not found.".format(dataset_name))
-        
+
     dataset = DATASETS[dataset_name]
 
     # Validate the secret, extract token
     try:
         if dataset["dataset_type"] == "dataverse_details":
-            dataset["dataset_type"]["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
+            dataset[dataset["dataset_type"]]["token"] = secrets_get(name="dataverse:{}".format(dataset_request["dataset_name"]))["value"]
     except:
         # TODO: Temp fix for testing - Do better cleanup if secret missing
         # dataset["dataset_type"]["token"] = {'name':dataset_name,'value':42}
-        pass 
-    
+        pass
+
     # Check/Decrement the budget before returning dataset
     adjusted_budget = dataset["budget"] - dataset_request["budget"]
     if adjusted_budget >= 0.0:
@@ -69,7 +75,7 @@ def register(dataset):
     # Add key if possible
     if dataset["dataset_type"] not in KNOWN_DATASET_TYPE_KEYS:
         abort(402, "Given type was {}, must be either csv_details or dataverse_details.".format(str(dataset["dataset_type"])))
-    
+
     # Add budget if possible 
     if dataset["budget"]:
         if dataset["budget"] <= 0.0: abort(403, "Budget must be greater than 0.")
