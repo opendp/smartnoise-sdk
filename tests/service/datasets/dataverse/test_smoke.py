@@ -6,6 +6,7 @@ import pytest
 from opendp.whitenoise.client import get_dataset_client
 from opendp.whitenoise.data.adapters import load_dataset
 
+@pytest.mark.dataverse_token
 @pytest.mark.parametrize("dataset_name", ["demo_dataverse"])
 @pytest.mark.parametrize("budget", [0.1])
 def test_read_dataverse(dataset_client, dataset_name, budget):
@@ -17,6 +18,7 @@ def test_read_dataverse(dataset_client, dataset_name, budget):
         assert len(text) > 0
 
 
+@pytest.mark.dataverse_token
 @pytest.mark.parametrize("dataset_name", ["demo_dataverse"])
 @pytest.mark.parametrize("budget", [0.1])
 def test_load_dataverse_dataset_file(dataset_client, dataset_name, budget):

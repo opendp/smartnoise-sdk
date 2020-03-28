@@ -20,9 +20,9 @@ app.add_api(os.path.join("openapi", "swagger.yml"))
 
 port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5000))
 os.environ["WHITENOISE_SERVICE_PORT"] = str(port)
-debug_mode = bool(os.environ.get("WHITENOISE_DEBUG_MODE", True))
-if debug_mode:
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=port)
 
 # flask app
 app = app.app
