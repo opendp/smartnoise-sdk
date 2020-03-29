@@ -53,7 +53,6 @@ def client():
 
     client = _get_client()
     if DATAVERSE_TOKEN_ENV_VAR in os.environ:
-        import pdb; pdb.set_trace()
         client.secretsput(Secret(name="dataverse:{}".format("demo_dataverse"),
                                  value=os.environ[DATAVERSE_TOKEN_ENV_VAR]))
     return client

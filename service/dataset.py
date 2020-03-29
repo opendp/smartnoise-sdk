@@ -1,9 +1,15 @@
 #%%
 import os
 import json
+import yaml
+
 from flask import abort
 from secrets import get as secrets_get
 from secrets import put as secrets_put
+
+
+with open("./datasets/dataverse/demo_dataverse.yml", "r") as stream:
+    demo_dataverse_schema = yaml.loads(stream)
 
 DATASETS = {"example": {
                         "dataset_type": "csv_details",
@@ -25,7 +31,7 @@ DATASETS = {"example": {
                                                                 "dataverse",
                                                                 "demo_dataverse.yml"),
                             "host": "https://demo.dataverse.org/api/access/datafile/395811",
-                            "schema": '{"fake":"schema"}'
+                            "schema": demo_dataverse_schema
                         },
                         "budget":3.0}}
 
