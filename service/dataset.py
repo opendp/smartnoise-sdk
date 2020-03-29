@@ -195,7 +195,7 @@ def _release_register_helper(dataset_request, dataset_storage, release_check):
         if adjusted_budget >= 0.0:
             dataset_request["budget"] = adjusted_budget
         else:
-            abort(412, "Not enough budget for read. Remaining budget: {}".format(dataset_request["budget"]))
+            abort(412, "Not enough budget for release. Remaining budget: {}".format(dataset_request["budget"]))
 
     # Check secret here, to make sure this comes from service
 
@@ -206,12 +206,6 @@ def _release_register_helper(dataset_request, dataset_storage, release_check):
     # Check key
     if dataset_request["dataset_type"] not in KNOWN_DATASET_TYPE_KEYS:
         abort(402, "Given type was {}, must be either csv_details or dataverse_details.".format(str(dataset_request["dataset_type"])))
-    
-    # Check budget 
-    if dataset_request["budget"]:
-        if dataset_request["budget"] <= 0.0: abort(403, "Budget must be greater than 0.")
-    else:
-        abort(403, "Must specify a budget")
 
     # Type specific registration
     if dataset_request["dataset_type"] == "csv_details":
