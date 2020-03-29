@@ -9,7 +9,7 @@ from secrets import put as secrets_put
 
 
 with open("./datasets/dataverse/demo_dataverse.yml", "r") as stream:
-    demo_dataverse_schema = yaml.loads(stream)
+    demo_dataverse_schema = yaml.safe_load(stream)
 
 DATASETS = {"example": {
                         "dataset_type": "csv_details",

@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 from connexion import FlaskApp as Flask
+from exceptions import InvalidUsage
 
 specification_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, specification_dir)
@@ -26,3 +27,9 @@ if __name__ == "__main__":
 
 # flask app
 app = app.app
+
+@app.errorhandler(InvalidUsage)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response

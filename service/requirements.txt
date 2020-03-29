@@ -1,2 +1,8 @@
 mlflow
 connexion
+pyyaml
+opendp-whitenoise
+pandasql
+sklearn
+matplotlib
+pandas

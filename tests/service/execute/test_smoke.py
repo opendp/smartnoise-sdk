@@ -12,7 +12,7 @@ def test_execute_run(execution_client, project):
 @pytest.mark.parametrize("project", [{"params": {"dataset_name": "demo_dataverse", "budget": .2,
                                       "query": "SELECT COUNT(*) FROM demo_dataverse.demo_dataverse"},
                                       "uri": "modules/sql-module"}])
-def test_execute_w_datavers(execution_client, project):
+def test_execute_w_dataverse(execution_client, project):
     execution_client.submit(params=project["params"],
                             uri=project["uri"])
 
