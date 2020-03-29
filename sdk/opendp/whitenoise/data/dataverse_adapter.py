@@ -1,4 +1,5 @@
 import os
+import json
 import tempfile
 import requests
 
@@ -44,7 +45,7 @@ class DataverseAdapter(DatasetAdapter):
 
     @staticmethod
     def _load_metadata(dataset_document):
-        return CollectionMetadata.from_file(dataset_document.dataverse_details.local_metadata_path)
+        return CollectionMetadata.from_dict(json.loads(dataset_document.dataverse_details.schema))
 
     @staticmethod
     def _load_reader(dataset_document):

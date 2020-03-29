@@ -8,8 +8,8 @@ from secrets import get as secrets_get
 from secrets import put as secrets_put
 
 
-with open("./datasets/dataverse/demo_dataverse.yml", "r") as stream:
-    demo_dataverse_schema = yaml.safe_load(stream)
+with open(os.path.join(os.path.dirname(__file__), "datasets", "dataverse", "demo_dataverse.yml"), "r") as stream:
+    demo_dataverse_schema = json.dumps(yaml.safe_load(stream))
 
 DATASETS = {"example": {
                         "dataset_type": "csv_details",
@@ -33,7 +33,7 @@ DATASETS = {"example": {
                             "host": "https://demo.dataverse.org/api/access/datafile/395811",
                             "schema": demo_dataverse_schema
                         },
-                        "budget":3.0}}
+                        "budget":300.0}}
 
 
 KNOWN_DATASET_TYPE_KEYS = ["csv_details", "dataverse_details"]

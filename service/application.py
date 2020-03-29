@@ -2,6 +2,7 @@ import argparse
 import os
 import subprocess
 import sys
+from flask import jsonify
 
 from connexion import FlaskApp as Flask
 from exceptions import InvalidUsage
@@ -23,13 +24,14 @@ port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5000))
 os.environ["WHITENOISE_SERVICE_PORT"] = str(port)
 
 if __name__ == "__main__":
+    @app.app.errorhandler(InvalidUsage)
+    def handle_invalid_usage(error):
+        response = jsonify(error.to_dict())
+        response.status_code = error.status_code
+        int(response.status_code)
+        return response
     app.run(host='0.0.0.0', port=port)
 
 # flask app
 app = app.app
 
-@app.errorhandler(InvalidUsage)
-def handle_invalid_usage(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
