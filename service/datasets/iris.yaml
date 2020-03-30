@@ -1,0 +1,27 @@
+engine: csv
+iris:
+  iris:
+    iris:
+      max_ids: 1
+      id:
+        private_id: True
+        type: int
+      petal length (cm):
+        lower: 1
+        type: float
+        upper: 7
+      petal width (cm):
+        lower: 0
+        type: float
+        upper: 3
+      row_privacy: false
+      rows: 150
+      sample_max_ids: true
+      sepal length (cm):
+        lower: 4
+        type: float
+        upper: 8
+      sepal width (cm):
+        lower: 2
+        type: float
+        upper: 5

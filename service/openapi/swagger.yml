@@ -50,6 +50,44 @@ paths:
            description: Successfully return the dataset information
            schema:
             $ref: '#/definitions/DatasetDocument'
+  /read-released:
+    post:
+      operationId: dataset.readreleased
+      tags:
+        - datasetReadRelease
+      summary: Read a released dataset
+      description: Return the details of the requested dataset, decrement the budget
+      parameters:
+        - name: dataset_request
+          in: body
+          description: Get the dataset read request
+          required: True
+          schema:
+            $ref: '#/definitions/DatasetReadReleaseRequest'
+      responses:
+         200:
+           description: Successfully return the dataset information
+           schema:
+            $ref: '#/definitions/ReleaseDatasetDocument'
+  /release:
+    post:
+      operationId: dataset.release
+      tags:
+        - datasetRelease
+      summary: Release a differentially private dataset
+      description: Return the details of the released dataset
+      parameters:
+        - name: release_request
+          in: body
+          description: Request to make a dataset release
+          required: True
+          schema:
+            $ref: '#/definitions/DatasetDocument'
+      responses:
+         200:
+           description: Successfully return the released dataset
+           schema:
+            $ref: '#/definitions/ReleaseDatasetDocument'
   /register:
     post:
       operationId: dataset.register
@@ -109,6 +147,12 @@ definitions:
         type: number
         format: float
         description: Budget used by this read request
+  DatasetReadReleaseRequest:
+    type: object
+    properties:
+      dataset_name:
+        type: string
+        description: The name for the dataset
   LocalCSVDetails:
     type: object
     properties:
@@ -129,6 +173,31 @@ definitions:
       schema:
         type: string
         description: Schema of dataset, well formed json
+  ReleaseDatasetDocument:
+    type: object
+    properties:
+      dataset_name:
+        type: string
+        description: The name for the dataset
+      dataset_type:
+        type: string
+        description: The type of the dataset
+      budget:
+        type: number
+        format: float
+        description: Available budget for the dataset registered
+      release_cost:
+        type: number
+        format: float
+        description: Cost of creating a release
+      authorized_users:
+        type: array
+        items: 
+          type: string
+      csv_details:
+        $ref: '#/definitions/LocalCSVDetails'
+      dataverse_details:
+        $ref: '#/definitions/DataverseDetails'
   DatasetDocument:
     type: object
     properties:
@@ -142,6 +211,14 @@ definitions:
         type: number
         format: float
         description: Available budget for the dataset registered
+      release_cost:
+        type: number
+        format: float
+        description: Cost of creating a release
+      authorized_users:
+        type: array
+        items: 
+          type: string
       csv_details:
         $ref: '#/definitions/LocalCSVDetails'
       dataverse_details:
