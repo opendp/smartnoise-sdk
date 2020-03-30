@@ -8,8 +8,8 @@
 from msrest.serialization import Model
 
 
-class DatasetDocument(Model):
-    """DatasetDocument.
+class ReleaseDatasetDocument(Model):
+    """ReleaseDatasetDocument.
 
     :param dataset_name: The name for the dataset
     :type dataset_name: str
@@ -38,7 +38,7 @@ class DatasetDocument(Model):
     }
 
     def __init__(self, dataset_name=None, dataset_type=None, budget=None, release_cost=None, authorized_users=None, csv_details=None, dataverse_details=None):
-        super(DatasetDocument, self).__init__()
+        super(ReleaseDatasetDocument, self).__init__()
         self.dataset_name = dataset_name
         self.dataset_type = dataset_type
         self.budget = budget
