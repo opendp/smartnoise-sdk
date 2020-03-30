@@ -51,6 +51,7 @@ if __name__ == "__main__":
 
         with open("result.json", "w") as stream:
             json.dump({"released_dataset_name": release_dataset_name}, stream)
-
+        mlflow.log_artifact("result.json")
+        
         # TODO: Perform basic dataset_document validation
         service_client.release(new_dataset)

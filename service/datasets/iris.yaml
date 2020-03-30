@@ -3,6 +3,9 @@ iris:
   iris:
     iris:
       max_ids: 1
+      id:
+        private_id: True
+        type: int
       petal length (cm):
         lower: 1
         type: float
