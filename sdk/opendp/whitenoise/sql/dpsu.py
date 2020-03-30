@@ -21,7 +21,6 @@ def preprocess_df_from_query(schema, df, query_string):
 
     group_cols = [ge.expression.name for ge in query_ast.agg.groupingExpressions]
     table_name = q.source.find_node(Table).name
-    print(table_name)
     key_col = schema[table_name].key_cols()[0].name
 
     preprocessed_df = pd.DataFrame()
