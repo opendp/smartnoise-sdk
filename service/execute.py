@@ -30,11 +30,9 @@ def run(details):
     try:
         submitted_run = mlflow.projects.run(project_uri,
                                             parameters=params,
-                                            use_conda=False)
+                                            use_conda=False, synchronous=False)
     except Exception as e:
         raise InvalidUsage("Failed executing with exception: {}".format(e))
 
-    path = MlflowClient().download_artifacts(submitted_run.run_id, "result.json")  # TODO move to report.json
-    with open(path, "r") as stream:
-        json_str = stream.read()
-    return {"result": json.dumps(json.loads(json_str))}
+    print(mlflow.get_tracking_uri())
+    return {"result": json.dumps({"run_id": submitted_run.run_id})}

@@ -4,7 +4,7 @@ import os
 import shutil
 
 _major = "0.1"
-_minor = "0.6"
+_minor = "0.7"
 
 VERSION = "{}.{}".format(_major, _minor)
 SELFVERSION = VERSION
