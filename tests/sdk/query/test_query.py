@@ -120,3 +120,13 @@ class TestQuery:
         private_reader = PrivateReader(schema, reader, 1.0)
         trs = private_reader.execute_typed("SELECT POWER(SUM(age), 2) as age_total FROM PUMS.PUMS")
         assert(trs['age_total'][0] > 1000 ** 2)
+    def test_execute_with_dpsu(self):
+        reader = PandasReader(schema, df)
+        private_reader = PrivateReader(schema, reader, 1.0)
+        query = QueryParser(schema).queries("SELECT COUNT(*) AS c FROM PUMS.PUMS GROUP BY married")[0]
+        assert(private_reader._get_reader(query) is not private_reader.reader)
+    def test_execute_without_dpsu(self):
+        reader = PandasReader(schema, df)
+        private_reader = PrivateReader(schema, reader, 1.0)
+        query = QueryParser(schema).queries("SELECT COUNT(*) AS c FROM PUMS.PUMS")[0]
+        assert(private_reader._get_reader(query) is private_reader.reader)

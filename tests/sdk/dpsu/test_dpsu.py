@@ -25,10 +25,9 @@ class TestDPSU:
         assert final_df is not None
         assert(len(final_df["group_cols"][0]) == 2)
 
-    def test_dpsu_df(self):
+    def test_run_dpsu(self):
         query = "SELECT married, educ FROM PUMS.PUMS GROUP BY married, educ"
         final_df = run_dpsu(schema, df, query, 3.0)
-        print(final_df.columns)
 
         assert final_df is not None
         assert list(final_df) == list(df)
