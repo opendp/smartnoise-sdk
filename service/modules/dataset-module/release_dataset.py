@@ -53,4 +53,4 @@ if __name__ == "__main__":
             json.dump({"released_dataset_name": release_dataset_name}, stream)
 
         # TODO: Perform basic dataset_document validation
-        service_client.register(new_dataset)
+        service_client.release(new_dataset)
