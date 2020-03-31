@@ -1,7 +1,9 @@
 import math
 import numpy as np
+from .dpsu import run_dpsu
 from .private_rewriter import Rewriter
 from .parse import QueryParser
+from .reader import PandasReader
 
 from opendp.whitenoise.ast.expressions import sql as ast
 from opendp.whitenoise.reader import Reader
@@ -77,6 +79,16 @@ class PrivateReader(Reader):
         self.refresh_options()
         subquery, query = self.rewrite(query_string)
         return subquery.numeric_symbols()
+
+    def _get_reader(self, query_ast):
+        print(query_ast)
+        if query_ast.agg is not None:
+            if isinstance(self.reader, PandasReader):
+                query = str(query_ast)
+                dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
+                return PandasReader(self.metadata, dpsu_df)
+        else:
+            return self.reader
 
     def execute(self, query_string):
         """Executes a query and returns a recordset that is differentially private.
@@ -155,13 +167,13 @@ class PrivateReader(Reader):
                     raise ValueError("Cannot run different query against cached result.  "
                                      "Make a new PrivateReader or else clear the cache with cache = False")
             else:
-                db_rs = self.reader.execute_ast(subquery)
+                db_rs = self._get_reader(subquery).execute_ast(subquery)
                 self._cached_exact = list(db_rs)
                 self._cached_ast = subquery
         else:
             self.cached_exact = None
             self.cached_ast = None
-            db_rs = self.reader.execute_ast(subquery)
+            db_rs = self._get_reader(subquery).execute_ast(subquery)
 
         clamp_counts = self.options.clamp_counts
 

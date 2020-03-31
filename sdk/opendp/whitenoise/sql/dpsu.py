@@ -5,19 +5,22 @@ import operator
 from collections import defaultdict
 
 from opendp.whitenoise.sql.parse import QueryParser
+from opendp.whitenoise.ast.ast import Table
 from opendp.whitenoise.mechanisms.rand import laplace
 
 sys_rand = random.SystemRandom()
 
-def preprocess_df_from_query(schema, df, query):
+def preprocess_df_from_query(schema, df, query_string):
     """
     Returns a dataframe with user_id | tuple based on query grouping keys.
     """
-    queries = QueryParser(schema).queries(query)
+    qp = QueryParser(schema)
+    q = qp.query(query_string)
+    queries = qp.queries(query_string)
     query_ast = queries[0]
 
     group_cols = [ge.expression.name for ge in query_ast.agg.groupingExpressions]
-    table_name = query_ast.m_sym_dict[group_cols[0]].tablename
+    table_name = q.source.find_node(Table).name
     key_col = schema[table_name].key_cols()[0].name
 
     preprocessed_df = pd.DataFrame()
