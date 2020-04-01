@@ -25,10 +25,10 @@ The stochastic evaluator drives black-box privacy algorithms, checking for priva
 
 ## Installation:
 The burdock library can be installed from PyPi:
-> pip install -i https://test.pypi.org/simple/ burdock
+> pip install opendp-whitenoise
 
 ## Documentation
-Documentation for SDK fucntionality: <here>
+Documentation for SDK functionality: <here>
 Service API documentation: <here>
 
 ## Getting started
@@ -41,7 +41,7 @@ Working with Spark DataFrames: <exit>
   
 ## Experimental
 ### Services getting started
-Running burdock code through a service layer: <here>
+Running opendp-whitenoise code through a service layer: <here>
   
 ### Service samples
 TODO
