@@ -1,0 +1,1 @@
+# Produce synthetic data from a document, evaluate with sdgym

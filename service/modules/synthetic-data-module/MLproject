@@ -1,0 +1,11 @@
+name: diffpriv_synthetic_data
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      dataset_name: str
+      budget: double
+      query: str released dataset name
+    command: "python run_query.py {dataset_name} {budget} {query}"
