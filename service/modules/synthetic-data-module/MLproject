@@ -6,6 +6,7 @@ entry_points:
   main:
     parameters:
       dataset_name: str
+      synthesizer_name: str
+      sample_size: int
       budget: double
-      query: str released dataset name
-    command: "python run_query.py {dataset_name} {budget} {query}"
+    command: "python synthetic_data.py dataset_name synthesizer_name sample_size budget"
