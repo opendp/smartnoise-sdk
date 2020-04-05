@@ -21,6 +21,9 @@ from privbn import PrivBNSynthesizer
 # List of supported DP synthesizers
 SUPPORTED_SYNTHESIZERS = {'PrivBNSynthesizer': PrivBNSynthesizer}
 
+# Maintain a dataset client
+DATASET_CLIENT = get_dataset_client()
+
 def load_data(dataset_name, budget):
     """
     Only works with categorical/ordinal columns as of now
@@ -28,7 +31,7 @@ def load_data(dataset_name, budget):
     SQL scenario...?
     """
     # Load dataset from service (dataset is pd.DataFrame)
-    dataset_document = get_dataset_client().read(dataset_name, budget)
+    dataset_document = DATASET_CLIENT.read(dataset_name, budget)
     dataset = load_dataset(dataset_document)
 
     # NOTE: As of right now, any data clipping per schema is not
@@ -38,7 +41,22 @@ def load_data(dataset_name, budget):
     categorical_columns = []
     ordinal_columns = [] # range(0,len(data))
 
-    return dataset, dataset_document.budget, {'categorical_columns': categorical_columns, 'ordinal_columns': ordinal_columns}
+    return dataset, dataset_document, {'categorical_columns': categorical_columns, 'ordinal_columns': ordinal_columns}
+
+def release_data(release_dataset_name, dataset_type, details, budget, auth_users):
+    # Create the new details
+    # TODO: Add type inference
+    dataset_to_release = {
+        "dataset_name": release_dataset_name,
+        "dataset_type": dataset_type,
+        dataset_type: details,
+        "budget": budget,
+        "authorized_users": auth_users
+    }
+
+    response = DATASET_CLIENT.release(dataset_to_release)
+    return response.dataset_name == release_dataset_name
+
 
 if __name__ == "__main__":
     # Example run args: "iris" "PrivBNSynthesizer" 20 3.0
@@ -48,9 +66,10 @@ if __name__ == "__main__":
     synthesizer_name = sys.argv[2]
     sample_size = sys.argv[3]
     budget = sys.argv[4]
+    release_dataset_name = sys.argv[5]
 
     with mlflow.start_run():
-        dataset, budget, synth_schema = load_data(dataset_name, budget)
+        dataset, dataset_document, synth_schema = load_data(dataset_name, budget)
 
         # Collect from the schema
 
@@ -74,14 +93,23 @@ if __name__ == "__main__":
         # TODO: Add check to validate dataset.to_numpy
         synthesizer.fit(dataset.to_numpy(), synth_schema['categorical_columns'], synth_schema['categorical_columns'])
         synthetic_data = synthesizer.sample(int(sample_size))
-
-        # NOTE: Two options here.
-        # 1. CURRENTLY IMPLEMENTED: Can default return the synthetic data in the payload.
-        # 2. Can default release a new dataset, and return name.
         
+        # Create new synthetic dataframe
         df = pd.DataFrame(synthetic_data, 
             index=dataset.index,
             columns=dataset.columns)
+        
+        # Retrieve dataset details
+        details = getattr(dataset_document, dataset_document.dataset_type)
+
+        # Release dataset first, if successful, add the dataframe csv to the path, as well as schema 
+        if release_data(release_dataset_name, "local_csv", details.copy(), budget, []):
+            # TODO: Only supports csv scenario as of now
+            df.to_csv(os.path.join(os.path.dirname(details["local_csv_path"]), release_dataset_name), index=False)
+            with open(os.path.join(os.path.dirname(details["local_csv_path"]), release_dataset_name + "_schema"), 'w') as yaml_path:
+                yaml.dump(os.path.join(os.path.dirname(details["local_csv_path"]), dataset_name + '.yaml'), yaml_path, default_flow_style=False)
+
         with open("result.json", "w") as stream:
-            json.dump(df.to_dict(), stream)
+            json.dump({"released_dataset_name": release_dataset_name}, stream)
         mlflow.log_artifact("result.json")
+        

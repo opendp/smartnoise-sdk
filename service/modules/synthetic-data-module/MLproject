@@ -9,4 +9,5 @@ entry_points:
       synthesizer_name: str
       sample_size: int
       budget: double
+      release_dataset_name: str
     command: "python synthetic_data.py dataset_name synthesizer_name sample_size budget"
