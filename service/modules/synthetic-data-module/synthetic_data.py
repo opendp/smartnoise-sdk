@@ -20,7 +20,7 @@ from privbn import PrivBNSynthesizer
 from mwem import MWEMSynthesizer
 
 # List of supported DP synthesizers
-SUPPORTED_SYNTHESIZERS = {'PrivBNSynthesizer': PrivBNSynthesizer, 'MWEMSynthesizer': MWEMSynthesizer}
+SUPPORTED_SYNTHESIZERS = {'MWEMSynthesizer': MWEMSynthesizer}
 
 # Maintain a dataset client
 DATASET_CLIENT = get_dataset_client()
