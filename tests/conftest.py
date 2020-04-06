@@ -46,10 +46,7 @@ if not os.path.exists(iris_schema_path):
     schema.to_file(iris_schema_path, "iris")
 
 def find_ngrams(input_list, n):
-    if n == 1:
-        return input_list
-    else:
-        return list(zip(*[input_list[i:] for i in range(n)]))
+    return input_list if n == 1 else list(zip(*[input_list[i:] for i in range(n)]))
 
 def _download_file(url, local_file):
     try:
