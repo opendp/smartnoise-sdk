@@ -1,7 +1,5 @@
-# WhiteNoise System: Tools for Differential Privacy
-
 <a href="https://www.linkedin.com/pulse/microsoft-harvards-institute-quantitative-social-science-john-kahan/"><img src="images/WhiteNoise Logo/SVG/Full_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
-## WhiteNoise Samples: Differential Privacy Examples, Notebooks and Documentation
+## WhiteNoise System: Toools for Differential Privacy
 See also the accompanying [WhiteNoise-core](https://github.com/opendifferentialprivacy/whitenoise-core) and [WhiteNoise-Samples](https://github.com/opendifferentialprivacy/whitenoise-samples) repositories for this system.
 
 The WhiteNoise tools allow researchers and analysts to: 
