@@ -27,7 +27,6 @@ EXTRAS = { }
 
 with open("README.md", "r", encoding="utf-8") as f:
     README = f.read()
-HISTORY = ""
 inline_license = ""
 
 setup(
@@ -36,7 +35,7 @@ setup(
     version=SELFVERSION,
 
     description="",
-    long_description=README + "\n\n" + HISTORY,
+    long_description=README,
     long_description_content_type="text/x-rst",
     author="opendp-whitenoise",
     license=inline_license,
