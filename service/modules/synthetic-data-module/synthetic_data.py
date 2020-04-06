@@ -16,8 +16,7 @@ from pandasql import sqldf
 from sdgym.constants import CONTINUOUS
 from sdgym.synthesizers.utils import Transformer
 
-from privbn import PrivBNSynthesizer
-from mwem import MWEMSynthesizer
+from mwem.mwem import MWEMSynthesizer
 
 # List of supported DP synthesizers
 SUPPORTED_SYNTHESIZERS = {'MWEMSynthesizer': MWEMSynthesizer}
@@ -58,10 +57,9 @@ def release_data(release_dataset_name, dataset_type, details, budget, auth_users
     response = DATASET_CLIENT.release(dataset_to_release)
     return response.dataset_name == release_dataset_name
 
-
 if __name__ == "__main__":
-    # Example run args: "iris" "PrivBNSynthesizer" 20 3.0
-    # NOTE: PrivBNSynthesizer actually ignores sample_size, 
+    # Example run args: "iris" "MWEMSynthesizer" 20 3.0
+    # NOTE: MWEMSynthesizer actually ignores sample_size, 
     # returns synthetic_samples_size == real_dataset_size
     dataset_name = sys.argv[1]
     synthesizer_name = sys.argv[2]
@@ -71,19 +69,6 @@ if __name__ == "__main__":
 
     with mlflow.start_run():
         dataset, dataset_document, synth_schema = load_data(dataset_name, budget)
-
-        # Collect from the schema
-
-        # Ensure the C dependencies are compiled
-        if synthesizer_name == 'PrivBNSynthesizer':
-            try:
-                assert os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)),"privbayes","privBayes.bin"))
-            except:
-                raise ValueError('You must compile the PrivBayes C dependencies. Run "make compile" in privbayes/.')
-                # NOTE: Ideally, would spin up a subprocess to do this, but issues with WSL and Popen.
-                # process = subprocess.Popen(["make -f "+os.path.join(os.path.dirname(os.path.abspath(__file__)),"privbayes","makefile")], stdout=subprocess.STDOUT)
-                # if process.wait() != 0:
-                #     raise ValueError('Issue with PrivBayes C dependencies')
             
         # Try to get an instance of synthesizer
         try:
@@ -92,14 +77,15 @@ if __name__ == "__main__":
             raise ValueError('Specified synthesizer is not supported.')
         
         # TODO: Add check to validate dataset.to_numpy
-        synthesizer.fit(dataset.to_numpy(), synth_schema['categorical_columns'], synth_schema['categorical_columns'])
+        synthesizer.fit(dataset.to_numpy(), synth_schema['categorical_columns'], synth_schema['ordinal_columns'])
         synthetic_data = synthesizer.sample(int(sample_size))
         
+
         # Create new synthetic dataframe
         df = pd.DataFrame(synthetic_data, 
             index=dataset.index,
             columns=dataset.columns)
-        
+        print(df)
         # Retrieve dataset details
         details = getattr(dataset_document, dataset_document.dataset_type)
 

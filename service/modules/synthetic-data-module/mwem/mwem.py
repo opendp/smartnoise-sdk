@@ -28,11 +28,15 @@ class MWEMSynthesizer():
         self.iterations = iterations
         self.mult_weights_iterations = mult_weights_iterations
         self.synthetic_data = None
+        self.data_bins = None
         self.real_data = None
 
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+        """
+        Creates a synthetic histogram distribution, based on the original data
+        """
         self.data = data.copy()
-        self.histogram, self.dimensions = self.histogram_from_data_attributes(self.data)
+        self.histogram, self.dimensions, self.data_bins = self.histogram_from_data_attributes(self.data)
         self.Q = self.compose_arbitrary_slices(self.Q_count, self.dimensions)
         # TODO: Add special support for categorical+ordinal columns
 
@@ -40,8 +44,24 @@ class MWEMSynthesizer():
         self.synthetic_data, self.real_data = self.mwem()
 
     def sample(self, samples):
-        # TODO: Support n dimensional sampling
-        return self.synthetic_data
+        """
+        Samples from the synthetic histogram
+        """
+        fake = self.synthetic_data
+
+        s = []
+        fake_indices = np.arange(len(np.ravel(fake)))
+        fake_distribution = np.ravel(fake)
+        norm = np.sum(fake)
+
+        for _ in range(samples):
+            s.append(np.random.choice(fake_indices, p=(fake_distribution/norm)))
+
+        s_unraveled = []
+        for ind in s:
+            s_unraveled.append(np.unravel_index(ind,fake.shape))
+
+        return s_unraveled
 
     def mwem(self):
         A, epsilon = self.initialize_A(self.histogram, self.dimensions, self.epsilon)
@@ -95,9 +115,9 @@ class MWEMSynthesizer():
         # Produce an N,D dimensional histogram, where
         # we pre-specify the bin sizes to correspond with 
         # our ranges above
-        histogram, _ = np.histogramdd(data, bins=dims_sizes)
+        histogram, bins = np.histogramdd(data, bins=dims_sizes)
         # Return histogram, dimensions
-        return histogram, dims_sizes
+        return histogram, dims_sizes, bins
     
     def exponential_mechanism(self, hist, A, Q, eps):
         """
