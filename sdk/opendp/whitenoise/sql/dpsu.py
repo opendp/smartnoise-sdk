@@ -56,7 +56,7 @@ def policy_laplace(df, eps, delta, max_contrib):
     df = df.sort_values("hash")
 
     for idx, group in df.groupby(key_col):
-        items = group["group_cols"]
+        items = list(group["group_cols"])
 
         if len(items) > max_contrib:
             items = sys_rand.sample(items, max_contrib)
@@ -105,5 +105,6 @@ def run_dpsu(schema, input_df, query, eps, delta=math.exp(-10), max_contrib=5):
 
     output_df = pd.merge(input_df, dpsu_df, on=dpsu_df.columns[0])
     output_df.drop(["group_cols", "hash"], axis=1, inplace=True)
+    output_df.drop_duplicates(inplace=True)
 
     return output_df

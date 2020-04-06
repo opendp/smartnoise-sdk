@@ -81,7 +81,6 @@ class PrivateReader(Reader):
         return subquery.numeric_symbols()
 
     def _get_reader(self, query_ast):
-        print(query_ast)
         if query_ast.agg is not None:
             if isinstance(self.reader, PandasReader):
                 query = str(query_ast)
