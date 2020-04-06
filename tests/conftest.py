@@ -51,11 +51,25 @@ def find_ngrams(input_list, n):
     else:
         return list(zip(*[input_list[i:] for i in range(n)]))
 
+def _download_file(url, local_file):
+    try:
+        from urllib import urlretrieve
+    except ImportError:
+        from urllib.request import urlretrieve
+    urlretrieve(url, local_file)
+
 reddit_dataset_path = os.path.join(root_url, "service", "datasets", "reddit.csv")
 if not os.path.exists(reddit_dataset_path):
     import re
-    reddit_path = os.path.join(root_url, "service", "datasets", "askreddit.csv")
-    reddit_df = pd.read_csv(reddit_path, index_col=0)
+    reddit_url = "https://github.com/heyyjudes/differentially-private-set-union/raw/master/data/clean_askreddit.csv.zip"
+    reddit_zip_path = os.path.join(root_url, "service", "datasets", "askreddit.csv.zip")
+    datasets = os.path.join(root_url, "service", "datasets")
+    clean_reddit_path = os.path.join(datasets, "clean_askreddit.csv")
+    _download_file(reddit_url, reddit_zip_path)
+    from zipfile import ZipFile
+    with ZipFile(reddit_zip_path) as zf:
+        zf.extractall(datasets)
+    reddit_df = pd.read_csv(clean_reddit_path, index_col=0)
     reddit_df = reddit_df.sample(frac=0.05)
     reddit_df['clean_text'] = reddit_df['clean_text'].astype(str)
     reddit_df.loc[:,'clean_text'] = reddit_df.clean_text.apply(lambda x : str.lower(x))
