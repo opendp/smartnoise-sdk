@@ -17,9 +17,10 @@ from sdgym.constants import CONTINUOUS
 from sdgym.synthesizers.utils import Transformer
 
 from privbn import PrivBNSynthesizer
+from mwem import MWEMSynthesizer
 
 # List of supported DP synthesizers
-SUPPORTED_SYNTHESIZERS = {'PrivBNSynthesizer': PrivBNSynthesizer}
+SUPPORTED_SYNTHESIZERS = {'PrivBNSynthesizer': PrivBNSynthesizer, 'MWEMSynthesizer': MWEMSynthesizer}
 
 # Maintain a dataset client
 DATASET_CLIENT = get_dataset_client()

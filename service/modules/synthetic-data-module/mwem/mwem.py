@@ -21,15 +21,27 @@ class MWEMSynthesizer():
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array. 
     """
-    def __init__(self, data, Q_count, epsilon, iterations, mult_weights_iterations):
+    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20):
         # TODO: Perform check that data is ndarray
-        self.data = data
-        self.histogram, self.dimensions = self.histogram_from_data_attributes(self.data)
         self.Q_count = Q_count
-        self.Q = self.compose_arbitrary_slices(Q_count, self.dimensions)
         self.epsilon = epsilon
         self.iterations = iterations
         self.mult_weights_iterations = mult_weights_iterations
+        self.synthetic_data = None
+        self.real_data = None
+
+    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+        self.data = data.copy()
+        self.histogram, self.dimensions = self.histogram_from_data_attributes(self.data)
+        self.Q = self.compose_arbitrary_slices(self.Q_count, self.dimensions)
+        # TODO: Add special support for categorical+ordinal columns
+
+        # Run the algorithm
+        self.synthetic_data, self.real_data = self.mwem()
+
+    def sample(self, samples):
+        # TODO: Support n dimensional sampling
+        return self.synthetic_data
 
     def mwem(self):
         A, epsilon = self.initialize_A(self.histogram, self.dimensions, self.epsilon)
