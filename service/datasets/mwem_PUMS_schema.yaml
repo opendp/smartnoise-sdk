@@ -1,0 +1,56 @@
+!!python/object:opendp.whitenoise.metadata.collection.CollectionMetadata
+compare: !!python/object:opendp.whitenoise.sql.reader.sql_base.NameCompare
+  search_path: []
+engine: Unknown
+m_tables:
+  PUMS.PUMS: !!python/object:opendp.whitenoise.metadata.collection.Table
+    compare: null
+    m_columns:
+      age: !!python/object:opendp.whitenoise.metadata.collection.Int
+        bounded: false
+        is_key: false
+        maxval: 100
+        minval: 0
+        name: age
+        unbounded: false
+      educ: !!python/object:opendp.whitenoise.metadata.collection.String
+        bounded: false
+        card: 0
+        is_key: false
+        name: educ
+      income: !!python/object:opendp.whitenoise.metadata.collection.Int
+        bounded: false
+        is_key: false
+        maxval: 500000
+        minval: 0
+        name: income
+        unbounded: false
+      married: !!python/object:opendp.whitenoise.metadata.collection.String
+        bounded: false
+        card: 0
+        is_key: false
+        name: married
+      pid: !!python/object:opendp.whitenoise.metadata.collection.Int
+        bounded: false
+        is_key: true
+        maxval: null
+        minval: null
+        name: pid
+        unbounded: true
+      race: !!python/object:opendp.whitenoise.metadata.collection.String
+        bounded: false
+        card: 0
+        is_key: false
+        name: race
+      sex: !!python/object:opendp.whitenoise.metadata.collection.String
+        bounded: false
+        card: 0
+        is_key: false
+        name: sex
+    max_ids: 1
+    name: PUMS
+    row_privacy: false
+    rowcount: 1000
+    rows_exact: null
+    sample_max_ids: null
+    schema: PUMS

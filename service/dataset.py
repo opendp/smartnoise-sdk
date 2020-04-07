@@ -23,6 +23,14 @@ DATASETS = {"example": {
                         },
                         "release_cost":10.0,
                         "budget":300.0},
+            "PUMS": {
+                        "dataset_name": "PUMS",
+                        "dataset_type": "csv_details",
+                        "csv_details": {
+                            "local_path": os.path.join(os.path.dirname(__file__), "datasets", "PUMS.csv")
+                        },
+                        "release_cost":10.0,
+                        "budget":300.0},
             "demo_dataverse": {
                         "dataset_name": "demo_dataverse",
                         "dataset_type": "dataverse_details",
@@ -205,7 +213,7 @@ def _release_register_helper(dataset_request, dataset_storage, release_check):
 
     # Check key
     if dataset_request["dataset_type"] not in KNOWN_DATASET_TYPE_KEYS:
-        abort(402, "Given type was {}, must be either csv_details or dataverse_details.".format(str(dataset_request["dataset_type"])))
+        abort(404, "Given type was {}, must be either csv_details or dataverse_details.".format(str(dataset_request["dataset_type"])))
 
     # Type specific registration
     if dataset_request["dataset_type"] == "csv_details":

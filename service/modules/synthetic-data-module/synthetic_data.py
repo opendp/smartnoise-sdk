@@ -33,6 +33,7 @@ def load_data(dataset_name, budget):
     # Load dataset from service (dataset is pd.DataFrame)
     dataset_document = DATASET_CLIENT.read(dataset_name, budget)
     dataset = load_dataset(dataset_document)
+    schema = load_metadata(dataset_document)
 
     # NOTE: As of right now, any data clipping per schema is not
     # required for the supported synthetic data scenarios
@@ -41,9 +42,15 @@ def load_data(dataset_name, budget):
     categorical_columns = []
     ordinal_columns = [] # range(0,len(data))
 
-    return dataset, dataset_document, {'categorical_columns': categorical_columns, 'ordinal_columns': ordinal_columns}
+    # TODO: Temporary support for dropping id column
+    if 'pid' in dataset.columns:
+        dataset.drop('pid', axis=1, inplace=True)
+    if 'income' in dataset.columns:
+        dataset.drop('income', axis=1, inplace=True)
 
-def release_data(release_dataset_name, dataset_type, details, budget, auth_users):
+    return dataset, dataset_document, {'categorical_columns': categorical_columns, 'ordinal_columns': ordinal_columns}, schema
+
+def release_data(release_dataset_name, dataset_type, details, budget, release_cost, auth_users):
     # Create the new details
     # TODO: Add type inference
     dataset_to_release = {
@@ -51,6 +58,7 @@ def release_data(release_dataset_name, dataset_type, details, budget, auth_users
         "dataset_type": dataset_type,
         dataset_type: details,
         "budget": budget,
+        "release_cost": release_cost,
         "authorized_users": auth_users
     }
 
@@ -58,17 +66,18 @@ def release_data(release_dataset_name, dataset_type, details, budget, auth_users
     return response.dataset_name == release_dataset_name
 
 if __name__ == "__main__":
-    # Example run args: "iris" "MWEMSynthesizer" 20 3.0
+    # Example run args: "PUMS" "MWEMSynthesizer" 1000 3.0 1.0 pums_released
     # NOTE: MWEMSynthesizer actually ignores sample_size, 
     # returns synthetic_samples_size == real_dataset_size
     dataset_name = sys.argv[1]
     synthesizer_name = sys.argv[2]
     sample_size = sys.argv[3]
     budget = sys.argv[4]
-    release_dataset_name = sys.argv[5]
+    release_cost = sys.argv[5]
+    release_dataset_name = sys.argv[6]
 
     with mlflow.start_run():
-        dataset, dataset_document, synth_schema = load_data(dataset_name, budget)
+        dataset, dataset_document, synth_schema, prev_schema = load_data(dataset_name, budget)
             
         # Try to get an instance of synthesizer
         try:
@@ -85,16 +94,16 @@ if __name__ == "__main__":
         df = pd.DataFrame(synthetic_data, 
             index=dataset.index,
             columns=dataset.columns)
-        print(df)
+        
         # Retrieve dataset details
         details = getattr(dataset_document, dataset_document.dataset_type)
 
         # Release dataset first, if successful, add the dataframe csv to the path, as well as schema 
-        if release_data(release_dataset_name, "local_csv", details.copy(), budget, []):
+        if release_data(release_dataset_name, "csv_details", {'local_path': details.local_path}, budget, release_cost, []):
             # TODO: Only supports csv scenario as of now
-            df.to_csv(os.path.join(os.path.dirname(details["local_csv_path"]), release_dataset_name), index=False)
-            with open(os.path.join(os.path.dirname(details["local_csv_path"]), release_dataset_name + "_schema"), 'w') as yaml_path:
-                yaml.dump(os.path.join(os.path.dirname(details["local_csv_path"]), dataset_name + '.yaml'), yaml_path, default_flow_style=False)
+            df.to_csv(os.path.join(os.path.dirname(details.local_path), release_dataset_name + '.csv'), index=False)
+            with open(os.path.join(os.path.dirname(details.local_path), release_dataset_name + "_schema.yaml"), 'w') as yaml_path:
+                yaml.dump(prev_schema, yaml_path, default_flow_style=False)
 
         with open("result.json", "w") as stream:
             json.dump({"released_dataset_name": release_dataset_name}, stream)
