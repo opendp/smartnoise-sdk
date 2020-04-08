@@ -24,7 +24,6 @@ class MWEMSynthesizer(BaseSynthesizer):
     random contiguous slices of the n-dimensional numpy array. 
     """
     def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20):
-        # TODO: Perform check that data is ndarray
         self.Q_count = Q_count
         self.epsilon = epsilon
         self.iterations = iterations
@@ -35,9 +34,32 @@ class MWEMSynthesizer(BaseSynthesizer):
 
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
         """
-        Creates a synthetic histogram distribution, based on the original data
+        Creates a synthetic histogram distribution, based on the original data.
+        Follows sdgym schema to be compatible with their benchmark system.
+
+        :param data: Dataset to use as basis for synthetic data
+        :type data: np.ndarray
+        :param categorical_columns: TODO: Add support
+        :type categorical_columns: iterable
+        :param ordinal_columns: TODO: Add support
+        :type ordinal_columns: iterable
+        :return: synthetic data, real data histograms
+        :rtype: np.ndarray
         """
-        self.data = data.copy()
+        if isinstance(data, ndarray):
+            self.data = data.copy()
+        else:
+            raise ValueError("Data must be a numpy array.")
+        
+        # NOTE: Limitation of ndarrays given histograms with large dims/many dims 
+        # (>10 dims, dims > 100) or datasets with many samples
+        # TODO: Dimensional split
+        # Compose MWEM according to splits in data/dimensions
+        # Curious to see if this methodology yields similar datasets
+        # to noraml n-dim compositions
+        # TODO: Figure out if we need to divide the budget by splits 
+        # to achieve DP
+
         self.histogram, self.dimensions, self.data_bins = self.histogram_from_data_attributes(self.data)
         self.Q = self.compose_arbitrary_slices(self.Q_count, self.dimensions)
         # TODO: Add special support for categorical+ordinal columns
@@ -47,7 +69,13 @@ class MWEMSynthesizer(BaseSynthesizer):
 
     def sample(self, samples):
         """
-        Samples from the synthetic histogram
+        Creates samples from the histogram data.
+        Follows sdgym schema to be compatible with their benchmark system.
+
+        :param samples: Number of samples to generate
+        :type samples: int
+        :return: N samples
+        :rtype: list(np.ndarray)
         """
         fake = self.synthetic_data
 
@@ -66,7 +94,18 @@ class MWEMSynthesizer(BaseSynthesizer):
         return s_unraveled
 
     def mwem(self):
-        A, epsilon = self.initialize_A(self.histogram, self.dimensions, self.epsilon)
+        """
+        Runner for the mwem algorithm. 
+
+        Initializes the synthetic histogram, and updates it
+        for self.iterations using the exponential mechanism and
+        multiplicative weights. Draws from the initialized query store
+        for measurements.
+        :return: A, self.histogram - A is the synthetic data histogram, self.histogram is original histo
+        :rtype: np.ndarray, np.ndarray
+        """
+
+        A = self.initialize_A(self.histogram, self.dimensions)
         measurements = {}
 
         for i in range(self.iterations):
@@ -88,19 +127,38 @@ class MWEMSynthesizer(BaseSynthesizer):
 
         return A, self.histogram
     
-    def initialize_A(self, histogram, dimensions, eps):
+    def initialize_A(self, histogram, dimensions):
+        """
+        Initializes a uniform distribution histogram from
+        the given histogram with dimensions
+
+        :param histogram: Reference histogram
+        :type histogram: np.ndarray
+        :param dimensions: Reference dimensions
+        :type dimensions: np.ndarray
+        :return: New histogram, uniformly distributed according to
+        reference histogram
+        :rtype: np.ndarray
+        """
+
         # NOTE: Could actually use a distribution from real data with some budget,
-        # as opposed to using this uniform dist
+        # as opposed to using this uniform dist (would take epsilon as argument,
+        # and detract from it)
         n = np.sum(histogram)
         value = n/np.prod(dimensions)
         A = np.zeros_like(histogram)
         A += value
-        return A, eps
+        return A
 
     def histogram_from_data_attributes(self, data):
         """
-        We need to collect information about the data
-        in order to initialize a matrix histogram.
+        Create a histogram from given data
+
+        :param data: Reference histogram
+        :type data: np.ndarray
+        :return: Histogram over given data, dimensions, 
+        bins created (output of np.histogramdd)
+        :rtype: np.ndarray, np.shape, np.ndarray
         """
         mins_data = []
         maxs_data = []
@@ -123,8 +181,21 @@ class MWEMSynthesizer(BaseSynthesizer):
     
     def exponential_mechanism(self, hist, A, Q, eps):
         """
-        "Sample a query qi in Q using the Exponential Mechanism
-        parametrized with epsilon value epsilon/2T and the score function"
+        Refer to paper for in depth description of
+        Exponential Mechanism.
+
+        Parametrized with epsilon value epsilon/2 * iterations
+
+        :param hist: Basis histogram
+        :type hist: np.ndarray
+        :param A: Synthetic histogram
+        :type A: np.ndarray
+        :param Q: Queries to draw from
+        :type Q: list
+        :param eps: Budget
+        :type eps: float
+        :return: # of errors
+        :rtype: int
         """
         errors = np.zeros(len(Q))
 
@@ -147,6 +218,26 @@ class MWEMSynthesizer(BaseSynthesizer):
         return len(errors) - 1
     
     def multiplicative_weights(self, A, Q, m, hist, iterate):
+        """
+        Multiplicative weights update algorithm,
+        used to boost the synthetic data accuracy given measurements m.
+
+        Run for iterate times
+
+        
+        :param A: Synthetic histogram
+        :type A: np.ndarray
+        :param Q: Queries to draw from
+        :type Q: list
+        :param m: Measurements taken from real data for each qi query
+        :type m: dict
+        :param hist: Basis histogram
+        :type hist: np.ndarray
+        :param iterate: Number of iterations to run mult weights
+        :type iterate: iterate
+        :return: A
+        :rtype: np.ndarray
+        """
         sum_A = np.sum(A)
 
         for _ in range(iterate):
@@ -169,6 +260,13 @@ class MWEMSynthesizer(BaseSynthesizer):
     def evaluate(self, a_slice, data):
         """
         Evaluate a count query i.e. an arbitrary slice
+
+        :param a_slice: Random slice within bounds of flattened data length
+        :type a_slice: np.s_
+        :param data: Data to evaluate from (synthetic dset)
+        :type data: np.ndarray
+        :return: Count from data within slice
+        :rtype: float
         """
         # We want to count the number of objects in an
         # arbitrary slice of our collection
@@ -188,6 +286,14 @@ class MWEMSynthesizer(BaseSynthesizer):
         random slice objects, given the dimensions
 
         These are our linear queries
+
+        :param num_s: Number of queries (slices) to generate
+        :type num_s: int
+        :param dimensions: Dimensions of histogram to be sliced
+        :type dimensions: np.shape
+        :return: Collection of random np.s_ (linear queries) for
+        a dataset with dimensions
+        :rtype: list
         """
         slices_list = []
         # TODO: For analysis, generate a distribution of slice sizes,
@@ -211,7 +317,15 @@ class MWEMSynthesizer(BaseSynthesizer):
         """
         We want to create a binary copy of the data,
         so that we can easily perform our error multiplication
-        in MW
+        in MW. Convenience function.
+
+        :param data: Data
+        :type data: np.ndarray
+        :param a_slice: Slice
+        :type a_slice: np.s_
+        :return: Return data, where the range specified
+        by a_slice is all 1s.
+        :rtype: np.ndarray
         """
         view = data.flatten()
 
@@ -222,5 +336,13 @@ class MWEMSynthesizer(BaseSynthesizer):
         return view[0:dim_arr_offset].reshape(data.shape)
     
     def laplace(self, sigma):
+        """
+        Laplace mechanism
+
+        :param sigma: Laplace scale param sigma
+        :type sigma: float
+        :return: Random value from laplace distribution [-1,1]
+        :rtype: float
+        """
         return sigma * np.log(random.random()) * np.random.choice([-1, 1])
 
