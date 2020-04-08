@@ -5,19 +5,22 @@ import operator
 from collections import defaultdict
 
 from opendp.whitenoise.sql.parse import QueryParser
+from opendp.whitenoise.ast.ast import Table
 from opendp.whitenoise.mechanisms.rand import laplace
 
 sys_rand = random.SystemRandom()
 
-def preprocess_df_from_query(schema, df, query):
+def preprocess_df_from_query(schema, df, query_string):
     """
     Returns a dataframe with user_id | tuple based on query grouping keys.
     """
-    queries = QueryParser(schema).queries(query)
+    qp = QueryParser(schema)
+    q = qp.query(query_string)
+    queries = qp.queries(query_string)
     query_ast = queries[0]
 
     group_cols = [ge.expression.name for ge in query_ast.agg.groupingExpressions]
-    table_name = query_ast.m_sym_dict[group_cols[0]].tablename
+    table_name = q.source.find_node(Table).name
     key_col = schema[table_name].key_cols()[0].name
 
     preprocessed_df = pd.DataFrame()
@@ -53,7 +56,7 @@ def policy_laplace(df, eps, delta, max_contrib):
     df = df.sort_values("hash")
 
     for idx, group in df.groupby(key_col):
-        items = group["group_cols"]
+        items = list(group["group_cols"])
 
         if len(items) > max_contrib:
             items = sys_rand.sample(items, max_contrib)
@@ -102,5 +105,6 @@ def run_dpsu(schema, input_df, query, eps, delta=math.exp(-10), max_contrib=5):
 
     output_df = pd.merge(input_df, dpsu_df, on=dpsu_df.columns[0])
     output_df.drop(["group_cols", "hash"], axis=1, inplace=True)
+    output_df.drop_duplicates(inplace=True)
 
     return output_df

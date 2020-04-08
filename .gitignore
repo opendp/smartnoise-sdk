@@ -106,3 +106,11 @@ venv.bak/
 # mlflow
 mlruns
 result.json
+
+# datasets
+iris.csv
+iris.yaml
+reddit.csv
+reddit.yaml
+clean_askreddit.csv
+askreddit.csv.zip
