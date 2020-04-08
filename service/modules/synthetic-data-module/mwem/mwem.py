@@ -6,7 +6,9 @@ import random
 import numpy as np
 import pandas as pd
 
-class MWEMSynthesizer():
+from sdgym.synthesizers.base import BaseSynthesizer
+
+class MWEMSynthesizer(BaseSynthesizer):
     """
     N-Dimensional numpy implementation of MWEM. 
     (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
@@ -21,7 +23,7 @@ class MWEMSynthesizer():
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array. 
     """
-    def __init__(self, Q_count=400, epsilon=3.0, iterations=150, mult_weights_iterations=20):
+    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20):
         # TODO: Perform check that data is ndarray
         self.Q_count = Q_count
         self.epsilon = epsilon
