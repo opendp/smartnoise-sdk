@@ -81,7 +81,7 @@ class PrivateReader(Reader):
         return subquery.numeric_symbols()
 
     def _get_reader(self, query_ast):
-        if query_ast.agg is not None:
+        if query_ast.agg is not None and self.options.use_dpsu:
             if isinstance(self.reader, PandasReader):
                 query = str(query_ast)
                 dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
@@ -311,7 +311,8 @@ class PrivateReaderOptions:
                  reservoir_sample=True,
                  clamp_columns=True,
                  row_privacy=False,
-                 max_contrib=None):
+                 max_contrib=None,
+                 use_dpsu=True):
         """Initialize with options.
 
         :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy
@@ -321,6 +322,7 @@ class PrivateReaderOptions:
         :param row_privacy: boolean, True if each row is a separate individual
         :param max_contrib: int, set to override the metadata-supplied limit of per-user
           contribution.  May only revise down; metadata takes precedence if limit is smaller.
+        :param use_dpsu: boolean, set to False if you want to use DPSU for histogram queries
         """
 
         self.censor_dims = censor_dims
@@ -329,3 +331,4 @@ class PrivateReaderOptions:
         self.clamp_columns = clamp_columns
         self.row_privacy = row_privacy
         self.max_contrib = max_contrib
+        self.use_dpsu = use_dpsu

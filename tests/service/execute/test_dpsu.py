@@ -1,7 +1,7 @@
 import pytest
 
-@pytest.mark.parametrize("project", [{"params": {"dataset_name": "PUMS", "budget": .2,
-                                      "query": "SELECT married, educ FROM PUMS.PUMS GROUP BY married, educ"},
+@pytest.mark.parametrize("project", [{"params": {"dataset_name": "reddit", "budget": .2,
+                                      "query": "SELECT ngram, COUNT(*) as n FROM reddit.reddit GROUP BY ngram"},
                                       "uri": "modules/sql-module"}])
 def test_execute_run(execution_client, project):
     execution_client.submit(params=project["params"],
