@@ -1,4 +1,8 @@
-# WhiteNoise: Tools for Differential Privacy
+<a href="https://www.linkedin.com/pulse/microsoft-harvards-institute-quantitative-social-science-john-kahan/"><img src="images/WhiteNoise Logo/SVG/Full_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
+## WhiteNoise System: Toools for Differential Privacy
+See also the accompanying [WhiteNoise-Core](https://github.com/opendifferentialprivacy/whitenoise-core) and [WhiteNoise-Samples](https://github.com/opendifferentialprivacy/whitenoise-samples) repositories for this system.
+
+##
 
 The WhiteNoise tools allow researchers and analysts to: 
 
@@ -25,10 +29,10 @@ The stochastic evaluator drives black-box privacy algorithms, checking for priva
 
 ## Installation:
 The burdock library can be installed from PyPi:
-> pip install -i https://test.pypi.org/simple/ burdock
+> pip install opendp-whitenoise
 
 ## Documentation
-Documentation for SDK fucntionality: <here>
+Documentation for SDK functionality: <here>
 Service API documentation: <here>
 
 ## Getting started
@@ -41,7 +45,7 @@ Working with Spark DataFrames: <exit>
   
 ## Experimental
 ### Services getting started
-Running burdock code through a service layer: <here>
+Running opendp-whitenoise code through a service layer: <here>
   
 ### Service samples
 TODO
