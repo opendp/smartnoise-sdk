@@ -6,9 +6,9 @@ import random
 import numpy as np
 import pandas as pd
 
-from sdgym.synthesizers.base import BaseSynthesizer
+# from sdgym.synthesizers.base import BaseSynthesizer
 
-class MWEMSynthesizer(BaseSynthesizer):
+class MWEMSynthesizer():
     """
     N-Dimensional numpy implementation of MWEM. 
     (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
@@ -46,7 +46,7 @@ class MWEMSynthesizer(BaseSynthesizer):
         :return: synthetic data, real data histograms
         :rtype: np.ndarray
         """
-        if isinstance(data, ndarray):
+        if isinstance(data, np.ndarray):
             self.data = data.copy()
         else:
             raise ValueError("Data must be a numpy array.")
@@ -111,11 +111,11 @@ class MWEMSynthesizer(BaseSynthesizer):
         for i in range(self.iterations):
             print("Iteration: " + str(i))
 
-            qi = self.exponential_mechanism(self.histogram, A, self.Q, (epsilon / (2*self.iterations)))
+            qi = self.exponential_mechanism(self.histogram, A, self.Q, (self.epsilon / (2*self.iterations)))
 
             # Make sure we get a different query to measure:
             while(qi in measurements):
-                qi = self.exponential_mechanism(self.histogram, A, self.Q, (epsilon / (2*self.iterations)))
+                qi = self.exponential_mechanism(self.histogram, A, self.Q, (self.epsilon / (2*self.iterations)))
 
             # NOTE: Add laplace noise here with budget
             evals = self.evaluate(self.Q[qi], self.histogram)
@@ -245,7 +245,7 @@ class MWEMSynthesizer(BaseSynthesizer):
                 error = m[qi] - self.evaluate(Q[qi], A)
 
                 # Perform the weights update
-                query_update = self.binary_replace_in_place_slice(np.zeros_like(A.copy()), Q[qi])
+                query_update = self.replace_in_place_slice(np.zeros_like(A.copy()), Q[qi])
                 
                 # Apply the update
                 A_multiplier = np.exp(query_update * error/(2.0 * sum_A))
@@ -313,7 +313,7 @@ class MWEMSynthesizer(BaseSynthesizer):
             slices_list.append(np.s_[l_b:u_b])
         return slices_list
 
-    def binary_replace_in_place_slice(self, data, a_slice):
+    def replace_in_place_slice(self, data, a_slice):
         """
         We want to create a binary copy of the data,
         so that we can easily perform our error multiplication
