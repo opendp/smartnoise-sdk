@@ -7,6 +7,7 @@
 
 import sys
 import os
+import subprocess
 import pandas as pd
 import numpy as np
 import math
@@ -279,7 +280,7 @@ class DPVerification:
     # Creating a new function to take in non-keyworded args and keyworded kwargs
     # This makes it generic to take in any Yarrow aggregate function with any set of parameters
     # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
-    def yarrow_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=100, epsilon=1.0, **kwargs):
+    def yarrow_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=100, epsilon=1.0, actual=1.0, **kwargs):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         self.dataset_path = dataset_path
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
@@ -299,10 +300,12 @@ class DPVerification:
             self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
         print("DP Predicate Test:", dp_res, "\n")
+        bias_res, msd = self.bias_test(actual, fD1)
+        print("Bias Test:", bias_res, "\n")
 
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
-        return dp_res
+        return dp_res, bias_res
 
     def accuracy_test(self, actual, low, high, confidence=0.95):
         # Actual mean of aggregation function f on D1 is equal to sample mean
@@ -454,20 +457,26 @@ class DPVerification:
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
         dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
 
-        # # Powerset Test on SUM query
+        # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
         dp_res, acc_res, utility_res, bias_res = self.dp_powerset_test(query_str, plot=False, repeat_count=1000)
 
         # Yarrow Test
-        dataset_root = os.getenv('DATASET_ROOT', '~/privacytoolsproject/')
-        test_csv_path = dataset_root + 'data/PUMS_california_demographics_1000/data.csv'
+        root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+        test_csv_path = os.path.join(root_url, "service", "datasets", "evaluation", "PUMS_1000.csv")
         test_csv_names = ["age", "sex", "educ", "race", "income", "married"]
 
-        dp_yarrow_mean_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_mean, 'race', "FLOAT", epsilon=.65, data_min=0., data_max=100., data_n=1000)
-        dp_yarrow_var_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_variance, 'educ', "FLOAT", epsilon=.15, data_min=0., data_max=12., data_n=1000)
-        dp_yarrow_moment_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_moment_raw, 'race', "FLOAT", epsilon=.15, data_min=0., data_max=100., data_n=1000, order = 3)
-        dp_yarrow_covariance_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", epsilon=.15, left_n=1000, right_n=1000,left_min=0.,left_max=1.,right_min=0.,right_max=1.)
-        return dp_res, acc_res, utility_res, bias_res
+        df = pd.read_csv(test_csv_path)
+        actual_mean = df['race'].mean()
+        actual_var = df['educ'].var()
+        actual_moment = df['race'].skew()
+        actual_covariance = df['age'].cov(df['married'])
+
+        dp_yarrow_mean_res, bias_mean_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_mean, 'race', "FLOAT", epsilon=.65, actual = actual_mean, data_min=0., data_max=100., data_n=1000)
+        dp_yarrow_var_res, bias_var_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_variance, 'educ', "FLOAT", epsilon=.15, actual = actual_var, data_min=0., data_max=12., data_n=1000)
+        dp_yarrow_moment_res, bias_moment_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_moment_raw, 'race', "FLOAT", epsilon=.15, actual = actual_moment, data_min=0., data_max=100., data_n=1000, order = 3)
+        dp_yarrow_covariance_res, bias_cov_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", actual = actual_covariance, epsilon=.15, left_n=1000, right_n=1000,left_min=0.,left_max=1.,right_min=0.,right_max=1.)
+        return
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=1000)
