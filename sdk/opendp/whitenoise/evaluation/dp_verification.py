@@ -14,8 +14,9 @@ import matplotlib.pyplot as plt
 import opendp.whitenoise.evaluation.aggregation as agg
 import opendp.whitenoise.evaluation.exploration as exp
 import copy
+import whitenoise
+import whitenoise.components as op
 
-# import yarrow
 from opendp.whitenoise.metadata.collection import *
 from scipy import stats
 
@@ -274,34 +275,34 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
 
-    # # Verification of aggregation mechanisms implemented in Yarrow
-    # # Creating a new function to take in non-keyworded args and keyworded kwargs
-    # # This makes it generic to take in any Yarrow aggregate function with any set of parameters
-    # # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
-    # def yarrow_test(self, dataset_path, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=10000, **kwargs):
-    #     ag = agg.Aggregation(t=1, repeat_count=repeat_count)
-    #     self.dataset_path = dataset_path
-    #     d1, d2 = self.generate_neighbors(load_csv=True)
+    # Verification of aggregation mechanisms implemented in Yarrow
+    # Creating a new function to take in non-keyworded args and keyworded kwargs
+    # This makes it generic to take in any Yarrow aggregate function with any set of parameters
+    # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
+    def yarrow_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=100, epsilon=1.0, **kwargs):
+        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
+        self.dataset_path = dataset_path
+        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
 
-    #     d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
-    #     d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
+        d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
+        d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
 
-    #     if(len(args) == 4):
-    #         fD1 = ag.yarrow_dp_multi_agg(f, d1_file_path, args, kwargs)
-    #         fD2 = ag.yarrow_dp_multi_agg(f, d2_file_path, args, kwargs)
-    #     else:
-    #         fD1 = ag.yarrow_dp_agg(f, d1_file_path, args, kwargs)
-    #         fD2 = ag.yarrow_dp_agg(f, d2_file_path, args, kwargs)
+        if(len(args) == 3):
+            fD1 = ag.yarrow_dp_multi_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
+            fD2 = ag.yarrow_dp_multi_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
+        else:
+            fD1 = ag.yarrow_dp_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
+            fD2 = ag.yarrow_dp_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
 
-    #     d1size, d2size = fD1.size, fD2.size
-    #     d1hist, d2hist, bin_edges = \
-    #         self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
-    #     dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-    #     print("DP Predicate Test:", dp_res, "\n")
+        d1size, d2size = fD1.size, fD2.size
+        d1hist, d2hist, bin_edges = \
+            self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
+        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+        print("DP Predicate Test:", dp_res, "\n")
 
-    #     if(plot):
-    #         self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
-    #     return dp_res
+        if(plot):
+            self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
+        return dp_res
 
     def accuracy_test(self, actual, low, high, confidence=0.95):
         # Actual mean of aggregation function f on D1 is equal to sample mean
@@ -453,18 +454,19 @@ class DPVerification:
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
         dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
 
-        # Powerset Test on SUM query
+        # # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
         dp_res, acc_res, utility_res, bias_res = self.dp_powerset_test(query_str, plot=False, repeat_count=1000)
 
         # Yarrow Test
-        # dataset_root = os.getenv('DATASET_ROOT', '/home/ankit/Documents/github/datasets/')
-        # test_csv_path = dataset_root + 'data/PUMS_california_demographics_1000/data.csv'
+        dataset_root = os.getenv('DATASET_ROOT', '~/privacytoolsproject/')
+        test_csv_path = dataset_root + 'data/PUMS_california_demographics_1000/data.csv'
+        test_csv_names = ["age", "sex", "educ", "race", "income", "married"]
 
-        # dp_yarrow_mean_res = self.yarrow_test(test_csv_path, yarrow.dp_mean, 'income', float, epsilon=self.epsilon, minimum=0, maximum=100, num_records=1000)
-        # dp_yarrow_var_res = self.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=self.epsilon, minimum=0, maximum=12, num_records=1000)
-        # dp_yarrow_moment_res = self.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
-        # dp_yarrow_covariance_res = self.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
+        dp_yarrow_mean_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_mean, 'race', "FLOAT", epsilon=.65, data_min=0., data_max=100., data_n=1000)
+        dp_yarrow_var_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_variance, 'educ', "FLOAT", epsilon=.15, data_min=0., data_max=12., data_n=1000)
+        dp_yarrow_moment_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_moment_raw, 'race', "FLOAT", epsilon=.15, data_min=0., data_max=100., data_n=1000, order = 3)
+        dp_yarrow_covariance_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", epsilon=.15, left_n=1000, right_n=1000,left_min=0.,left_max=1.,right_min=0.,right_max=1.)
         return dp_res, acc_res, utility_res, bias_res
 
 if __name__ == "__main__":

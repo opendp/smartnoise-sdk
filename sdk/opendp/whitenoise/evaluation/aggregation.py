@@ -8,7 +8,8 @@ import mlflow
 import json
 import sys
 import os
-# import yarrow
+import whitenoise
+import whitenoise.components as op
 
 from opendp.whitenoise.sql import PandasReader, PrivateReader
 from opendp.whitenoise.reader.rowset import TypedRowset
@@ -78,27 +79,29 @@ class Aggregation:
         sumsq = self.dp_mechanism_sum(df, colname + "squared")
         return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
 
-    # # Apply noise to input aggregation function using Yarrow library
-    # def yarrow_dp_agg(self, f, dataset_path, args, kwargs):
-    #     with yarrow.Analysis() as analysis:
-    #         df = yarrow.Dataset('df', dataset_path)
-    #         agg = f(df[args], **kwargs)
-    #     noisy_values = []
-    #     for x in range(self.repeat_count):
-    #         analysis.release()
-    #         noisy_values.append(analysis.release_proto.values[6].values['data'].f64.data[0])
-    #     return np.array(noisy_values)
+    # Apply noise to input aggregation function using Yarrow library
+    def yarrow_dp_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
+        releases = []        
+        with whitenoise.Analysis() as analysis:
+            for x in range(self.repeat_count):
+                df = whitenoise.Dataset(path=dataset_path, column_names=col_names)
+                releases.append(f(op.cast(df[args[0]], type=args[1]), privacy_usage={'epsilon': epsilon}, **kwargs))
+        analysis.release()
+        noisy_values = [release.value for release in releases]
+        return np.array(noisy_values)
 
-    # # Apply noise to functions like covariance using Yarrow library that work on multiple columns
-    # def yarrow_dp_multi_agg(self, f, dataset_path, args, kwargs):
-    #     with yarrow.Analysis() as analysis:
-    #         df = yarrow.Dataset('df', dataset_path)
-    #         agg = f(df[(args[0], args[1])], df[(args[2], args[3])], **kwargs)
-    #     noisy_values = []
-    #     for x in range(self.repeat_count):
-    #         analysis.release()
-    #         noisy_values.append(analysis.release_proto.values[10].values['data'].f64.data[0])
-    #     return np.array(noisy_values)
+    # Apply noise to functions like covariance using Yarrow library that work on multiple columns
+    def yarrow_dp_multi_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
+        releases = []
+        with whitenoise.Analysis() as analysis:
+            for x in range(self.repeat_count):
+                df = whitenoise.Dataset(path=dataset_path, column_names=col_names)
+                releases.append(f(left=op.cast(df[args[0]], type=args[2]), 
+                right=op.cast(df[args[1]], type=args[2]),
+                privacy_usage={'epsilon': epsilon}, **kwargs))
+        analysis.release()
+        noisy_values = [release.value[0][0] for release in releases]
+        return np.array(noisy_values)
 
     # Run the query using the private reader and input query
     # Get query response back
