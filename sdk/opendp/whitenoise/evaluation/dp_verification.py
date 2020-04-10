@@ -332,6 +332,7 @@ class DPVerification:
         print("Mean signed deviation ratio to actual: ", msd)
         # Checking if mean of (difference of noisy response to actual) is zero i.e. unbiased result
         tset, pval = stats.ttest_1samp(diff, 0.0)
+        print("p-Value of 1 sample t-test: ", pval)
         return (pval < sig_level), msd
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
@@ -476,7 +477,7 @@ class DPVerification:
         dp_yarrow_var_res, bias_var_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_variance, 'educ', "FLOAT", epsilon=.15, actual = actual_var, data_min=0., data_max=12., data_n=1000)
         dp_yarrow_moment_res, bias_moment_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_moment_raw, 'race', "FLOAT", epsilon=.15, actual = actual_moment, data_min=0., data_max=100., data_n=1000, order = 3)
         dp_yarrow_covariance_res, bias_cov_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", actual = actual_covariance, epsilon=.15, left_n=1000, right_n=1000,left_min=0.,left_max=1.,right_min=0.,right_max=1.)
-        return
+        return dp_res, acc_res, utility_res, bias_res
 
 if __name__ == "__main__":
     dv = DPVerification(dataset_size=1000)
