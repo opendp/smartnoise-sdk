@@ -50,3 +50,4 @@ class TestDPSU:
         korolova_result = private_reader_korolova.execute_typed(query)
 
         assert len(result['n']) > len(korolova_result['n'])
+        assert len(final_df) < len(df)
