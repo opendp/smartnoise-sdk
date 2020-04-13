@@ -1,6 +1,6 @@
 Contributing to WhiteNoise
 =============================
-Contributions to WhiteNoise are welcome from all members of the community. This document is her to simplify the onboarding experience for making a contribution, contributions to this document are also welcome.
+Contributions to WhiteNoise are welcome from all members of the community. This document is here to simplify the onboarding experience for contributors, contributions to this document are also welcome.
 
 System requirements
 =============================
@@ -17,18 +17,17 @@ environment, ideally isolated with conda or venv. Below we have a conda based ex
     python -m pip install -e sdk/
     python -m pip install -r tests/requirements.txt
 
-Additional requirements are needed for contributing to the WhiteNoise Service:
-
-.. code-block:: bash
-
-    python -m pip install -r service/requirements.txt
-
 Verifying your SDK installation is running:
 
 .. code-block:: bash
 
     pytest tests/sdk
 
+Additional requirements are needed for contributing to the WhiteNoise Service:
+
+.. code-block:: bash
+
+    python -m pip install -r service/requirements.txt
 
 The sdk tests should pass if not, please check github issues for known build failures and report a new issue if not recorded.
 
