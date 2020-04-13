@@ -4,7 +4,7 @@ Contributions to WhiteNoise are welcome from all members of the community. This 
 
 System requirements
 =============================
-WhiteNoise-system is python based. The initial setup will require a conda
+WhiteNoise-system is python based. The initial setup will require a python
 environment, ideally isolated with conda or venv. Below we have a conda based example for setting up the SDK and Service requirements
 
 .. code-block:: bash
