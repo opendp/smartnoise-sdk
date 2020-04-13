@@ -86,7 +86,7 @@ if not os.path.exists(reddit_schema_path):
     reddit = Table("reddit", "reddit", 500000, [
                 String("author", card=10000, is_key=True),
                 String("ngram", card=10000)
-    ])
+    ], False, max_ids=500)
     schema = CollectionMetadata([reddit], "csv")
     schema.to_file(reddit_schema_path, "reddit")
 
