@@ -1,0 +1,9 @@
+name: release
+channels:
+  - defaults
+dependencies:
+  - pip:
+    - mlflow
+    - pandasql
+    - pandas
+    - opendp-whitenoise

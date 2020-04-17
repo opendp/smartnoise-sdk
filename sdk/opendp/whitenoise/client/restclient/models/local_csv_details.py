@@ -11,7 +11,7 @@ from msrest.serialization import Model
 class LocalCSVDetails(Model):
     """LocalCSVDetails.
 
-    :param local_path: Path to the csv on diskThe type of the dataset
+    :param local_path: Path to the csv on disk
     :type local_path: str
     """
 

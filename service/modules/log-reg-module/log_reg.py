@@ -7,8 +7,8 @@ import logging
 import numpy as np
 import pandas as pd
 
-from burdock.client import get_dataset_client
-from burdock.data.adapters import load_metadata, load_dataset
+from opendp.whitenoise.client import get_dataset_client
+from opendp.whitenoise.data.adapters import load_metadata, load_dataset
 
 from diffprivlib.mechanisms import Vector
 from diffprivlib.utils import PrivacyLeakWarning, DiffprivlibCompatibilityWarning, warn_unused_args

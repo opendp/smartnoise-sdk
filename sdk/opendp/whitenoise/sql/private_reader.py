@@ -1,7 +1,9 @@
 import math
 import numpy as np
+from .dpsu import run_dpsu
 from .private_rewriter import Rewriter
 from .parse import QueryParser
+from .reader import PandasReader
 
 from opendp.whitenoise.ast.expressions import sql as ast
 from opendp.whitenoise.reader import Reader
@@ -77,6 +79,15 @@ class PrivateReader(Reader):
         self.refresh_options()
         subquery, query = self.rewrite(query_string)
         return subquery.numeric_symbols()
+
+    def _get_reader(self, query_ast):
+        if query_ast.agg is not None and self.options.use_dpsu:
+            if isinstance(self.reader, PandasReader):
+                query = str(query_ast)
+                dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
+                return PandasReader(self.metadata, dpsu_df)
+        else:
+            return self.reader
 
     def execute(self, query_string):
         """Executes a query and returns a recordset that is differentially private.
@@ -155,13 +166,13 @@ class PrivateReader(Reader):
                     raise ValueError("Cannot run different query against cached result.  "
                                      "Make a new PrivateReader or else clear the cache with cache = False")
             else:
-                db_rs = self.reader.execute_ast(subquery)
+                db_rs = self._get_reader(subquery).execute_ast(subquery)
                 self._cached_exact = list(db_rs)
                 self._cached_ast = subquery
         else:
             self.cached_exact = None
             self.cached_ast = None
-            db_rs = self.reader.execute_ast(subquery)
+            db_rs = self._get_reader(subquery).execute_ast(subquery)
 
         clamp_counts = self.options.clamp_counts
 
@@ -300,7 +311,8 @@ class PrivateReaderOptions:
                  reservoir_sample=True,
                  clamp_columns=True,
                  row_privacy=False,
-                 max_contrib=None):
+                 max_contrib=None,
+                 use_dpsu=True):
         """Initialize with options.
 
         :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy
@@ -310,6 +322,7 @@ class PrivateReaderOptions:
         :param row_privacy: boolean, True if each row is a separate individual
         :param max_contrib: int, set to override the metadata-supplied limit of per-user
           contribution.  May only revise down; metadata takes precedence if limit is smaller.
+        :param use_dpsu: boolean, set to False if you want to use DPSU for histogram queries
         """
 
         self.censor_dims = censor_dims
@@ -318,3 +331,4 @@ class PrivateReaderOptions:
         self.clamp_columns = clamp_columns
         self.row_privacy = row_privacy
         self.max_contrib = max_contrib
+        self.use_dpsu = use_dpsu
