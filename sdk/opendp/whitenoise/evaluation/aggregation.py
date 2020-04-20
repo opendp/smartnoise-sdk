@@ -79,8 +79,8 @@ class Aggregation:
         sumsq = self.dp_mechanism_sum(df, colname + "squared")
         return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
 
-    # Apply noise to input aggregation function using Yarrow library
-    def yarrow_dp_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
+    # Apply noise to input aggregation function using WhiteNoise-Core library
+    def whitenoise_core_dp_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
         releases = []        
         with whitenoise.Analysis() as analysis:
             for x in range(self.repeat_count):
@@ -90,8 +90,8 @@ class Aggregation:
         noisy_values = [release.value for release in releases]
         return np.array(noisy_values)
 
-    # Apply noise to functions like covariance using Yarrow library that work on multiple columns
-    def yarrow_dp_multi_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
+    # Apply noise to functions like covariance using WhiteNoise-Core library that work on multiple columns
+    def whitenoise_core_dp_multi_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
         releases = []
         with whitenoise.Analysis() as analysis:
             for x in range(self.repeat_count):

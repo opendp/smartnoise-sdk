@@ -276,11 +276,11 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
 
-    # Verification of aggregation mechanisms implemented in Yarrow
+    # Verification of aggregation mechanisms implemented in WhiteNoise-Core
     # Creating a new function to take in non-keyworded args and keyworded kwargs
-    # This makes it generic to take in any Yarrow aggregate function with any set of parameters
+    # This makes it generic to take in any WhiteNoise-core aggregate function with any set of parameters
     # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
-    def yarrow_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=100, epsilon=1.0, actual=1.0, **kwargs):
+    def whitenoise_core_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=100, epsilon=1.0, actual=1.0, **kwargs):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         self.dataset_path = dataset_path
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
@@ -289,11 +289,11 @@ class DPVerification:
         d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
 
         if(len(args) == 3):
-            fD1 = ag.yarrow_dp_multi_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
-            fD2 = ag.yarrow_dp_multi_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
+            fD1 = ag.whitenoise_core_dp_multi_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
+            fD2 = ag.whitenoise_core_dp_multi_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
         else:
-            fD1 = ag.yarrow_dp_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
-            fD2 = ag.yarrow_dp_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
+            fD1 = ag.whitenoise_core_dp_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
+            fD2 = ag.whitenoise_core_dp_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
 
         d1size, d2size = fD1.size, fD2.size
         d1hist, d2hist, bin_edges = \
@@ -462,7 +462,7 @@ class DPVerification:
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
         dp_res, acc_res, utility_res, bias_res = self.dp_powerset_test(query_str, plot=False, repeat_count=1000)
 
-        # Yarrow Test
+        # WhiteNoise-Core Test
         root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
         test_csv_path = os.path.join(root_url, "service", "datasets", "evaluation", "PUMS_1000.csv")
         test_csv_names = ["age", "sex", "educ", "race", "income", "married"]
@@ -473,10 +473,10 @@ class DPVerification:
         actual_moment = df['race'].skew()
         actual_covariance = df['age'].cov(df['married'])
 
-        dp_yarrow_mean_res, bias_mean_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_mean, 'race', "FLOAT", epsilon=.65, actual = actual_mean, data_min=0., data_max=100., data_n=1000)
-        dp_yarrow_var_res, bias_var_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_variance, 'educ', "FLOAT", epsilon=.15, actual = actual_var, data_min=0., data_max=12., data_n=1000)
-        dp_yarrow_moment_res, bias_moment_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_moment_raw, 'race', "FLOAT", epsilon=.15, actual = actual_moment, data_min=0., data_max=100., data_n=1000, order = 3)
-        dp_yarrow_covariance_res, bias_cov_res = self.yarrow_test(test_csv_path, test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", actual = actual_covariance, epsilon=.15, left_n=1000, right_n=1000,left_min=0.,left_max=1.,right_min=0.,right_max=1.)
+        dp_mean_res, bias_mean_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_mean, 'race', "FLOAT", epsilon=.65, actual = actual_mean, data_min=0., data_max=100., data_n=1000)
+        dp_var_res, bias_var_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_variance, 'educ', "FLOAT", epsilon=.15, actual = actual_var, data_min=0., data_max=12., data_n=1000)
+        dp_moment_res, bias_moment_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_moment_raw, 'race', "FLOAT", epsilon=.15, actual = actual_moment, data_min=0., data_max=100., data_n=1000, order = 3)
+        dp_covariance_res, bias_cov_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", actual = actual_covariance, epsilon=.15, left_n=1000, right_n=1000,left_min=0.,left_max=1.,right_min=0.,right_max=1.)
         return dp_res, acc_res, utility_res, bias_res
 
 if __name__ == "__main__":
