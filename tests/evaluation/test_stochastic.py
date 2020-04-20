@@ -116,31 +116,3 @@ class TestStochastic:
         assert(acc_res == True)
         assert(utility_res == True)
         assert(bias_res == True)
-
-    @pytest.mark.skip(reason="Yarrow response error while calling")
-    def test_yarrow_dp_mean(self):
-        import yarrow
-        test_csv_path = 'service/datasets/PUMS.csv'
-        dp_yarrow_mean_res = dv.yarrow_test(test_csv_path, yarrow.dp_mean, 'income', float, epsilon=1.0, minimum=0, maximum=100, num_records=1000)
-        assert(dp_yarrow_mean_res == True)
-
-    @pytest.mark.skip(reason="Yarrow response error while calling")
-    def test_yarrow_dp_variance(self):
-        import yarrow
-        test_csv_path = 'service/datasets/PUMS.csv'
-        dp_yarrow_var_res = dv.yarrow_test(test_csv_path, yarrow.dp_variance, 'educ', int, epsilon=1.0, minimum=0, maximum=12, num_records=1000)
-        assert(dp_yarrow_var_res == True)
-
-    @pytest.mark.skip(reason="Yarrow response error while calling")
-    def test_yarrow_dp_moment_raw(self):
-        import yarrow
-        test_csv_path = 'service/datasets/PUMS.csv'
-        dp_yarrow_moment_res = dv.yarrow_test(test_csv_path, yarrow.dp_moment_raw, 'married', float, epsilon=.15, minimum=0, maximum=12, num_records=1000000, order = 3)
-        assert(dp_yarrow_moment_res == True)
-
-    @pytest.mark.skip(reason="Yarrow response error while calling")
-    def test_yarrow_dp_covariance(self):
-        import yarrow
-        test_csv_path = 'service/datasets/PUMS.csv'
-        dp_yarrow_covariance_res = dv.yarrow_test(test_csv_path, yarrow.dp_covariance, 'married', int, 'sex', int, epsilon=.15, minimum_x=0, maximum_x=1, minimum_y=0, maximum_y=1, num_records=1000)
-        assert(dp_yarrow_covariance_res == True)
