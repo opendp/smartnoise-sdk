@@ -81,11 +81,10 @@ class PrivateReader(Reader):
         return subquery.numeric_symbols()
 
     def _get_reader(self, query_ast):
-        if query_ast.agg is not None and self.options.use_dpsu:
-            if isinstance(self.reader, PandasReader):
-                query = str(query_ast)
-                dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
-                return PandasReader(self.metadata, dpsu_df)
+        if query_ast.agg is not None and self.options.use_dpsu and isinstance(self.reader, PandasReader):
+            query = str(query_ast)
+            dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
+            return PandasReader(self.metadata, dpsu_df)
         else:
             return self.reader
 
