@@ -31,6 +31,12 @@ DATASETS = {"example": {
                         },
                         "release_cost":10.0,
                         "budget":300.0},
+            "reddit": {
+                        "dataset_type": "csv_details",
+                        "csv_details": {
+                            "local_path": os.path.join(os.path.dirname(__file__), "datasets", "reddit.csv")
+                        },
+                        "budget": 3.0},
             "demo_dataverse": {
                         "dataset_name": "demo_dataverse",
                         "dataset_type": "dataverse_details",

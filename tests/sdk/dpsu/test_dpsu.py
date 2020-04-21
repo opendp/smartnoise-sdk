@@ -8,6 +8,7 @@ import pytest
 from opendp.whitenoise.sql.dpsu import preprocess_df_from_query, run_dpsu
 from opendp.whitenoise.metadata import CollectionMetadata
 from opendp.whitenoise.sql.parse import QueryParser
+from opendp.whitenoise.sql import PrivateReader, PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -33,4 +34,20 @@ class TestDPSU:
         assert len(final_df) > 0
         assert list(final_df) == list(df)
         assert not final_df.equals(df)
+        assert len(final_df) < len(df)
+
+    @pytest.mark.skip("max_ids needs to be overriden")
+    def test_dpsu_vs_korolova(self):
+        query = "SELECT ngram, COUNT(*) as n FROM reddit.reddit GROUP BY ngram ORDER BY n desc"
+        reader = PandasReader(schema, df)
+        private_reader = PrivateReader(schema, reader, 3.0)
+        private_reader.options.max_contrib = 10
+        result = private_reader.execute_typed(query)
+
+        private_reader_korolova = PrivateReader(schema, reader, 3.0)
+        private_reader_korolova.options.dpsu = False
+        private_reader_korolova.options.max_contrib = 10
+        korolova_result = private_reader_korolova.execute_typed(query)
+
+        assert len(result['n']) > len(korolova_result['n'])
         assert len(final_df) < len(df)

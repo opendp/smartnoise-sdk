@@ -55,6 +55,11 @@ def _download_file(url, local_file):
         from urllib.request import urlretrieve
     urlretrieve(url, local_file)
 
+pums_1000_dataset_path = os.path.join(root_url, "service", "datasets", "evaluation", "PUMS_1000.csv")
+if not os.path.exists(pums_1000_dataset_path):
+    pums_url = "https://raw.githubusercontent.com/opendifferentialprivacy/dp-test-datasets/master/data/PUMS_california_demographics_1000/data.csv"
+    _download_file(pums_url, pums_1000_dataset_path)
+
 reddit_dataset_path = os.path.join(root_url, "service", "datasets", "reddit.csv")
 if not os.path.exists(reddit_dataset_path):
     import re
@@ -86,7 +91,7 @@ if not os.path.exists(reddit_schema_path):
     reddit = Table("reddit", "reddit", 500000, [
                 String("author", card=10000, is_key=True),
                 String("ngram", card=10000)
-    ])
+    ], False, max_ids=500)
     schema = CollectionMetadata([reddit], "csv")
     schema.to_file(reddit_schema_path, "reddit")
 

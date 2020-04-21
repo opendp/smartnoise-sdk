@@ -128,5 +128,6 @@ class TestQuery:
     def test_execute_without_dpsu(self):
         reader = PandasReader(schema, df)
         private_reader = PrivateReader(schema, reader, 1.0)
-        query = QueryParser(schema).queries("SELECT COUNT(*) AS c FROM PUMS.PUMS")[0]
+        query = QueryParser(schema).queries("SELECT COUNT(*) AS c FROM PUMS.PUMS GROUP BY married")[0]
+        private_reader.options.use_dpsu = False
         assert(private_reader._get_reader(query) is private_reader.reader)
