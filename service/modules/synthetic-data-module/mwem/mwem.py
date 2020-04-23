@@ -6,9 +6,7 @@ import random
 import numpy as np
 import pandas as pd
 
-from sdgym.synthesizers.base import BaseSynthesizer
-
-class MWEMSynthesizer(BaseSynthesizer):
+class MWEMSynthesizer():
     """
     N-Dimensional numpy implementation of MWEM. 
     (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
@@ -23,7 +21,7 @@ class MWEMSynthesizer(BaseSynthesizer):
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array. 
     """
-    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20):
+    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = []):
         self.Q_count = Q_count
         self.epsilon = epsilon
         self.iterations = iterations
@@ -31,6 +29,7 @@ class MWEMSynthesizer(BaseSynthesizer):
         self.synthetic_data = None
         self.data_bins = None
         self.real_data = None
+        self.splits = splits
 
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
         """
@@ -59,13 +58,18 @@ class MWEMSynthesizer(BaseSynthesizer):
         # to noraml n-dim compositions
         # TODO: Figure out if we need to divide the budget by splits 
         # to achieve DP
-
-        self.histogram, self.dimensions, self.data_bins = self.histogram_from_data_attributes(self.data)
-        self.Q = self.compose_arbitrary_slices(self.Q_count, self.dimensions)
-        # TODO: Add special support for categorical+ordinal columns
+        if self.splits == []:
+            self.histograms = self.histogram_from_data_attributes(self.data, [np.arange(self.data.shape[1])])
+        else:
+            self.histograms = self.histogram_from_data_attributes(self.data, self.splits)
+        
+        self.Qs = []
+        for h in self.histograms:
+            # h[1] is dimensions for each histogram
+            self.Qs.append(self.compose_arbitrary_slices(self.Q_count, h[1]))
 
         # Run the algorithm
-        self.synthetic_data, self.real_data = self.mwem()
+        self.synthetic_histograms = self.mwem()
 
     def sample(self, samples):
         """
@@ -77,21 +81,32 @@ class MWEMSynthesizer(BaseSynthesizer):
         :return: N samples
         :rtype: list(np.ndarray)
         """
-        fake = self.synthetic_data
+        synthesized_columns = ()
+        for fake, _ in self.synthetic_histograms:
+            s = []
+            fake_indices = np.arange(len(np.ravel(fake)))
+            fake_distribution = np.ravel(fake)
+            norm = np.sum(fake)
 
-        s = []
-        fake_indices = np.arange(len(np.ravel(fake)))
-        fake_distribution = np.ravel(fake)
-        norm = np.sum(fake)
+            for _ in range(samples):
+                s.append(np.random.choice(fake_indices, p=(fake_distribution/norm)))
 
-        for _ in range(samples):
-            s.append(np.random.choice(fake_indices, p=(fake_distribution/norm)))
-
-        s_unraveled = []
-        for ind in s:
-            s_unraveled.append(np.unravel_index(ind,fake.shape))
-
-        return s_unraveled
+            s_unraveled = []
+            for ind in s:
+                s_unraveled.append(np.unravel_index(ind,fake.shape))
+            
+            if synthesized_columns == ():
+                synthesized_columns = (np.array(s_unraveled))
+            else:
+                synthesized_columns = np.hstack((synthesized_columns, np.array(s_unraveled)))
+        
+        # Recombine the independent distributions into a single dataset
+        combined = synthesized_columns
+        print(combined)
+        # Reorder the columns to mirror their original order
+        r = self.reorder(self.splits)
+        print(r)
+        return combined[:,r]
 
     def mwem(self):
         """
@@ -104,28 +119,35 @@ class MWEMSynthesizer(BaseSynthesizer):
         :return: A, self.histogram - A is the synthetic data histogram, self.histogram is original histo
         :rtype: np.ndarray, np.ndarray
         """
+        As = []
 
-        A = self.initialize_A(self.histogram, self.dimensions)
-        measurements = {}
+        for i,h in enumerate(self.histograms):
+            hist = h[0]
+            dimensions = h[1]
+            Q = self.Qs[i]
+            A = self.initialize_A(hist, dimensions)
+            measurements = {}
 
-        for i in range(self.iterations):
-            print("Iteration: " + str(i))
+            for i in range(self.iterations):
+                print("Iteration: " + str(i))
 
-            qi = self.exponential_mechanism(self.histogram, A, self.Q, (self.epsilon / (2*self.iterations)))
+                qi = self.exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
 
-            # Make sure we get a different query to measure:
-            while(qi in measurements):
-                qi = self.exponential_mechanism(self.histogram, A, self.Q, (self.epsilon / (2*self.iterations)))
+                # Make sure we get a different query to measure:
+                while(qi in measurements):
+                    qi = self.exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
 
-            # NOTE: Add laplace noise here with budget
-            evals = self.evaluate(self.Q[qi], self.histogram)
-            lap = self.laplace((2*self.iterations)/(self.epsilon*len(self.dimensions)))
-            measurements[qi] = evals + lap
+                # NOTE: Add laplace noise here with budget
+                evals = self.evaluate(Q[qi], hist)
+                lap = self.laplace((2*self.iterations)/(self.epsilon*len(dimensions)))
+                measurements[qi] = evals + lap
 
-            # Improve approximation with Multiplicative Weights
-            A = self.multiplicative_weights(A, self.Q, measurements, self.histogram, self.mult_weights_iterations)
+                # Improve approximation with Multiplicative Weights
+                A = self.multiplicative_weights(A, Q, measurements, hist, self.mult_weights_iterations)
 
-        return A, self.histogram
+            As.append((A,hist))
+
+        return As
     
     def initialize_A(self, histogram, dimensions):
         """
@@ -150,7 +172,7 @@ class MWEMSynthesizer(BaseSynthesizer):
         A += value
         return A
 
-    def histogram_from_data_attributes(self, data):
+    def histogram_from_data_attributes(self, data, splits=[]):
         """
         Create a histogram from given data
 
@@ -160,24 +182,30 @@ class MWEMSynthesizer(BaseSynthesizer):
         bins created (output of np.histogramdd)
         :rtype: np.ndarray, np.shape, np.ndarray
         """
-        mins_data = []
-        maxs_data = []
-        dims_sizes = []
+        histograms = []
 
-        # Transpose for column wise iteration
-        for column in data.T:
-            min_c = min(column) ; max_c = max(column) 
-            mins_data.append(min_c)
-            maxs_data.append(max_c)
-            # Dimension size (number of bins)
-            dims_sizes.append(max_c-min_c+1)
-        
-        # Produce an N,D dimensional histogram, where
-        # we pre-specify the bin sizes to correspond with 
-        # our ranges above
-        histogram, bins = np.histogramdd(data, bins=dims_sizes)
-        # Return histogram, dimensions
-        return histogram, dims_sizes, bins
+        for split in splits:
+            split_data = data[:, split]
+            mins_data = []
+            maxs_data = []
+            dims_sizes = []
+
+            # Transpose for column wise iteration
+            for column in split_data.T:
+                min_c = min(column) ; max_c = max(column) 
+                mins_data.append(min_c)
+                maxs_data.append(max_c)
+                # Dimension size (number of bins)
+                dims_sizes.append(max_c-min_c+1)
+            
+            # Produce an N,D dimensional histogram, where
+            # we pre-specify the bin sizes to correspond with 
+            # our ranges above
+            histogram, bins = np.histogramdd(split_data, bins=dims_sizes)
+            # Return histogram, dimensions
+            histograms.append((histogram, dims_sizes, bins))
+
+        return histograms
     
     def exponential_mechanism(self, hist, A, Q, eps):
         """
@@ -245,7 +273,7 @@ class MWEMSynthesizer(BaseSynthesizer):
                 error = m[qi] - self.evaluate(Q[qi], A)
 
                 # Perform the weights update
-                query_update = self.replace_in_place_slice(np.zeros_like(A.copy()), Q[qi])
+                query_update = self.binary_replace_in_place_slice(np.zeros_like(A.copy()), Q[qi])
                 
                 # Apply the update
                 A_multiplier = np.exp(query_update * error/(2.0 * sum_A))
@@ -321,7 +349,7 @@ class MWEMSynthesizer(BaseSynthesizer):
         else:
             return e
 
-    def replace_in_place_slice(self, data, a_slice):
+    def binary_replace_in_place_slice(self, data, a_slice):
         """
         We want to create a binary copy of the data,
         so that we can easily perform our error multiplication
@@ -339,6 +367,34 @@ class MWEMSynthesizer(BaseSynthesizer):
         view.T[a_slice] = 1.0
         return view
     
+    def reorder(self, splits):
+        """
+        Given an array of dimensionality splits (column indices)
+        returns the corresponding reorder array (indices to return
+        columns to original order)
+
+        Example:
+        original = [[1, 2, 3, 4, 5, 6],
+        [ 6,  7,  8,  9, 10, 11]]
+        
+        splits = [[1,3,4],[0,2,5]]
+        
+        mod_data = [[2 4 5 1 3 6]
+                [ 7  9 10  6  8 11]]
+        
+        reorder = [3 0 4 1 2 5]
+
+        :param splits: 2d list with splits (column indices)
+        :type splits: array of arrays
+        :return: 2d list with splits (column indices)
+        :rtype: array of arrays
+        """
+        flat = np.ravel(splits)
+        reordered = np.zeros(len(flat))
+        for i, ind in enumerate(flat):
+            reordered[ind] = i
+        return reordered.astype(int)
+
     def laplace(self, sigma):
         """
         Laplace mechanism
