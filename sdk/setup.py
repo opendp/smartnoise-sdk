@@ -1,5 +1,5 @@
 """Setup file for differential privacy package."""
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 import os
 import shutil
 
@@ -40,8 +40,8 @@ setup(
     long_description_content_type="text/x-rst",
     author="opendp-whitenoise",
     license=inline_license,
-    packages=find_packages(exclude=["*.tests"]),
-
+    packages=find_namespace_packages(include=['opendp.*'],
+                                     exclude=["*.tests"]),
     install_requires=DEPENDENCIES,
 
     include_package_data=True,
