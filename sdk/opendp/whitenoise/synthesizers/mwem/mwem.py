@@ -1,3 +1,4 @@
+#%%
 import sys
 import os
 import math
@@ -21,7 +22,7 @@ class MWEMSynthesizer():
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array. 
     """
-    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = []):
+    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = [], split_factor=-1):
         self.Q_count = Q_count
         self.epsilon = epsilon
         self.iterations = iterations
@@ -30,7 +31,8 @@ class MWEMSynthesizer():
         self.data_bins = None
         self.real_data = None
         self.splits = splits
-
+        self.split_factor = split_factor
+        
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
         """
         Creates a synthetic histogram distribution, based on the original data.
@@ -49,6 +51,9 @@ class MWEMSynthesizer():
             self.data = data.copy()
         else:
             raise ValueError("Data must be a numpy array.")
+
+        if self.split_factor > 0 and self.splits == []:
+            self.splits = self.generate_splits(data.T.shape[0], self.split_factor)
         
         # NOTE: Limitation of ndarrays given histograms with large dims/many dims 
         # (>10 dims, dims > 100) or datasets with many samples
@@ -104,6 +109,7 @@ class MWEMSynthesizer():
         combined = synthesized_columns
         print(combined)
         # Reorder the columns to mirror their original order
+        print(self.splits)
         r = self.reorder(self.splits)
         print(r)
         return combined[:,r]
@@ -129,7 +135,7 @@ class MWEMSynthesizer():
             measurements = {}
 
             for i in range(self.iterations):
-                print("Iteration: " + str(i))
+                # print("Iteration: " + str(i))
 
                 qi = self.exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
 
@@ -183,7 +189,6 @@ class MWEMSynthesizer():
         :rtype: np.ndarray, np.shape, np.ndarray
         """
         histograms = []
-
         for split in splits:
             split_data = data[:, split]
             mins_data = []
@@ -389,7 +394,7 @@ class MWEMSynthesizer():
         :return: 2d list with splits (column indices)
         :rtype: array of arrays
         """
-        flat = np.ravel(splits)
+        flat = np.concatenate(np.asarray(splits)).ravel()
         reordered = np.zeros(len(flat))
         for i, ind in enumerate(flat):
             reordered[ind] = i
@@ -416,7 +421,7 @@ class MWEMSynthesizer():
         fits = int((np.floor(len(indices) / factor)) * factor)
         even_inds = indices[:fits].reshape((int(len(indices)/factor), factor))
         s1 = even_inds.tolist()
-        if indices[fits:]:
+        if indices[fits:] != np.array([]):
             s1.append(indices[fits:])
         s2 = [np.array(l) for l in s1]
         return np.array(s2)
