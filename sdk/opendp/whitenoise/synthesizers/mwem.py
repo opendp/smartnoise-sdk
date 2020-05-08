@@ -7,6 +7,8 @@ import random
 import numpy as np
 import pandas as pd
 
+#from base import SDGYMBaseSynthesizer
+
 class MWEMSynthesizer():
     """
     N-Dimensional numpy implementation of MWEM. 
@@ -22,7 +24,7 @@ class MWEMSynthesizer():
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array. 
     """
-    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = [], split_factor=-1):
+    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = [], split_factor=None):
         self.Q_count = Q_count
         self.epsilon = epsilon
         self.iterations = iterations
@@ -33,17 +35,13 @@ class MWEMSynthesizer():
         self.splits = splits
         self.split_factor = split_factor
         
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+    def fit(self, data):
         """
         Creates a synthetic histogram distribution, based on the original data.
         Follows sdgym schema to be compatible with their benchmark system.
 
         :param data: Dataset to use as basis for synthetic data
         :type data: np.ndarray
-        :param categorical_columns: TODO: Add support
-        :type categorical_columns: iterable
-        :param ordinal_columns: TODO: Add support
-        :type ordinal_columns: iterable
         :return: synthetic data, real data histograms
         :rtype: np.ndarray
         """
@@ -52,7 +50,7 @@ class MWEMSynthesizer():
         else:
             raise ValueError("Data must be a numpy array.")
 
-        if self.split_factor > 0 and self.splits == []:
+        if self.split_factor != None and self.splits == []:
             self.splits = self.generate_splits(data.T.shape[0], self.split_factor)
         
         # NOTE: Limitation of ndarrays given histograms with large dims/many dims 
@@ -107,11 +105,8 @@ class MWEMSynthesizer():
         
         # Recombine the independent distributions into a single dataset
         combined = synthesized_columns
-        print(combined)
         # Reorder the columns to mirror their original order
-        print(self.splits)
         r = self.reorder(self.splits)
-        print(r)
         return combined[:,r]
 
     def mwem(self):
@@ -155,7 +150,7 @@ class MWEMSynthesizer():
 
         return As
     
-    def initialize_A(self, histogram, dimensions):
+    def _initialize_A(self, histogram, dimensions):
         """
         Initializes a uniform distribution histogram from
         the given histogram with dimensions
@@ -178,7 +173,7 @@ class MWEMSynthesizer():
         A += value
         return A
 
-    def histogram_from_data_attributes(self, data, splits=[]):
+    def _histogram_from_data_attributes(self, data, splits=[]):
         """
         Create a histogram from given data
 
@@ -212,12 +207,12 @@ class MWEMSynthesizer():
 
         return histograms
     
-    def exponential_mechanism(self, hist, A, Q, eps):
+    def _exponential_mechanism(self, hist, A, Q, eps):
         """
         Refer to paper for in depth description of
         Exponential Mechanism.
 
-        Parametrized with epsilon value epsilon/2 * iterations
+        Parametrized with epsilon value epsilon/(2 * iterations)
 
         :param hist: Basis histogram
         :type hist: np.ndarray
@@ -250,7 +245,7 @@ class MWEMSynthesizer():
 
         return len(errors) - 1
     
-    def multiplicative_weights(self, A, Q, m, hist, iterate):
+    def _multiplicative_weights(self, A, Q, m, hist, iterate):
         """
         Multiplicative weights update algorithm,
         used to boost the synthetic data accuracy given measurements m.
@@ -290,7 +285,7 @@ class MWEMSynthesizer():
                 A = A * (sum_A/count_A)
         return A
 
-    def compose_arbitrary_slices(self, num_s, dimensions):
+    def _compose_arbitrary_slices(self, num_s, dimensions):
         """
         Here, dimensions is the shape of the histogram
         We want to return a list of length num_s, containing
@@ -332,7 +327,7 @@ class MWEMSynthesizer():
             slices_list.append(sl)
         return slices_list
 
-    def evaluate(self, a_slice, data):
+    def _evaluate(self, a_slice, data):
         """
         Evaluate a count query i.e. an arbitrary slice
 
@@ -354,7 +349,7 @@ class MWEMSynthesizer():
         else:
             return e
 
-    def binary_replace_in_place_slice(self, data, a_slice):
+    def _binary_replace_in_place_slice(self, data, a_slice):
         """
         We want to create a binary copy of the data,
         so that we can easily perform our error multiplication
@@ -372,7 +367,7 @@ class MWEMSynthesizer():
         view.T[a_slice] = 1.0
         return view
     
-    def reorder(self, splits):
+    def _reorder(self, splits):
         """
         Given an array of dimensionality splits (column indices)
         returns the corresponding reorder array (indices to return
@@ -400,7 +395,7 @@ class MWEMSynthesizer():
             reordered[ind] = i
         return reordered.astype(int)
 
-    def generate_splits(self, n_dim, factor):
+    def _generate_splits(self, n_dim, factor):
         """
         If user specifies, do the work and figure out how to divide the dimensions
         into even splits to speed up MWEM
@@ -426,7 +421,7 @@ class MWEMSynthesizer():
         s2 = [np.array(l) for l in s1]
         return np.array(s2)
 
-    def laplace(self, sigma):
+    def _laplace(self, sigma):
         """
         Laplace mechanism
 
