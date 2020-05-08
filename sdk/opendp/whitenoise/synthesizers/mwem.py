@@ -7,9 +7,9 @@ import random
 import numpy as np
 import pandas as pd
 
-#from base import SDGYMBaseSynthesizer
+from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
-class MWEMSynthesizer():
+class MWEMSynthesizer(SDGYMBaseSynthesizer):
     """
     N-Dimensional numpy implementation of MWEM. 
     (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
@@ -51,7 +51,7 @@ class MWEMSynthesizer():
             raise ValueError("Data must be a numpy array.")
 
         if self.split_factor != None and self.splits == []:
-            self.splits = self.generate_splits(data.T.shape[0], self.split_factor)
+            self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
         
         # NOTE: Limitation of ndarrays given histograms with large dims/many dims 
         # (>10 dims, dims > 100) or datasets with many samples
@@ -62,14 +62,14 @@ class MWEMSynthesizer():
         # TODO: Figure out if we need to divide the budget by splits 
         # to achieve DP
         if self.splits == []:
-            self.histograms = self.histogram_from_data_attributes(self.data, [np.arange(self.data.shape[1])])
+            self.histograms = self._histogram_from_data_attributes(self.data, [np.arange(self.data.shape[1])])
         else:
-            self.histograms = self.histogram_from_data_attributes(self.data, self.splits)
+            self.histograms = self._histogram_from_data_attributes(self.data, self.splits)
         
         self.Qs = []
         for h in self.histograms:
             # h[1] is dimensions for each histogram
-            self.Qs.append(self.compose_arbitrary_slices(self.Q_count, h[1]))
+            self.Qs.append(self._compose_arbitrary_slices(self.Q_count, h[1]))
 
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
@@ -106,7 +106,7 @@ class MWEMSynthesizer():
         # Recombine the independent distributions into a single dataset
         combined = synthesized_columns
         # Reorder the columns to mirror their original order
-        r = self.reorder(self.splits)
+        r = self._reorder(self.splits)
         return combined[:,r]
 
     def mwem(self):
@@ -126,25 +126,25 @@ class MWEMSynthesizer():
             hist = h[0]
             dimensions = h[1]
             Q = self.Qs[i]
-            A = self.initialize_A(hist, dimensions)
+            A = self._initialize_A(hist, dimensions)
             measurements = {}
 
             for i in range(self.iterations):
                 # print("Iteration: " + str(i))
 
-                qi = self.exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
+                qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
 
                 # Make sure we get a different query to measure:
                 while(qi in measurements):
-                    qi = self.exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
+                    qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
 
                 # NOTE: Add laplace noise here with budget
-                evals = self.evaluate(Q[qi], hist)
-                lap = self.laplace((2*self.iterations)/(self.epsilon*len(dimensions)))
+                evals = self._evaluate(Q[qi], hist)
+                lap = self._laplace((2*self.iterations)/(self.epsilon*len(dimensions)))
                 measurements[qi] = evals + lap
 
                 # Improve approximation with Multiplicative Weights
-                A = self.multiplicative_weights(A, Q, measurements, hist, self.mult_weights_iterations)
+                A = self._multiplicative_weights(A, Q, measurements, hist, self.mult_weights_iterations)
 
             As.append((A,hist))
 
@@ -228,7 +228,7 @@ class MWEMSynthesizer():
         errors = np.zeros(len(Q))
 
         for i in range(len(errors)):
-            errors[i] = eps * abs(self.evaluate(Q[i], hist)-self.evaluate(Q[i], A))/2.0
+            errors[i] = eps * abs(self._evaluate(Q[i], hist)-self._evaluate(Q[i], A))/2.0
 
         maxi = max(errors)
 
@@ -270,10 +270,10 @@ class MWEMSynthesizer():
 
         for _ in range(iterate):
             for qi in m:
-                error = m[qi] - self.evaluate(Q[qi], A)
+                error = m[qi] - self._evaluate(Q[qi], A)
 
                 # Perform the weights update
-                query_update = self.binary_replace_in_place_slice(np.zeros_like(A.copy()), Q[qi])
+                query_update = self._binary_replace_in_place_slice(np.zeros_like(A.copy()), Q[qi])
                 
                 # Apply the update
                 A_multiplier = np.exp(query_update * error/(2.0 * sum_A))
