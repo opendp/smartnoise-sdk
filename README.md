@@ -36,6 +36,7 @@ The WhiteNoise library can be installed from PyPi:
 ## Documentation
 Documentation for SDK functionality: [here](https://opendifferentialprivacy.github.io/whitenoise-samples/docs/api/system/)
 
+### Experimental
 Service API specification: [here](https://github.com/opendifferentialprivacy/whitenoise-system/blob/master/service/openapi/swagger.yml)
 
 ## Getting started
