@@ -34,27 +34,11 @@ The WhiteNoise library can be installed from PyPi:
 > pip install opendp-whitenoise
 
 ## Documentation
-Documentation for SDK functionality: [here](https://opendifferentialprivacy.github.io/whitenoise-samples/docs/api/system/) <\br>
-Service API documentation: <here>
+Documentation for SDK functionality: [here](https://opendifferentialprivacy.github.io/whitenoise-samples/docs/api/system/)
+
+Service API specification: [here](https://github.com/opendifferentialprivacy/whitenoise-system/blob/master/service/openapi/swagger.yml)
 
 ## Getting started
 
 ## Samples
-Samples of DP SQL functionality: [here](https://github.com/opendifferentialprivacy/whitenoise-samples/tree/master/data) </br>
-Samples of interacting with the WhiteNoise service: <here> </br>
-Working with SQL Engines: <exit> </br>
-Working with Spark DataFrames: <exit> </br>
-  
-## Experimental
-### Services getting started
-Running opendp-whitenoise code through a service layer: <here>
-  
-### Service samples
-TODO
-  
-
-  
-
-  
-  
-  
+Samples of DP SQL functionality: [here](https://github.com/opendifferentialprivacy/whitenoise-samples/tree/master/data)
