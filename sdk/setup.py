@@ -21,12 +21,13 @@ DEPENDENCIES = [
     "antlr4-python3-runtime==4.8",
     "pandasql",
     "statsmodels",
-    "pyyaml"
+    "pyyaml",
+    "opendp-whitenoise-core-demo"
 ]
 
 EXTRAS = { }
 
-with open("README.md", "r", encoding="utf-8") as f:
+with open("DESCRIPTION.md", "r", encoding="utf-8") as f:
     README = f.read()
 inline_license = ""
 
@@ -37,7 +38,7 @@ setup(
 
     description="",
     long_description=README,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     author="opendp-whitenoise",
     license=inline_license,
     packages=find_packages(exclude=["*.tests"]),
