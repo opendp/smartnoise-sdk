@@ -72,7 +72,7 @@ if not os.path.exists(reddit_dataset_path):
     with ZipFile(reddit_zip_path) as zf:
         zf.extractall(datasets)
     reddit_df = pd.read_csv(clean_reddit_path, index_col=0)
-    reddit_df = reddit_df.sample(frac=0.05)
+    reddit_df = reddit_df.sample(frac=0.01)
     reddit_df['clean_text'] = reddit_df['clean_text'].astype(str)
     reddit_df.loc[:,'clean_text'] = reddit_df.clean_text.apply(lambda x : str.lower(x))
     reddit_df.loc[:,'clean_text'] = reddit_df.clean_text.apply(lambda x : " ".join(re.findall('[\w]+', x)))
