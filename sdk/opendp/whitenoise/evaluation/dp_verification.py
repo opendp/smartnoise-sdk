@@ -15,8 +15,6 @@ import matplotlib.pyplot as plt
 import opendp.whitenoise.evaluation.aggregation as agg
 import opendp.whitenoise.evaluation.exploration as exp
 import copy
-import whitenoise
-import whitenoise.components as op
 
 from opendp.whitenoise.metadata.collection import *
 from scipy import stats
@@ -473,10 +471,40 @@ class DPVerification:
         actual_moment = df['race'].skew()
         actual_covariance = df['age'].cov(df['married'])
 
-        dp_mean_res, bias_mean_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_mean, 'race', "FLOAT", epsilon=.65, actual = actual_mean, data_min=0., data_max=100., data_n=1000)
-        dp_var_res, bias_var_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_variance, 'educ', "FLOAT", epsilon=.15, actual = actual_var, data_min=0., data_max=12., data_n=1000)
-        dp_moment_res, bias_moment_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_moment_raw, 'race', "FLOAT", epsilon=.15, actual = actual_moment, data_min=0., data_max=100., data_n=1000, order = 3)
-        dp_covariance_res, bias_cov_res = self.whitenoise_core_test(test_csv_path, test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", actual = actual_covariance, epsilon=.15, left_n=1000, right_n=1000,left_min=0.,left_max=1.,right_min=0.,right_max=1.)
+        dp_mean_res, bias_mean_res = self.whitenoise_core_test(test_csv_path,
+                                                               test_csv_names,
+                                                               wn.dp_mean,
+                                                               'race',
+                                                               "FLOAT",
+                                                               epsilon=.65,
+                                                               actual=actual_mean,
+                                                               data_lower=0.,
+                                                               data_upper=100.,
+                                                               data_n=1000)
+        dp_var_res, bias_var_res = self.whitenoise_core_test(test_csv_path,
+                                                             test_csv_names,
+                                                             wn.dp_variance,
+                                                             'educ',
+                                                             "FLOAT",
+                                                             epsilon=.15,
+                                                             actual=actual_var,
+                                                             data_lower=0.,
+                                                             data_upper=12.,
+                                                             data_n=1000)
+        dp_moment_res, bias_moment_res = self.whitenoise_core_test(test_csv_path,
+                                                                   test_csv_names,
+                                                                   wn.dp_moment_raw,
+                                                                   'race',
+                                                                   "FLOAT",
+                                                                   epsilon=.15,
+                                                                   actual=actual_moment,
+                                                                   data_lower=0.,
+                                                                   data_upper=100.,
+                                                                   data_n=1000,
+                                                                   order=3)
+        dp_covariance_res, bias_cov_res = self.whitenoise_core_test(test_csv_path,
+                                                            test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", actual = actual_covariance, epsilon=.15, left_n=1000, right_n=1000,
+                                                                    left_min=0.,left_max=1.,right_min=0.,right_max=1.)
         return dp_res, acc_res, utility_res, bias_res
 
 if __name__ == "__main__":
