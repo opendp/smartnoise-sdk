@@ -22,7 +22,7 @@ DEPENDENCIES = [
     "pandasql",
     "statsmodels",
     "pyyaml",
-    "opendp-whitenoise-core-demo"
+    "opendp-whitenoise-core"
 ]
 
 EXTRAS = { }
