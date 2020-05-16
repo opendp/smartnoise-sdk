@@ -63,7 +63,7 @@ if not os.path.exists(pums_1000_dataset_path):
 reddit_dataset_path = os.path.join(root_url, "service", "datasets", "reddit.csv")
 if not os.path.exists(reddit_dataset_path):
     import re
-    reddit_url = "https://github.com/heyyjudes/differentially-private-set-union/raw/master/data/clean_askreddit.csv.zip"
+    reddit_url = "https://github.com/joshua-oss/differentially-private-set-union/raw/master/data/clean_askreddit.csv.zip"
     reddit_zip_path = os.path.join(root_url, "service", "datasets", "askreddit.csv.zip")
     datasets = os.path.join(root_url, "service", "datasets")
     clean_reddit_path = os.path.join(datasets, "clean_askreddit.csv")
