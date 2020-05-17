@@ -20,8 +20,6 @@ import opendp.whitenoise.evaluation.aggregation as agg
 import opendp.whitenoise.evaluation.exploration as exp
 import copy
 
-#import whitenoise.components as op
-
 from opendp.whitenoise.metadata.collection import *
 from scipy import stats
 
@@ -486,6 +484,7 @@ class DPVerification:
         dp_var_res, bias_var_res = self.whitenoise_core_test(test_csv_path, test_csv_names, wn.dp_variance, 'educ', epsilon=.15, actual = actual_var, data_lower=0., data_upper=12., data_n=1000)
         dp_moment_res, bias_moment_res = self.whitenoise_core_test(test_csv_path, test_csv_names, wn.dp_moment_raw, 'race', epsilon=.15, actual = actual_moment, data_lower=0., data_upper=100., data_n=1000, order = 3)
         dp_covariance_res, bias_cov_res = self.whitenoise_core_test(test_csv_path, test_csv_names, wn.dp_covariance, 'age', 'married', actual = actual_covariance, epsilon=.5, data_n=1000,data_lower=[0., 0.],data_upper=[1., 1.])
+
         return dp_res, acc_res, utility_res, bias_res
 
 if __name__ == "__main__":
