@@ -13,8 +13,8 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 # Below need to be uncommented to debug main function from current file
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../../whitenoise-core-python/'))
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../../whitenoise-core-python/'))
 import opendp.whitenoise.core as wn
 import opendp.whitenoise.evaluation.aggregation as agg
 import opendp.whitenoise.evaluation.exploration as exp
