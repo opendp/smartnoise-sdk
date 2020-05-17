@@ -91,6 +91,7 @@ class Aggregation:
         noisy_values = [release.value for release in releases]
         return np.array(noisy_values)
 
+
     # Apply noise to functions like covariance using WhiteNoise-Core library that work on multiple columns
     def whitenoise_core_dp_multi_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
         releases = []
