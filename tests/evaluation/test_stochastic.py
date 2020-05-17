@@ -7,6 +7,8 @@ test_logger = logging.getLogger("stochastic-test-logger")
 import sys
 import subprocess
 import os
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../whitenoise-core-python/'))
 import pytest
 from opendp.whitenoise.evaluation.dp_verification import DPVerification
 from opendp.whitenoise.evaluation.exploration import Exploration
@@ -54,6 +56,7 @@ class TestStochastic:
         assert(dp_res)
         #assert(bias_res)
 
+    @pytest.mark.skip
     def test_dp_predicate_var(self):
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT VAR(Usage) AS UsageVariance FROM d1.d1"
@@ -91,6 +94,7 @@ class TestStochastic:
         #assert(utility_res)
         #assert(bias_res)
 
+    @pytest.mark.slow
     def test_groupby(self):
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
@@ -104,6 +108,7 @@ class TestStochastic:
         #assert(utility_res)
         #assert(bias_res)
 
+    @pytest.mark.slow
     def test_groupby_avg(self):
         d1_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d2.d2 GROUP BY Role, Segment"
