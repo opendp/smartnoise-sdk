@@ -39,7 +39,7 @@ class TestWhitenoiseCore:
         test_logger.debug("Result of DP Predicate Test on WhiteNoise-Core Mean: " + str(dp_res))
         test_logger.debug("Result of Bias Test on WhiteNoise-Core Mean: " + str(bias_res))
         assert(dp_res)
-        #assert(bias_res)
+        assert(bias_res)
 
     def test_dp_whitenoise_core_var_pums(self):
         logging.getLogger().setLevel(logging.DEBUG)
@@ -57,7 +57,7 @@ class TestWhitenoiseCore:
         test_logger.debug("Result of DP Predicate Test on WhiteNoise-Core Variance: " + str(dp_res))
         test_logger.debug("Result of Bias Test on WhiteNoise-Core Variance: " + str(bias_res))
         assert(dp_res)
-        #assert(bias_res)
+        assert(bias_res)
 
     def test_dp_whitenoise_core_moment_pums(self):
         logging.getLogger().setLevel(logging.DEBUG)
@@ -75,7 +75,7 @@ class TestWhitenoiseCore:
         test_logger.debug("Result of DP Predicate Test on WhiteNoise-Core Moment: " + str(dp_res))
         test_logger.debug("Result of Bias Test on WhiteNoise-Core Moment: " + str(bias_res))
         assert(dp_res)
-        #assert(bias_res)
+        assert(bias_res)
 
     def test_dp_whitenoise_core_covariance_pums(self):
         logging.getLogger().setLevel(logging.DEBUG)
@@ -94,4 +94,4 @@ class TestWhitenoiseCore:
         test_logger.debug("Result of DP Predicate Test on WhiteNoise-Core Covariance: " + str(dp_res))
         test_logger.debug("Result of Bias Test on WhiteNoise-Core Covariance: " + str(bias_res))
         assert(dp_res)
-        #assert(bias_res)
+        assert(bias_res)

@@ -335,7 +335,7 @@ class DPVerification:
         # Checking if mean of (difference of noisy response to actual) is zero i.e. unbiased result
         tset, pval = stats.ttest_1samp(diff, 0.0)
         print("p-Value of 1 sample t-test: ", pval)
-        return (pval < sig_level), msd
+        return (pval >= sig_level), msd
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
