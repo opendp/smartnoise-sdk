@@ -8,8 +8,7 @@ import mlflow
 import json
 import sys
 import os
-import whitenoise
-import whitenoise.components as op
+import opendp.whitenoise.core as wn
 
 from opendp.whitenoise.sql import PandasReader, PrivateReader
 from opendp.whitenoise.reader.rowset import TypedRowset
@@ -81,23 +80,26 @@ class Aggregation:
 
     # Apply noise to input aggregation function using WhiteNoise-Core library
     def whitenoise_core_dp_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
-        releases = []        
-        with whitenoise.Analysis() as analysis:
+        releases = []
+        with wn.Analysis() as analysis:
             for x in range(self.repeat_count):
-                df = whitenoise.Dataset(path=dataset_path, column_names=col_names)
-                releases.append(f(op.cast(df[args[0]], type=args[1]), privacy_usage={'epsilon': epsilon}, **kwargs))
+                df = wn.Dataset(path=dataset_path, column_names=col_names)
+                releases.append(f(wn.cast(df[args[0]], args[1]),
+                                  privacy_usage={'epsilon': epsilon},
+                                  **kwargs))
         analysis.release()
         noisy_values = [release.value for release in releases]
         return np.array(noisy_values)
 
+
     # Apply noise to functions like covariance using WhiteNoise-Core library that work on multiple columns
     def whitenoise_core_dp_multi_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
         releases = []
-        with whitenoise.Analysis() as analysis:
+        with wn.Analysis() as analysis:
             for x in range(self.repeat_count):
-                df = whitenoise.Dataset(path=dataset_path, column_names=col_names)
-                releases.append(f(left=op.cast(df[args[0]], type=args[2]), 
-                right=op.cast(df[args[1]], type=args[2]),
+                df = wn.Dataset(path=dataset_path, column_names=col_names)
+                releases.append(f(left=wn.cast(df[args[0]], args[2]),
+                                  right=wn.cast(df[args[1]], args[2]),
                 privacy_usage={'epsilon': epsilon}, **kwargs))
         analysis.release()
         noisy_values = [release.value[0][0] for release in releases]

@@ -41,7 +41,7 @@ There are existing datasets used for the service found in service/datasets/,
 we tend to use the git relative path for access. As you can see below, the metadata tends to be in
 a .yaml of the same name as the test dataset, schema.yaml files are needed for most supported DP algorithms.
 
--- code-block:: python
+.. code-block:: python
 
     import subprocess
     git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -53,19 +53,19 @@ Service setup and test validation:
 ============================
 To setup the local flask service run the below command within the previously made conda environment:
 
--- code-block:: bash
+.. code-block:: bash
 
     python service/application.py
 
 
 In a different shell, within the same conda environment, run the test suite:
--- code-block:: bash
+.. code-block:: bash
 
     pytest tests/service -m "not dataverse_token"
 
 
 Modules can be run directly, without going through the execution service for easier debugging:
--- code-block:: bash
+.. code-block:: bash
 
     python service/modules/sql-module/run_query.py "example" .3 "SELECT COUNT(A) from example.example"
 
