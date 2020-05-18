@@ -70,3 +70,19 @@ from opendp.whitenoise.metadata.collection import Table, Float
 ```
 ## Samples
 Samples of DP SQL functionality: [here](https://github.com/opendifferentialprivacy/whitenoise-samples/blob/master/data/README.md)
+
+## Communication
+
+- Please use [GitHub issues](https://github.com/opendifferentialprivacy/whitenoise-system/issues) for bug reports, feature requests, install issues, and ideas.
+- [Gitter](https://gitter.im/opendifferentialprivacy/WhiteNoise) is available for general chat and online discussions.
+- For other requests, please contact us at [whitenoise@opendp.io](mailto:whitenoise@opendp.io).
+  - _Note: We encourage you to use [GitHub issues](https://github.com/opendifferentialprivacy/whitenoise-system/issues), especially for bugs._
+
+## Releases and Contributing
+
+Please let us know if you encounter a bug by [creating an issue](https://github.com/opendifferentialprivacy/whitenoise-system/issues).
+
+We appreciate all contributions. We welcome pull requests with bug-fixes without prior discussion.
+
+If you plan to contribute new features, utility functions or extensions to the WhiteNoise system, please first open an issue and discuss the feature with us.
+  - Sending a PR without discussion might end up resulting in a rejected PR, because we may be taking the system in a different direction than you might be aware of.
