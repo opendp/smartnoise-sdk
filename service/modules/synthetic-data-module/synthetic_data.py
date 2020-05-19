@@ -16,7 +16,7 @@ from pandasql import sqldf
 from sdgym.constants import CONTINUOUS
 from sdgym.synthesizers.utils import Transformer
 
-from mwem.mwem import MWEMSynthesizer
+from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
 
 # List of supported DP synthesizers
 SUPPORTED_SYNTHESIZERS = {'MWEMSynthesizer': MWEMSynthesizer}
