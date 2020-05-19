@@ -12,6 +12,10 @@ import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+# Below need to be uncommented to debug main function from current file
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../../whitenoise-core-python/'))
+import opendp.whitenoise.core as wn
 import opendp.whitenoise.evaluation.aggregation as agg
 import opendp.whitenoise.evaluation.exploration as exp
 import copy
@@ -278,7 +282,7 @@ class DPVerification:
     # Creating a new function to take in non-keyworded args and keyworded kwargs
     # This makes it generic to take in any WhiteNoise-core aggregate function with any set of parameters
     # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
-    def whitenoise_core_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=100, epsilon=1.0, actual=1.0, **kwargs):
+    def whitenoise_core_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=1000, epsilon=1.0, actual=1.0, **kwargs):
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         self.dataset_path = dataset_path
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
@@ -286,7 +290,7 @@ class DPVerification:
         d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
         d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
 
-        if(len(args) == 3):
+        if(len(args) == 2):
             fD1 = ag.whitenoise_core_dp_multi_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
             fD2 = ag.whitenoise_core_dp_multi_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
         else:
@@ -331,7 +335,7 @@ class DPVerification:
         # Checking if mean of (difference of noisy response to actual) is zero i.e. unbiased result
         tset, pval = stats.ttest_1samp(diff, 0.0)
         print("p-Value of 1 sample t-test: ", pval)
-        return (pval < sig_level), msd
+        return (pval >= sig_level), msd
 
     # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
@@ -343,7 +347,8 @@ class DPVerification:
         d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
         d1size, d2size = fD1.size, fD2.size
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-        acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
+        #acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
+        acc_res, utility_res = None, None
         bias_res, msd = self.bias_test(fD1_actual, fD1)
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
@@ -383,11 +388,12 @@ class DPVerification:
                 print("DP Predicate Test Result: ", dp_res)
 
                 # Accuracy Test
-                low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
-                high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
-                acc_res, utility_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
+                #low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
+                #high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
+                #acc_res, utility_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
+                acc_res, utility_res = None, None
                 bias_res, msd = self.bias_test(exact_val, fD1)
-                res_list.append([dp_res, acc_res, utility_res, within_bounds, bias_res, msd])
+                res_list.append([dp_res, acc_res, utility_res, bias_res, msd])
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
 
@@ -396,9 +402,10 @@ class DPVerification:
 
         res_list = res_list.values() if hasattr(res_list, "values") else res_list  # TODO why is this needed?
         dp_res = np.all(np.array([res[0] for res in res_list]))
-        acc_res = np.all(np.array([res[1] for res in res_list]))
-        utility_res = np.all(np.array([res[2] for res in res_list]))
-        bias_res = np.all(np.array([res[4] for res in res_list]))
+        #acc_res = np.all(np.array([res[1] for res in res_list]))
+        #utility_res = np.all(np.array([res[2] for res in res_list]))
+        acc_res, utility_res = None, None
+        bias_res = np.all(np.array([res[3] for res in res_list]))
         return dp_res, acc_res, utility_res, bias_res
 
     # Use the powerset based neighboring datasets to scan through all edges of database search graph
@@ -420,7 +427,8 @@ class DPVerification:
                 fD1, fD1_actual, fD1_low, fD1_high = ag.run_agg_query(d1, d1_metadata, d1_query, confidence)
                 fD2, fD2_actual, fD2_low, fD2_high = ag.run_agg_query(d2, d2_metadata, d2_query, confidence)
 
-                acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
+                #acc_res, utility_res, within_bounds = self.accuracy_test(fD1_actual, fD1_low, fD1_high, confidence)
+                acc_res, utility_res, within_bounds = None, None, None
                 bias_res, msd = self.bias_test(fD1_actual, fD1)
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
@@ -435,17 +443,18 @@ class DPVerification:
         for data, res in res_list.items():
             print(data, "-", res)
 
-        dp_res = np.all(np.array([res[0] for res in res_list]))
-        acc_res = np.all(np.array([res[1] for res in res_list]))
-        utility_res = np.all(np.array([res[2] for res in res_list]))
-        bias_res = np.all(np.array([res[4] for res in res_list]))
+        dp_res = np.all(np.array([res[0] for data, res in res_list.items()]))
+        #acc_res = np.all(np.array([res[1] for res in res_list]))
+        #utility_res = np.all(np.array([res[2] for res in res_list]))
+        acc_res, utility_res = None, None
+        bias_res = np.all(np.array([res[4] for data, res in res_list.items()]))
         return dp_res, acc_res, utility_res, bias_res
 
     # Main method listing all the DP verification steps
     def main(self):
-        # COUNT Example
-        d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
-        d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
+        # # COUNT Example
+        d1_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d1.d1"
+        d2_query = "SELECT COUNT(UserId) AS TotalUserCount FROM d2.d2"
         dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
 
         d1_query = "SELECT SUM(Usage) AS Usage FROM d1.d1"
@@ -454,15 +463,15 @@ class DPVerification:
 
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=200)
 
         # Powerset Test on SUM query
         query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res, acc_res, utility_res, bias_res = self.dp_powerset_test(query_str, plot=False, repeat_count=1000)
+        dp_res, acc_res, utility_res, bias_res = self.dp_powerset_test(query_str, plot=False, repeat_count=100)
 
         # WhiteNoise-Core Test
-        root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
-        test_csv_path = os.path.join(root_url, "service", "datasets", "evaluation", "PUMS_1000.csv")
+        pums_1000_dataset_path = os.path.join(os.path.dirname(__file__), '../../../../service', "datasets", "evaluation", "PUMS_1000.csv")
+        test_csv_path = pums_1000_dataset_path
         test_csv_names = ["age", "sex", "educ", "race", "income", "married"]
 
         df = pd.read_csv(test_csv_path)
@@ -471,40 +480,11 @@ class DPVerification:
         actual_moment = df['race'].skew()
         actual_covariance = df['age'].cov(df['married'])
 
-        dp_mean_res, bias_mean_res = self.whitenoise_core_test(test_csv_path,
-                                                               test_csv_names,
-                                                               wn.dp_mean,
-                                                               'race',
-                                                               "FLOAT",
-                                                               epsilon=.65,
-                                                               actual=actual_mean,
-                                                               data_lower=0.,
-                                                               data_upper=100.,
-                                                               data_n=1000)
-        dp_var_res, bias_var_res = self.whitenoise_core_test(test_csv_path,
-                                                             test_csv_names,
-                                                             wn.dp_variance,
-                                                             'educ',
-                                                             "FLOAT",
-                                                             epsilon=.15,
-                                                             actual=actual_var,
-                                                             data_lower=0.,
-                                                             data_upper=12.,
-                                                             data_n=1000)
-        dp_moment_res, bias_moment_res = self.whitenoise_core_test(test_csv_path,
-                                                                   test_csv_names,
-                                                                   wn.dp_moment_raw,
-                                                                   'race',
-                                                                   "FLOAT",
-                                                                   epsilon=.15,
-                                                                   actual=actual_moment,
-                                                                   data_lower=0.,
-                                                                   data_upper=100.,
-                                                                   data_n=1000,
-                                                                   order=3)
-        dp_covariance_res, bias_cov_res = self.whitenoise_core_test(test_csv_path,
-                                                            test_csv_names, op.dp_covariance, 'age', 'married', "FLOAT", actual = actual_covariance, epsilon=.15, left_n=1000, right_n=1000,
-                                                                    left_min=0.,left_max=1.,right_min=0.,right_max=1.)
+        dp_mean_res, bias_mean_res = self.whitenoise_core_test(test_csv_path, test_csv_names, wn.dp_mean, 'race', epsilon=.65, actual = actual_mean, data_lower=0., data_upper=100., data_n=1000)
+        dp_var_res, bias_var_res = self.whitenoise_core_test(test_csv_path, test_csv_names, wn.dp_variance, 'educ', epsilon=.15, actual = actual_var, data_lower=0., data_upper=12., data_n=1000)
+        dp_moment_res, bias_moment_res = self.whitenoise_core_test(test_csv_path, test_csv_names, wn.dp_moment_raw, 'race', epsilon=.15, actual = actual_moment, data_lower=0., data_upper=100., data_n=1000, order = 3)
+        dp_covariance_res, bias_cov_res = self.whitenoise_core_test(test_csv_path, test_csv_names, wn.dp_covariance, 'age', 'married', actual = actual_covariance, epsilon=.5, data_n=1000,data_lower=[0., 0.],data_upper=[1., 1.])
+
         return dp_res, acc_res, utility_res, bias_res
 
 if __name__ == "__main__":

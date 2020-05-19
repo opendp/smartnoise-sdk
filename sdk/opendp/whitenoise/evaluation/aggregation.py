@@ -8,13 +8,14 @@ import mlflow
 import json
 import sys
 import os
-import opendp.whitenoise.core as wn
 
 from opendp.whitenoise.sql import PandasReader, PrivateReader
 from opendp.whitenoise.reader.rowset import TypedRowset
 from opendp.whitenoise.mechanisms.laplace import Laplace
 from opendp.whitenoise.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
+
+import opendp.whitenoise.core as wn
 
 class Aggregation:
     def __init__(self, epsilon=1.0, t=1, repeat_count=10000, mechanism="Laplace"):
@@ -80,13 +81,12 @@ class Aggregation:
 
     # Apply noise to input aggregation function using WhiteNoise-Core library
     def whitenoise_core_dp_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
-        releases = []
+        releases = []        
         with wn.Analysis() as analysis:
             for x in range(self.repeat_count):
                 df = wn.Dataset(path=dataset_path, column_names=col_names)
-                releases.append(f(wn.cast(df[args[0]], args[1]),
-                                  privacy_usage={'epsilon': epsilon},
-                                  **kwargs))
+                release = f(wn.to_float(df[args[0]]), privacy_usage={'epsilon': epsilon}, **kwargs)
+                releases.append(release)
         analysis.release()
         noisy_values = [release.value for release in releases]
         return np.array(noisy_values)
@@ -98,9 +98,8 @@ class Aggregation:
         with wn.Analysis() as analysis:
             for x in range(self.repeat_count):
                 df = wn.Dataset(path=dataset_path, column_names=col_names)
-                releases.append(f(left=wn.cast(df[args[0]], args[2]),
-                                  right=wn.cast(df[args[1]], args[2]),
-                privacy_usage={'epsilon': epsilon}, **kwargs))
+                release = f(data=wn.to_float(df[[args[0], args[1]]]), privacy_usage={'epsilon': epsilon}, **kwargs)
+                releases.append(release)
         analysis.release()
         noisy_values = [release.value[0][0] for release in releases]
         return np.array(noisy_values)
@@ -124,9 +123,10 @@ class Aggregation:
         for idx in range(self.repeat_count):
             srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
             res = private_reader._execute_ast(query_ast, True)
-            interval = res.report[res.colnames[0]].intervals[confidence]
-            low_bounds.append(interval[0].low)
-            high_bounds.append(interval[0].high)
+            # Disabled because confidence interval not available in report
+            #interval = res.report[res.colnames[0]].intervals[confidence]
+            #low_bounds.append(interval[0].low)
+            #high_bounds.append(interval[0].high)
             noisy_values.append(res.rows()[1:][0][0])
         return np.array(noisy_values), actual, low_bounds, high_bounds
 
@@ -166,13 +166,15 @@ class Aggregation:
             num_rows = []
             srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
             singleres = private_reader._execute_ast(query_ast, True)
+            values = singleres[col]
             for col in dim_cols:
-                dim_rows.append(singleres.report[col].values)
+                dim_rows.append(singleres[col])
             for col in num_cols:
-                values = singleres.report[col].values
-                low = singleres.report[col].intervals[confidence].low
-                high = singleres.report[col].intervals[confidence].high
-                num_rows.append(list(zip(values, low, high)))
+                values = singleres[col]
+                #low = singleres.report[col].intervals[confidence].low
+                #high = singleres.report[col].intervals[confidence].high
+                #num_rows.append(list(zip(values, low, high)))
+                num_rows.append(list(zip(values)))
 
             res.extend(list(zip(*dim_rows, *num_rows)))
 
