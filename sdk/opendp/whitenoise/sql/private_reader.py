@@ -18,13 +18,13 @@ from opendp.whitenoise.reader.rowset import TypedRowset
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results
     """
-    def __init__(self, metadata, reader, epsilon=1.0, delta=10E-16, interval_widths=None, options=None):
+    def __init__(self, metadata, reader, epsilon_per_column=1.0, delta=10E-16, interval_widths=None, options=None):
         """Create a new private reader.
 
             :param metadata: The CollectionMetadata object with information about all tables referenced in this query
             :param reader: The data reader to wrap, such as a SqlServerReader, PandasReader, or SparkReader
                 The PrivateReader intercepts queries to the underlying reader and ensures differential privacy.
-            :param epsilon: The privacy budget to spend for each column in the query
+            :param epsilon_per_column: The privacy budget to spend for each column in the query
             :param delta: The delta privacy parameter
             :param interval_widths: If supplied, returns confidence intervals of the specified width, e.g. [0.95, 0.75]
             :param options: A PrivateReaderOptions with flags that change the behavior of the privacy
@@ -34,7 +34,7 @@ class PrivateReader(Reader):
         self.metadata = metadata
         self.reader = reader
         self.rewriter = Rewriter(metadata)
-        self.epsilon = epsilon
+        self.epsilon_per_column = epsilon_per_column
         self.delta = delta
         self.interval_widths = interval_widths
         self._cached_exact = None
@@ -52,6 +52,10 @@ class PrivateReader(Reader):
         self.rewriter.options.reservoir_sample = self.options.reservoir_sample
         self.rewriter.options.clamp_columns = self.options.clamp_columns
         self.rewriter.options.max_contrib = self.options.max_contrib
+
+    @staticmethod
+    def get_budget_multiplier(schema, reader, query):
+        return len(PrivateReader(schema, reader, 1).get_privacy_cost(query))
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -120,7 +124,7 @@ class PrivateReader(Reader):
 
         subquery, query = self.rewrite_ast(query)
         max_contrib = self.options.max_contrib if self.options.max_contrib is not None else 1
-        self.tau = max_contrib * (1- ( math.log(2 * self.delta / max_contrib) / self.epsilon  ))
+        self.tau = max_contrib * (1- ( math.log(2 * self.delta / max_contrib) / self.epsilon_per_column  ))
 
         syms = subquery.all_symbols()
         source_col_names = [s[0] for s in syms]
