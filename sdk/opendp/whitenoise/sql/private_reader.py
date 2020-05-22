@@ -1,3 +1,4 @@
+import logging
 import math
 import numpy as np
 from .dpsu import run_dpsu
@@ -13,12 +14,14 @@ from opendp.whitenoise.mechanisms.gaussian import Gaussian
 from opendp.whitenoise.report import Interval, Intervals, Result
 from opendp.whitenoise.reader.rowset import TypedRowset
 
+module_logger = logging.getLogger(__name__)
 
 
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results
     """
-    def __init__(self, metadata, reader, epsilon_per_column=1.0, delta=10E-16, interval_widths=None, options=None):
+    def __init__(self, metadata, reader, epsilon_per_column=1.0, delta=10E-16,
+                 interval_widths=None, options=None, epsilon=None):
         """Create a new private reader.
 
             :param metadata: The CollectionMetadata object with information about all tables referenced in this query
@@ -35,11 +38,25 @@ class PrivateReader(Reader):
         self.reader = reader
         self.rewriter = Rewriter(metadata)
         self.epsilon_per_column = epsilon_per_column
+        if epsilon is not None:
+            message = ("epsilon named parameter was replaced with "
+                       "epsilon_per_column to be more descriptive.")
+            if epsilon != epsilon_per_column:
+                raise Exception(message)
+            else:
+                module_logger.warning(message)
+
         self.delta = delta
         self.interval_widths = interval_widths
         self._cached_exact = None
         self._cached_ast = None
         self.refresh_options()
+
+    @property
+    def epsilon(self):
+        module_logger.warning("Epsilon property will be replaced with "
+                              "the more descriptive epsilon_per_column property.")
+        return self.epsilon_per_column
 
     @property
     def engine(self):
@@ -157,7 +174,7 @@ class PrivateReader(Reader):
             kc_pos = kcc_pos.pop()
 
         # make a list of mechanisms in column order
-        mechs = [Gaussian(self.epsilon, self.delta, s, max_contrib, self.interval_widths) if s is not None else None for s in sens]
+        mechs = [Gaussian(self.epsilon_per_column, self.delta, s, max_contrib, self.interval_widths) if s is not None else None for s in sens]
 
         # execute the subquery against the backend and load in tuples
         if cache_exact:
