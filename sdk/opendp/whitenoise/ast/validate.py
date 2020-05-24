@@ -23,8 +23,8 @@ class QueryConstraints:
     """
         A collection of boolean functions that check for validity of
         a parsed Query AST.  Create the object by passing in the AST,
-        then call any or all check functions.  Each check function returns
-        either (False, "Message") or (True, "")
+        then call any or all check functions.  Check functions pass
+        or raise ValueError with descriptive message.
     """
 
     def __init__(self, query, metadata):
@@ -37,13 +37,46 @@ class QueryConstraints:
 
         checks = [func for func in dir(QueryConstraints) if callable(getattr(QueryConstraints, func)) and func.startswith("check_")]
         rets = [getattr(self, check)() for check in checks]
-
+            
     def check_aggregate(self):
-        nes = self.query.select.namedExpressions
-        agg = self.query.agg
-        gc = agg.groupedColumns() if agg is not None else []
-        exp = [c.expression for c in nes]
-        agg = [e for e in exp if type(e) == AggFunction and e.is_aggregate()]
+        q = self.query
+        def simplify(exp):
+            while type(exp) is NestedExpression:
+                exp = exp.expression
+            if type(exp) is ArithmeticExpression:
+                l = simplify(exp.left)
+                r = simplify(exp.right)
+                if type(l) is Literal:
+                    exp = r
+                elif type(r) is Literal:
+                    exp = l
+            if isinstance(exp, (PowerFunction, RoundFunction)):
+                exp = exp.expression
+            return exp
+
+        select_expressions = [simplify(s[1]) for s in q.m_symbols]
+        is_agg = lambda n: type(n) == AggFunction and n.is_aggregate
+        split = lambda p, i: (list(filter(p, i)), list(filter(lambda v: not p(v), i)))
+        aggs, non_aggs = split(is_agg, select_expressions)
+
+        grouping_expressions = [simplify(exp.expression) for exp in q.agg.groupingExpressions] if q.agg is not None else []
+        group_col_names = [gc.name for gc in q.agg.groupedColumns()] if q.agg is not None else []
+
+        for nac in non_aggs:
+            if not isinstance(nac, (TableColumn, Literal, BareFunction)):
+                raise ValueError("Select column not a supported type: " + str(nac))
+            if type(nac) is TableColumn:
+                if nac.colname not in group_col_names:
+                    raise ValueError("Attempting to select a column not in a GROUP BY clause: " + str(nac))
+
+        for ac in aggs:
+            if not isinstance(ac.expression, (TableColumn, AllColumns)):
+                raise ValueError("We don't support aggregation over expressions: " + str(ac))
+
+        for ge in grouping_expressions:
+            if not isinstance(ge, Column):
+                raise ValueError("We don't support grouping by expressions: " + str(ge))
+        
 
     def check_groupkey(self):
         agg = self.query.agg
@@ -53,22 +86,35 @@ class QueryConstraints:
         if (len(gbk) > 0) and (len(gbk) == len(gc)):
             raise ValueError("GROUP BY must include more than key columns: " + ", ".join([str(g) for g in gc]))
 
+    def check_select_relations(self):
+        rel_nodes = self.query.select.find_nodes(SqlRel)
+        if (len(rel_nodes)) > 0:
+            raise ValueError("We don't support subqueries in the SELECT clause")
+
+    def check_order_relations(self):
+        if self.query.order is not None:
+            rel_nodes = self.query.order.find_nodes(SqlRel)
+            if (len(rel_nodes)) > 0:
+                raise ValueError("We don't support subqueries in the ORDER BY clause")
+
     def check_source_relations(self):
         relations = self.query.source.relations
         if len(relations) != 1:
             raise ValueError("Query must reference only one relation")
 
         relation = relations[0]
-        if not self.query.row_privacy:
-            self.walk_relations(relation)
+        self.walk_relations(relation)
 
     def walk_relations(self, r):
+        if type(r) is AliasedSubquery:
+            raise ValueError("Support for subqueries is currently disabled")
         if type(r) is Query or type(r) is Table or type(r) is AliasedRelation or type(r) is AliasedSubquery:
             syms = r.all_symbols(AllColumns())
             tcs = [s for name, s in syms if type(s) is TableColumn ]
             if not any([tc.is_key for tc in tcs]):
                 raise ValueError("Source relation must include a private key column: " + str(r))
         if type(r) is Join:
+            raise ValueError("Support for JOIN queries is currently disabled")
             if type(r.criteria) is not UsingJoinCriteria:
                 raise ValueError("We only support JOIN with USING semantics currently")
             ids = [str(i).lower() for i in r.criteria.identifiers]
