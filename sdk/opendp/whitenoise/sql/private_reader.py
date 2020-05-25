@@ -119,8 +119,7 @@ class PrivateReader(Reader):
 
         subquery, query = self.rewrite_ast(query)
         max_contrib = self.options.max_contrib if self.options.max_contrib is not None else 1
-
-        thresh_scale = max_contrib * (math.sqrt(math.log(1/self.delta)) + math.sqrt(math.log(1/self.delta) + self.epsilon)) / (math.sqrt(2) * self.epsilon)
+        thresh_scale = math.sqrt(max_contrib) * ((math.sqrt(math.log(1/self.delta)) + math.sqrt(math.log(1/self.delta) + self.epsilon)) / (math.sqrt(2) * self.epsilon))
         self.tau = 1 + thresh_scale * math.sqrt(2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.delta)))
 
         syms = subquery.all_symbols()
