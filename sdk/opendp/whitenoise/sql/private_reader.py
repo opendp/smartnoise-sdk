@@ -9,7 +9,6 @@ from .reader import PandasReader
 from opendp.whitenoise.ast.expressions import sql as ast
 from opendp.whitenoise.reader import Reader
 
-from opendp.whitenoise.mechanisms.laplace import Laplace
 from opendp.whitenoise.mechanisms.gaussian import Gaussian
 from opendp.whitenoise.report import Interval, Intervals, Result
 from opendp.whitenoise.reader.rowset import TypedRowset
@@ -141,7 +140,8 @@ class PrivateReader(Reader):
 
         subquery, query = self.rewrite_ast(query)
         max_contrib = self.options.max_contrib if self.options.max_contrib is not None else 1
-        self.tau = max_contrib * (1- ( math.log(2 * self.delta / max_contrib) / self.epsilon_per_column  ))
+        thresh_scale = math.sqrt(max_contrib) * ((math.sqrt(math.log(1/self.delta)) + math.sqrt(math.log(1/self.delta) + self.epsilon_per_column)) / (math.sqrt(2) * self.epsilon_per_column))
+        self.tau = 1 + thresh_scale * math.sqrt(2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.delta)))
 
         syms = subquery.all_symbols()
         source_col_names = [s[0] for s in syms]
