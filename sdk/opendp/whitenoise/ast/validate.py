@@ -56,9 +56,9 @@ class QueryConstraints:
 
         select_expressions = [simplify(s[1]) for s in q.m_symbols]
         is_agg = lambda n: type(n) == AggFunction and n.is_aggregate
-        split = lambda p, i: (list(filter(p, i)), list(filter(lambda v: not p(v), i)))
-        aggs, non_aggs = split(is_agg, select_expressions)
-
+        aggs = [expr for expr in select_expressions if is_agg(expr)]
+        non_aggs = [expr for expr in select_expressions if not is_agg(expr)]
+        
         grouping_expressions = [simplify(exp.expression) for exp in q.agg.groupingExpressions] if q.agg is not None else []
         group_col_names = [gc.name for gc in q.agg.groupedColumns()] if q.agg is not None else []
 
@@ -90,12 +90,6 @@ class QueryConstraints:
         rel_nodes = self.query.select.find_nodes(SqlRel)
         if (len(rel_nodes)) > 0:
             raise ValueError("We don't support subqueries in the SELECT clause")
-
-    def check_order_relations(self):
-        if self.query.order is not None:
-            rel_nodes = self.query.order.find_nodes(SqlRel)
-            if (len(rel_nodes)) > 0:
-                raise ValueError("We don't support subqueries in the ORDER BY clause")
 
     def check_source_relations(self):
         relations = self.query.source.relations
