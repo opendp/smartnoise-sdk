@@ -3,6 +3,7 @@ import subprocess
 
 import pandas as pd
 from pandasql import sqldf
+import math
 
 from opendp.whitenoise.metadata import CollectionMetadata
 from opendp.whitenoise.sql import PrivateReader, PandasReader
@@ -50,22 +51,22 @@ class TestQuery:
         assert(rs[2][0] == 451 * 5)
     def test_group_by_noisy_order(self):
         reader = PandasReader(schema, df)
-        private_reader = PrivateReader(schema, reader, 1.0)
+        private_reader = PrivateReader(schema, reader, 4.0)
         rs = private_reader.execute("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
         assert(rs[1][0] < rs[2][0])
     def test_group_by_noisy_order_desc(self):
         reader = PandasReader(schema, df)
-        private_reader = PrivateReader(schema, reader, 1.0)
+        private_reader = PrivateReader(schema, reader, 4.0)
         rs = private_reader.execute("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs[1][0] > rs[2][0])
     def test_group_by_noisy_typed_order(self):
         reader = PandasReader(schema, df)
-        private_reader = PrivateReader(schema, reader, 1.0)
+        private_reader = PrivateReader(schema, reader, 4.0)
         rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
         assert(rs['c'][0] < rs['c'][1])
     def test_group_by_noisy_typed_order_desc(self):
         reader = PandasReader(schema, df)
-        private_reader = PrivateReader(schema, reader, 1.0)
+        private_reader = PrivateReader(schema, reader, 4.0)
         rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs['c'][0] > rs['c'][1])
     def test_no_tau(self):
@@ -131,3 +132,23 @@ class TestQuery:
         query = QueryParser(schema).queries("SELECT COUNT(*) AS c FROM PUMS.PUMS GROUP BY married")[0]
         private_reader.options.use_dpsu = False
         assert(private_reader._get_reader(query) is private_reader.reader)
+    def test_check_thresholds_gauss(self):
+        # check tau for various privacy parameters
+        epsilons = [0.1, 2.0]
+        max_contribs = [1, 3]
+        deltas = [10E-5, 10E-15]
+        query = "SELECT COUNT(*) FROM PUMS.PUMS GROUP BY married"
+        reader = PandasReader(schema, df)
+        qp = QueryParser(schema)
+        q = qp.query(query)        
+        for eps in epsilons:
+            for d in max_contribs:
+                for delta in deltas:
+                    # using slightly different formulations of same formula from different papers
+                    # make sure private_reader round-trips
+                    gaus_scale = math.sqrt(d) * math.sqrt(2 * math.log(1.25/delta))/eps
+                    gaus_rho = 1 + gaus_scale * math.sqrt(2 * math.log(d / math.sqrt(2 * math.pi * delta)))
+                    private_reader = PrivateReader(schema, reader, eps, delta)
+                    q.max_ids = d # hijack the AST
+                    r = private_reader.execute_ast(q)
+                    assert(math.isclose(private_reader.tau, gaus_rho, rel_tol=0.03, abs_tol=2))

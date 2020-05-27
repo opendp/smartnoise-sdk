@@ -12,5 +12,5 @@ SELECT COUNT(DISTINCT DeviceID) AS did FROM Telemetry.Crashes GROUP BY Refurbish
 SELECT COUNT(DISTINCT DeviceID) AS did FROM Telemetry.Crashes;
 SELECT Region, Refurbished, AVG(Temperature) FROM Telemetry.Crashes GROUP BY Region, Refurbished ORDER BY Refurbished, Region;
 SELECT Region, Refurbished, AVG(Temperature) FROM Telemetry.Crashes GROUP BY Region, Refurbished ORDER BY Region, Refurbished DESC;
-SELECT POWER(COUNT ( DeviceID ) / 10000, 2) AS n, Region FROM Telemetry.Crashes GROUP BY Region;
-SELECT SQRT(AVG(Crashes * Crashes) - AVG(Crashes) * AVG(Crashes) )  FROM Telemetry.Crashes;
+--SELECT POWER(COUNT ( DeviceID ) / 10000, 2) AS n, Region FROM Telemetry.Crashes GROUP BY Region;
+--SELECT SQRT(AVG(Crashes * Crashes) - AVG(Crashes) * AVG(Crashes) )  FROM Telemetry.Crashes;
