@@ -12,8 +12,8 @@ import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import opendp.whitenoise.evaluation.aggregation as agg
-import opendp.whitenoise.evaluation.exploration as exp
+import opendp.whitenoise.evaluation._aggregation as agg
+import opendp.whitenoise.evaluation._exploration as exp
 import copy
 
 from opendp.whitenoise.metadata.collection import *
