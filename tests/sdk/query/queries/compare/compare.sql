@@ -12,4 +12,4 @@ SELECT  TrialGroup, COUNT(DeviceID) AS N, AVG(Temperature) FROM (
       ) AS Z GROUP BY  TrialGroup ORDER BY  TrialGroup;
 SELECT OEM, AVG(Temperature) FROM Telemetry.Census JOIN Telemetry.Crashes USING(DeviceID) GROUP BY OEM ORDER BY OEM;
 SELECT OEM, AVG(Temperature) FROM Telemetry.Census JOIN Telemetry.Crashes USING(DeviceID) GROUP BY OEM ORDER BY OEM;
-SELECT SUM(Crashes), TrialGroup FROM Telemetry.Census JOIN Telemetry.Crashes USING(DeviceID) JOIN Telemetry.Rollouts USING(DeviceID) GROUP BY TrialGroup ORDER BY TrialGroup;
+--SELECT SUM(Crashes), TrialGroup FROM Telemetry.Census JOIN Telemetry.Crashes USING(DeviceID) JOIN Telemetry.Rollouts USING(DeviceID) GROUP BY TrialGroup ORDER BY TrialGroup;

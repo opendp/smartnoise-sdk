@@ -15,10 +15,3 @@ SELECT COUNT(DISTINCT DeviceID) AS did FROM Telemetry.Crashes GROUP BY Refurbish
 SELECT COUNT(DISTINCT DeviceID) AS did FROM Telemetry.Crashes;
 SELECT Region, Refurbished, AVG(Temperature) FROM Telemetry.Crashes GROUP BY Region, Refurbished ORDER BY Refurbished, Region;
 SELECT COUNT(DeviceID) AS Devices, Region, Refurbished, AVG(Temperature) AS Temperature FROM Telemetry.Crashes GROUP BY Region, Refurbished ORDER BY Region, Refurbished DESC;
-SELECT OEM, TrialGroup, COUNT(DeviceID) AS N, SUM(Crashes) FROM (
-       SELECT Crashes, T.* FROM Telemetry.Crashes JOIN ( 
-        SELECT DeviceID, OEM, TrialGroup FROM 
-         (Telemetry.Census JOIN Telemetry.Rollouts USING(DeviceID)) AS Q
-             ) AS T USING(DeviceID) 
-      ) AS Z GROUP BY OEM, TrialGroup ORDER BY OEM, TrialGroup;
--- SELECT Heat, COUNT(DeviceID) FROM (SELECT DeviceID, CASE WHEN Temperature < 42 THEN 'Cold' WHEN Temperature > 51 THEN 'Hot' ELSE 'Medium' END AS Heat FROM Telemetry.Crashes) AS TC GROUP BY Heat ORDER BY Heat;

@@ -9,7 +9,7 @@ from opendp.whitenoise.sql.parse import QueryParser
 dir_name = dirname(__file__)
 testpath = join(dir_name, "queries") + "/"
 
-other_dirs = [f for f in listdir(testpath) if not isfile(join(testpath, f)) and f not in ["parse", "validate", "rewrite"] ]
+other_dirs = [f for f in listdir(testpath) if not isfile(join(testpath, f)) and f not in ["parse", "compare", "validate", "rewrite", "validate_pums"] ]
 rewrite_files = [join(testpath + "rewrite/", f) for f in listdir(testpath + "rewrite") if isfile(join(testpath + "rewrite", f))]
 
 good_files = [f for f in rewrite_files if not "_fail" in f]

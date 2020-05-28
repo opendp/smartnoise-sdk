@@ -5,24 +5,39 @@ from opendp.whitenoise.metadata import CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname
+import subprocess
+
+"""Unit test driver for testing valid and invalid queries that 
+    use the PUMS schema.
+
+All queries in tests/validate_pums.sql should pass validation
+All queries in tests/validate_pums_fail.sql should parse and build AST, but fail validation
+
+In other words, these tests should catch simple cases of valid SQL 
+    that violates differential privacy rules, which the validator is
+    expected to prevent.
+
+Add new queries to these two SQL files to test edge cases.
+
+Note that the other validate test suite does a cumulative test pass using more
+    complex schema, with each increasing level (parse->ast->validate->rewrite)
+    running all queries for the levels before.  Because those test suites don't use
+    PUMS schema, we do not do the cumulative test here, but it is done in the full
+    unit test pass.
+"""
+
+git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+meta_path = join(git_root_dir, join("service", "datasets", "PUMS.yaml"))
 
 dir_name = dirname(__file__)
 testpath = join(dir_name, "queries") + "/"
 
-other_dirs = [f for f in listdir(testpath) if not isfile(join(testpath, f)) and f not in ["parse", "validate", "validate_pums", "compare"]]
-
-
-validate_files = [join(testpath + "validate/", f) for f in listdir(testpath + "validate") if isfile(join(testpath + "validate", f))]
+validate_files = [join(testpath + "validate_pums/", f) for f in listdir(testpath + "validate_pums") if isfile(join(testpath + "validate_pums", f))]
 
 good_files = [f for f in validate_files if not "_fail" in f]
 bad_files = [f for f in validate_files if "_fail" in f]
 
-for d in other_dirs:
-    other_files = [join(testpath + d + "/", f) for f in listdir(testpath + d) if isfile(join(testpath + d, f))]
-    good_files.extend(other_files)
-
-
-metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
+metadata = CollectionMetadata.from_file(meta_path)
 
 
 #
@@ -64,9 +79,8 @@ class BadQueryTester:
     def runValidate(self):
         for qs in self.queries:
             print(qs)
-            with pytest.raises(ValueError):
-                q = QueryParser(metadata).query(qs)
-                self.validateSingle(q)
+            q = QueryParser(metadata).query(qs)
+            self.validateSingle(q)
 
     def validateSingle(self, q):
         with pytest.raises(ValueError):

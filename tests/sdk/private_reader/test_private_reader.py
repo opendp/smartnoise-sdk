@@ -15,8 +15,11 @@ git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" "
 meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "reddit.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "reddit.csv"))
 
+
 schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path, index_col=0)
+
+
 
 class TestDPSU:
     def test_preprocess_df_from_query(self):
@@ -51,3 +54,17 @@ class TestDPSU:
 
         assert len(result['n']) > len(korolova_result['n'])
         assert len(final_df) < len(df)
+
+
+    def test_calculate_multiplier(self):
+        pums_meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.yaml"))
+        pums_csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.csv"))
+        pums_schema = CollectionMetadata.from_file(pums_meta_path)
+        pums_df = pd.read_csv(pums_csv_path)
+        pums_reader = PandasReader(pums_schema, pums_df)
+        query = "SELECT COUNT(*) FROM PUMS.PUMS"
+        cost = PrivateReader.get_budget_multiplier(pums_schema, pums_reader, query)
+
+        query = "SELECT AVG(age) FROM PUMS.PUMS"
+        cost_avg = PrivateReader.get_budget_multiplier(pums_schema, pums_reader, query)
+        assert 1 + cost == cost_avg
