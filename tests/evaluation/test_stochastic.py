@@ -10,9 +10,9 @@ import os
 #sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
 #sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../whitenoise-core-python/'))
 import pytest
-from opendp.whitenoise.evaluation.dp_verification import DPVerification
-from opendp.whitenoise.evaluation.exploration import Exploration
-from opendp.whitenoise.evaluation.aggregation import Aggregation
+from opendp.whitenoise.evaluation._dp_verification import DPVerification
+from opendp.whitenoise.evaluation._exploration import Exploration
+from opendp.whitenoise.evaluation._aggregation import Aggregation
 
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url, "service", "datasets"))

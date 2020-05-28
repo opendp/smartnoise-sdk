@@ -4,7 +4,6 @@ import math
 import numpy as np
 import pandas as pd
 
-import mlflow
 import json
 import sys
 import os
@@ -14,8 +13,6 @@ from opendp.whitenoise.reader.rowset import TypedRowset
 from opendp.whitenoise.mechanisms.laplace import Laplace
 from opendp.whitenoise.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
-
-import opendp.whitenoise.core as wn
 
 class Aggregation:
     def __init__(self, epsilon=1.0, t=1, repeat_count=10000, mechanism="Laplace"):
@@ -78,31 +75,6 @@ class Aggregation:
         df[colname + "squared"] = df[colname] ** 2
         sumsq = self.dp_mechanism_sum(df, colname + "squared")
         return np.subtract(np.divide(sumsq, cnt), np.power(np.divide(sum, cnt), 2))
-
-    # Apply noise to input aggregation function using WhiteNoise-Core library
-    def whitenoise_core_dp_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
-        releases = []        
-        with wn.Analysis() as analysis:
-            for x in range(self.repeat_count):
-                df = wn.Dataset(path=dataset_path, column_names=col_names)
-                release = f(wn.to_float(df[args[0]]), privacy_usage={'epsilon': epsilon}, **kwargs)
-                releases.append(release)
-        analysis.release()
-        noisy_values = [release.value for release in releases]
-        return np.array(noisy_values)
-
-
-    # Apply noise to functions like covariance using WhiteNoise-Core library that work on multiple columns
-    def whitenoise_core_dp_multi_agg(self, f, dataset_path, col_names, args, epsilon, kwargs):
-        releases = []
-        with wn.Analysis() as analysis:
-            for x in range(self.repeat_count):
-                df = wn.Dataset(path=dataset_path, column_names=col_names)
-                release = f(data=wn.to_float(df[[args[0], args[1]]]), privacy_usage={'epsilon': epsilon}, **kwargs)
-                releases.append(release)
-        analysis.release()
-        noisy_values = [release.value[0][0] for release in releases]
-        return np.array(noisy_values)
 
     # Run the query using the private reader and input query
     # Get query response back
