@@ -12,7 +12,6 @@ import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import opendp.whitenoise.core as wn
 import opendp.whitenoise.evaluation.aggregation as agg
 import opendp.whitenoise.evaluation.exploration as exp
 import copy
@@ -274,37 +273,6 @@ class DPVerification:
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
-
-    # Verification of aggregation mechanisms implemented in WhiteNoise-Core
-    # Creating a new function to take in non-keyworded args and keyworded kwargs
-    # This makes it generic to take in any WhiteNoise-core aggregate function with any set of parameters
-    # DP-SQL queries in Burdock use other aggregation functions in Aggregation class
-    def whitenoise_core_test(self, dataset_path, col_names, f, *args, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False, repeat_count=1000, epsilon=1.0, actual=1.0, **kwargs):
-        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
-        self.dataset_path = dataset_path
-        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
-
-        d1_file_path = os.path.join(self.file_dir, self.csv_path , "d1.csv")
-        d2_file_path = os.path.join(self.file_dir, self.csv_path , "d2.csv")
-
-        if(len(args) == 2):
-            fD1 = ag.whitenoise_core_dp_multi_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
-            fD2 = ag.whitenoise_core_dp_multi_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
-        else:
-            fD1 = ag.whitenoise_core_dp_agg(f, d1_file_path, col_names, args, epsilon, kwargs)
-            fD2 = ag.whitenoise_core_dp_agg(f, d2_file_path, col_names, args, epsilon, kwargs)
-
-        d1size, d2size = fD1.size, fD2.size
-        d1hist, d2hist, bin_edges = \
-            self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
-        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-        print("DP Predicate Test:", dp_res, "\n")
-        bias_res, msd = self.bias_test(actual, fD1)
-        print("Bias Test:", bias_res, "\n")
-
-        if(plot):
-            self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound)
-        return dp_res, bias_res
 
     def accuracy_test(self, actual, low, high, confidence=0.95):
         # Actual mean of aggregation function f on D1 is equal to sample mean
