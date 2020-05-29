@@ -10,13 +10,18 @@ import opendp.whitenoise.evaluation._exploration as exp
 from opendp.whitenoise.metadata.collection import *
 
 class DPVerification:
-    """ This class contains a list of methods that can be passed DP analysis for stochastic verification
-    It tries to use a set of neighboring datasets D1 and D2 that differ by single individual 
-    On these neighboring datasets, it applies the DP analysis repeatedly
-    It tests the DP condition to let the DP implementer know whether repeated analysis results 
-    are not enough to re-identify D1 or D2 which differ by single individual i.e. passing epsilon-DP condition
-    If the DP condition is not passed, there is a bug and analysis is not differentially private
-    Similarly, it has methods to evaluate accuracy, utility and bias of DP analysis
+    """ This class contains a list of methods that can be passed DP analysis 
+    for stochastic verification. It tries to use a set of neighboring datasets 
+    D1 and D2 that differ by single individual. On these neighboring datasets, 
+    it applies the DP analysis repeatedly. 
+    
+    It tests the DP condition to let the DP implementer know whether repeated analysis
+    results are not enough to re-identify D1 or D2 which differ by single individual 
+    i.e. passing epsilon-DP condition. 
+    
+    If the DP condition is not passed, there is a bug and analysis is not 
+    differentially private. Similarly, it has methods to evaluate accuracy, 
+    utility and bias of DP analysis. 
     """
     def __init__(self, epsilon=1.0, dataset_size=10000, csv_path="."):
         """
@@ -34,8 +39,9 @@ class DPVerification:
 
     def create_simulated_dataset(self, file_name = "simulation"):
         """
-        Returns a simulated dataset of configurable size and following geometric distribution
-        Adds a couple of dimension columns for analysis related to GROUP BY
+        Returns a simulated dataset of configurable size and following
+        geometric distribution. Adds a couple of dimension columns for 
+        analysis related to GROUP BY queries. 
         """
         np.random.seed(1)
         userids = list(range(1, self.dataset_size+1))
@@ -96,9 +102,11 @@ class DPVerification:
 
     def apply_aggregation_neighbors(self, f, args1, args2):
         """
-        If there is an aggregation function that we need to test, we need to apply it on neighboring datasets
-        This function applies the aggregation repeatedly to log results in two vectors that are then used for generating histogram
-        The histogram is then passed through the DP test
+        If there is an aggregation function that we need to test, 
+        we need to apply it on neighboring datasets. This function applies 
+        the aggregation repeatedly to log results in two vectors that are 
+        then used for generating histogram. The histogram is then passed 
+        through the DP test.
         """
         fD1 = f(*args1)
         fD2 = f(*args2)
@@ -106,7 +114,8 @@ class DPVerification:
 
     def generate_histogram_neighbors(self, fD1, fD2, numbins=0, binsize="auto", exact=False):
         """
-        Generate histograms given the vectors of repeated aggregation results applied on neighboring datasets
+        Generate histograms given the vectors of repeated aggregation results
+        applied on neighboring datasets
         """
         d1 = fD1
         d2 = fD2
@@ -138,7 +147,8 @@ class DPVerification:
 
     def plot_histogram_neighbors(self, fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, binlist, bound=True, exact=False):
         """
-        Plot histograms given the vectors of repeated aggregation results applied on neighboring datasets
+        Plot histograms given the vectors of repeated aggregation results 
+        applied on neighboring datasets
         """
         plt.figure(figsize=(15,5))
         if(exact):
@@ -180,8 +190,10 @@ class DPVerification:
 
     def get_bounded_histogram(self, d1hist, d2hist, binlist, d1size, d2size, exact, alpha=0.05):
         """
-        Check if histogram of fD1 values multiplied by e^epsilon and summed by delta is bounding fD2 and vice versa
-        Use the histogram results and create bounded histograms to compare in DP test
+        Check if histogram of fD1 values multiplied by e^epsilon and 
+        summed by delta is bounding fD2 and vice versa
+        Use the histogram results and create bounded histograms 
+        to compare in DP test
         """
         d1_error_interval = 0.0
         d2_error_interval = 0.0
@@ -267,7 +279,8 @@ class DPVerification:
     def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
         """
         Verification of SQL aggregation mechanisms
-        Returns statistical distance measures between repeated analysis responses on neighboring datasets
+        Returns statistical distance measures between repeated analysis 
+        responses on neighboring datasets
         """
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors()
         fD1, fD2 = self.apply_aggregation_neighbors(f, (d1, colname), (d2, colname))
@@ -307,8 +320,9 @@ class DPVerification:
     def bias_test(self, actual, fD, sig_level = 0.05):
         """
         Given actual response, calculates mean signed deviation of noisy responses
-        Also, performs 1-sample two tailed t-test to find whether the difference between actual
-        response and repeated noisy responses is statistically significant i.e. biased result
+        Also, performs 1-sample two tailed t-test to find whether 
+        the difference between actual response and repeated noisy responses 
+        is statistically significant i.e. biased result
         """
         n = len(fD)
         actual = [actual] * n
@@ -319,7 +333,8 @@ class DPVerification:
 
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
         """
-        Applying singleton queries repeatedly against DP SQL-92 implementation by WhiteNoise-System
+        Applying singleton queries repeatedly against DP SQL-92 implementation 
+        by WhiteNoise-System
         """
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
@@ -391,7 +406,8 @@ class DPVerification:
 
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, test_cases=5):
         """
-        Use the powerset based neighboring datasets to scan through all edges of database search graph
+        Use the powerset based neighboring datasets to scan through 
+        all edges of database search graph
         """
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         ex = exp.Exploration()

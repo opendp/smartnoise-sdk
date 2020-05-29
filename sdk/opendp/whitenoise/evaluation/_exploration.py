@@ -7,10 +7,13 @@ from opendp.whitenoise.metadata.collection import *
 
 class Exploration:
     """
-    This file contains methods to set and scan a search space of datasets that we shall be using for DP evaluation.
-    We need to search databases, neighboring pairs and queries for running the DP predicate test.
+    This file contains methods to set and scan a search space of datasets 
+    that we shall be using for DP evaluation. We need to search databases, 
+    neighboring pairs and queries for running the DP predicate test.
+    
     We shall start a small 3-row databases to create our 12 neighboring pairs per database
-    Then we shall use halton sequence to generate a set of such 3 row databases randomly in a 3-D log-space
+    Then we shall use halton sequence to generate a set of such 3 row databases 
+    randomly in a 3-D log-space
     """
     def __init__(self, dataset_size=3, csv_path=r'../service/datasets/evaluation'):  # TODO changed default to "."
         """
@@ -54,9 +57,11 @@ class Exploration:
 
     def generate_powerset(self, d1):
         """
-        Given a list of N records in a database, create a powerset of neighboring datasets by traversing the edges 
-        of database search graph. Perform DFS to traverse the database search graph
-        Convention of file names = <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>
+        Given a list of N records in a database, create a powerset of 
+        neighboring datasets by traversing the edges of database search graph. 
+        Perform DFS to traverse the database search graph
+        Convention of file names ->
+        <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>
         """
         if(len(d1) == 0):
             return

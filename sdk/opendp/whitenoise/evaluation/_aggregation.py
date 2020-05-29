@@ -15,7 +15,8 @@ from pandasql import sqldf
 
 class Aggregation:
     """
-    Implement different aggregation functions that can be passed through the verification tests
+    Implement different aggregation functions that can be passed through 
+    the verification tests
     """
     def __init__(self, epsilon=1.0, t=1, repeat_count=10000, mechanism="Laplace"):
         self.epsilon = epsilon
@@ -25,13 +26,15 @@ class Aggregation:
 
     def exact_count(self, df, colname):
         """
-        Exact count taking df as a parameter it shall be passed both d1 and d2 that differ by 1 record
+        Exact count taking df as a parameter it shall be passed both d1 and d2 
+        that differ by 1 record
         """
         return np.zeros(self.repeat_count) + df[colname].count()
 
     def buggy_count(self, df, colname):
         """
-        Example of non-DP noise repeatedly applied while counting records in a dataset
+        Example of non-DP noise repeatedly applied while 
+        counting records in a dataset
         """
         return df[colname].count() + np.random.random_sample((self.repeat_count,))*10
 
