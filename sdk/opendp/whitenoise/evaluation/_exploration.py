@@ -19,7 +19,8 @@ class Exploration:
         """
         Instantiates the Exploration class to define dimensions and 
         boundaries of halton sequence space. 
-        Also initialized file path of 3 record dataset for application of DFS to run a Powerset test
+        Also initialized file path of 3 record dataset for application of DFS 
+        to run a Powerset test
         """
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
