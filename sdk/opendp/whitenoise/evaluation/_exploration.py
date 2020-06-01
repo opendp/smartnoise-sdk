@@ -101,6 +101,4 @@ class Exploration:
         samples = self.generate_halton_samples(bounds = self.corners, dims = self.N)
         for sample in samples:
             df, metadata = self.create_small_dataset(sample)
-            print("Loaded " + str(len(df)) + " records")
             self.generate_powerset(df)
-            print(self.visited)

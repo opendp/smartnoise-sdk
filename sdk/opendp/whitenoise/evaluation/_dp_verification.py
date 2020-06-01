@@ -33,7 +33,6 @@ class DPVerification:
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
         self.csv_path = csv_path
         self.df, self.dataset_path, self.file_name, self.metadata = self.create_simulated_dataset()
-        print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
         self.delta = 1/(self.N * math.sqrt(self.N))
 
@@ -81,7 +80,6 @@ class DPVerification:
         d1 = self.df
         drop_idx = np.random.choice(self.df.index, 1, replace=False)
         d2 = self.df.drop(drop_idx)
-        print("Length of D1: ", len(d1), " Length of D2: ", len(d2))
 
         if(load_csv):
             # Storing the data as a CSV for applying queries via Burdock querying system
@@ -374,8 +372,6 @@ class DPVerification:
             d1_d2 = d1_d2.merge(exact_gp, on=dim_cols, how='left')
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
-                print(d1_d2.iloc[index, :n_cols - 3])
-                print("Column: ", col)
                 # fD1 and fD2 will have the results of the K repeated query results that can be passed through histogram test
                 # These results are for that particular numerical column and the specific dimension key of d1_d2
                 fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 3]])
@@ -384,7 +380,6 @@ class DPVerification:
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-                print("DP Predicate Test Result: ", dp_res)
 
                 # Accuracy Test
                 #low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
@@ -432,7 +427,6 @@ class DPVerification:
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-                print("DP Predicate Test Result: ", dp_res)
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
                 key = "[" + ','.join(str(e) for e in list(sample)) + "] - " + filename
