@@ -78,12 +78,11 @@ class TestStochastic:
         dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum)
 
-    @pytest.mark.skip
-    def test_powerset_sum(self):
-        query_str = "SELECT SUM(Usage) AS TotalUsage FROM "
-        dp_res, acc_res, utility_res, bias_res = dv.dp_powerset_test(query_str, repeat_count=500, plot=False)
-        test_logger.debug("Result of DP Predicate Test on Powerset SUM: " + str(dp_res))
-        test_logger.debug("Result of Accuracy Test on Powerset SUM: " + str(acc_res))
+    @pytest.mark.slow
+    def test_powerset_count_sum(self):
+        query_str = "SELECT COUNT(UserId) AS UserCount, SUM(Usage) AS TotalUsage FROM dummy_table"
+        dp_res, acc_res, utility_res, bias_res = dv.dp_powerset_test(query_str, "dummy_table", repeat_count=200, plot=False)
+        test_logger.debug("Result of DP Predicate Test on Powerset COUNT and SUM: " + str(dp_res))
         assert(dp_res)
 
     def test_groupby(self):

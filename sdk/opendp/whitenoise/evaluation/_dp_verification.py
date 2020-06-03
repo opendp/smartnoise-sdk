@@ -328,7 +328,7 @@ class DPVerification:
         n = len(fD)
         actual = [actual] * n
         diff = fD - actual
-        msd = (np.sum(diff) / n) / actual[0]
+        msd = (np.sum(diff) / n)
         tset, pval = stats.ttest_1samp(diff, 0.0)
         return (pval >= sig_level), msd
 
