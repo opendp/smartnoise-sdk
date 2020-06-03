@@ -9,6 +9,7 @@ import sys
 import os
 
 from opendp.whitenoise.sql import PandasReader, PrivateReader
+from opendp.whitenoise.sql.private_reader import PrivateReaderOptions
 from opendp.whitenoise.reader.rowset import TypedRowset
 from opendp.whitenoise.mechanisms.laplace import Laplace
 from opendp.whitenoise.mechanisms.gaussian import Gaussian
@@ -102,9 +103,11 @@ class Aggregation:
             noisy_values.append(res.rows()[1:][0][0])
         return np.array(noisy_values), actual, low_bounds, high_bounds
 
-    # Run the query using the private reader and input query
-    # Get query response back for multiple dimensions and aggregations
-    def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
+    def run_agg_query_df(self, df, metadata, query, confidence):
+        """
+        Run the query using the private reader and input query
+        Get query response back for multiple dimensions and aggregations
+        """
         # Getting exact result
         reader = PandasReader(metadata, df)
         exact = reader.execute_typed(query).rows()[1:]
@@ -112,7 +115,8 @@ class Aggregation:
         for row in exact:
             exact_res.append(row)
 
-        private_reader = PrivateReader(metadata, reader, self.epsilon)
+        prOptions = PrivateReaderOptions(censor_dims = False)
+        private_reader = PrivateReader(metadata, reader, self.epsilon, options=prOptions)
         query_ast = private_reader.parse_query_string(query)
 
         # Distinguishing dimension and measure columns

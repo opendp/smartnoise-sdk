@@ -28,14 +28,13 @@ class Exploration:
     def create_small_dataset(self, sample, file_name = "small"):
         userids = list(range(1, self.dataset_size+1))
         userids = ["A" + str(user) for user in userids]
+        segment = ['A', 'B', 'C']
+        role = ['R1', 'R2']
+        roles = np.random.choice(role, size=self.dataset_size, p=[0.7, 0.3]).tolist()
+        segments = np.random.choice(segment, size=self.dataset_size, p=[0.5, 0.3, 0.2]).tolist()
         usage = list(sample)
-        df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', self.numerical_col_name])
-        metadata = Table(file_name, file_name, self.dataset_size, \
-        [\
-            String("UserId", self.dataset_size, True),\
-            Int(self.numerical_col_name, min(usage), max(usage))
-        ])
-        return df, metadata
+        df = pd.DataFrame(list(zip(userids, segments, roles, usage)), columns=['UserId', 'Segment', 'Role', self.numerical_col_name])
+        return df
 
     # Generate halton samples in a n-dimensional space. Defaulted to 3 dimensions
     def generate_halton_samples(self, bounds, dims, n_sample=10):
@@ -65,6 +64,8 @@ class Exploration:
                     d1_table = Table("d1_" + filename, "d1_" + filename, len(d1), \
                     [\
                         String("UserId", len(d1), True),\
+                        String("Segment", 3, False), \
+                        String("Role", 2, False), \
                         Int(self.numerical_col_name, min_val, max_val)
                     ])
                     d2_table = copy.copy(d1_table)
@@ -79,14 +80,5 @@ class Exploration:
     def test_exploration(self):
         samples = self.generate_halton_samples(bounds = self.corners, dims = self.N)
         for sample in samples:
-            df, metadata = self.create_small_dataset(sample)
-            print("Loaded " + str(len(df)) + " records")
+            df = self.create_small_dataset(sample)
             self.generate_powerset(df)
-            print(self.visited)
-
-    def main(self):
-        self.test_exploration()
-
-if __name__ == "__main__":
-    ex = Exploration()
-    ex.main()
