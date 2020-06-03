@@ -332,14 +332,6 @@ class DPVerification:
 
         d1_res, d1_exact, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence)
         d2_res, d2_exact, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence)
-        d1.to_csv('d1.csv', sep=',', encoding='utf-8', index=False)
-        d2.to_csv('d2.csv', sep=',', encoding='utf-8', index=False)
-        print(d1.head())
-        print(d2.head())
-        d1_res.to_csv('d1_res.csv', sep=',', encoding='utf-8', index=False)
-        d2_res.to_csv('d2_res.csv', sep=',', encoding='utf-8', index=False)
-        print(d1_res.head())
-        print(d2_res.head())
         res_list = []
         for col in num_cols:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
@@ -351,7 +343,6 @@ class DPVerification:
             # This is what we use for generating the histogram of results for that dimension key
             d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
             d1_d2 = d1_d2.merge(exact_gp, on=dim_cols, how='left')
-            print(d1_d2.head())
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
                 print(d1_d2.iloc[index, :n_cols - 3])
@@ -364,7 +355,7 @@ class DPVerification:
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-                
+
                 # Accuracy Test
                 #low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
                 #high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
@@ -407,7 +398,7 @@ class DPVerification:
                 dp_res, acc_res, utility_res, bias_res = self.dp_groupby_query_test(
                     d1_query, 
                     d2_query, 
-                    gen_neighbors = True, 
+                    gen_neighbors = False, 
                     debug=debug, plot=plot, bound=bound, exact=exact, 
                     repeat_count=repeat_count
                 )
@@ -425,11 +416,3 @@ class DPVerification:
         acc_res, utility_res = None, None
         bias_res = np.all(np.array([res[1] for data, res in res_list.items()]))
         return dp_res, acc_res, utility_res, bias_res
-
-if __name__ == "__main__":
-    import subprocess
-    root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
-    dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url, "service", "datasets"))
-    ag = agg.Aggregation(t=1, repeat_count=1000)
-    query_str = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM dummy_table GROUP BY Role, Segment"
-    dp_res, acc_res, utility_res, bias_res = dv.dp_powerset_test(query_str, "dummy_table", repeat_count=200, plot=False)
