@@ -1,10 +1,20 @@
+from opendp.whitenoise.evaluation.blackbox._base import BlackBoxPrivacyInterface
+from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.whitenoise.evaluation.metrics._metrics import Metrics
+
 class EvaluatorInterface:
 	"""
 	Interface for various DP implementations to interface with tests available
 	in evaluator. Evaluator tests for various properties of DP implementation
 	like privacy, accuracy, utility and bias
 	"""
-	def evaluate(self, d1, d2, analysis, privacy_params, eval_params):
+	def evaluate(self, 
+		d1 : object, 
+		d2 : object, 
+		analysis : BlackBoxPrivacyInterface, 
+		privacy_params : PrivacyParams, 
+		eval_params : EvaluatorParams) -> Metrics:
 		"""
 		Evaluates properties of black box DP implementations using 
 			- DP Histogram Test
