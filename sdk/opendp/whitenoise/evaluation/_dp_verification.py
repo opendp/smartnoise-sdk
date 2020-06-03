@@ -296,9 +296,7 @@ class DPVerification:
         n = len(fD)
         actual = [actual] * n
         diff = fD - actual
-        msd = (np.sum(diff) / n) / actual[0]
-        print("Mean signed deviation ratio to actual: ", msd)
-        # Checking if mean of (difference of noisy response to actual) is zero i.e. unbiased result
+        msd = (np.sum(diff) / n)
         tset, pval = stats.ttest_1samp(diff, 0.0)
         print("p-Value of 1 sample t-test: ", pval)
         return (pval >= sig_level), msd
