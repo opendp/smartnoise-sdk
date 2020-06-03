@@ -33,11 +33,9 @@ class Generator(nn.Module):
         return data
 
 class Discriminator(nn.Module):
-    def __init__(self, input_dim, hidden_dims, pac=4):
+    def __init__(self, input_dim, hidden_dims):
         super(Discriminator, self).__init__()
-        dim = input_dim * pac
-        self.pac = pac
-        self.pac_dim = dim
+        dim = input_dim
         
         model = []
         for i, layer_dim in enumerate(list(hidden_dims)):
@@ -46,10 +44,12 @@ class Discriminator(nn.Module):
             model.append(nn.Dropout(0.5))
             dim = layer_dim
         model.append(nn.Linear(dim, 1))
+        model.append(nn.Sigmoid())
         self.model = nn.Sequential(*model)
     
     def forward(self, input):
-        return self.model(input.view(-1, self.pac_dim))
+        output = self.model(input)
+        return output.view(-1)
 
 def apply_activate(data, output_info):
     data_t = []
@@ -103,7 +103,7 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
         discriminator = Discriminator(data_dim, self.dis_dim)
         discriminator = utils.convert_batchnorm_modules(discriminator).to(self.device)
         
-        optimizer_d = optim.RMSprop(discriminator.parameters(), lr=4e-4)
+        optimizer_d = optim.Adam(discriminator.parameters(), lr=4e-4)
         
         privacy_engine = PrivacyEngine(
             discriminator,
@@ -116,31 +116,35 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
         )
         
         privacy_engine.attach(optimizer_d)
-        optimizer_g = optim.RMSprop(self.generator.parameters(), lr=1e-4)
+        optimizer_g = optim.Adam(self.generator.parameters(), lr=1e-4)
+
+        criterion = nn.BCELoss()
         
         for epoch in range(self.epochs):
             for i, data in enumerate(dataloader):
                 discriminator.zero_grad()
                 
                 real_data = data[0].to(self.device)
-                
+
                 # train with fake data
-                noise = torch.randn(self.batch_size, self.latent_dim, 1, 1)
+                noise = torch.randn(self.batch_size, self.latent_dim, 1, 1, device=self.device)
                 noise = noise.view(-1, self.latent_dim)
                 fake_data = self.generator(noise)
                 fake_data = apply_activate(fake_data, self.transformer.output_info)
-                output = discriminator(fake_data)
-                loss_d_fake = torch.mean(output)
+                label_fake = torch.full((self.batch_size,), 0, device=self.device)
+                output = discriminator(fake_data.detach())
+                loss_d_fake = criterion(output, label_fake)
                 loss_d_fake.backward()
                 optimizer_d.step()
                 
                 # train with real data
+                label_true = torch.full((self.batch_size,), 1, device=self.device)
                 output = discriminator(real_data.float())
-                loss_d_real = torch.mean(output)
+                loss_d_real = criterion(output, label_true)
                 loss_d_real.backward()
                 optimizer_d.step()
                 
-                loss_d = -loss_d_real + loss_d_fake
+                loss_d = loss_d_real + loss_d_fake
 
                 max_grad_norm = []
                 for p in discriminator.parameters():
@@ -150,15 +154,13 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
                 privacy_engine.max_grad_norm = max_grad_norm
             
                 # train generator
-                if i % self.n_critics == 0:
-                    self.generator.zero_grad()
-
-                    gen_data = self.generator(noise)
-                    loss_g = -torch.mean(discriminator(gen_data))
-                    
-                    loss_g.backward()
-                    optimizer_g.step()
-                
+                self.generator.zero_grad()
+                label_g = torch.full((self.batch_size,), 1, device=self.device)
+                output_g = discriminator(fake_data)
+                loss_g = criterion(output_g, label_g)
+                loss_g.backward()
+                optimizer_g.step()
+            
                 # manually clear gradients
                 autograd_grad_sample.clear_backprops(discriminator)
                 
@@ -171,7 +173,7 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
         steps = n // self.batch_size + 1
         data = []
         for i in range(steps):
-            noise = torch.randn(self.batch_size, self.latent_dim, 1, 1)
+            noise = torch.randn(self.batch_size, self.latent_dim, 1, 1, device=self.device)
             noise = noise.view(-1, self.latent_dim)
             
             fake_data = self.generator(noise)

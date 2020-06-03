@@ -3,7 +3,6 @@ import os
 
 import pytest
 import string
-import numpy as np
 import pandas as pd
 
 from opendp.whitenoise.metadata import CollectionMetadata
@@ -15,7 +14,7 @@ meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS
 csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.csv"))
 
 schema = CollectionMetadata.from_file(meta_path)
-df = pd.read_csv(csv_path, index_col=0)
+df = pd.read_csv(csv_path)
 
 synth = DPGANSynthesizer()
 
