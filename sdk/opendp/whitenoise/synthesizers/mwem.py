@@ -61,7 +61,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # to noraml n-dim compositions
         # TODO: Figure out if we need to divide the budget by splits 
         # to achieve DP
-        if self.splits == []:
+        if self.splits.size == 0:
             self.histograms = self._histogram_from_data_attributes(self.data, [np.arange(self.data.shape[1])])
         else:
             self.histograms = self._histogram_from_data_attributes(self.data, self.splits)
@@ -85,6 +85,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :rtype: list(np.ndarray)
         """
         synthesized_columns = ()
+        first = True
         for fake, _ in self.synthetic_histograms:
             s = []
             fake_indices = np.arange(len(np.ravel(fake)))
@@ -98,8 +99,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             for ind in s:
                 s_unraveled.append(np.unravel_index(ind,fake.shape))
             
-            if synthesized_columns == ():
+            if first:
                 synthesized_columns = (np.array(s_unraveled))
+                first = False
             else:
                 synthesized_columns = np.hstack((synthesized_columns, np.array(s_unraveled)))
         
@@ -342,7 +344,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # arbitrary slice of our collection
 
         # We use np.s_[arbitrary slice] as our queries
-        e = data.T[a_slice]
+        e = data.T[tuple(a_slice)]
         
         if isinstance(e, np.ndarray):
             return np.sum(e)
@@ -364,7 +366,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :rtype: np.ndarray
         """
         view = data.copy()
-        view.T[a_slice] = 1.0
+        view.T[tuple(a_slice)] = 1.0
         return view
     
     def _reorder(self, splits):
@@ -416,7 +418,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         fits = int((np.floor(len(indices) / factor)) * factor)
         even_inds = indices[:fits].reshape((int(len(indices)/factor), factor))
         s1 = even_inds.tolist()
-        if indices[fits:] != np.array([]):
+        if indices[fits:].size > 0: # != np.array([])
             s1.append(indices[fits:])
         s2 = [np.array(l) for l in s1]
         return np.array(s2)
