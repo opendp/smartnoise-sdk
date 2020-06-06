@@ -9,7 +9,7 @@ from torch.nn import functional as F
 
 #from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 #from opendp.whitenoise.synthesizers.utils import BGMTransformer
-from dpctgan.transformer2 import GMMTransformer
+
 from dpctgan.transformer import DataTransformer
 from base import SDGYMBaseSynthesizer
 
