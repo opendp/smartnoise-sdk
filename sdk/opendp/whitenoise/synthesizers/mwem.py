@@ -3,6 +3,8 @@ import sys
 import os
 import math
 import random
+import warnings
+import time
 
 import numpy as np
 import pandas as pd
@@ -24,7 +26,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array. 
     """
-    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = [], split_factor=None):
+    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = [], split_factor=None, max_bin_count=500):
         self.Q_count = Q_count
         self.epsilon = epsilon
         self.iterations = iterations
@@ -34,6 +36,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.real_data = None
         self.splits = splits
         self.split_factor = split_factor
+        self.max_bin_count = max_bin_count
+        self.mins_maxes = {}
+        self.scale = {}
         
     def fit(self, data):
         """
@@ -52,15 +57,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
         if self.split_factor != None and self.splits == []:
             self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
-        
-        # NOTE: Limitation of ndarrays given histograms with large dims/many dims 
-        # (>10 dims, dims > 100) or datasets with many samples
-        # TODO: Dimensional split
-        # Compose MWEM according to splits in data/dimensions
-        # Curious to see if this methodology yields similar datasets
-        # to noraml n-dim compositions
-        # TODO: Figure out if we need to divide the budget by splits 
-        # to achieve DP
+
+        self.splits = np.array(self.splits)
         if self.splits.size == 0:
             self.histograms = self._histogram_from_data_attributes(self.data, [np.arange(self.data.shape[1])])
         else:
@@ -86,7 +84,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         synthesized_columns = ()
         first = True
-        for fake, _ in self.synthetic_histograms:
+        for fake, _ , split in self.synthetic_histograms:
             s = []
             fake_indices = np.arange(len(np.ravel(fake)))
             fake_distribution = np.ravel(fake)
@@ -99,11 +97,23 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             for ind in s:
                 s_unraveled.append(np.unravel_index(ind,fake.shape))
             
+            # Here we make scale adjustments to match the original
+            # data
+            np_unraveled = np.array(s_unraveled)
+            
+            for i in range(np_unraveled.shape[-1]):
+                min_c, max_c = self.mins_maxes[str(split[i])]
+                # TODO: Deal with the 0 edge case when scaling
+                # i.e. scale factor * 0th bin is 0, 
+                # but should still scale appropriately
+                np_unraveled[:,i] = np_unraveled[:,i] * self.scale[str(split[i])]
+                np_unraveled[:,i] = np_unraveled[:,i] + min_c
+            
             if first:
-                synthesized_columns = (np.array(s_unraveled))
+                synthesized_columns = np_unraveled
                 first = False
             else:
-                synthesized_columns = np.hstack((synthesized_columns, np.array(s_unraveled)))
+                synthesized_columns = np.hstack((synthesized_columns, np_unraveled))
         
         # Recombine the independent distributions into a single dataset
         combined = synthesized_columns
@@ -127,12 +137,16 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for i,h in enumerate(self.histograms):
             hist = h[0]
             dimensions = h[1]
+            split = h[3]
             Q = self.Qs[i]
             A = self._initialize_A(hist, dimensions)
             measurements = {}
+            first = True
 
             for i in range(self.iterations):
-                # print("Iteration: " + str(i))
+                if first:
+                    print('Initializing iteration with columns ' + str(split))
+                    start = time.time()
 
                 qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
 
@@ -147,8 +161,17 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
                 # Improve approximation with Multiplicative Weights
                 A = self._multiplicative_weights(A, Q, measurements, hist, self.mult_weights_iterations)
+                
+                if first:
+                    end = time.time()
+                    # Lower bound time estimate on next synthetic histogram
+                    # Introduces arbitrary time factor, to reduce expectations : )
+                    arbitrary_time_factor = self.iterations % 10 # Seems to slow down proportionally every ~10 iterations
+                    t = str(round((end-start) * self.iterations * arbitrary_time_factor,3))
+                    print('Estimate duration till completion: ' + t + ' seconds (lower bound)')
+                    first = False
 
-            As.append((A,hist))
+            As.append((A,hist,split))
 
         return As
     
@@ -193,19 +216,33 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             dims_sizes = []
 
             # Transpose for column wise iteration
-            for column in split_data.T:
+            for i, column in enumerate(split_data.T):
                 min_c = min(column) ; max_c = max(column) 
                 mins_data.append(min_c)
                 maxs_data.append(max_c)
                 # Dimension size (number of bins)
-                dims_sizes.append(max_c-min_c+1)
+                bin_count = max_c-min_c+1
+                # Here we track the min and max for the column,
+                # for sampling
+                self.mins_maxes[str(split[i])] = (min_c, max_c)
+                if bin_count > self.max_bin_count:
+                    # Note the limitations of MWEM here, specifically in the case of continuous data.
+                    warnings.warn('Bin count ' + str(bin_count) + ' in column: ' + str(split[i]) + \
+                                  ' exceeds max_bin_count, defaulting to: ' + str(self.max_bin_count)+\
+                                  '. Is this a continuous variable?', Warning)
+                    bin_count = self.max_bin_count
+                    # We track a scaling factor per column, for sampling
+                    self.scale[str(split[i])] = (max_c-min_c+1)/self.max_bin_count
+                else:
+                    self.scale[str(split[i])] = 1
+                dims_sizes.append(bin_count)
             
             # Produce an N,D dimensional histogram, where
             # we pre-specify the bin sizes to correspond with 
             # our ranges above
             histogram, bins = np.histogramdd(split_data, bins=dims_sizes)
             # Return histogram, dimensions
-            histograms.append((histogram, dims_sizes, bins))
+            histograms.append((histogram, dims_sizes, bins, split))
 
         return histograms
     
@@ -227,24 +264,16 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :return: # of errors
         :rtype: int
         """
-        errors = np.zeros(len(Q))
-
-        for i in range(len(errors)):
-            errors[i] = eps * abs(self._evaluate(Q[i], hist)-self._evaluate(Q[i], A))/2.0
-
+        errors = [abs(self._evaluate(Q[i], hist)-self._evaluate(Q[i], A)) * (eps/2.0) for i in range(len(Q))]
         maxi = max(errors)
-
+        errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
+        r = random.random()
+        e_s = np.sum(errors)
+        c = 0
         for i in range(len(errors)):
-            errors[i] = math.exp(errors[i] - maxi)
-
-        uni = np.sum(errors) * random.random()
-
-        for i in range(len(errors)):
-            uni -= errors[i]
-
-            if uni <= 0.0:
+            c += errors[i]
+            if c > r * e_s:
                 return i
-
         return len(errors) - 1
     
     def _multiplicative_weights(self, A, Q, m, hist, iterate):
