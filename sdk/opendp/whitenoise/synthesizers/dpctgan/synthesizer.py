@@ -10,12 +10,13 @@ from torch.nn import functional as F
 #from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 #from opendp.whitenoise.synthesizers.utils import BGMTransformer
 
-from dpctgan.transformer import DataTransformer
-from base import SDGYMBaseSynthesizer
+#from dpctgan.transformer import DataTransformer
+from .transformer import DataTransformer
+from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
-from dpctgan.conditional import ConditionalGenerator 
-from dpctgan.models import Discriminator, Generator
-from dpctgan.sampler import Sampler 
+from .conditional import ConditionalGenerator 
+from .models import Discriminator, Generator
+from .sampler import Sampler 
 
 from torchdp import PrivacyEngine, utils 
 from torchdp import autograd_grad_sample 
