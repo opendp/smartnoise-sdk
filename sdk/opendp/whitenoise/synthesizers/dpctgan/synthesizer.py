@@ -18,8 +18,8 @@ from .conditional import ConditionalGenerator
 from .models import Discriminator, Generator
 from .sampler import Sampler 
 
-from torchdp import PrivacyEngine, utils 
-from torchdp import autograd_grad_sample 
+from ..torchdp import PrivacyEngine, utils 
+from ..torchdp import autograd_grad_sample 
 
 
 
