@@ -18,8 +18,28 @@ from .conditional import ConditionalGenerator
 from .models import Discriminator, Generator
 from .sampler import Sampler 
 
-from ..torchdp import PrivacyEngine, utils 
-from ..torchdp import autograd_grad_sample 
+import torchdp
+
+
+# custom for calcuate grad_sample for multiple loss.backward()
+def _custom_create_or_extend_grad_sample(
+    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
+) -> None:
+    """
+    Create a 'grad_sample' attribute in the given parameter, or append to it
+    if the 'grad_sample' attribute already exists.
+    """
+    raise Exception("hello")
+    if hasattr(param, "grad_sample"):
+        param.grad_sample = param.grad_sample + grad_sample
+        #param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
+    else:
+        param.grad_sample = grad_sample
+
+
+
+torchdp.supported_layers_grad_samplers._create_or_extend_grad_sample = _custom_create_or_extend_grad_sample
+
 
 
 
@@ -139,7 +159,7 @@ class DPCTGANSynthesizer(SDGYMBaseSynthesizer):
         optimizerG = optim.Adam(
             self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9), weight_decay=self.l2scale)
         optimizerD = optim.Adam(discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
-        privacy_engine = PrivacyEngine(
+        privacy_engine = torchdp.PrivacyEngine(
             discriminator,
             batch_size=self.batch_size,
             sample_size=train_data.shape[0],
