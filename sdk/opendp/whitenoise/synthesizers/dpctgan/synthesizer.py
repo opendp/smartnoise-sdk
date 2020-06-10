@@ -6,17 +6,15 @@ import torch.nn as nn
 import torch.utils.data
 from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential,Sigmoid
 from torch.nn import functional as F
-
-#from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
-#from opendp.whitenoise.synthesizers.utils import BGMTransformer
-
-#from dpctgan.transformer import DataTransformer
-from .transformer import DataTransformer
 from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
-from .conditional import ConditionalGenerator 
-from .models import Discriminator, Generator
-from .sampler import Sampler 
+import ctgan
+from ctgan.transformer import DataTransformer
+from ctgan.conditional import ConditionalGenerator 
+from ctgan.models import Discriminator, Generator
+from ctgan.sampler import Sampler 
+
+from ctgan import CTGANSynthesizer
 
 import torchdp
 
@@ -29,7 +27,7 @@ def _custom_create_or_extend_grad_sample(
     Create a 'grad_sample' attribute in the given parameter, or append to it
     if the 'grad_sample' attribute already exists.
     """
-    raise Exception("hello")
+    
     if hasattr(param, "grad_sample"):
         param.grad_sample = param.grad_sample + grad_sample
         #param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
@@ -37,13 +35,13 @@ def _custom_create_or_extend_grad_sample(
         param.grad_sample = grad_sample
 
 
-
+# Monkeypatches the _create_or_extend_grad_sample function when calling torchdp
 torchdp.supported_layers_grad_samplers._create_or_extend_grad_sample = _custom_create_or_extend_grad_sample
 
 
 
 
-class DPCTGANSynthesizer(SDGYMBaseSynthesizer):
+class DPCTGANSynthesizer(SDGYMBaseSynthesizer, CTGANSynthesizer):
     """Differential Privacy Conditional Table GAN Synthesizer
     This code is modifed from https://github.com/sdv-dev/CTGAN """
 
@@ -55,14 +53,17 @@ class DPCTGANSynthesizer(SDGYMBaseSynthesizer):
                  batch_size=500,
                  epochs=300,
                  pack=1,
+                 log_frequency=True,
                  disabled_dp=False,
                  target_delta=None,
                  sigma = 5,
                  max_per_sample_grad_norm=1.0,
                  budget = 3,
                  verbose=True
+
                  ):
 
+        # CTGAN model specific parameters
         self.embedding_dim = embedding_dim
         self.gen_dim = gen_dim
         self.dis_dim = dis_dim
@@ -71,7 +72,9 @@ class DPCTGANSynthesizer(SDGYMBaseSynthesizer):
         self.batch_size = batch_size
         self.epochs = epochs
         self.pack=pack
+        self.log_frequency = log_frequency
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # torchdp parameters
         self.sigma = sigma
         self.disabled_dp = disabled_dp
         self.target_delta = target_delta
@@ -83,56 +86,6 @@ class DPCTGANSynthesizer(SDGYMBaseSynthesizer):
         self.loss_g_list = []
         self.verbose=verbose
 
-    def _apply_activate(self, data):
-        data_t = []
-        st = 0
-        for item in self.transformer.output_info:
-            if item[1] == 'tanh':
-                ed = st + item[0]
-                data_t.append(torch.tanh(data[:, st:ed]))
-                st = ed
-            elif item[1] == 'softmax':
-                ed = st + item[0]
-                data_t.append(functional.gumbel_softmax(data[:, st:ed], tau=0.2))
-                st = ed
-            else:
-                assert 0
-
-        return torch.cat(data_t, dim=1)
-
-    def _cond_loss(self, data, c, m):
-        loss = []
-        st = 0
-        st_c = 0
-        skip = False
-        for item in self.transformer.output_info:
-            if item[1] == 'tanh':
-                st += item[0]
-                skip = True
-
-            elif item[1] == 'softmax':
-                if skip:
-                    skip = False
-                    st += item[0]
-                    continue
-
-                ed = st + item[0]
-                ed_c = st_c + item[0]
-                tmp = functional.cross_entropy(
-                    data[:, st:ed],
-                    torch.argmax(c[:, st_c:ed_c], dim=1),
-                    reduction='none'
-                )
-                loss.append(tmp)
-                st = ed
-                st_c = ed_c
-
-            else:
-                assert 0
-
-        loss = torch.stack(loss, dim=1)
-
-        return (loss * m).sum() / data.size()[0]
 
     def fit(self, train_data, categorical_columns=tuple(), ordinal_columns=tuple()):
 
@@ -144,7 +97,7 @@ class DPCTGANSynthesizer(SDGYMBaseSynthesizer):
         data_sampler = Sampler(train_data, self.transformer.output_info)
 
         data_dim = self.transformer.output_dimensions
-        self.cond_generator = ConditionalGenerator(train_data, self.transformer.output_info)
+        self.cond_generator = ConditionalGenerator(train_data, self.transformer.output_info, self.log_frequency)
 
         self.generator = Generator(
             self.embedding_dim + self.cond_generator.n_opt,
@@ -159,6 +112,7 @@ class DPCTGANSynthesizer(SDGYMBaseSynthesizer):
         optimizerG = optim.Adam(
             self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9), weight_decay=self.l2scale)
         optimizerD = optim.Adam(discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
+        
         privacy_engine = torchdp.PrivacyEngine(
             discriminator,
             batch_size=self.batch_size,
