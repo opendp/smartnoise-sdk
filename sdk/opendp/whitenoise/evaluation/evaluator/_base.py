@@ -26,3 +26,4 @@ class EvaluatorInterface:
 		analysis is the DP implementation object
 		Returns a metrics object
 		"""
+		pass

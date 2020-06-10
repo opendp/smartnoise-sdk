@@ -15,6 +15,7 @@ class BlackBoxPrivacyInterface:
 		it can be a graph, some sort of script written in any language, or a SQL
 		query. privacy_params are a shared format that is consumed by the evaluator
 		"""
+		pass
 	
 	def release(self, dataset : object, actual = False) -> Report:
 		"""
@@ -25,3 +26,4 @@ class BlackBoxPrivacyInterface:
 		
 		Returns reports as a in-memory Python tabular vector of arrays.
 		"""
+		pass

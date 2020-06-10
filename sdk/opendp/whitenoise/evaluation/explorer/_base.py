@@ -13,8 +13,10 @@ class ExplorerInterface:
 		"""
 		Explores powerset of a given dataset
 		"""
+		pass
 		
 	def generate_halton(self, halton_params : HaltonParams) -> [object]:
 		"""
 		Generate new datasets using halton sequence. Calls the powerset explore
 		"""
+		pass

@@ -13,12 +13,14 @@ class LearnerInterface:
 		or queries and query candidate pool. 
 		Reinforcement Learning approach: setup seed query
 		"""
+		pass
 		
 	def notify(self, analysis : object, metrics : Metrics, privacy_params : PrivacyParams):
 		"""
 		Tells the learner about the results of an analysis. 
 		Returns null
 		"""
+		pass
 
 	def propose(self):
 		"""
@@ -26,3 +28,4 @@ class LearnerInterface:
 		the given objective metrics.  May be totally random.  
 		Returns analysis object.
 		"""
+		pass
