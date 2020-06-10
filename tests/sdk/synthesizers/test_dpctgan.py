@@ -6,7 +6,7 @@ import string
 import pandas as pd 
 
 from opendp.whitenoise.metadata import CollectionMetadata 
-from opendp.whitenoise.synthesizers.dpctgan.synthesizer import DPCTGANSynthesizer 
+from opendp.whitenoise.synthesizers.dpctgan.dpctgan import DPCTGANSynthesizer 
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 

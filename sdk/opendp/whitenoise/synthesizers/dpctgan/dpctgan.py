@@ -24,8 +24,10 @@ def _custom_create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
 ) -> None:
     """
-    Create a 'grad_sample' attribute in the given parameter, or append to it
+    Create a 'grad_sample' attribute in the given parameter, or accumulate it
     if the 'grad_sample' attribute already exists.
+
+    This custom code will not work when using optimizer.virtual_step()
     """
     
     if hasattr(param, "grad_sample"):
@@ -42,8 +44,9 @@ torchdp.supported_layers_grad_samplers._create_or_extend_grad_sample = _custom_c
 
 
 class DPCTGANSynthesizer(SDGYMBaseSynthesizer, CTGANSynthesizer):
-    """Differential Privacy Conditional Table GAN Synthesizer
-    This code is modifed from https://github.com/sdv-dev/CTGAN """
+    """Differential Private Conditional Table GAN Synthesizer
+    This code adds Differential Privacy to CTGANSynthesizer from https://github.com/sdv-dev/CTGAN 
+    """
 
     def __init__(self,
                  embedding_dim=128,
