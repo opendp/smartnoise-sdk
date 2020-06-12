@@ -2,13 +2,15 @@ from opendp.whitenoise.evaluation.blackbox._base import BlackBoxPrivacyInterface
 from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
+from abc import ABC, abstractmethod
 
-class EvaluatorInterface:
+class EvaluatorInterface(ABC):
 	"""
 	Interface for various DP implementations to interface with tests available
 	in evaluator. Evaluator tests for various properties of DP implementation
 	like privacy, accuracy, utility and bias
 	"""
+	@abstractmethod
 	def evaluate(self, 
 		d1 : object, 
 		d2 : object, 

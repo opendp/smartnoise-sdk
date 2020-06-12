@@ -1,13 +1,15 @@
 from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.report._report import Report
+from abc import ABC, abstractmethod
 
-class BlackBoxPrivacyInterface:
+class BlackBoxPrivacyInterface(ABC):
 	"""
 	Interface for every black box differential privacy algorithm to implement
 	This shall help define functions that'll allow it to be evaluated whether
 	the DP histogram test passes or not for such implementations. 
 	"""
+	@abstractmethod
 	def prepare(self, analysis : object, privacy_params : PrivacyParams):
 		"""
 		Loads and compiles the specified analysis into a BlackBoxPrivacy instance
@@ -17,6 +19,7 @@ class BlackBoxPrivacyInterface:
 		"""
 		pass
 	
+	@abstractmethod
 	def release(self, dataset : object, actual = False) -> Report:
 		"""
 		Return a single report using the previously loaded analysis and 

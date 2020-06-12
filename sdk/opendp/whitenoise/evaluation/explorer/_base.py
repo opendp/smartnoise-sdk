@@ -1,7 +1,8 @@
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from opendp.whitenoise.evaluation.params._halton_params import HaltonParams
+from abc import ABC, abstractmethod
 
-class ExplorerInterface:
+class ExplorerInterface(ABC):
 	"""
 	DP evaluator can be invoked with various evaluation parameters
 	For example, for a SQL analysis, we can pass various datasets and 
@@ -9,12 +10,14 @@ class ExplorerInterface:
 	helps provide capability to do brute force generation of neighboring 
 	datasets.
 	"""
+	@abstractmethod
 	def evaluate_powerset(self, dataset : object) -> Metrics:
 		"""
 		Explores powerset of a given dataset
 		"""
 		pass
 		
+	@abstractmethod
 	def generate_halton(self, halton_params : HaltonParams) -> [object]:
 		"""
 		Generate new datasets using halton sequence. Calls the powerset explore
