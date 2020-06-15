@@ -148,15 +148,15 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                     print('Initializing iteration with columns ' + str(split))
                     start = time.time()
 
-                qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
+                qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations) / len(self.histograms)))
 
                 # Make sure we get a different query to measure:
                 while(qi in measurements):
-                    qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations)))
+                    qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations) / len(self.histograms)))
 
                 # NOTE: Add laplace noise here with budget
                 evals = self._evaluate(Q[qi], hist)
-                lap = self._laplace((2*self.iterations)/(self.epsilon*len(dimensions)))
+                lap = self._laplace((2*self.iterations)/(self.epsilon*len(dimensions)*len(self.histograms)))
                 measurements[qi] = evals + lap
 
                 # Improve approximation with Multiplicative Weights
