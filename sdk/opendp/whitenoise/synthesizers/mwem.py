@@ -26,7 +26,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array. 
     """
-    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = [], split_factor=None, max_bin_count=500):
+    def __init__(self, Q_count=400, epsilon=3.0, iterations=30, mult_weights_iterations=20, splits = [], split_factor=None, max_bin_count=500, custom_bin_count={}):
         self.Q_count = Q_count
         self.epsilon = epsilon
         self.iterations = iterations
@@ -39,6 +39,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.max_bin_count = max_bin_count
         self.mins_maxes = {}
         self.scale = {}
+        self.custom_bin_count = custom_bin_count
         
     def fit(self, data):
         """
@@ -76,6 +77,12 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         Creates samples from the histogram data.
         Follows sdgym schema to be compatible with their benchmark system.
+
+        NOTE: We are sampleing from each split dimensional
+        group as though they are *independent* from one another.
+        We have essentially created len(splits) DP histograms as
+        if they are separate databases, and combine the results into
+        a single sample. 
 
         :param samples: Number of samples to generate
         :type samples: int
@@ -143,20 +150,38 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             measurements = {}
             first = True
 
-            for i in range(self.iterations):
+            # NOTE: Here we perform a privacy check,
+            # because if the histogram dimensions are
+            # greater than the iterations, this can be
+            # a big privacy risk (the sample queries will
+            # otherwise be able to match the actual 
+            # distribution)
+            # This usually occurs with a split factor of 1,
+            # so that each attribute is independent of the other
+            flat_dim = 1
+            for j in dimensions:
+                flat_dim *= j
+            
+            if 2*flat_dim <= self.iterations:
+                warnings.warn("Flattened dimensionality of synthetic histogram is less than" + \
+                    " the number of iterations. This is a privacy risk." + \
+                        " Consider increasing your split_factor (especially if it is 1), or decreasing the number of iterations. " + \
+                            "Dim: " + str(flat_dim) + ' Split: ' + str(split), Warning)
+
+            for j in range(self.iterations):
                 if first:
                     print('Initializing iteration with columns ' + str(split))
                     start = time.time()
 
-                qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations) / len(self.histograms)))
+                qi = self._exponential_mechanism(hist, A, Q, ((self.epsilon / (2*self.iterations)) / len(self.histograms)))
 
                 # Make sure we get a different query to measure:
                 while(qi in measurements):
-                    qi = self._exponential_mechanism(hist, A, Q, (self.epsilon / (2*self.iterations) / len(self.histograms)))
+                    qi = self._exponential_mechanism(hist, A, Q, ((self.epsilon / (2*self.iterations)) / len(self.histograms)))
 
                 # NOTE: Add laplace noise here with budget
                 evals = self._evaluate(Q[qi], hist)
-                lap = self._laplace((2*self.iterations)/(self.epsilon*len(dimensions)*len(self.histograms)))
+                lap = self._laplace((2*self.iterations*len(self.histograms))/(self.epsilon*len(dimensions)))
                 measurements[qi] = evals + lap
 
                 # Improve approximation with Multiplicative Weights
@@ -218,6 +243,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             # Transpose for column wise iteration
             for i, column in enumerate(split_data.T):
                 min_c = min(column) ; max_c = max(column) 
+                # TODO: Make these noisy min/max
                 mins_data.append(min_c)
                 maxs_data.append(max_c)
                 # Dimension size (number of bins)
@@ -235,6 +261,11 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                     self.scale[str(split[i])] = (max_c-min_c+1)/self.max_bin_count
                 else:
                     self.scale[str(split[i])] = 1
+
+                if str(split[i]) in self.custom_bin_count:
+                    bin_count = int(self.custom_bin_count[str(split[i])])
+                    self.scale[str(split[i])] = 1
+
                 dims_sizes.append(bin_count)
             
             # Produce an N,D dimensional histogram, where
