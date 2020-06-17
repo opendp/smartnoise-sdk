@@ -1,4 +1,4 @@
-<a href="https://opendifferentialprivacy.github.io"><img src="images/WhiteNoise Logo/SVG/LogoMark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
+<a href="https://opendifferentialprivacy.github.io"><img src="images/WhiteNoise Logo/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
 ## System: Tools for Differential Privacy
 See also the accompanying [Core repository](https://github.com/opendifferentialprivacy/whitenoise-core) and [Samples repository](https://github.com/opendifferentialprivacy/whitenoise-samples) for this system.
 
