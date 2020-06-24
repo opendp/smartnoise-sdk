@@ -1,16 +1,19 @@
-<a href="https://opendifferentialprivacy.github.io"><img src="images/WhiteNoise Logo/SVG/Full_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
-## WhiteNoise System: Tools for Differential Privacy
-See also the accompanying [WhiteNoise-Core](https://github.com/opendifferentialprivacy/whitenoise-core) and [WhiteNoise-Samples](https://github.com/opendifferentialprivacy/whitenoise-samples) repositories for this system.
+[**Please note that we are renaming the toolkit and will be introducing the new name in the coming weeks.**](https://projects.iq.harvard.edu/opendp/blog/building-inclusive-community)
+
+<a href="https://opendifferentialprivacy.github.io"><img src="images/WhiteNoise Logo/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
+## System: Tools for Differential Privacy
+See also the accompanying [Core repository](https://github.com/opendifferentialprivacy/whitenoise-core) and [Samples repository](https://github.com/opendifferentialprivacy/whitenoise-samples) for this system. </br>
+
 
 ##
 
-The WhiteNoise tools allow researchers and analysts to: 
+The tools repository for this system allow researchers and analysts to: 
 
 * Use SQL dialect to create differentially private results over tabular data stores
 * Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy budget
 * Perform black-box stochastic testing against differential privacy modules
 
-The WhiteNoise system is currently aimed at scenarios where the researcher is trusted by the data owner.  Future releases will focus on hardened scenarios where the researcher or analyst is untrusted.  
+This differential privacy system is currently aimed at scenarios where the researcher is trusted by the data owner.  Future releases will focus on hardened scenarios where the researcher or analyst is untrusted.  
 
 New mechanisms and algorithms will be available in coming weeks.
 
@@ -34,7 +37,7 @@ The stochastic evaluator drives black-box privacy algorithms, checking for priva
 Notebooks illustrating the use of the evaluator can be found [here](https://github.com/opendifferentialprivacy/whitenoise-samples/tree/master/evaluator).
 
 ## Installation:
-The WhiteNoise library can be installed from PyPi:
+The system's Core library can be installed from PyPi:
 > pip install opendp-whitenoise
 
 ## Documentation
@@ -84,5 +87,5 @@ Please let us know if you encounter a bug by [creating an issue](https://github.
 
 We appreciate all contributions. We welcome pull requests with bug-fixes without prior discussion.
 
-If you plan to contribute new features, utility functions or extensions to the WhiteNoise system, please first open an issue and discuss the feature with us.
+If you plan to contribute new features, utility functions or extensions to this system, please first open an issue and discuss the feature with us.
   - Sending a PR without discussion might end up resulting in a rejected PR, because we may be taking the system in a different direction than you might be aware of.
