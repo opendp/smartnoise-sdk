@@ -41,6 +41,11 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.scale = {}
         self.custom_bin_count = custom_bin_count
         
+        # Pandas check
+        self.pandas = False
+        self.pd_cols = None
+        self.pd_index = None
+        
     def fit(self, data):
         """
         Creates a synthetic histogram distribution, based on the original data.
@@ -53,8 +58,13 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         if isinstance(data, np.ndarray):
             self.data = data.copy()
+        elif isinstance(data, pd.DataFrame):
+            self.pandas = True
+            self.data = data.to_numpy().copy()
+            self.pd_cols = data.columns
+            self.pd_index = data.index
         else:
-            raise ValueError("Data must be a numpy array.")
+            raise ValueError("Data must be a numpy array or pandas dataframe.")
 
         if self.split_factor != None and self.splits == []:
             self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
@@ -126,7 +136,14 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         combined = synthesized_columns
         # Reorder the columns to mirror their original order
         r = self._reorder(self.splits)
-        return combined[:,r]
+        
+        if self.pandas:
+            df = pd.DataFrame(combined[:,r], 
+                index = self.pd_index,
+                columns = self.pd_cols)
+            return df
+        else:
+            return combined[:,r]
 
     def mwem(self):
         """
