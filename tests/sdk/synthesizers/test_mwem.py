@@ -86,3 +86,5 @@ class TestMWEM:
     
     def test_generate_splits(self):
         assert (synth._generate_splits(3,3) == np.array([[0, 1, 2]])).all()
+
+    # TODO: More split tests

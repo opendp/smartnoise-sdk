@@ -7,4 +7,3 @@ dependencies:
     - pandasql
     - pandas
     - opendp-whitenoise
-    - sdgym
