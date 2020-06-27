@@ -18,7 +18,36 @@ KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier, GradientBoostingClassifie
                LogisticRegression, GaussianMixture, MLPClassifier, DecisionTreeClassifier,
                GaussianNB, BernoulliNB, MultinomialNB, RandomForestClassifier, ExtraTreesClassifier]
 
-def tune_hypereparams():
+# from sklearn.model_selection import GridSearchCV
+# from sklearn.svm import SVR
+# gsc = GridSearchCV(
+#         estimator=SVR(kernel='rbf'),
+#         param_grid={
+#             'C': [0.1, 1, 100, 1000],
+#             'epsilon': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
+#             'gamma': [0.0001, 0.001, 0.005, 0.1, 1, 3, 5]
+#         },
+#         cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1)
+
+# from sklearn.linear_model.base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+
+# class DPSynthEstimatorHP(BaseEstimator):
+#     """
+#     We want to take in:
+#     1. The model for our data synthesis.
+#     2. The evaluation model for parameter selection.
+#     """
+
+def grid_search():
+    pass
+#     from sklearn.model_selection import GridSearchCV
+#     gsc = GridSearchCV(
+#         estimator=SVR(kernel='rbf'),
+#         param_grid = {'Q':[400,1000],[]...}
+#         cv = 5,
+#         scoring = (custom scoring))
+    
+def tune_hyperparams():
     pass
 
 def load_data(req_datasets=[]):
@@ -70,21 +99,26 @@ def load_data(req_datasets=[]):
     # Return dictionary of pd dataframes
     return loaded_datasets
 
-def run_synthesizers(datasets, synthesizers=[]):
+def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
     import time
     for n, s in synthesizers:
         print('Synthesizer: '+ str(n))
         for d in datasets:
-            start = time.time()
-            print(datasets[d]["data"])
-            sampled = s.fit_sample((datasets[d]["data"]))
-            end = time.time() - start
-            print(datasets[d]["name"] + ' finished in ' + str(end))
-            # Add that synthesized dataset to the dict
-            datasets[d][n] = sampled
+            datasets[d][n] = {}
+            synth_dict = datasets[d][n]
+            for e in epsilons:
+                start = time.time()
+                # TODO: Set epsilons more elegantly
+                s.epsilon = e
+                sampled = s.fit_sample((datasets[d]["data"]))
+                end = time.time() - start
+                print(datasets[d]["name"] + ' finished in ' + str(end))
+                # Add that synthesized dataset to the dict
+                # Keyed with epsilon value
+                synth_dict[str(e)] = sampled
     return datasets
 
-def ml_eval(data_dict, synthesizers, seed=42, test_size = 0.2):
+def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import classification_report
     from sklearn.metrics import accuracy_score
@@ -93,57 +127,78 @@ def ml_eval(data_dict, synthesizers, seed=42, test_size = 0.2):
     y = real.loc[:, real.columns == data_dict['target']]
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=seed)
     
-    def model_tests(dd,n,model,cat,xt,yt):
+    def model_tests(dd,n,model,cat,xt,yt,eps=None):
         predictions = model.predict(xt)
         model_dict = dd[type(model).__name__]
-        model_dict[cat] = {}
-        model_dict[cat]['classification_report'] = classification_report(yt, predictions)
-        model_dict[cat]['accuracy'] = accuracy_score(yt, predictions)
-        print('Accuracy ' + cat + ' ' + str(type(model).__name__) + ':' + str(model_dict[cat]['accuracy']))
-        return model_dict[cat]['accuracy']
+        if eps:
+            if cat not in model_dict:
+                model_dict[cat] = {}
+            model_dict[cat][eps] = {}
+            model_cat = model_dict[cat][eps]
+        else:
+            model_dict[cat] = {}
+            model_cat = model_dict[cat]
+        model_cat['classification_report'] = classification_report(yt, predictions)
+        model_cat['accuracy'] = accuracy_score(yt, predictions)
+        # print('Accuracy ' + cat + ' ' + str(type(model).__name__) + ':' + str(model_cat['accuracy']))
+        return model_cat['accuracy']
     
     for n, _ in synthesizers:
-        synth = data_dict[n]
-        X_synth = synth.loc[:, synth.columns != data_dict['target']]
-        y_synth = synth.loc[:, synth.columns == data_dict['target']]
-        x_train_synth, x_test_synth, y_train_synth, y_test_synth = train_test_split(X_synth, y_synth, test_size=test_size, random_state=seed)
-        
         trtrs = []
-        tstss = []
+        tstrs = {}
+        tstss = {}
         
         for model in KNOWN_MODELS:
             model_real = model()
             model_real.fit(x_train, y_train)
-
-            model_fake = model()
-            model_fake.fit(x_train_synth, y_train_synth)
             
             data_dict[type(model_real).__name__] = {}
-            #Test the model
+            
             trtr = model_tests(data_dict, n, model_real, 'TRTR', x_test, y_test)
-            tstr = model_tests(data_dict, n, model_fake, 'TSTR', x_test, y_test)
-            tsts = model_tests(data_dict, n, model_fake, 'TSTS', x_test_synth, y_test_synth)
             trtrs.append(trtr)
-            tstss.append(tsts)
-            print()
+            
+            for e in epsilons:
+                if str(e) not in tstss:
+                    tstss[str(e)] = []
+                if str(e) not in tstrs:
+                    tstrs[str(e)] = []
+                    
+                synth = data_dict[n][str(e)]
+                
+                X_synth = synth.loc[:, synth.columns != data_dict['target']]
+                y_synth = synth.loc[:, synth.columns == data_dict['target']]
+                x_train_synth, x_test_synth, y_train_synth, y_test_synth = train_test_split(X_synth, y_synth, test_size=test_size, random_state=seed)
+
+                model_fake = model()
+                model_fake.fit(x_train_synth, y_train_synth)
+                
+                #Test the model
+                tstr = model_tests(data_dict, n, model_fake, 'TSTR', x_test, y_test, str(e))
+                tsts = model_tests(data_dict, n, model_fake, 'TSTS', x_test_synth, y_test_synth, str(e))
+                tstss[str(e)].append(tsts)
+                tstrs[str(e)].append(tstr)
             
         data_dict['trtr_sra'] = trtrs
         data_dict['tsts_sra'] = tstss
+        data_dict['tstr_avg'] = tstrs
         
     return data_dict
             
-def eval_data(data_dicts, synthesizers):
+def eval_data(data_dicts, synthesizers, epsilons):
     print(data_dicts)
     for d in data_dicts:
         for n,_ in synthesizers:
-            wass = wasserstein_randomization(data_dicts[d][n], data_dicts[d]['data'], 1000)
-            data_dicts[d]['wasserstein'] = wass
+            for e in epsilons:
+                wass = wasserstein_randomization(data_dicts[d][n][str(e)], data_dicts[d]['data'], 1000)
+                data_dicts[d][n]['wasserstein_'+str(e)] = wass
             
-        ml_eval(data_dicts[d], synthesizers)
-        
-        sra_score = sra(data_dicts[d]['trtr_sra'],data_dicts[d]['tsts_sra'])
-        print(sra_score)
-        data_dicts[d]['sra'] = sra_score
+                ml_eval(data_dicts[d], synthesizers, epsilons)
+
+                sra_score = sra(data_dicts[d]['trtr_sra'],data_dicts[d]['tsts_sra'][str(e)])
+                print(sra_score)
+                if 'sra' not in data_dicts[d]:
+                    data_dicts[d]['sra'] = {}
+                data_dicts[d]['sra'][str(e)] = sra_score
         
     return data_dicts
 
@@ -198,7 +253,6 @@ def wasserstein_randomization(d1, d2, iters):
     d_pd = pd.DataFrame(distances)
     print(d_pd.describe())
 
-    return distances
     """
     import numpy as np
     import pandas as pd
@@ -211,8 +265,23 @@ def wasserstein_randomization(d1, d2, iters):
 
     wasserstein_randomization(d1.to_numpy(), d2.to_numpy(), 1000)
     """
+    
 
-def run_suite(synthesizers=[], req_datasets=[]):
+
+
+def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 10.0, 100.0]):
+    import json
+    class JSONEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if hasattr(obj, 'to_json'):
+                return {}
+                #return obj.to_json(orient='records')
+            return json.JSONEncoder.default(self, obj)
+        
     loaded_datasets = load_data(req_datasets)
-    data_dicts = run_synthesizers(loaded_datasets, synthesizers)
-    results = eval_data(data_dicts, synthesizers)
+    data_dicts = run_synthesizers(loaded_datasets, synthesizers, epsilons)
+    results = eval_data(data_dicts, synthesizers, epsilons)
+    
+    with open('artifact.json', 'w') as f:
+        json.dump(results, f, cls=JSONEncoder)
+    
