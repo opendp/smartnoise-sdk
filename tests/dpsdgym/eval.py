@@ -1,5 +1,5 @@
 from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, GradientBoostingClassifier
-from sklearn.metrics import accuracy_score, f1_score, r2_score
+from sklearn.metrics import accuracy_score, f1_score, r2_score, roc_auc_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 from sklearn.neural_network import MLPClassifier
@@ -12,12 +12,42 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import numpy as np
 import pandas as pd
 
-SEED = None
+SEED = 42
 
-KNOWN_DATASETS = ['nursery']
+KNOWN_DATASETS = ['wine'] #['nursery']#, 'mushroom']#
 
-KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier, GradientBoostingClassifier,
-               LogisticRegression, GaussianMixture, MLPClassifier, DecisionTreeClassifier,
+SYNTHESIZERS = [
+    ('mwem', MWEMSynthesizer)
+]
+
+SYNTH_SETTINGS = {
+    'mwem': {
+        'nursery': {
+            'Q_count':1000,
+            'iterations':30,
+            'mult_weights_iterations':20,
+            'split_factor':8,
+            'max_bin_count':400
+        },
+        'mushroom': {
+            'Q_count':1000,
+            'iterations':30,
+            'mult_weights_iterations':20,
+            'split_factor':4,
+            'max_bin_count':400
+        },
+        'wine': {
+            'Q_count':1000,
+            'iterations':30,
+            'mult_weights_iterations':20,
+            'split_factor':6,
+            'max_bin_count':400
+        }
+    }
+}
+# GradientBoostingClassifier
+KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
+               LogisticRegression, MLPClassifier, DecisionTreeClassifier,
                GaussianNB, BernoulliNB, MultinomialNB, RandomForestClassifier, ExtraTreesClassifier]
 
 MODEL_ARGS = {
@@ -28,20 +58,20 @@ MODEL_ARGS = {
     'BaggingClassifier': {
         'random_state': SEED
     },
-    'GradientBoostingClassifier': {
-        'random_state': SEED,
-        'n_estimators': 200
-    },
+#     'GradientBoostingClassifier': {
+#         'random_state': SEED,
+#         'n_estimators': 200
+#     },
     'LogisticRegression': {
         'random_state': SEED,
-        'max_iter': 200,
+        'max_iter': 500,
         'multi_class': 'auto',
         'solver': 'lbfgs'
     },
-    'GaussianMixture': {
-        'random_state': SEED,
-        'max_iter': 200
-    },
+#     'GaussianMixture': {
+#         'random_state': SEED,
+#         'max_iter': 200
+#     },
     'MLPClassifier': {
         'random_state': SEED,
         'max_iter': 500
@@ -68,38 +98,6 @@ MODEL_ARGS = {
     }
 }
 
-# from sklearn.model_selection import GridSearchCV
-# from sklearn.svm import SVR
-# gsc = GridSearchCV(
-#         estimator=SVR(kernel='rbf'),
-#         param_grid={
-#             'C': [0.1, 1, 100, 1000],
-#             'epsilon': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
-#             'gamma': [0.0001, 0.001, 0.005, 0.1, 1, 3, 5]
-#         },
-#         cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1)
-
-# from sklearn.linear_model.base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
-
-# class DPSynthEstimatorHP(BaseEstimator):
-#     """
-#     We want to take in:
-#     1. The model for our data synthesis.
-#     2. The evaluation model for parameter selection.
-#     """
-
-def grid_search():
-    pass
-#     from sklearn.model_selection import GridSearchCV
-#     gsc = GridSearchCV(
-#         estimator=SVR(kernel='rbf'),
-#         param_grid = {'Q':[400,1000],[]...}
-#         cv = 5,
-#         scoring = (custom scoring))
-    
-def tune_hyperparams():
-    pass
-
 def load_data(req_datasets=[]):
     import requests
     import io
@@ -120,7 +118,10 @@ def load_data(req_datasets=[]):
         r = requests.post(dataset['url'])
         if r.ok:
             data = r.content.decode('utf8')
-            df = pd.read_csv(io.StringIO(data), names=dataset['columns'].split(','), index_col=False)
+            sep = dataset['sep']
+            df = pd.read_csv(io.StringIO(data), names=dataset['columns'].split(','), sep=sep, index_col=False)
+            if dataset['header'] == "t":
+                df = df.iloc[1:]
             return df
 
         raise "Unable to retrieve dataset: " + dataset
@@ -133,10 +134,10 @@ def load_data(req_datasets=[]):
         from sklearn.preprocessing import LabelEncoder
 
         encoders = {}
-
-        for column in select_column(dataset['categorical_columns']):
-            encoders[column] = LabelEncoder()
-            df[column] = encoders[column].fit_transform(df[column])
+        if dataset['categorical_columns'] != "":
+            for column in select_column(dataset['categorical_columns']):
+                encoders[column] = LabelEncoder()
+                df[column] = encoders[column].fit_transform(df[column])
 
         return {"data": df, "target": dataset['target'], "name": dataset['name']}
 
@@ -156,11 +157,13 @@ def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
         for d in datasets:
             datasets[d][n] = {}
             synth_dict = datasets[d][n]
+            synth_args = SYNTH_SETTINGS[n][d]
             for e in epsilons:
                 start = time.time()
                 # TODO: Set epsilons more elegantly
-                s.epsilon = e
-                sampled = s.fit_sample((datasets[d]["data"]))
+                synth = s(epsilon=float(e), **synth_args)
+                print(datasets[d]["data"])
+                sampled = synth.fit_sample((datasets[d]["data"]))
                 end = time.time() - start
                 print(datasets[d]["name"] + ' finished in ' + str(end))
                 # Add that synthesized dataset to the dict
@@ -190,7 +193,24 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
             model_cat = model_dict[cat]
         model_cat['classification_report'] = classification_report(np.ravel(yt), predictions, labels=np.unique(predictions))
         model_cat['accuracy'] = accuracy_score(np.ravel(yt), predictions)
+        
+        # Check to see if classification problem is multiclass
+        probs = model.predict_proba(xt)
+        if len(np.unique(yt)) > 2:
+            model_cat['aucroc'] = roc_auc_score(yt, probs, multi_class='ovr')
+        else:
+            if len(np.unique(yt)) == 1:
+                # Occasionally, the synthesizer will
+                # produce synthetic labels of only one class
+                # - in this case, aucroc is undefined, so we set 
+                # it to 0 (undesirable)
+                model_cat['aucroc'] = 0.0
+            else:
+                probs = probs[:,0]
+                model_cat['aucroc'] = roc_auc_score(yt, probs)
+            
         # print('Accuracy ' + cat + ' ' + str(type(model).__name__) + ':' + str(model_cat['accuracy']))
+        
         return model_cat['accuracy']
     
     for n, _ in synthesizers:
@@ -319,10 +339,7 @@ def wasserstein_randomization(d1, d2, iters):
     wasserstein_randomization(d1.to_numpy(), d2.to_numpy(), 1000)
     """
     
-
-
-
-def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 10.0, 100.0]):
+def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 10.0, 100.0]): # 
     import json
     class JSONEncoder(json.JSONEncoder):
         def default(self, obj):

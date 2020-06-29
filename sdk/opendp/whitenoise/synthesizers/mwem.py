@@ -60,6 +60,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             self.data = data.copy()
         elif isinstance(data, pd.DataFrame):
             self.pandas = True
+            for col in data.columns:
+                data[col] = pd.to_numeric(data[col], errors='ignore')
             self.data = data.to_numpy().copy()
             self.pd_cols = data.columns
             self.pd_index = data.index
