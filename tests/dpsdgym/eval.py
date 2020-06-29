@@ -12,11 +12,61 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import numpy as np
 import pandas as pd
 
+SEED = None
+
 KNOWN_DATASETS = ['nursery']
 
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier, GradientBoostingClassifier,
                LogisticRegression, GaussianMixture, MLPClassifier, DecisionTreeClassifier,
                GaussianNB, BernoulliNB, MultinomialNB, RandomForestClassifier, ExtraTreesClassifier]
+
+MODEL_ARGS = {
+    'AdaBoostClassifier': {
+        'random_state': SEED,
+        'n_estimators': 100
+    },
+    'BaggingClassifier': {
+        'random_state': SEED
+    },
+    'GradientBoostingClassifier': {
+        'random_state': SEED,
+        'n_estimators': 200
+    },
+    'LogisticRegression': {
+        'random_state': SEED,
+        'max_iter': 200,
+        'multi_class': 'auto',
+        'solver': 'lbfgs'
+    },
+    'GaussianMixture': {
+        'random_state': SEED,
+        'max_iter': 200
+    },
+    'MLPClassifier': {
+        'random_state': SEED,
+        'max_iter': 500
+    },
+    'DecisionTreeClassifier': {
+        'random_state': SEED,
+        'class_weight': 'balanced'
+    },
+    'GaussianNB': {
+    },
+    'BernoulliNB': {
+    },
+    'MultinomialNB': {
+    },
+    'RandomForestClassifier': {
+        'random_state': SEED,
+        'class_weight': 'balanced',
+        'n_estimators': 200
+    },
+    'ExtraTreesClassifier': {
+        'random_state': SEED,
+        'class_weight': 'balanced',
+        'n_estimators': 200
+    }
+}
 
 # from sklearn.model_selection import GridSearchCV
 # from sklearn.svm import SVR
@@ -138,8 +188,8 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
         else:
             model_dict[cat] = {}
             model_cat = model_dict[cat]
-        model_cat['classification_report'] = classification_report(yt, predictions)
-        model_cat['accuracy'] = accuracy_score(yt, predictions)
+        model_cat['classification_report'] = classification_report(np.ravel(yt), predictions, labels=np.unique(predictions))
+        model_cat['accuracy'] = accuracy_score(np.ravel(yt), predictions)
         # print('Accuracy ' + cat + ' ' + str(type(model).__name__) + ':' + str(model_cat['accuracy']))
         return model_cat['accuracy']
     
@@ -149,8 +199,11 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
         tstss = {}
         
         for model in KNOWN_MODELS:
-            model_real = model()
-            model_real.fit(x_train, y_train)
+            m_name = type(model()).__name__
+            model_args = MODEL_ARGS[m_name]
+            print(m_name)
+            model_real = model(**model_args)
+            model_real.fit(x_train, y_train.values.ravel())
             
             data_dict[type(model_real).__name__] = {}
             
@@ -169,8 +222,8 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
                 y_synth = synth.loc[:, synth.columns == data_dict['target']]
                 x_train_synth, x_test_synth, y_train_synth, y_test_synth = train_test_split(X_synth, y_synth, test_size=test_size, random_state=seed)
 
-                model_fake = model()
-                model_fake.fit(x_train_synth, y_train_synth)
+                model_fake = model(**model_args)
+                model_fake.fit(x_train_synth, y_train_synth.values.ravel())
                 
                 #Test the model
                 tstr = model_tests(data_dict, n, model_fake, 'TSTR', x_test, y_test, str(e))
@@ -284,4 +337,31 @@ def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 10.0, 
     
     with open('artifact.json', 'w') as f:
         json.dump(results, f, cls=JSONEncoder)
-    
+
+        
+"""
+{
+   "nursery":{
+      "data":{},
+      "target":"health",
+      "name":"nursery",
+      "mwem":{},
+      "AdaBoostClassifier":{},
+      "BaggingClassifier":{},
+      "GradientBoostingClassifier":{},
+      "LogisticRegression":{},
+      "GaussianMixture":{},
+      "MLPClassifier":{},
+      "DecisionTreeClassifier":{},
+      "GaussianNB":{},
+      "BernoulliNB":{},
+      "MultinomialNB":{},
+      "RandomForestClassifier":{},
+      "ExtraTreesClassifier":{},
+      "trtr_sra":[],
+      "tsts_sra":{},
+      "tstr_avg":{},
+      "sra":{}
+   }
+}
+"""
