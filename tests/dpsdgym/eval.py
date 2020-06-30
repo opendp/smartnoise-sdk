@@ -8,16 +8,22 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 #from xgboost import XGBRegressor
 
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn.metrics import accuracy_score
+
+from diffprivlib.models import LogisticRegression as DPLR
 
 import numpy as np
 import pandas as pd
 
 SEED = 42
 
-KNOWN_DATASETS = ['wine'] #['nursery']#, 'mushroom']#
+KNOWN_DATASETS = ['mushroom'] #['nursery']#, 'mushroom']#
 
 SYNTHESIZERS = [
-    ('mwem', MWEMSynthesizer)
+    ('mwem', MWEMSynthesizer),
+    ('target_synth', TargetSynthesizer)
 ]
 
 SYNTH_SETTINGS = {
@@ -30,7 +36,7 @@ SYNTH_SETTINGS = {
             'max_bin_count':400
         },
         'mushroom': {
-            'Q_count':1000,
+            'Q_count':3000,
             'iterations':30,
             'mult_weights_iterations':20,
             'split_factor':4,
@@ -42,6 +48,38 @@ SYNTH_SETTINGS = {
             'mult_weights_iterations':20,
             'split_factor':2,
             'max_bin_count':200
+        }
+    },
+    'target_synth': {
+        'nursery': {
+            'dp_synthesizer': MWEMSynthesizer,
+            'synth_args': {
+                'Q_count':1000,
+                'iterations':30,
+                'mult_weights_iterations':20,
+                'split_factor':8,
+                'max_bin_count':400
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'health'
+        },
+        'mushroom': {
+            'dp_synthesizer': MWEMSynthesizer,
+            'synth_args': {
+                'Q_count':1000,
+                'iterations':30,
+                'mult_weights_iterations':20,
+                'split_factor':4,
+                'max_bin_count':400
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'edible'
         }
     }
 }
@@ -103,7 +141,7 @@ class dumb_predictor():
         self.label = label
         
     def predict(self, instances):
-        return self.label
+        return np.full(len(instances), self.label)
 
 def load_data(req_datasets=[]):
     import requests
@@ -169,7 +207,6 @@ def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
                 start = time.time()
                 # TODO: Set epsilons more elegantly
                 synth = s(epsilon=float(e), **synth_args)
-                print(datasets[d]["data"])
                 sampled = synth.fit_sample((datasets[d]["data"]))
                 end = time.time() - start
                 print(datasets[d]["name"] + ' finished in ' + str(end))
@@ -178,30 +215,24 @@ def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
                 synth_dict[str(e)] = sampled
     return datasets
 
-def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import classification_report
-    from sklearn.metrics import accuracy_score
-    real = data_dict["data"]
-    X = real.loc[:, real.columns != data_dict['target']]
-    y = real.loc[:, real.columns == data_dict['target']]
-    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=seed)
-    
-    def model_tests(dd,n,model,cat,xt,yt,eps=None):
-        predictions = model.predict(xt)
-        model_dict = dd[type(model).__name__]
-        if eps:
-            if cat not in model_dict:
-                model_dict[cat] = {}
-            model_dict[cat][eps] = {}
-            model_cat = model_dict[cat][eps]
-        else:
+def model_tests(dd,n,model,cat,xt,yt,eps=None):
+    predictions = model.predict(xt)
+    if n not in dd[type(model).__name__]:
+        dd[type(model).__name__][n] = {}
+    model_dict = dd[type(model).__name__][n]
+    if eps:
+        if cat not in model_dict:
             model_dict[cat] = {}
-            model_cat = model_dict[cat]
-        model_cat['classification_report'] = classification_report(np.ravel(yt), predictions, labels=np.unique(predictions))
-        model_cat['accuracy'] = accuracy_score(np.ravel(yt), predictions)
-        
-        # Check to see if classification problem is multiclass
+        model_dict[cat][eps] = {}
+        model_cat = model_dict[cat][eps]
+    else:
+        model_dict[cat] = {}
+        model_cat = model_dict[cat]
+    model_cat['classification_report'] = classification_report(np.ravel(yt), predictions, labels=np.unique(predictions))
+    model_cat['accuracy'] = accuracy_score(np.ravel(yt), predictions)
+    
+    # Check to see if classification problem is multiclass
+    if type(model).__name__ != 'dumb_predictor':
         probs = model.predict_proba(xt)
         unique = np.array(np.unique(yt))
         if len(unique) > 2:
@@ -236,16 +267,22 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
             else:
                 probs = probs[:,0]
                 model_cat['aucroc'] = roc_auc_score(yt, probs)
-            
-        # print('Accuracy ' + cat + ' ' + str(type(model).__name__) + ':' + str(model_cat['accuracy']))
         
-        return model_cat['accuracy']
+    # print('Accuracy ' + cat + ' ' + str(type(model).__name__) + ':' + str(model_cat['accuracy']))
+    
+    return model_cat['accuracy']
+
+def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
+    real = data_dict["data"]
+    X = real.loc[:, real.columns != data_dict['target']]
+    y = real.loc[:, real.columns == data_dict['target']]
+    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=seed)
     
     for n, _ in synthesizers:
         trtrs = []
         tstrs = {}
         tstss = {}
-        
+
         for model in KNOWN_MODELS:
             m_name = type(model()).__name__
             model_args = MODEL_ARGS[m_name]
@@ -253,7 +290,8 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
             model_real = model(**model_args)
             model_real.fit(x_train, y_train.values.ravel())
             
-            data_dict[type(model_real).__name__] = {}
+            if type(model_real).__name__ not in data_dict:
+                data_dict[type(model_real).__name__] = {}
             
             trtr = model_tests(data_dict, n, model_real, 'TRTR', x_test, y_test)
             trtrs.append(trtr)
@@ -281,17 +319,21 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
                     tstrs[str(e)].append(tstr)
                 elif len(np.unique(y_train_ravel)) == 1:
                     dumb = dumb_predictor(np.unique(y_train_ravel)[0])
+                    data_dict[type(dumb).__name__] = {}
                     tstr = model_tests(data_dict, n, dumb, 'TSTR', x_test, y_test, str(e))
                     tsts = model_tests(data_dict, n, dumb, 'TSTS', x_test_synth, y_test_synth, str(e))
                     tstss[str(e)].append(tsts)
                     tstrs[str(e)].append(tstr)
-                    
-#                     tstss[str(e)].append(float(1.0/len(model_real.classes_)))
-#                     tstrs[str(e)].append(float(1.0/len(model_real.classes_)))
-            
-        data_dict['trtr_sra'] = trtrs
-        data_dict['tsts_sra'] = tstss
-        data_dict['tstr_avg'] = tstrs
+
+        if 'trtr_sra' not in data_dict:
+            data_dict['trtr_sra'] = {}
+        if 'tsts_sra' not in data_dict:
+            data_dict['tsts_sra'] = {}
+        if 'tstr_avg' not in data_dict:
+            data_dict['tstr_avg'] = {}
+        data_dict['trtr_sra'][n] = trtrs
+        data_dict['tsts_sra'][n] = tstss
+        data_dict['tstr_avg'][n] = tstrs
         
     return data_dict
             
@@ -305,11 +347,11 @@ def eval_data(data_dicts, synthesizers, epsilons):
             
                 ml_eval(data_dicts[d], synthesizers, epsilons)
 
-                sra_score = sra(data_dicts[d]['trtr_sra'],data_dicts[d]['tsts_sra'][str(e)])
+                sra_score = sra(data_dicts[d]['trtr_sra'][n],data_dicts[d]['tsts_sra'][n][str(e)])
                 print(sra_score)
                 if 'sra' not in data_dicts[d]:
-                    data_dicts[d]['sra'] = {}
-                data_dicts[d]['sra'][str(e)] = sra_score
+                    data_dicts[d][n]['sra'] = {}
+                data_dicts[d][n]['sra'][str(e)] = sra_score
         
     return data_dicts
 
@@ -377,7 +419,7 @@ def wasserstein_randomization(d1, d2, iters):
     wasserstein_randomization(d1.to_numpy(), d2.to_numpy(), 1000)
     """
     
-def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 45.0, 95.0]): # [0.01, 0.1, 1.0, 10.0, 100.0] 
+def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 45.0, 95.0]): # [0.01, 0.1, 1.0, 9.0, 45.0, 95.0] [0.01, 0.1, 1.0, 10.0, 100.0] 
     import json
     class JSONEncoder(json.JSONEncoder):
         def default(self, obj):
