@@ -40,8 +40,8 @@ SYNTH_SETTINGS = {
             'Q_count':1000,
             'iterations':30,
             'mult_weights_iterations':20,
-            'split_factor':6,
-            'max_bin_count':400
+            'split_factor':2,
+            'max_bin_count':200
         }
     }
 }
@@ -64,7 +64,7 @@ MODEL_ARGS = {
 #     },
     'LogisticRegression': {
         'random_state': SEED,
-        'max_iter': 500,
+        'max_iter': 1000,
         'multi_class': 'auto',
         'solver': 'lbfgs'
     },
@@ -97,6 +97,13 @@ MODEL_ARGS = {
         'n_estimators': 200
     }
 }
+
+class dumb_predictor():
+    def __init__(self, label):
+        self.label = label
+        
+    def predict(self, instances):
+        return self.label
 
 def load_data(req_datasets=[]):
     import requests
@@ -196,8 +203,29 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
         
         # Check to see if classification problem is multiclass
         probs = model.predict_proba(xt)
-        if len(np.unique(yt)) > 2:
-            model_cat['aucroc'] = roc_auc_score(yt, probs, multi_class='ovr')
+        unique = np.array(np.unique(yt))
+        if len(unique) > 2:
+            try:
+                model_cat['aucroc'] = roc_auc_score(yt, probs, multi_class='ovr')
+            except:
+                try:
+                    # We can try again, removing classes that have no
+                    # examples in yt
+                    missing_classes = np.setdiff1d(model.classes_, unique)
+                    cols = []
+                    for m in missing_classes:
+                        ind = np.where(model.classes_==m)
+                        cols.append(ind[0].tolist())
+                        
+                    existant_probs = np.delete(probs, cols, axis=1)
+
+                    for i, row in enumerate(existant_probs):
+                        existant_probs[i] = row / np.sum(row)
+                        
+                    model_cat['aucroc'] = roc_auc_score(yt, existant_probs, multi_class='ovr')
+                except:
+                    # If this doesnt work, we admit defeat
+                    model_cat['aucroc'] = 0.0
         else:
             if len(np.unique(yt)) == 1:
                 # Occasionally, the synthesizer will
@@ -243,13 +271,23 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
                 x_train_synth, x_test_synth, y_train_synth, y_test_synth = train_test_split(X_synth, y_synth, test_size=test_size, random_state=seed)
 
                 model_fake = model(**model_args)
-                model_fake.fit(x_train_synth, y_train_synth.values.ravel())
-                
-                #Test the model
-                tstr = model_tests(data_dict, n, model_fake, 'TSTR', x_test, y_test, str(e))
-                tsts = model_tests(data_dict, n, model_fake, 'TSTS', x_test_synth, y_test_synth, str(e))
-                tstss[str(e)].append(tsts)
-                tstrs[str(e)].append(tstr)
+                y_train_ravel = y_train_synth.values.ravel()
+                if len(np.unique(y_train_ravel)) > 1:
+                    model_fake.fit(x_train_synth, y_train_ravel)
+                    #Test the model
+                    tstr = model_tests(data_dict, n, model_fake, 'TSTR', x_test, y_test, str(e))
+                    tsts = model_tests(data_dict, n, model_fake, 'TSTS', x_test_synth, y_test_synth, str(e))
+                    tstss[str(e)].append(tsts)
+                    tstrs[str(e)].append(tstr)
+                elif len(np.unique(y_train_ravel)) == 1:
+                    dumb = dumb_predictor(np.unique(y_train_ravel)[0])
+                    tstr = model_tests(data_dict, n, dumb, 'TSTR', x_test, y_test, str(e))
+                    tsts = model_tests(data_dict, n, dumb, 'TSTS', x_test_synth, y_test_synth, str(e))
+                    tstss[str(e)].append(tsts)
+                    tstrs[str(e)].append(tstr)
+                    
+#                     tstss[str(e)].append(float(1.0/len(model_real.classes_)))
+#                     tstrs[str(e)].append(float(1.0/len(model_real.classes_)))
             
         data_dict['trtr_sra'] = trtrs
         data_dict['tsts_sra'] = tstss
@@ -262,8 +300,8 @@ def eval_data(data_dicts, synthesizers, epsilons):
     for d in data_dicts:
         for n,_ in synthesizers:
             for e in epsilons:
-                wass = wasserstein_randomization(data_dicts[d][n][str(e)], data_dicts[d]['data'], 1000)
-                data_dicts[d][n]['wasserstein_'+str(e)] = wass
+#                 wass = wasserstein_randomization(data_dicts[d][n][str(e)], data_dicts[d]['data'], 1000)
+#                 data_dicts[d][n]['wasserstein_'+str(e)] = wass
             
                 ml_eval(data_dicts[d], synthesizers, epsilons)
 
@@ -339,7 +377,7 @@ def wasserstein_randomization(d1, d2, iters):
     wasserstein_randomization(d1.to_numpy(), d2.to_numpy(), 1000)
     """
     
-def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 10.0, 100.0]): # 
+def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 45.0, 95.0]): # [0.01, 0.1, 1.0, 10.0, 100.0] 
     import json
     class JSONEncoder(json.JSONEncoder):
         def default(self, obj):
