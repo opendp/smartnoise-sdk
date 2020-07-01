@@ -1,7 +1,3 @@
-# This file contains methods to set and scan a search space of datasets that we shall be using for DP evaluation.
-# We need to search databases, neighboring pairs and queries for running the DP predicate test.
-# We shall start a small 3-row databases to create our 12 neighboring pairs per database
-# Then we shall use halton sequence to generate a set of such 3 row databases randomly in a 3-D log-space
 import numpy as np
 import pandas as pd
 import os
@@ -9,9 +5,23 @@ import copy
 from statsmodels.tools import sequences
 from opendp.whitenoise.metadata.collection import *
 
-
 class Exploration:
+    """
+    This file contains methods to set and scan a search space of datasets 
+    that we shall be using for DP evaluation. We need to search databases, 
+    neighboring pairs and queries for running the DP predicate test.
+    
+    We shall start a small 3-row databases to create our 12 neighboring pairs per database
+    Then we shall use halton sequence to generate a set of such 3 row databases 
+    randomly in a 3-D log-space
+    """
     def __init__(self, dataset_size=3, csv_path=r'../service/datasets/evaluation'):  # TODO changed default to "."
+        """
+        Instantiates the Exploration class to define dimensions and 
+        boundaries of halton sequence space. 
+        Also initialized file path of 3 record dataset for application of DFS 
+        to run a Powerset test
+        """
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
         self.csv_path = csv_path
@@ -24,8 +34,10 @@ class Exploration:
         self.visited = []
         self.neighbor_pair = {}
 
-    # Create a dataset with one numerical column on which we shall evaluate DP queries
     def create_small_dataset(self, sample, file_name = "small"):
+        """
+        Create a dataset with one numerical column on which we shall evaluate DP queries
+        """
         userids = list(range(1, self.dataset_size+1))
         userids = ["A" + str(user) for user in userids]
         usage = list(sample)
@@ -37,15 +49,21 @@ class Exploration:
         ])
         return df, metadata
 
-    # Generate halton samples in a n-dimensional space. Defaulted to 3 dimensions
     def generate_halton_samples(self, bounds, dims, n_sample=10):
+        """
+        Generate halton samples in a n-dimensional space. Defaulted to 3 dimensions
+        """
         samples = sequences.halton(dim=dims, n_sample=n_sample, bounds=bounds)
         return samples
 
-    # Given a list of N records in a database, create a powerset of neighboring datasets by traversing the edges of database search graph
-    # Perform DFS to traverse the database search graph
-    # Convention of file names = <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>
     def generate_powerset(self, d1):
+        """
+        Given a list of N records in a database, create a powerset of 
+        neighboring datasets by traversing the edges of database search graph. 
+        Perform DFS to traverse the database search graph
+        Convention of file names ->
+        <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>
+        """
         if(len(d1) == 0):
             return
         else:
@@ -77,16 +95,10 @@ class Exploration:
             return
 
     def test_exploration(self):
+        """
+        Test method to generate halton samples and then generate powerset for each sample
+        """
         samples = self.generate_halton_samples(bounds = self.corners, dims = self.N)
         for sample in samples:
             df, metadata = self.create_small_dataset(sample)
-            print("Loaded " + str(len(df)) + " records")
             self.generate_powerset(df)
-            print(self.visited)
-
-    def main(self):
-        self.test_exploration()
-
-if __name__ == "__main__":
-    ex = Exploration()
-    ex.main()
