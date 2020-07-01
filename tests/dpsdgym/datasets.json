@@ -1,0 +1,29 @@
+{
+    "nursery": {
+        "name": "nursery",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/nursery/nursery.data",
+        "categorical_columns": "parents,has_nurs,form,children,housing,finance,social,health",
+        "columns":"parents,has_nurs,form,children,housing,finance,social,health",
+        "target": "health",
+        "header": "f",
+        "sep": ","
+    },
+    "wine": {
+        "name": "wine",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv",
+        "categorical_columns": "",
+        "columns":"fixed,volatile,citric,residual,chlorides,free,total,density,ph,sulphates,alc,quality",
+        "target": "quality",
+        "header": "t",
+        "sep": ";"
+    },
+    "mushroom": {
+        "name": "mushroom",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data",
+        "categorical_columns": "edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat", 
+"columns":"edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat",
+        "target": "edible",
+        "header": "f",
+        "sep": ","
+    }
+}

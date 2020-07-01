@@ -1,140 +1,18 @@
-from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, GradientBoostingClassifier
-from sklearn.metrics import accuracy_score, f1_score, r2_score, roc_auc_score
-from sklearn.linear_model import LogisticRegression
-from sklearn.mixture import GaussianMixture
-from sklearn.neural_network import MLPClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-#from xgboost import XGBRegressor
+import sys
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_auc_score
 
-from diffprivlib.models import LogisticRegression as DPLR
+from metrics.sra import sra
+from metrics.wasserstein import wasserstein_randomization
+
+from load_data import load_data
+
+import conf 
 
 import numpy as np
 import pandas as pd
-
-SEED = 42
-
-KNOWN_DATASETS = ['mushroom'] #['nursery']#, 'mushroom']#
-
-SYNTHESIZERS = [
-    ('mwem', MWEMSynthesizer),
-    ('target_synth', TargetSynthesizer)
-]
-
-SYNTH_SETTINGS = {
-    'mwem': {
-        'nursery': {
-            'Q_count':1000,
-            'iterations':30,
-            'mult_weights_iterations':20,
-            'split_factor':8,
-            'max_bin_count':400
-        },
-        'mushroom': {
-            'Q_count':3000,
-            'iterations':30,
-            'mult_weights_iterations':20,
-            'split_factor':4,
-            'max_bin_count':400
-        },
-        'wine': {
-            'Q_count':1000,
-            'iterations':30,
-            'mult_weights_iterations':20,
-            'split_factor':2,
-            'max_bin_count':200
-        }
-    },
-    'target_synth': {
-        'nursery': {
-            'dp_synthesizer': MWEMSynthesizer,
-            'synth_args': {
-                'Q_count':1000,
-                'iterations':30,
-                'mult_weights_iterations':20,
-                'split_factor':8,
-                'max_bin_count':400
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'health'
-        },
-        'mushroom': {
-            'dp_synthesizer': MWEMSynthesizer,
-            'synth_args': {
-                'Q_count':1000,
-                'iterations':30,
-                'mult_weights_iterations':20,
-                'split_factor':4,
-                'max_bin_count':400
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'edible'
-        }
-    }
-}
-# GradientBoostingClassifier
-KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
-               LogisticRegression, MLPClassifier, DecisionTreeClassifier,
-               GaussianNB, BernoulliNB, MultinomialNB, RandomForestClassifier, ExtraTreesClassifier]
-
-MODEL_ARGS = {
-    'AdaBoostClassifier': {
-        'random_state': SEED,
-        'n_estimators': 100
-    },
-    'BaggingClassifier': {
-        'random_state': SEED
-    },
-#     'GradientBoostingClassifier': {
-#         'random_state': SEED,
-#         'n_estimators': 200
-#     },
-    'LogisticRegression': {
-        'random_state': SEED,
-        'max_iter': 1000,
-        'multi_class': 'auto',
-        'solver': 'lbfgs'
-    },
-#     'GaussianMixture': {
-#         'random_state': SEED,
-#         'max_iter': 200
-#     },
-    'MLPClassifier': {
-        'random_state': SEED,
-        'max_iter': 500
-    },
-    'DecisionTreeClassifier': {
-        'random_state': SEED,
-        'class_weight': 'balanced'
-    },
-    'GaussianNB': {
-    },
-    'BernoulliNB': {
-    },
-    'MultinomialNB': {
-    },
-    'RandomForestClassifier': {
-        'random_state': SEED,
-        'class_weight': 'balanced',
-        'n_estimators': 200
-    },
-    'ExtraTreesClassifier': {
-        'random_state': SEED,
-        'class_weight': 'balanced',
-        'n_estimators': 200
-    }
-}
 
 class dumb_predictor():
     def __init__(self, label):
@@ -143,58 +21,6 @@ class dumb_predictor():
     def predict(self, instances):
         return np.full(len(instances), self.label)
 
-def load_data(req_datasets=[]):
-    import requests
-    import io
-    import json
-    # Returns a dictionary of datasets
-    # TODO: Add memory check to make sure to not overwhelm computer
-    # TODO: Add safety checks here
-    if not req_datasets:
-        req_datasets = KNOWN_DATASETS
-
-    with open('datasets.json') as j:
-        dsets = j.read()
-    archive = json.loads(dsets)
-
-    loaded_datasets = {}
-
-    def retrieve_dataset(dataset):
-        r = requests.post(dataset['url'])
-        if r.ok:
-            data = r.content.decode('utf8')
-            sep = dataset['sep']
-            df = pd.read_csv(io.StringIO(data), names=dataset['columns'].split(','), sep=sep, index_col=False)
-            if dataset['header'] == "t":
-                df = df.iloc[1:]
-            return df
-
-        raise "Unable to retrieve dataset: " + dataset
-
-    def select_column(scol):
-        # Zero indexed, inclusive
-        return scol.split(',')
-
-    def encode_categorical(df,dataset):
-        from sklearn.preprocessing import LabelEncoder
-
-        encoders = {}
-        if dataset['categorical_columns'] != "":
-            for column in select_column(dataset['categorical_columns']):
-                encoders[column] = LabelEncoder()
-                df[column] = encoders[column].fit_transform(df[column])
-
-        return {"data": df, "target": dataset['target'], "name": dataset['name']}
-
-
-    for d in req_datasets:
-        df = retrieve_dataset(archive[d])
-        encoded_df_dict = encode_categorical(df, archive[d])
-        loaded_datasets[d] = encoded_df_dict
-
-    # Return dictionary of pd dataframes
-    return loaded_datasets
-
 def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
     import time
     for n, s in synthesizers:
@@ -202,7 +28,7 @@ def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
         for d in datasets:
             datasets[d][n] = {}
             synth_dict = datasets[d][n]
-            synth_args = SYNTH_SETTINGS[n][d]
+            synth_args = conf.SYNTH_SETTINGS[n][d]
             for e in epsilons:
                 start = time.time()
                 # TODO: Set epsilons more elegantly
@@ -267,9 +93,7 @@ def model_tests(dd,n,model,cat,xt,yt,eps=None):
             else:
                 probs = probs[:,0]
                 model_cat['aucroc'] = roc_auc_score(yt, probs)
-        
-    # print('Accuracy ' + cat + ' ' + str(type(model).__name__) + ':' + str(model_cat['accuracy']))
-    
+            
     return model_cat['accuracy']
 
 def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
@@ -283,9 +107,9 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
         tstrs = {}
         tstss = {}
 
-        for model in KNOWN_MODELS:
+        for model in conf.KNOWN_MODELS:
             m_name = type(model()).__name__
-            model_args = MODEL_ARGS[m_name]
+            model_args = conf.MODEL_ARGS[m_name]
             print(m_name)
             model_real = model(**model_args)
             model_real.fit(x_train, y_train.values.ravel())
@@ -337,89 +161,29 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
         
     return data_dict
             
-def eval_data(data_dicts, synthesizers, epsilons):
+def eval_data(data_dicts, synthesizers, epsilons, flags):
     print(data_dicts)
     for d in data_dicts:
         for n,_ in synthesizers:
             for e in epsilons:
-#                 wass = wasserstein_randomization(data_dicts[d][n][str(e)], data_dicts[d]['data'], 1000)
-#                 data_dicts[d][n]['wasserstein_'+str(e)] = wass
-            
-                ml_eval(data_dicts[d], synthesizers, epsilons)
+                if 'wasserstein' in flags:
+                    wass = wasserstein_randomization(data_dicts[d][n][str(e)], data_dicts[d]['data'], 1000)
+                    data_dicts[d][n]['wasserstein_'+str(e)] = wass
 
-                sra_score = sra(data_dicts[d]['trtr_sra'][n],data_dicts[d]['tsts_sra'][n][str(e)])
-                print(sra_score)
-                if 'sra' not in data_dicts[d]:
-                    data_dicts[d][n]['sra'] = {}
-                data_dicts[d][n]['sra'][str(e)] = sra_score
+                if 'ml_eval' in flags:
+                    ml_eval(data_dicts[d], synthesizers, epsilons)
+
+                    if 'sra' in flags:
+                        sra_score = sra(data_dicts[d]['trtr_sra'][n],data_dicts[d]['tsts_sra'][n][str(e)])
+                        print(sra_score)
+                        if 'sra' not in data_dicts[d]:
+                            data_dicts[d][n]['sra'] = {}
+                        data_dicts[d][n]['sra'][str(e)] = sra_score
         
     return data_dicts
 
-def sra(R, S):
-    k = len(R)
-    sum_I = 0
-    for i in range(k):
-        R_vals = np.array([R[i]-rj if i != k else None for k, rj in enumerate(R)])
-        S_vals = np.array([S[i]-sj if i != k else None  for k, sj in enumerate(S)])
-        I = (R_vals[R_vals != np.array(None)] * S_vals[S_vals != np.array(None)])
-        I[I >= 0] = 1
-        I[I < 0] = 0
-        sum_I += I
-    return np.sum((1 / (k * (k-1))) * sum_I)
-
-def wasserstein_randomization(d1, d2, iters):
-    """
-    Calculate wasserstein randomization test results
-    "We propose a metric based on
-    the idea of randomization inference (Basu, 1980; Fisher, 1935). 
-    Each data point is randomly assigned to one of two
-    data sets and the similarity of the resulting two distributions 
-    is measured with the Wasserstein distance. Repeating this
-    random assignment a great number of times (e.g. 100000 times) 
-    provides an empirical approximation of the distances’
-    null distribution. Similar to the pMSE ratio score we then 
-    calculate the ratio of the measured Wasserstein distance and
-    the median of the null distribution to get a Wasserstein distance 
-    ratio score that is comparable across different attributes.
-    Again a Wasserstein distance ratio score of 0 would indicate that 
-    two marginal distributions are identical. Larger scores
-    indicate greater differences between distributions."
-    """
-    from scipy.stats import wasserstein_distance
-    import matplotlib.pyplot as plt
-    # pip install pyemd
-    # https://github.com/wmayner/pyemd
-    from pyemd import emd_samples
-
-    assert(len(d1) == len(d2))
-    l_1 = len(d1)
-    d3 = np.concatenate((d1,d2))
-    distances = []
-    for i in range(iters):
-        np.random.shuffle(d3)
-        n_1, n_2 = d3[:l_1], d3[l_1:]
-        dist = emd_samples(n_1, n_2, bins='auto')
-        distances.append(dist)
-    plt.hist(distances, bins=25)
-    plt.show()
-
-    d_pd = pd.DataFrame(distances)
-    print(d_pd.describe())
-
-    """
-    import numpy as np
-    import pandas as pd
-
-    d1 = pd.read_csv('nursery.csv')
-    d2 = pd.read_csv('synthetic.csv')
-
-    d1 = d1.drop(d1.columns[[0]], axis=1)
-    d2 = d2.drop(d2.columns[[0]], axis=1)
-
-    wasserstein_randomization(d1.to_numpy(), d2.to_numpy(), 1000)
-    """
     
-def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 45.0, 95.0]): # [0.01, 0.1, 1.0, 9.0, 45.0, 95.0] [0.01, 0.1, 1.0, 10.0, 100.0] 
+def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 45.0, 95.0], flags=[]): 
     import json
     class JSONEncoder(json.JSONEncoder):
         def default(self, obj):
@@ -430,35 +194,58 @@ def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 4
         
     loaded_datasets = load_data(req_datasets)
     data_dicts = run_synthesizers(loaded_datasets, synthesizers, epsilons)
-    results = eval_data(data_dicts, synthesizers, epsilons)
+    results = eval_data(data_dicts, synthesizers, epsilons, flags)
     
     with open('artifact.json', 'w') as f:
         json.dump(results, f, cls=JSONEncoder)
 
-        
-"""
-{
-   "nursery":{
-      "data":{},
-      "target":"health",
-      "name":"nursery",
-      "mwem":{},
-      "AdaBoostClassifier":{},
-      "BaggingClassifier":{},
-      "GradientBoostingClassifier":{},
-      "LogisticRegression":{},
-      "GaussianMixture":{},
-      "MLPClassifier":{},
-      "DecisionTreeClassifier":{},
-      "GaussianNB":{},
-      "BernoulliNB":{},
-      "MultinomialNB":{},
-      "RandomForestClassifier":{},
-      "ExtraTreesClassifier":{},
-      "trtr_sra":[],
-      "tsts_sra":{},
-      "tstr_avg":{},
-      "sra":{}
-   }
-}
-"""
+flag_options = ['wasserstein', 'ml_eval', 'sra']
+
+if __name__ == "__main__":
+    """
+    {
+    "mushroom":{
+        "data":{},
+        "target":"edible",
+        "name":"mushroom",
+        "mwem":{},
+        "target_synth":{},
+        "AdaBoostClassifier":{
+            "mwem":{
+                "TRTR":{},
+                "TSTR":{},
+                "TSTS":{}
+            },
+            "target_synth":{
+                "TRTR":{},
+                "TSTR":{},
+                "TSTS":{}
+            }
+        },
+        "BaggingClassifier":{},
+        "LogisticRegression":{},
+        "MLPClassifier":{},
+        "DecisionTreeClassifier":{},
+        "GaussianNB":{},
+        "BernoulliNB":{},
+        "MultinomialNB":{},
+        "RandomForestClassifier":{},
+        "ExtraTreesClassifier":{},
+        "trtr_sra":{
+            "mwem":[],
+            "target_synth":[]
+        },
+        "tsts_sra":{},
+        "tstr_avg":{},
+        "dumb_predictor":{}
+    }
+    }
+    """
+    args = sys.argv
+
+    if args[0] == 'all' or args == None:
+        flags = flag_options
+    else: 
+        flags = args
+
+    run_suite(synthesizers=conf.SYNTHESIZERS, flags=flags)
