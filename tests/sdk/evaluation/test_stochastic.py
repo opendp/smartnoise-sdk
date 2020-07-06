@@ -21,7 +21,7 @@ class TestStochastic:
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT COUNT(UserId) AS UserCount FROM d1.d1"
         d2_query = "SELECT COUNT(UserId) AS UserCount FROM d2.d2"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
         test_logger.debug("Result of DP Predicate Test on COUNT Query: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on COUNT Query: " + str(acc_res))
         test_logger.debug("Result of Utility Test on COUNT Query: " + str(utility_res))
@@ -32,7 +32,7 @@ class TestStochastic:
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT SUM(Usage) AS TotalUsage FROM d1.d1"
         d2_query = "SELECT SUM(Usage) AS TotalUsage FROM d2.d2"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
         test_logger.debug("Result of DP Predicate Test on SUM Query: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on SUM Query: " + str(acc_res))
         test_logger.debug("Result of Utility Test on SUM Query: " + str(utility_res))
@@ -43,7 +43,7 @@ class TestStochastic:
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT AVG(Usage) AS MeanUsage FROM d1.d1"
         d2_query = "SELECT AVG(Usage) AS MeanUsage FROM d2.d2"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000)
         test_logger.debug("Result of DP Predicate Test on MEAN Query: " + str(dp_res))
         assert(dp_res)
 
@@ -52,7 +52,7 @@ class TestStochastic:
         logging.getLogger().setLevel(logging.DEBUG)
         d1_query = "SELECT VAR(Usage) AS UsageVariance FROM d1.d1"
         d2_query = "SELECT VAR(Usage) AS UsageVariance FROM d2.d2"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_query_test(d1_query, d2_query, plot=False, repeat_count=1000, get_exact=False)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=1000, get_exact=False)
         test_logger.debug("Result of DP Predicate Test on VAR Query: " + str(dp_res))
         assert(dp_res)
 
@@ -86,22 +86,20 @@ class TestStochastic:
         test_logger.debug("Result of Accuracy Test on Powerset SUM: " + str(acc_res))
         assert(dp_res)
 
-    @pytest.mark.skip
     def test_groupby(self):
         d1_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, COUNT(UserId) AS UserCount, SUM(Usage) AS Usage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=2000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=200)
         test_logger.debug("Result of DP Predicate Test on GROUP BY and SUM, COUNT aggregate: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on GROUP BY and SUM, COUNT aggregate: " + str(acc_res))
         test_logger.debug("Result of Utility Test on GROUP BY and SUM, COUNT aggregate: " + str(utility_res))
         test_logger.debug("Result of Bias Test on GROUP BY and SUM, COUNT aggregate: " + str(bias_res))
         assert(dp_res)
 
-    @pytest.mark.skip
     def test_groupby_avg(self):
         d1_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d1.d1 GROUP BY Role, Segment"
         d2_query = "SELECT Role, Segment, AVG(Usage) AS AvgUsage FROM d2.d2 GROUP BY Role, Segment"
-        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=2000)
+        dp_res, acc_res, utility_res, bias_res = dv.dp_groupby_query_test(d1_query, d2_query, plot=False, repeat_count=200)
         test_logger.debug("Result of DP Predicate Test on GROUP BY and AVG aggregate: " + str(dp_res))
         test_logger.debug("Result of Accuracy Test on GROUP BY and AVG aggregate: " + str(acc_res))
         test_logger.debug("Result of Utility Test on GROUP BY and AVG aggregate: " + str(utility_res))
