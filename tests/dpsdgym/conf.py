@@ -14,7 +14,7 @@ from opendp.whitenoise.synthesizers.quail import QUAILSynthesizer
 
 SEED = 42
 
-KNOWN_DATASETS = ['mushroom'] #['nursery']#, 'mushroom']#
+KNOWN_DATASETS = ['car'] #['wine'] #['nursery'] #['mushroom']
 
 SYNTHESIZERS = [
     ('mwem', MWEMSynthesizer),
@@ -28,6 +28,13 @@ SYNTH_SETTINGS = {
             'iterations':30,
             'mult_weights_iterations':20,
             'split_factor':8,
+            'max_bin_count':400
+        },
+        'car': {
+            'Q_count':1000,
+            'iterations':30,
+            'mult_weights_iterations':20,
+            'split_factor':7,
             'max_bin_count':400
         },
         'mushroom': {
@@ -61,6 +68,21 @@ SYNTH_SETTINGS = {
             },
             'target': 'health'
         },
+        'car': {
+            'dp_synthesizer': MWEMSynthesizer,
+            'synth_args': {
+                'Q_count':1000,
+                'iterations':30,
+                'mult_weights_iterations':20,
+                'split_factor':7,
+                'max_bin_count':400
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'class'
+        },
         'mushroom': {
             'dp_synthesizer': MWEMSynthesizer,
             'synth_args': {
@@ -75,6 +97,21 @@ SYNTH_SETTINGS = {
                 'max_iter': 1000
             },
             'target': 'edible'
+        },
+        'wine': {
+            'dp_synthesizer': MWEMSynthesizer,
+            'synth_args': {
+                'Q_count':1000,
+                'iterations':30,
+                'mult_weights_iterations':20,
+                'split_factor':2,
+                'max_bin_count':200
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'quality'
         }
     }
 }

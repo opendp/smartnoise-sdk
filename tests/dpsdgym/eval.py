@@ -243,9 +243,9 @@ if __name__ == "__main__":
     """
     args = sys.argv
 
-    if args[0] == 'all' or args == None:
+    if args[1] == 'all' or args == None:
         flags = flag_options
     else: 
-        flags = args
+        flags = args[1:]
 
     run_suite(synthesizers=conf.SYNTHESIZERS, flags=flags)

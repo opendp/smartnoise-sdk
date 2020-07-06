@@ -25,5 +25,14 @@
         "target": "edible",
         "header": "f",
         "sep": ","
+    },
+    "car": {
+        "name": "car",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data",
+        "categorical_columns": "buying,maint,doors,persons,lug_boot,safety,class", 
+"columns":"buying,maint,doors,persons,lug_boot,safety,class",
+        "target": "class",
+        "header": "f",
+        "sep": ","
     }
 }
