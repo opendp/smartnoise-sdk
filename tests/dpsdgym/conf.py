@@ -51,68 +51,6 @@ SYNTH_SETTINGS = {
             'split_factor':2,
             'max_bin_count':200
         }
-    },
-    'quail_synth': {
-        'nursery': {
-            'dp_synthesizer': MWEMSynthesizer,
-            'synth_args': {
-                'Q_count':1000,
-                'iterations':30,
-                'mult_weights_iterations':20,
-                'split_factor':8,
-                'max_bin_count':400
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'health'
-        },
-        'car': {
-            'dp_synthesizer': MWEMSynthesizer,
-            'synth_args': {
-                'Q_count':1000,
-                'iterations':30,
-                'mult_weights_iterations':20,
-                'split_factor':7,
-                'max_bin_count':400
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'class'
-        },
-        'mushroom': {
-            'dp_synthesizer': MWEMSynthesizer,
-            'synth_args': {
-                'Q_count':1000,
-                'iterations':30,
-                'mult_weights_iterations':20,
-                'split_factor':4,
-                'max_bin_count':400
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'edible'
-        },
-        'wine': {
-            'dp_synthesizer': MWEMSynthesizer,
-            'synth_args': {
-                'Q_count':1000,
-                'iterations':30,
-                'mult_weights_iterations':20,
-                'split_factor':2,
-                'max_bin_count':200
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'quality'
-        }
     }
 }
 # GradientBoostingClassifier

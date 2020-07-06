@@ -202,45 +202,6 @@ def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 4
 flag_options = ['wasserstein', 'ml_eval', 'sra']
 
 if __name__ == "__main__":
-    """
-    {
-    "mushroom":{
-        "data":{},
-        "target":"edible",
-        "name":"mushroom",
-        "mwem":{},
-        "target_synth":{},
-        "AdaBoostClassifier":{
-            "mwem":{
-                "TRTR":{},
-                "TSTR":{},
-                "TSTS":{}
-            },
-            "target_synth":{
-                "TRTR":{},
-                "TSTR":{},
-                "TSTS":{}
-            }
-        },
-        "BaggingClassifier":{},
-        "LogisticRegression":{},
-        "MLPClassifier":{},
-        "DecisionTreeClassifier":{},
-        "GaussianNB":{},
-        "BernoulliNB":{},
-        "MultinomialNB":{},
-        "RandomForestClassifier":{},
-        "ExtraTreesClassifier":{},
-        "trtr_sra":{
-            "mwem":[],
-            "target_synth":[]
-        },
-        "tsts_sra":{},
-        "tstr_avg":{},
-        "dumb_predictor":{}
-    }
-    }
-    """
     args = sys.argv
 
     if args[1] == 'all' or args == None:
