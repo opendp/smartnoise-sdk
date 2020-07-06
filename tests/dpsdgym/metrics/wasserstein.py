@@ -18,6 +18,10 @@ def wasserstein_randomization(d1, d2, iters):
     Again a Wasserstein distance ratio score of 0 would indicate that 
     two marginal distributions are identical. Larger scores
     indicate greater differences between distributions."
+    From "REALLY USEFUL SYNTHETIC DATA
+    A FRAMEWORK TO EVALUATE THE QUALITY OF
+    DIFFERENTIALLY PRIVATE SYNTHETIC DATA"
+    https://arxiv.org/pdf/2004.07740.pdf
     """
     from scipy.stats import wasserstein_distance
     import matplotlib.pyplot as plt
@@ -39,16 +43,3 @@ def wasserstein_randomization(d1, d2, iters):
 
     d_pd = pd.DataFrame(distances)
     print(d_pd.describe())
-
-    """
-    import numpy as np
-    import pandas as pd
-
-    d1 = pd.read_csv('nursery.csv')
-    d2 = pd.read_csv('synthetic.csv')
-
-    d1 = d1.drop(d1.columns[[0]], axis=1)
-    d2 = d2.drop(d2.columns[[0]], axis=1)
-
-    wasserstein_randomization(d1.to_numpy(), d2.to_numpy(), 1000)
-    """

@@ -4,10 +4,20 @@ import numpy as np
 import pandas as pd
 
 def load_data(req_datasets=[]):
+    """
+    Takes in optional dataset list. Otherwise grabs them
+    from the conf.py file.
+
+    Returns a dictionary of datasets.
+    {
+        'dset': pd.DataFrame,
+        'dset': pd.DataFrame
+    }
+    """
     import requests
     import io
     import json
-    # Returns a dictionary of datasets
+
     # TODO: Add memory check to make sure to not overwhelm computer
     # TODO: Add safety checks here
     if not req_datasets:
@@ -45,7 +55,6 @@ def load_data(req_datasets=[]):
                 df[column] = encoders[column].fit_transform(df[column])
 
         return {"data": df, "target": dataset['target'], "name": dataset['name']}
-
 
     for d in req_datasets:
         df = retrieve_dataset(archive[d])

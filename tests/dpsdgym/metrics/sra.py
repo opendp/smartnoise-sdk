@@ -2,6 +2,13 @@ import numpy as np
 import pandas as pd
 
 def sra(R, S):
+    """
+    SRA can be thought of as the (empirical) probability of a
+    comparison on the synthetic data being ”correct” (i.e. the same as
+    the comparison would be on the real data).
+    From "Measuring the quality of Synthetic data for use in competitions"
+    https://arxiv.org/pdf/1806.11345.pdf
+    """
     k = len(R)
     sum_I = 0
     for i in range(k):

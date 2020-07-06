@@ -1,7 +1,6 @@
 
-from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, GradientBoostingClassifier
+from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.mixture import GaussianMixture
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
@@ -17,8 +16,7 @@ SEED = 42
 KNOWN_DATASETS = ['car'] #['wine'] #['nursery'] #['mushroom']
 
 SYNTHESIZERS = [
-    ('mwem', MWEMSynthesizer),
-    ('quail_synth', QUAILSynthesizer)
+    ('mwem', MWEMSynthesizer)
 ]
 
 SYNTH_SETTINGS = {
@@ -53,7 +51,7 @@ SYNTH_SETTINGS = {
         }
     }
 }
-# GradientBoostingClassifier
+
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
                LogisticRegression, MLPClassifier, DecisionTreeClassifier,
                GaussianNB, BernoulliNB, MultinomialNB, RandomForestClassifier, ExtraTreesClassifier]

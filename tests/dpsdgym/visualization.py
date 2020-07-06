@@ -5,10 +5,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import conf
 
-priv_models_acc = [0.49710982658959535, 0.2658959537572254, 0.6184971098265896, 0.6647398843930635, 0.6705202312138728, 0.6734104046242775]
-
-
 def plot_epsilon_tstr_accuracies(results_json=None):
+    """
+    Will produce a accuracy-by-epsilon graph from an artifact.json
+    file.
+    """
     if not results_json or results_json == "":
         results_json = 'artifact.json'
 
@@ -45,8 +46,6 @@ def plot_epsilon_tstr_accuracies(results_json=None):
             plt.plot(x, y_tstr,colors[i % len(colors)], label = str(n) + "_tstr")
             if i == 0:
                 plt.plot(x, y_trtr,'--k', label = "trtr")
-                logreg = priv_models_acc
-                plt.plot(x, logreg, '--m', label = "log_reg")
             plt.ylim(0.2,1.01)
             plt.xscale("log")
             plt.legend()

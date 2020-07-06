@@ -6,6 +6,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 
 from metrics.sra import sra
 from metrics.wasserstein import wasserstein_randomization
+from metrics.pmse import pmse_ratio
 
 from load_data import load_data
 
@@ -15,6 +16,10 @@ import numpy as np
 import pandas as pd
 
 class dumb_predictor():
+    """
+    Dummy classifier to be used if any of conf.KNOWN_MODELS break.
+    Returns single class as prediction.
+    """
     def __init__(self, label):
         self.label = label
         
@@ -22,6 +27,18 @@ class dumb_predictor():
         return np.full(len(instances), self.label)
 
 def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
+    """
+    Run each synthesizer on each dataset for specified epsilons
+
+    :param datasets: dictionary with real datasets
+    :type datasets: dict
+    :param synthesizers: list of synthesizers used, often KNOWN_SYNTHESIZERS
+    :type synthesizers: list
+    :param epsilons: Epsilons used in the synthesis
+    :type epsilons: list
+    :return: dictionary of both real and synthetic data for each dataset
+    :rtype: dict
+    """
     import time
     for n, s in synthesizers:
         print('Synthesizer: '+ str(n))
@@ -41,7 +58,11 @@ def run_synthesizers(datasets, synthesizers=[], epsilons=[1.0]):
                 synth_dict[str(e)] = sampled
     return datasets
 
-def model_tests(dd,n,model,cat,xt,yt,eps=None):
+def model_tests(dd, n, model, cat, xt, yt, eps=None):
+    """
+    Helper function for ml_eval(), used to examine 
+    performance post model fit.
+    """
     predictions = model.predict(xt)
     if n not in dd[type(model).__name__]:
         dd[type(model).__name__][n] = {}
@@ -97,6 +118,21 @@ def model_tests(dd,n,model,cat,xt,yt,eps=None):
     return model_cat['accuracy']
 
 def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
+    """
+    Takes in output from load_data.py/run_synthesizers().
+    Trains each model in conf.KNOWN_MODELS with real/fake data,
+    and compares performance. Records necessary accuracies to
+    be used with SRA.
+
+    :param data_dicts: dictionary with real/synthetic data
+    :type data_dicts: dict
+    :param synthesizers: list of synthesizers used, often KNOWN_SYNTHESIZERS
+    :type synthesizers: list
+    :param epsilons: Epsilons used in the synthesis
+    :type epsilons: list
+    :return: dictionary artifact.json with all results
+    :rtype: dict
+    """
     real = data_dict["data"]
     X = real.loc[:, real.columns != data_dict['target']]
     y = real.loc[:, real.columns == data_dict['target']]
@@ -162,13 +198,31 @@ def ml_eval(data_dict, synthesizers, epsilons, seed=42, test_size = 0.2):
     return data_dict
             
 def eval_data(data_dicts, synthesizers, epsilons, flags):
-    print(data_dicts)
+    """
+    Takes in output from load_data.py/run_synthesizers(). Runs flagged 
+    metrics for each dataset specified.
+
+    :param data_dicts: dictionary with real/synthetic data
+    :type data_dicts: dict
+    :param synthesizers: list of synthesizers used, often KNOWN_SYNTHESIZERS
+    :type synthesizers: list
+    :param epsilons: Epsilons used in the synthesis
+    :type epsilons: list
+    :param flags: The metrics to run
+    :type flags: list
+    :return: dictionary artifact.json with all results
+    :rtype: dict
+    """
     for d in data_dicts:
         for n,_ in synthesizers:
             for e in epsilons:
                 if 'wasserstein' in flags:
                     wass = wasserstein_randomization(data_dicts[d][n][str(e)], data_dicts[d]['data'], 1000)
                     data_dicts[d][n]['wasserstein_'+str(e)] = wass
+
+                if 'pmse' in flags:
+                    pmse = pmse_ratio(data_dicts[d][n][str(e)], data_dicts[d]['data'])
+                    data_dicts[d][n]['pmse_'+str(e)] = pmse
 
                 if 'ml_eval' in flags:
                     ml_eval(data_dicts[d], synthesizers, epsilons)
@@ -189,7 +243,10 @@ def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 4
         def default(self, obj):
             if hasattr(obj, 'to_json'):
                 return {}
-                #return obj.to_json(orient='records')
+                # TODO: Provide flagged option for saving the
+                # datasets themselves. Current default to
+                # discarding data after run
+                # return obj.to_json(orient='records')
             return json.JSONEncoder.default(self, obj)
         
     loaded_datasets = load_data(req_datasets)
@@ -199,9 +256,10 @@ def run_suite(synthesizers=[], req_datasets=[], epsilons=[0.01, 0.1, 1.0, 9.0, 4
     with open('artifact.json', 'w') as f:
         json.dump(results, f, cls=JSONEncoder)
 
-flag_options = ['wasserstein', 'ml_eval', 'sra']
+flag_options = ['wasserstein', 'ml_eval', 'sra', 'pmse']
 
 if __name__ == "__main__":
+    # TODO: Add epsilon flag to specify epsilons pre run
     args = sys.argv
 
     if args[1] == 'all' or args == None:
