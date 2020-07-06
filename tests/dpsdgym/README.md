@@ -62,23 +62,23 @@ The default epsilon increments for the evaluation (different privacy settings):
 epsilons=[0.01, 0.1, 1.0, 9.0, 45.0, 95.0]
 ```
 
-The output of the evaluation pipeline is an `artifact.json` file, that includes all the results from metrics. With this file, you can run the `visualization.py` to produce a graph.
-## Other Resources
-"""
-    {
-    "mushroom":{
+The output of the evaluation pipeline is an `artifact.json` file, that includes all the results from metrics. With this file, you can run the `visualization.py` to produce a graph. The artifact takes on the following format:
+```json
+{
+    "dataset":{
         "data":{},
-        "target":"edible",
-        "name":"mushroom",
-        "mwem":{},
-        "target_synth":{},
+        "target":"target",
+        "name":"dataset_name",
+        "mwem (or other synth)":{},
+        "another_synth":{},
+        (For each of the models, record the accuracies Train Real Test Real (TRTR), Train Synthetic Test Synthetic (TSTS) and Train Synthetic Test Real(TSTR))
         "AdaBoostClassifier":{
             "mwem":{
                 "TRTR":{},
                 "TSTR":{},
                 "TSTS":{}
             },
-            "target_synth":{
+            "another_synth":{
                 "TRTR":{},
                 "TSTR":{},
                 "TSTS":{}
@@ -95,11 +95,12 @@ The output of the evaluation pipeline is an `artifact.json` file, that includes 
         "ExtraTreesClassifier":{},
         "trtr_sra":{
             "mwem":[],
-            "target_synth":[]
+            "another_synth":[]
         },
         "tsts_sra":{},
-        "tstr_avg":{},
-        "dumb_predictor":{}
+        "tstr_avg":{}
     }
-    }
-    """
+}
+```
+## Other Resources
+DPSDGym draws inspiration from [SDGYM](https://github.com/sdv-dev/SDGym) - it is also designed to play nicely with SDGYM, and so synthesizers that work for DPSDGym should also work with SDGym.
