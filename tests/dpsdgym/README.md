@@ -1,9 +1,9 @@
 # Differentially Private Synthetic Data Gym (DPSDGym)
 Differentially Private Synthetic Data Gym (DPSDGym) provides infrastructure to evaluate differentially private synthetic data generators on tabular datasets using best methods from recent literature (see citations). As of now, this includes:
-1. propensity Mean Squared Error (pMSE) [1](https://arxiv.org/pdf/2004.07740.pdf)
-2. Wasserstein Randomization [1](https://arxiv.org/pdf/2004.07740.pdf)
-3. Synthetic Ranking Agreement (SRA) [2](https://arxiv.org/pdf/1806.11345.pdf) 
-4. Aggregate AUROC/Machine learning accuracy across different epsilons for:
+1. propensity Mean Squared Error (pMSE) [(1)](https://arxiv.org/pdf/2004.07740.pdf)
+2. Wasserstein Randomization [(1)](https://arxiv.org/pdf/2004.07740.pdf)
+3. Synthetic Ranking Agreement (SRA) [(2)](https://arxiv.org/pdf/1806.11345.pdf) 
+4. Aggregate AUROC/Machine learning accuracy across different epsilons. [(3)](https://openreview.net/pdf?id=S1zk9iRqF7) The current models supporting aggregation are:
     * AdaBoost
     * Bagging Classifier
     * Logistic Regression
@@ -12,7 +12,8 @@ Differentially Private Synthetic Data Gym (DPSDGym) provides infrastructure to e
     * Naive Bayes (Gaussian, etc.)
     * Random Forest
     * Extra Trees
-    [3](https://openreview.net/pdf?id=S1zk9iRqF7) 
+
+    
 ## Datasets
 DPSDGym contains a data loader function that retrieves datasets from the [UCI ML Repository](https://archive.ics.uci.edu/ml/datasets.php). Currently, DPSDGym has been tested with:
 * [Car Evaluation Data Set](https://archive.ics.uci.edu/ml/datasets/Car+Evaluation)
@@ -71,7 +72,6 @@ The output of the evaluation pipeline is an `artifact.json` file, that includes 
         "name":"dataset_name",
         "mwem (or other synth)":{},
         "another_synth":{},
-        (For each of the models, record the accuracies Train Real Test Real (TRTR), Train Synthetic Test Synthetic (TSTS) and Train Synthetic Test Real(TSTR))
         "AdaBoostClassifier":{
             "mwem":{
                 "TRTR":{},
@@ -102,5 +102,6 @@ The output of the evaluation pipeline is an `artifact.json` file, that includes 
     }
 }
 ```
+(For each of the models, eval.py records the accuracies on Train Real Test Real (TRTR), Train Synthetic Test Synthetic (TSTS) and Train Synthetic Test Real(TSTR))
 ## Other Resources
 DPSDGym draws inspiration from [SDGYM](https://github.com/sdv-dev/SDGym) - it is also designed to play nicely with SDGYM, and so synthesizers that work for DPSDGym should also work with SDGym.
