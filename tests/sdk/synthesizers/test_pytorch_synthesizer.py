@@ -6,7 +6,9 @@ import string
 import pandas as pd
 
 from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.synthesizers.dpgan.dpgan import DPGANSynthesizer
+from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
+from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
+from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -16,14 +18,14 @@ csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.
 schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
-synth = DPGANSynthesizer()
+dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
 
-class TestDPGAN:
+class TestPytorchDPSynthesizer:
     def test_fit(self):
-        synth.fit(df)
-        assert synth.generator
+        dpgan.fit(df)
+        assert dpgan.gan.generator
     
     def test_sample(self):
         sample_size = len(df)
-        synthetic = synth.sample(sample_size)
-        assert synthetic.shape == df.shape
+        synth_data = dpgan.sample(sample_size)
+        assert synth_data.shape == df.shape
