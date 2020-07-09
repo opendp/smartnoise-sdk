@@ -20,6 +20,7 @@ df = pd.read_csv(csv_path)
 
 dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
 
+@pytest.mark.torch
 class TestPytorchDPSynthesizer:
     @pytest.mark.torch
     def test_fit(self):
