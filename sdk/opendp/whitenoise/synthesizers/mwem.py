@@ -9,7 +9,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from base import SDGYMBaseSynthesizer
+from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
 class MWEMSynthesizer(SDGYMBaseSynthesizer):
     """
