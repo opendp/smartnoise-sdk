@@ -338,6 +338,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
         r = random.random()
         e_s = sum(errors)
+
         c = 0
         for i in range(len(errors)):
             c += errors[i]
