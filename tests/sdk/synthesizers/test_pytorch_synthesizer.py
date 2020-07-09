@@ -17,12 +17,11 @@ csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.
 schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
-dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
-
 @pytest.mark.torch
 class TestPytorchDPSynthesizer:
     from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
-    
+    dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
+
     @pytest.mark.torch
     def test_fit(self):
         dpgan.fit(df)
