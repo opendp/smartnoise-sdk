@@ -9,7 +9,9 @@ try:
 
     from torchdp import PrivacyEngine, utils, autograd_grad_sample
 except ImportError:
-    raise ImportError('Requires torch and torchdp')
+    import logging
+    test_logger = logging.getLogger(__name__)
+    test_logger.warning("requires torch and torchdp")
 
 class Generator(nn.Module):
     def __init__(self, latent_dim, output_dim, binary=True):
