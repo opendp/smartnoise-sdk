@@ -1,12 +1,17 @@
 import numpy as np
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torch.optim as optim
+    from torch.utils.data import DataLoader, TensorDataset
 
-from torchdp import PrivacyEngine, utils, autograd_grad_sample
+    from torchdp import PrivacyEngine, utils, autograd_grad_sample
+except ImportError:
+    import logging
+    test_logger = logging.getLogger(__name__)
+    test_logger.warning("requires torch and torchdp")
 
 class Generator(nn.Module):
     def __init__(self, latent_dim, output_dim, binary=True):

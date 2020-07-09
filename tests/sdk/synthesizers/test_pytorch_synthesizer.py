@@ -7,7 +7,6 @@ import pandas as pd
 
 from opendp.whitenoise.metadata import CollectionMetadata
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -22,6 +21,8 @@ dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
 
 @pytest.mark.torch
 class TestPytorchDPSynthesizer:
+    from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
+    
     @pytest.mark.torch
     def test_fit(self):
         dpgan.fit(df)
