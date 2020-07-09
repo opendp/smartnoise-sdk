@@ -55,21 +55,21 @@ from opendp.whitenoise.sql import execute_private_query, PandasReader
 from opendp.whitenoise.metadata import CollectionMetadata
 from opendp.whitenoise.metadata.collection import Table, Float
 
- sklearn_dataset = sklearn.datasets.load_iris()
- sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)
+sklearn_dataset = sklearn.datasets.load_iris()
+sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)
 
 
- iris = Table("dbo", "iris", 150, [
+iris = Table("dbo", "iris", 150, [
     Float("sepal length (cm)", 4, 8),
     Float("sepal width (cm)", 2, 5),
     Float("petal length (cm)", 1, 7),
     Float("petal width (cm)", 0, 3)
- ])
- schema = CollectionMetadata([iris], "csv")
+])
+schema = CollectionMetadata([iris], "csv")
 
- reader = PandasReader(schema, sklearn_df)
- rowset = execute_private_query(schema, reader, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
- df = pd.DataFrame(rowset[1:], columns=rowset[0])
+reader = PandasReader(schema, sklearn_df)
+rowset = execute_private_query(schema, reader, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
+df = pd.DataFrame(rowset[1:], columns=rowset[0])
 ```
 ## Samples
 Samples of DP SQL functionality: [here](https://github.com/opendifferentialprivacy/whitenoise-samples/blob/master/data/README.md)
