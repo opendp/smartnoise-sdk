@@ -7,102 +7,68 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
 from torchdp import PrivacyEngine, utils, autograd_grad_sample
-from .utils import GeneralTransformer
-
-from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
 class Generator(nn.Module):
-    def __init__(self, latent_dim, hidden_dims, output_dim):
+    def __init__(self, latent_dim, output_dim, binary=True):
         super(Generator, self).__init__()
+        def block(in_, out, Activation):
+            return nn.Sequential(
+                nn.Linear(in_, out, bias=False),
+                nn.LayerNorm(out),
+                Activation(),
+            )
         
-        hidden_activation = nn.ReLU()
-        previous_layer_dim = latent_dim
+        self.layer_0 = block(latent_dim, latent_dim, nn.Tanh if binary else lambda: nn.LeakyReLU(0.2))
+        self.layer_1 = block(latent_dim, latent_dim, nn.Tanh if binary else lambda: nn.LeakyReLU(0.2))
+        self.layer_2 = block(latent_dim, output_dim, nn.Tanh if binary else lambda: nn.LeakyReLU(0.2))
         
-        model = []
-        for i, layer_dim in enumerate(list(hidden_dims)):
-            model.append(nn.Linear(previous_layer_dim, layer_dim))
-            model.append(nn.BatchNorm1d(layer_dim))
-            model.append(hidden_activation)
-            previous_layer_dim = layer_dim
-        model.append(nn.Linear(previous_layer_dim, output_dim))
-        
-        self.model = nn.Sequential(*model)
-    
     def forward(self, noise):
-        data = self.model(noise)
-        return data
+        noise = self.layer_0(noise) + noise
+        noise = self.layer_1(noise) + noise
+        noise = self.layer_2(noise)
+        return noise
+
 
 class Discriminator(nn.Module):
-    def __init__(self, input_dim, hidden_dims):
+    def __init__(self, input_dim, wasserstein=False):
         super(Discriminator, self).__init__()
-        dim = input_dim
-        
-        model = []
-        for i, layer_dim in enumerate(list(hidden_dims)):
-            model.append(nn.Linear(dim, layer_dim))
-            model.append(nn.LeakyReLU(0.2))
-            model.append(nn.Dropout(0.5))
-            dim = layer_dim
-        model.append(nn.Linear(dim, 1))
-        model.append(nn.Sigmoid())
-        self.model = nn.Sequential(*model)
-    
-    def forward(self, input):
-        output = self.model(input)
-        return output.view(-1)
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, 2*input_dim // 3),
+            nn.LeakyReLU(0.2),
+            nn.Linear(2*input_dim // 3, input_dim // 3),
+            nn.LeakyReLU(0.2),
+            nn.Linear(input_dim // 3, 1)
+        )
 
-def apply_activate(data, output_info):
-    data_t = []
-    st = 0
-    for item in output_info:
-        if item[1] == 'tanh':
-            ed = st + item[0]
-            data_t.append(torch.tanh(data[:, st:ed]))
-            st = ed
-        elif item[1] == 'softmax':
-            ed = st + item[0]
-            data_t.append(F.gumbel_softmax(data[:, st:ed], tau=0.2))
-            st = ed
-        else:
-            continue
-    return torch.cat(data_t, dim=1)
+        if not wasserstein:
+            self.model.add_module("activation", nn.Sigmoid())
 
-class DPGANSynthesizer(SDGYMBaseSynthesizer):
-    def __init__(self,
-                 latent_dim=128,
-                 gen_dim=(256, 256),
-                 dis_dim=(256, 256),
-                 batch_size=256,
+    def forward(self, x):
+        return self.model(x)
+
+class DPGAN:
+    def __init__(self, 
+                 binary=False,
+                 latent_dim=64, 
+                 batch_size=64,
                  epochs=1000,
-                 n_critics=5, 
                  delta=1e-5,
-                 budget=3.0):
+                 budget=1.0):
+        self.binary = binary
         self.latent_dim = latent_dim
-        self.gen_dim = gen_dim
-        self.dis_dim = dis_dim
         self.batch_size = batch_size
         self.epochs = epochs
-        self.n_critics = n_critics
         self.delta = delta
         self.budget = budget
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
-        self.transformer = GeneralTransformer()
-        self.transformer.fit(data, categorical_columns, ordinal_columns)
-        data = self.transformer.transform(data)
+
+    def train(self, data):
         dataset = TensorDataset(torch.from_numpy(data.astype('float32')).to(self.device))
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
         
-        data_dim = self.transformer.output_dim
-        
-        self.generator = Generator(self.latent_dim, self.gen_dim, data_dim)
-        self.generator = utils.convert_batchnorm_modules(self.generator).to(self.device)
-        
-        discriminator = Discriminator(data_dim, self.dis_dim)
-        discriminator = utils.convert_batchnorm_modules(discriminator).to(self.device)
-        
+        self.generator = Generator(self.latent_dim, data.shape[1], binary=self.binary).to(self.device)
+        discriminator = Discriminator(data.shape[1]).to(self.device)
         optimizer_d = optim.Adam(discriminator.parameters(), lr=4e-4)
         
         privacy_engine = PrivacyEngine(
@@ -110,7 +76,7 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
             batch_size=self.batch_size,
             sample_size=len(data),
             alphas=[1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)),
-            noise_multiplier=5.0,
+            noise_multiplier=3.5,
             max_grad_norm=1.0,
             clip_per_layer=True
         )
@@ -130,7 +96,6 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
                 noise = torch.randn(self.batch_size, self.latent_dim, 1, 1, device=self.device)
                 noise = noise.view(-1, self.latent_dim)
                 fake_data = self.generator(noise)
-                fake_data = apply_activate(fake_data, self.transformer.output_info)
                 label_fake = torch.full((self.batch_size,), 0, device=self.device)
                 output = discriminator(fake_data.detach())
                 loss_d_fake = criterion(output, label_fake)
@@ -162,14 +127,19 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
                 optimizer_g.step()
             
                 # manually clear gradients
-                autograd_grad_sample.clear_backprops(discriminator)
+                for p in discriminator.parameters():
+                    if hasattr(p, "grad_sample"):
+                        del p.grad_sample
+
+                if self.delta is None:
+                    self.delta = 1 / data.shape[0]
                 
                 epsilon, best_alpha = optimizer_d.privacy_engine.get_privacy_spent(self.delta)
                 
             if self.budget < epsilon:
                 break
-    
-    def sample(self, n):
+
+    def generate(self, n):
         steps = n // self.batch_size + 1
         data = []
         for i in range(steps):
@@ -177,10 +147,9 @@ class DPGANSynthesizer(SDGYMBaseSynthesizer):
             noise = noise.view(-1, self.latent_dim)
             
             fake_data = self.generator(noise)
-            fake_data = apply_activate(fake_data, self.transformer.output_info)
             data.append(fake_data.detach().cpu().numpy())
 
         data = np.concatenate(data, axis=0)
         data = data[:n]
 
-        return self.transformer.inverse_transform(data, None)
+        return data
