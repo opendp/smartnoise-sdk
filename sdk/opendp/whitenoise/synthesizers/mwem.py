@@ -41,6 +41,16 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.scale = {}
         self.custom_bin_count = custom_bin_count
         
+        # Pandas check
+        self.pandas = False
+        self.pd_cols = None
+        self.pd_index = None
+
+        # Query trackers
+        self.Q_counter = 0
+        self.Qs = None
+        self.max_retries_exp_mechanism = 50
+        
     def fit(self, data):
         """
         Creates a synthetic histogram distribution, based on the original data.
@@ -53,8 +63,15 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         if isinstance(data, np.ndarray):
             self.data = data.copy()
+        elif isinstance(data, pd.DataFrame):
+            self.pandas = True
+            for col in data.columns:
+                data[col] = pd.to_numeric(data[col], errors='ignore')
+            self.data = data.to_numpy().copy()
+            self.pd_cols = data.columns
+            self.pd_index = data.index
         else:
-            raise ValueError("Data must be a numpy array.")
+            raise ValueError("Data must be a numpy array or pandas dataframe.")
 
         if self.split_factor != None and self.splits == []:
             self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
@@ -66,10 +83,10 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             self.histograms = self._histogram_from_data_attributes(self.data, self.splits)
         
         self.Qs = []
+        self.Q_counter = 0
         for h in self.histograms:
             # h[1] is dimensions for each histogram
             self.Qs.append(self._compose_arbitrary_slices(self.Q_count, h[1]))
-
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
 
@@ -126,7 +143,14 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         combined = synthesized_columns
         # Reorder the columns to mirror their original order
         r = self._reorder(self.splits)
-        return combined[:,r]
+        
+        if self.pandas:
+            df = pd.DataFrame(combined[:,r], 
+                index = self.pd_index,
+                columns = self.pd_cols)
+            return df
+        else:
+            return combined[:,r]
 
     def mwem(self):
         """
@@ -174,10 +198,24 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                     start = time.time()
 
                 qi = self._exponential_mechanism(hist, A, Q, ((self.epsilon / (2*self.iterations)) / len(self.histograms)))
-
+                
+                # We track "top" queries - in the case of 
+                # high epsilon values, this while statement 
+                # can otherwise block
+                self.Q_counter+=1
+                top_qis = []
                 # Make sure we get a different query to measure:
                 while(qi in measurements):
+                    self.Q_counter+=1
+                    if self.Q_counter > self.max_retries_exp_mechanism:
+                        top_qi = Q.pop(qi)
+                        top_qis.append(top_qi)
+                        self.Q_counter = 0
                     qi = self._exponential_mechanism(hist, A, Q, ((self.epsilon / (2*self.iterations)) / len(self.histograms)))
+                
+                # Here we add back the "top" queries we popped
+                if top_qis:
+                    Q.extend(top_qis)
 
                 # NOTE: Add laplace noise here with budget
                 evals = self._evaluate(Q[qi], hist)
@@ -299,7 +337,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         maxi = max(errors)
         errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
         r = random.random()
-        e_s = np.sum(errors)
+        e_s = sum(errors)
+
         c = 0
         for i in range(len(errors)):
             c += errors[i]
@@ -405,7 +444,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
         # We use np.s_[arbitrary slice] as our queries
         e = data.T[tuple(a_slice)]
-        
+
         if isinstance(e, np.ndarray):
             return np.sum(e)
         else:
