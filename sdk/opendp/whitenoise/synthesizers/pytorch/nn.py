@@ -53,13 +53,13 @@ class DPGAN:
                  batch_size=64,
                  epochs=1000,
                  delta=1e-5,
-                 budget=1.0):
+                 epsilon=1.0):
         self.binary = binary
         self.latent_dim = latent_dim
         self.batch_size = batch_size
         self.epochs = epochs
         self.delta = delta
-        self.budget = budget
+        self.epsilon = epsilon
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
