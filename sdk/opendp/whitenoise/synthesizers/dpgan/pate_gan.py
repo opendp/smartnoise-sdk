@@ -25,8 +25,20 @@ class PATEGAN:
         self.delta = delta
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.pd_cols = None
+        self.pd_index = None
     
     def train(self, data):
+        if isinstance(data, pd.DataFrame):
+            for col in data.columns:
+                data[col] = pd.to_numeric(data[col], errors='ignore')
+            self.pd_cols = data.columns
+            self.pd_index = data.pd_index
+            data = data.to_numpy()
+        else:
+            raise ValueError("Data must be a numpy array or pandas dataframe")
+
         data_dim = data.shape[1]
 
         self.num_teachers = int(len(data) / 1000)
