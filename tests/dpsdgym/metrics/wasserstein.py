@@ -3,25 +3,33 @@ import pandas as pd
 
 def wasserstein_randomization(d1_large, d2_large, iters, downsample_size=100):
     """
-    Calculate wasserstein randomization test results
-    "We propose a metric based on
-    the idea of randomization inference (Basu, 1980; Fisher, 1935). 
-    Each data point is randomly assigned to one of two
-    data sets and the similarity of the resulting two distributions 
-    is measured with the Wasserstein distance. Repeating this
-    random assignment a great number of times (e.g. 100000 times) 
-    provides an empirical approximation of the distances’
-    null distribution. Similar to the pMSE ratio score we then 
-    calculate the ratio of the measured Wasserstein distance and
-    the median of the null distribution to get a Wasserstein distance 
-    ratio score that is comparable across different attributes.
-    Again a Wasserstein distance ratio score of 0 would indicate that 
-    two marginal distributions are identical. Larger scores
-    indicate greater differences between distributions."
+    Combine synthetic and real data into two sets and randomly 
+    divide the data into two new random sets. Check the wasserstein
+    distance (earth movers distance) between these two new muddled sets.
+    Use the measured wasserstein distance to compute the ratio between
+    it and the median of the null distribution (earth movers distance on
+    original set). A ratio of 0 would indicate that the two marginal 
+    distributions are identical.
+
     From "REALLY USEFUL SYNTHETIC DATA
     A FRAMEWORK TO EVALUATE THE QUALITY OF
     DIFFERENTIALLY PRIVATE SYNTHETIC DATA"
     https://arxiv.org/pdf/2004.07740.pdf
+
+    NOTE: We return the mean here. However, its best
+    probably to analyze the distribution of the wasserstein score
+
+    :param d1_large: real data
+    :type d1_large: pandas DataFrame
+    :param d2_large: fake data
+    :type d2_large: pandas DataFrame
+    :param iters: how many iterations to run the randomization
+    :type iters: int
+    :param downsample_size: we downsample the original datasets due
+    to memory constraints
+    :type downsample_size: int
+    :return: wasserstein randomization mean
+    :rtype: float
     """
     # pip install pyemd
     # https://github.com/wmayner/pyemd
@@ -48,6 +56,8 @@ def wasserstein_randomization(d1_large, d2_large, iters, downsample_size=100):
     # measurements
     if len(distances) == 0:
         return -1 
+
     d_pd = pd.DataFrame(distances)
     print(d_pd.describe())
+
     return np.mean(np.array(distances))

@@ -6,10 +6,18 @@ def sra(R, S):
     SRA can be thought of as the (empirical) probability of a
     comparison on the synthetic data being ”correct” (i.e. the same as
     the comparison would be on the real data).
+    
     From "Measuring the quality of Synthetic data for use in competitions"
     https://arxiv.org/pdf/1806.11345.pdf
 
     (NOTE: SRA requires at least 2 accuracies per list to work)
+
+    :param R: list of accuracies on models of real data
+    :type R: list of floats
+    :param S: list of accuracies on models of synthetic data
+    :type S: list of floats
+    :return: sra score
+    :rtype: float
     """
     print(R, S)
     k = len(R)

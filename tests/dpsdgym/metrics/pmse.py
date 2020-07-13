@@ -5,19 +5,23 @@ from sklearn.model_selection import train_test_split
 
 def pmse_ratio(data, synthetic_data):
     """
-    To compare the overall similarity of the joint distribution 
-    and to calculate the general quality of the synthetic copies
-    we rely on the propensity score mean squared error (pMSE) 
-    ratio score for synthetic data as proposed by Snoke et al.
-    (2018). The pMSE requires training a discriminator 
-    that is capable to distinguish between real
-    and synthetic examples. A synthetic data set has high 
-    general data quality, if the model cannot distinguish between
-    real and fake examples.
+    In order to determine how similar the synthetic and real data are
+    to each other (general quality of synthetic) we can train a 
+    discriminator to attempt to distinguish between real and
+    synthetic. The poorer the performance of the discriminator, the
+    more similar the two datasets are.
+
     From "Really Useful Synthetic Data
     A Framework To Evaluate The Quality Of
     Differentially Private Synthetic Data"
     https://arxiv.org/pdf/2004.07740.pdf
+
+    :param data: Original data
+    :type samples: pandas DataFrame
+    :param data: Synthetic data we are analyzing
+    :type samples: pandas DataFrame
+    :return: ratio (pmse score)
+    :rtype: float
     """
     n1 = data.shape[0]
     n2 = synthetic_data.shape[0]
