@@ -1,37 +1,47 @@
-# This file contains a list of tests that can be passed actual aggregates or result aggregates from a DP implementation
-# It tries to use a sample dataset S and splits it randomly into two neighboring datasets D1 and D2
-# Using these neighboring datasets, it applies the aggregate query repeatedly
-# It tests the DP condition to let the DP implementer know whether repeated aggregate query results are not enough to re-identify D1 or D2 which differ by single individual
-# i.e. passing (epsilon, delta) - DP condition
-# If the definition is not passed, there is a bug or it is a by-design bug in case of passing actual aggregates
-
-import sys
-import os
-import subprocess
 import pandas as pd
 import numpy as np
-import math
 import matplotlib.pyplot as plt
+import math
+import copy
+import os
+from scipy import stats
 import opendp.whitenoise.evaluation._aggregation as agg
 import opendp.whitenoise.evaluation._exploration as exp
-import copy
-
 from opendp.whitenoise.metadata.collection import *
-from scipy import stats
 
 class DPVerification:
-    # Set the epsilon parameter of differential privacy
+    """ This class contains a list of methods that can be passed DP analysis 
+    for stochastic verification. It tries to use a set of neighboring datasets 
+    D1 and D2 that differ by single individual. On these neighboring datasets, 
+    it applies the DP analysis repeatedly. 
+    
+    It tests the DP condition to let the DP implementer know whether repeated analysis
+    results are not enough to re-identify D1 or D2 which differ by single individual 
+    i.e. passing epsilon-DP condition. 
+    
+    If the DP condition is not passed, there is a bug and analysis is not 
+    differentially private. Similarly, it has methods to evaluate accuracy, 
+    utility and bias of DP analysis. 
+    """
     def __init__(self, epsilon=1.0, dataset_size=10000, csv_path="."):
+        """
+        Instantiates DP Verification class initializing privacy parameters
+        Creates a simulation dataset for use in verification testing
+        """
         self.epsilon = epsilon
         self.dataset_size = dataset_size
         self.file_dir = os.path.dirname(os.path.abspath(__file__))
         self.csv_path = csv_path
         self.df, self.dataset_path, self.file_name, self.metadata = self.create_simulated_dataset()
-        print("Loaded " + str(len(self.df)) + " records")
         self.N = len(self.df)
         self.delta = 1/(self.N * math.sqrt(self.N))
 
     def create_simulated_dataset(self, file_name = "simulation"):
+        """
+        Returns a simulated dataset of configurable size and following
+        geometric distribution. Adds a couple of dimension columns for 
+        analysis related to GROUP BY queries. 
+        """
         np.random.seed(1)
         userids = list(range(1, self.dataset_size+1))
         userids = ["A" + str(user) for user in userids]
@@ -55,8 +65,11 @@ class DPVerification:
 
         return df, file_path, file_name, metadata
 
-    # Generate dataframes that differ by a single record that is randomly chosen
     def generate_neighbors(self, load_csv = False):
+        """
+        Generate dataframes that differ by a single record that is randomly chosen
+        Returns the neighboring datasets and their corresponding metadata
+        """
         if(load_csv):
             self.df = pd.read_csv(self.dataset_path)
 
@@ -67,7 +80,6 @@ class DPVerification:
         d1 = self.df
         drop_idx = np.random.choice(self.df.index, 1, replace=False)
         d2 = self.df.drop(drop_idx)
-        print("Length of D1: ", len(d1), " Length of D2: ", len(d2))
 
         if(load_csv):
             # Storing the data as a CSV for applying queries via Burdock querying system
@@ -86,18 +98,23 @@ class DPVerification:
 
         return d1, d2, d1_metadata, d2_metadata
 
-    # If there is an aggregation function that we need to test, we need to apply it on neighboring datasets
-    # This function applies the aggregation repeatedly to log results in two vectors that are then used for generating histogram
-    # The histogram is then passed through the DP test
     def apply_aggregation_neighbors(self, f, args1, args2):
+        """
+        If there is an aggregation function that we need to test, 
+        we need to apply it on neighboring datasets. This function applies 
+        the aggregation repeatedly to log results in two vectors that are 
+        then used for generating histogram. The histogram is then passed 
+        through the DP test.
+        """
         fD1 = f(*args1)
         fD2 = f(*args2)
-
-        print("Mean fD1: ", np.mean(fD1), " Stdev fD1: ", np.std(fD1), " Mean fD2: ", np.mean(fD2), " Stdev fD2: ", np.std(fD2))
         return fD1, fD2
 
-    # Generate histograms given the vectors of repeated aggregation results applied on neighboring datasets
     def generate_histogram_neighbors(self, fD1, fD2, numbins=0, binsize="auto", exact=False):
+        """
+        Generate histograms given the vectors of repeated aggregation results
+        applied on neighboring datasets
+        """
         d1 = fD1
         d2 = fD2
         d = np.concatenate((d1, d2), axis=None)
@@ -126,8 +143,11 @@ class DPVerification:
 
         return d1hist, d2hist, bin_edges
 
-    # Plot histograms given the vectors of repeated aggregation results applied on neighboring datasets
     def plot_histogram_neighbors(self, fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, binlist, bound=True, exact=False):
+        """
+        Plot histograms given the vectors of repeated aggregation results 
+        applied on neighboring datasets
+        """
         plt.figure(figsize=(15,5))
         if(exact):
             ax = plt.subplot(1, 1, 1)
@@ -166,9 +186,13 @@ class DPVerification:
             plt.legend(['D2', 'D1'], loc="upper right")
         plt.show()
 
-    # Check if histogram of fD1 values multiplied by e^epsilon and summed by delta is bounding fD2 and vice versa
-    # Use the histogram results and create bounded histograms to compare in DP test
     def get_bounded_histogram(self, d1hist, d2hist, binlist, d1size, d2size, exact, alpha=0.05):
+        """
+        Check if histogram of fD1 values multiplied by e^epsilon and 
+        summed by delta is bounding fD2 and vice versa
+        Use the histogram results and create bounded histograms 
+        to compare in DP test
+        """
         d1_error_interval = 0.0
         d2_error_interval = 0.0
         # Lower and Upper bound
@@ -198,8 +222,10 @@ class DPVerification:
 
         return px, py, d1histupperbound, d2histupperbound, d1histbound, d2histbound, d1lower, d2lower
 
-    # Differentially Private Predicate Test
     def dp_test(self, d1hist, d2hist, binlist, d1size, d2size, debug=False, exact=False):
+        """
+        Differentially Private Predicate Test
+        """
         px, py, d1histupperbound, d2histupperbound, d1histbound, d2histbound, d1lower, d2lower = \
             self.get_bounded_histogram(d1hist, d2hist, binlist, d1size, d2size, exact)
         if(debug):
@@ -224,58 +250,60 @@ class DPVerification:
         np.any(np.logical_and(np.greater(d2hist, np.zeros(d2hist.size)), np.greater(d2lower, d1histupperbound)))
         return not bound_exceeded, d1histupperbound, d2histupperbound, d1lower, d2lower
 
-    # K-S Two sample test between the repeated query results on neighboring datasets
     def ks_test(self, fD1, fD2):
+        """
+        K-S Two sample test between the repeated query results on neighboring datasets
+        """
         return stats.ks_2samp(fD1, fD2)
 
-    # Anderson Darling Test
     def anderson_ksamp(self, fD1, fD2):
+        """
+        Anderson Darling Test
+        """
         return stats.anderson_ksamp([fD1, fD2])
 
-    # Kullback-Leibler divergence D(P || Q) for discrete distributions
     def kl_divergence(self, p, q):
+        """
+        Kullback-Leibler divergence D(P || Q) for discrete distributions
+        """
         return np.sum(np.where(p != 0, p * np.log(p / q), 0))
 
-    # Wasserstein Distance
     def wasserstein_distance(self, d1hist, d2hist):
+        """
+        Wasserstein Distance between histograms of repeated analysis on neighboring datasets
+        """
         return stats.wasserstein_distance(d1hist, d2hist)
 
-    # Verification of SQL aggregation mechanisms
     def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
+        """
+        Verification of SQL aggregation mechanisms
+        Returns statistical distance measures between repeated analysis 
+        responses on neighboring datasets
+        """
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors()
-
         fD1, fD2 = self.apply_aggregation_neighbors(f, (d1, colname), (d2, colname))
         d1size, d2size = fD1.size, fD2.size
-
         ks_res = self.ks_test(fD1, fD2)
-        print("\nKS 2-sample Test Result: ", ks_res, "\n")
-
-        #andderson_res = self.anderson_ksamp(fD1, fD2)
-        #print("Anderson 2-sample Test Result: ", andderson_res, "\n")
-
         d1hist, d2hist, bin_edges = \
             self.generate_histogram_neighbors(fD1, fD2, numbins, binsize, exact=exact)
-
-        ws_res = 0.0
-        #kl_res = 0.0
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug, exact=exact)
+        ws_res = 0.0
         if(exact):
-            dp_res = False
-            print("Wasserstein Distance: ", ws_res, "\n")
-            #print("KL Divergence Distance: ", kl_res, "\n")
+            return False, 0.0, 0.0
         else:
             ws_res = self.wasserstein_distance(d1hist, d2hist)
-            print("Wasserstein Distance: ", ws_res, "\n")
-            #kl_res = self.kl_divergence(d1histupperbound, d2lower)
-            #print("KL-Divergence: ", kl_res, "\n")
-        print("DP Predicate Test:", dp_res, "\n")
 
         if(plot):
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, ks_res, ws_res
 
     def accuracy_test(self, actual, low, high, confidence=0.95):
-        # Actual mean of aggregation function f on D1 is equal to sample mean
+        """
+        Performs accuracy and utility tests given lower and upper bounds.
+        95% of times actual response (without DP noise) should fall within the error bounds
+        Utility Test finds whether 5% of times, actual response falls outside the bounds 
+        Else error bounds are too large and noisy responses are low utility
+        """
         n = len(low)
         actual = [actual] * n
         error_interval = 0.05*confidence
@@ -283,27 +311,29 @@ class DPVerification:
         relaxed_high = 1 - (confidence + error_interval)
         within_bounds = np.sum(np.logical_and(np.greater_equal(actual, low), np.greater_equal(high, actual)))
         outside_bounds = n - within_bounds
-        print("Count of times noisy result within bounds:", within_bounds, "/", n)
-        print("Count of times noisy result outside bounds:", outside_bounds, "/", n)
         acc_res = (within_bounds / n >= relaxed_low)
         utility_res = (outside_bounds / n >= relaxed_high)
         return acc_res, utility_res, float('%.2f'%((within_bounds / n) * 100))
 
-    # Calculates mean signed deviation from noisy results sample as a ratio of actual value
     def bias_test(self, actual, fD, sig_level = 0.05):
-        # Mean signed deviation
+        """
+        Given actual response, calculates mean signed deviation of noisy responses
+        Also, performs 1-sample two tailed t-test to find whether 
+        the difference between actual response and repeated noisy responses 
+        is statistically significant i.e. biased result
+        """
         n = len(fD)
         actual = [actual] * n
         diff = fD - actual
         msd = (np.sum(diff) / n) / actual[0]
-        print("Mean signed deviation ratio to actual: ", msd)
-        # Checking if mean of (difference of noisy response to actual) is zero i.e. unbiased result
         tset, pval = stats.ttest_1samp(diff, 0.0)
-        print("p-Value of 1 sample t-test: ", pval)
         return (pval >= sig_level), msd
 
-    # Applying queries repeatedly against SQL-92 implementation of Differential Privacy by Burdock
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
+        """
+        Applying singleton queries repeatedly against DP SQL-92 implementation 
+        by WhiteNoise-System
+        """
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
 
@@ -319,8 +349,10 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, acc_res, utility_res, bias_res
 
-    # Allows DP Predicate test on both singleton and GROUP BY queries
     def dp_groupby_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
+        """
+        Allows DP Predicate test on both singleton and GROUP BY SQL queries
+        """
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
 
@@ -332,16 +364,11 @@ class DPVerification:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             exact_gp = d1_exact.groupby(dim_cols)[col].apply(list).reset_index(name=col)
-            # Full outer join after flattening the results above to one row per dimension key
-            # We cannot be sure if every dimension key has a response in every repeated query run because of tau thresholding
-            # That's why we do a full outer join and flatten whatever vector of results we get for the numerical column across repeat runs
-            # This is what we use for generating the histogram of results for that dimension key
-            d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')
+            # Both D1 and D2 should have dimension key for histograms to be created
+            d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='inner')
             d1_d2 = d1_d2.merge(exact_gp, on=dim_cols, how='left')
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
-                print(d1_d2.iloc[index, :n_cols - 3])
-                print("Column: ", col)
                 # fD1 and fD2 will have the results of the K repeated query results that can be passed through histogram test
                 # These results are for that particular numerical column and the specific dimension key of d1_d2
                 fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 3]])
@@ -350,7 +377,6 @@ class DPVerification:
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-                print("DP Predicate Test Result: ", dp_res)
 
                 # Accuracy Test
                 #low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
@@ -362,9 +388,6 @@ class DPVerification:
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
 
-        for res in res_list:
-            print(res)
-
         res_list = res_list.values() if hasattr(res_list, "values") else res_list  # TODO why is this needed?
         dp_res = np.all(np.array([res[0] for res in res_list]))
         #acc_res = np.all(np.array([res[1] for res in res_list]))
@@ -373,8 +396,11 @@ class DPVerification:
         bias_res = np.all(np.array([res[3] for res in res_list]))
         return dp_res, acc_res, utility_res, bias_res
 
-    # Use the powerset based neighboring datasets to scan through all edges of database search graph
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, test_cases=5):
+        """
+        Use the powerset based neighboring datasets to scan through 
+        all edges of database search graph
+        """
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         ex = exp.Exploration()
         res_list = {}
@@ -398,7 +424,6 @@ class DPVerification:
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
                 d1size, d2size = fD1.size, fD2.size
                 dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-                print("DP Predicate Test Result: ", dp_res)
                 if(plot):
                     self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
                 key = "[" + ','.join(str(e) for e in list(sample)) + "] - " + filename

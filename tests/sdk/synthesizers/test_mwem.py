@@ -2,6 +2,7 @@ import subprocess
 import os
 
 import pytest
+import warnings
 import string
 import numpy as np
 import pandas as pd
@@ -20,6 +21,8 @@ df = df.drop(["income"], axis=1)
 nf = df.to_numpy().astype(int)
 
 synth = MWEMSynthesizer(split_factor=3)
+
+faux_synth = MWEMSynthesizer(split_factor=1)
 
 test_data = np.array([[1,1,1],[2,2,2],[3,3,3]])
 
@@ -86,3 +89,9 @@ class TestMWEM:
     
     def test_generate_splits(self):
         assert (synth._generate_splits(3,3) == np.array([[0, 1, 2]])).all()
+
+    # TODO: More split tests
+
+    def test_faux_fit(self):
+        pytest.warns(Warning, faux_synth.fit, test_data) 
+        assert faux_synth.histograms
