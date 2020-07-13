@@ -1,68 +1,23 @@
-import math
 import numpy as np
+import pandas as pd
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset
 
-from opendp.whitenoise.synthesizers.utils.pate import weights_init, pate, moments_acc
-
-class Generator(nn.Module):
-    def __init__(self, latent_dim, hidden_dims, output_dim):
-        super(Generator, self).__init__()
-        previous_layer_dim = latent_dim
-        
-        model = []
-        for i, layer_dim in enumerate(list(hidden_dims)):
-            model.append(nn.Linear(previous_layer_dim, layer_dim))
-            model.append(nn.BatchNorm1d(layer_dim))
-            model.append(nn.ReLU())
-            previous_layer_dim = layer_dim
-        model.append(nn.Linear(previous_layer_dim, output_dim))
-        
-        self.model = nn.Sequential(*model)
-    
-    def forward(self, noise):
-        data = self.model(noise)
-        return data
-
-class Discriminator(nn.Module):
-    def __init__(self, input_dim, hidden_dims):
-        super(Discriminator, self).__init__()
-        previous_layer_dim = input_dim
-        
-        model = []
-        if isinstance(hidden_dims, tuple):
-            for i, layer_dim in enumerate(list(hidden_dims)):
-                model.append(nn.Linear(previous_layer_dim, layer_dim))
-                model.append(nn.LeakyReLU(0.2))
-                model.append(nn.Dropout(0.5))
-                previous_layer_dim = layer_dim
-        else:
-            model.append(nn.Linear(previous_layer_dim, hidden_dims))
-            previous_layer_dim = hidden_dims
-        model.append(nn.Linear(previous_layer_dim, 1))
-        model.append(nn.Sigmoid())
-
-        self.model = nn.Sequential(*model)
-    
-    def forward(self, input):
-        output = self.model(input)
-        return output.view(-1)
-
-class PATEGANSynthesizer:
+class PATEGAN:
     def __init__(self,
-                 latent_dim=32,
-                 gen_dim=(128, 64, 128),
+                 binary=False,
+                 latent_dim=64,
                  batch_size=64,
                  teacher_iters=5,
                  student_iters=5,
-                 budget=3.0,
+                 budget=1.0,
                  delta=1e-5):
+        self.binary = binary
         self.latent_dim = latent_dim
-        self.gen_dim = gen_dim
         self.batch_size = batch_size
         self.teacher_iters = teacher_iters
         self.student_iters = student_iters
@@ -71,7 +26,7 @@ class PATEGANSynthesizer:
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+    def train(self, data):
         data_dim = data.shape[1]
 
         self.num_teachers = int(len(data) / 1000)
@@ -83,14 +38,13 @@ class PATEGANSynthesizer:
         for teacher_id in range(self.num_teachers):
             loader.append(DataLoader(tensor_partitions[teacher_id], batch_size=self.batch_size, shuffle=True))
 
-        self.generator = Generator(self.latent_dim, self.gen_dim, data_dim).double().to(self.device)
+        self.generator = Generator(self.latent_dim, data_dim, binary=self.binary).double().to(self.device)
         self.generator.apply(weights_init)
         
-        student_dim = (data_dim, int(data_dim/2), data_dim)
-        student_disc = Discriminator(data_dim, student_dim).double().to(self.device)
+        student_disc = Discriminator(data_dim).double().to(self.device)
         student_disc.apply(weights_init)
 
-        teacher_disc = [Discriminator(data_dim, data_dim).double().to(self.device) for i in range(self.num_teachers)]
+        teacher_disc = [Discriminator(data_dim).double().to(self.device) for i in range(self.num_teachers)]
         for i in range(self.num_teachers):
             teacher_disc[i].apply(weights_init)
         
@@ -157,7 +111,7 @@ class PATEGANSynthesizer:
 
             epsilon = min((alphas - math.log(self.delta)) / l_list)
 
-    def sample(self, n):
+    def generate(self, n):
         steps = n // self.batch_size + 1
         data = []
         for i in range(steps):
