@@ -17,9 +17,9 @@ def pmse_ratio(data, synthetic_data):
     https://arxiv.org/pdf/2004.07740.pdf
 
     :param data: Original data
-    :type samples: pandas DataFrame
-    :param data: Synthetic data we are analyzing
-    :type samples: pandas DataFrame
+    :type data: pandas DataFrame
+    :param synthetic_data: Synthetic data we are analyzing
+    :type synthetic_data: pandas DataFrame
     :return: ratio (pmse score)
     :rtype: float
     """
