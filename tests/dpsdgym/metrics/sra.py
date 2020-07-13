@@ -8,7 +8,10 @@ def sra(R, S):
     the comparison would be on the real data).
     From "Measuring the quality of Synthetic data for use in competitions"
     https://arxiv.org/pdf/1806.11345.pdf
+
+    (NOTE: SRA requires at least 2 accuracies per list to work)
     """
+    print(R, S)
     k = len(R)
     sum_I = 0
     for i in range(k):

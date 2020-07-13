@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def wasserstein_randomization(d1, d2, iters):
+def wasserstein_randomization(d1_large, d2_large, iters, downsample_size=100):
     """
     Calculate wasserstein randomization test results
     "We propose a metric based on
@@ -23,23 +23,29 @@ def wasserstein_randomization(d1, d2, iters):
     DIFFERENTIALLY PRIVATE SYNTHETIC DATA"
     https://arxiv.org/pdf/2004.07740.pdf
     """
-    from scipy.stats import wasserstein_distance
-    import matplotlib.pyplot as plt
     # pip install pyemd
     # https://github.com/wmayner/pyemd
     from pyemd import emd_samples
 
-    assert(len(d1) == len(d2))
+    assert(len(d1_large) == len(d2_large))
+    d1 = d1_large.sample(n=downsample_size)
+    d2 = d2_large.sample(n=downsample_size)
     l_1 = len(d1)
     d3 = np.concatenate((d1,d2))
     distances = []
     for i in range(iters):
         np.random.shuffle(d3)
         n_1, n_2 = d3[:l_1], d3[l_1:]
-        dist = emd_samples(n_1, n_2, bins='auto')
+        try:
+            # This can be very memory intensive
+            # so we check for errors here
+            dist = emd_samples(n_1, n_2, bins='auto')
+        except MemoryError:
+            dist = emd_samples(n_1, n_2, bins=10)
         distances.append(dist)
-    plt.hist(distances, bins=25)
-    plt.show()
-
+    # Safety check
+    if len(distances) == 0:
+        return -1 
     d_pd = pd.DataFrame(distances)
     print(d_pd.describe())
+    return np.mean(np.array(distances))
