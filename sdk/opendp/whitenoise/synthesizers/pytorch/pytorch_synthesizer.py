@@ -8,8 +8,14 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
     def __init__(self, preprocessor, gan):
         self.preprocessor = preprocessor
         self.gan = gan
+
+        self.categorical_columns = None
+        self.ordinal_columns = None
     
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+        self.categorical_columns = categorical_columns
+        self.ordinal_columns = ordinal_columns
+        
         self.preprocessor.fit(data, categorical_columns, ordinal_columns)
         preprocessed_data = self.preprocessor.transform(data)
 

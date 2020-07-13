@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 import torch
 import torch.nn as nn
@@ -63,7 +64,19 @@ class DPGAN:
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+        self.pd_cols = None
+        self.pd_index = None
+
     def train(self, data):
+        if isinstance(data, pd.DataFrame):
+            for col in data.columns:
+                data[col] = pd.to_numeric(data[col], errors='ignore')
+            self.pd_cols = data.columns
+            self.pd_index = data.pd_index
+            data = data.to_numpy()
+        else:
+            raise ValueError("Data must be a numpy array or pandas dataframe")
+
         dataset = TensorDataset(torch.from_numpy(data.astype('float32')).to(self.device))
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
         
