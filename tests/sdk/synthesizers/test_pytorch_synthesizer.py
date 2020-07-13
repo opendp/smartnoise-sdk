@@ -6,8 +6,16 @@ import string
 import pandas as pd
 
 from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+
+try:
+    from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
+    from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
+except:
+    import logging
+    test_logger = logging.getLogger(__name__)
+    test_logger.warning("Requires torch and torchdp")
+
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -19,7 +27,6 @@ df = pd.read_csv(csv_path)
 
 @pytest.mark.torch
 class TestPytorchDPSynthesizer:
-    from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
     dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
 
     @pytest.mark.torch
