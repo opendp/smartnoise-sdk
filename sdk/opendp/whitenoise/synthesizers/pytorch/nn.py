@@ -74,7 +74,7 @@ class DPGAN:
             self.pd_cols = data.columns
             self.pd_index = data.pd_index
             data = data.to_numpy()
-        else:
+        elif not isinstance(data, np.ndarray):
             raise ValueError("Data must be a numpy array or pandas dataframe")
 
         dataset = TensorDataset(torch.from_numpy(data.astype('float32')).to(self.device))
