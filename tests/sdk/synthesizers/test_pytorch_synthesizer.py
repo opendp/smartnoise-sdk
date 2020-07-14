@@ -27,15 +27,17 @@ df = pd.read_csv(csv_path)
 
 @pytest.mark.torch
 class TestPytorchDPSynthesizer:
-    dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
+    def setup(self):
+        self.dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
+        raise Exception()
 
-    @pytest.mark.torch
     def test_fit(self):
         dpgan.fit(df)
         assert dpgan.gan.generator
+        raise Exception()
     
-    @pytest.mark.torch
     def test_sample(self):
         sample_size = len(df)
         synth_data = dpgan.sample(sample_size)
         assert synth_data.shape == df.shape
+        raise Exception()
