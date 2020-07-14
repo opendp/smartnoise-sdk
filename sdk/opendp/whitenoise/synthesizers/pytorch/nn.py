@@ -147,9 +147,9 @@ class DPGAN:
                 if self.delta is None:
                     self.delta = 1 / data.shape[0]
                 
-                epsilon, best_alpha = optimizer_d.privacy_engine.get_privacy_spent(self.delta)
+                eps, best_alpha = optimizer_d.privacy_engine.get_privacy_spent(self.delta)
                 
-            if self.budget < epsilon:
+            if self.epsilon < eps:
                 break
 
     def generate(self, n):
