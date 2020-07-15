@@ -6,7 +6,16 @@ import string
 import pandas as pd
 
 from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.synthesizers.dpgan.pate_gan import PATEGANSynthesizer
+
+try:
+    from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
+    from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.whitenoise.synthesizers.pytorch.nn import PATEGAN
+except:
+    import logging
+    test_logger = logging.getLogger(__name__)
+    test_logger.warning("Requires torch and torchdp")
+
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -16,14 +25,17 @@ csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.
 schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
-synth = PATEGANSynthesizer()
-
+@pytest.mark.torch
 class TestDPGAN:
+    def setup(self):
+        self.pategan = PytorchDPSynthesizer(GeneralTransformer(), PATEGAN())
+
     def test_fit(self):
-        synth.fit(df.to_numpy())
-        assert synth.generator
+        self.pategan.fit(df)
+        assert self.pategan.gan.generator
     
     def test_sample(self):
+        self.pategan.fit(df)
         sample_size = len(df)
-        synthetic = synth.sample(sample_size)
-        assert synthetic.shape == df.shape
+        synth_data = self.pategan.sample(sample_size)
+        assert synth_data.shape == df.shape

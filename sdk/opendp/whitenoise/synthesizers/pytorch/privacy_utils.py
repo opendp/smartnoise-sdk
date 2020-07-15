@@ -6,7 +6,6 @@ import numpy as np
 def weights_init(m):
     if type(m) == nn.Linear:
         nn.init.xavier_uniform_(m.weight)
-        m.bias.data.fill_(0.01)
 
 def pate(data, teachers, lap_scale):
     num_teachers = len(teachers)
