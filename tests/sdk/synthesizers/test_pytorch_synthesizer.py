@@ -28,7 +28,7 @@ df = pd.read_csv(csv_path)
 @pytest.mark.torch
 class TestPytorchDPSynthesizer:
     def setup(self):
-        self.dpgan = PytorchDPSynthesizer(GeneralTransformer(), DPGAN())
+        self.dpgan = PytorchDPSynthesizer(DPGNA(), GeneralTransformer())
 
     def test_fit(self):
         self.dpgan.fit(df)
