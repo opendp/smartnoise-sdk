@@ -22,7 +22,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             self.preprocessor.fit(data, categorical_columns, ordinal_columns)
             data = self.preprocessor.transform(data)
 
-        self.gan.train(data)
+        self.gan.train(data, categorical_columns, ordinal_columns)
     
     def sample(self, n):
         synth_data = self.gan.generate(n)
