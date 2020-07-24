@@ -11,23 +11,31 @@ from opendp.whitenoise.synthesizers.quail import QUAILSynthesizer
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
 from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN
-#from dpctgan import DPCTGANSynthesizer
+from dpctgan import DPCTGANSynthesizer
 
 from diffprivlib.models import LogisticRegression as DPLR
 
 SEED = 42
 
-KNOWN_DATASETS =  ['car'] # ,'mushroom', 'wine', 'car' ['wine','car','adult','nursery','mushroom'] ['car'] ['adult'] #['wine'] #['nursery'] #['mushroom']
+KNOWN_DATASETS =  ['car','mushroom', 'wine', 'adult'] # ,'mushroom', 'wine', 'car' ['wine','car','adult','nursery','mushroom'] ['car'] ['adult'] #['wine'] #['nursery'] #['mushroom']
+
+KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
+               LogisticRegression, MLPClassifier,
+               RandomForestClassifier] # GaussianNB, 
+
+KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
+               'LogisticRegression', 'MLPClassifier',
+               'GaussianNB', 'RandomForestClassifier']
 
 SYNTHESIZERS = [
     ('mwem', MWEMSynthesizer),
-    # ('dpctgan', DPCTGANSynthesizer),
+    ('dpctgan', DPCTGANSynthesizer),
     ('dpgan',PytorchDPSynthesizer),
-    # ('pategan',PytorchDPSynthesizer),
+    ('pategan',PytorchDPSynthesizer),
     ('quail_mwem', QUAILSynthesizer),
-    # ('quail_dpgan', QUAILSynthesizer),
-    # ('quail_pategan', QUAILSynthesizer),
-    # ('quail_dpctgan', QUAILSynthesizer),
+    ('quail_dpgan', QUAILSynthesizer),
+    ('quail_pategan', QUAILSynthesizer),
+    ('quail_dpctgan', QUAILSynthesizer),
 ]
 
 SYNTH_SETTINGS = {
@@ -45,52 +53,52 @@ SYNTH_SETTINGS = {
             'epochs': 50
         }
     },
-    # 'quail_dpctgan': {
-    #     'adult': {
-    #         'dp_synthesizer': DPCTGANSynthesizer,
-    #         'synth_args': {
-    #             'epochs': 50
-    #         },
-    #         'dp_classifier': DPLR,
-    #         'class_args': {
-    #             'max_iter': 1000
-    #         },
-    #         'target': 'earning-class'
-    #     },
-    #     'car': {
-    #         'dp_synthesizer': DPCTGANSynthesizer,
-    #         'synth_args': {
-    #             'epochs': 50
-    #         },
-    #         'dp_classifier': DPLR,
-    #         'class_args': {
-    #             'max_iter': 1000
-    #         },
-    #         'target': 'class'
-    #     },
-    #     'wine': {
-    #         'dp_synthesizer': DPCTGANSynthesizer,
-    #         'synth_args': {
-    #             'epochs': 50
-    #         },
-    #         'dp_classifier': DPLR,
-    #         'class_args': {
-    #             'max_iter': 1000
-    #         },
-    #         'target': 'quality'
-    #     },
-    #     'mushroom': {
-    #         'dp_synthesizer': DPCTGANSynthesizer,
-    #         'synth_args': {
-    #             'epochs': 50
-    #         },
-    #         'dp_classifier': DPLR,
-    #         'class_args': {
-    #             'max_iter': 1000
-    #         },
-    #         'target': 'edible'
-    #     },
-    # },
+    'quail_dpctgan': {
+        'adult': {
+            'dp_synthesizer': DPCTGANSynthesizer,
+            'synth_args': {
+                'epochs': 50
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'earning-class'
+        },
+        'car': {
+            'dp_synthesizer': DPCTGANSynthesizer,
+            'synth_args': {
+                'epochs': 50
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'class'
+        },
+        'wine': {
+            'dp_synthesizer': DPCTGANSynthesizer,
+            'synth_args': {
+                'epochs': 50
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'quality'
+        },
+        'mushroom': {
+            'dp_synthesizer': DPCTGANSynthesizer,
+            'synth_args': {
+                'epochs': 50
+            },
+            'dp_classifier': DPLR,
+            'class_args': {
+                'max_iter': 1000
+            },
+            'target': 'edible'
+        },
+    },
     'dpgan': {
         'car': {
             'preprocessor': GeneralTransformer(),
@@ -345,10 +353,6 @@ SYNTH_SETTINGS = {
     }
 }
 
-KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
-               LogisticRegression, MLPClassifier, DecisionTreeClassifier,
-               GaussianNB, RandomForestClassifier, ExtraTreesClassifier] # BernoulliNB, MultinomialNB,
-
 MODEL_ARGS = {
     'AdaBoostClassifier': {
         'random_state': SEED,
@@ -365,7 +369,9 @@ MODEL_ARGS = {
     },
     'MLPClassifier': {
         'random_state': SEED,
-        'max_iter': 2000
+        'max_iter': 2000,
+        'early_stopping': True,
+        'n_iter_no_change': 20
     },
     'DecisionTreeClassifier': {
         'random_state': SEED,
