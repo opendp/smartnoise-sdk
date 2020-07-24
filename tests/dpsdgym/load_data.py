@@ -10,7 +10,7 @@ from imblearn.over_sampling import SMOTE
 # forces a subsampling of particularly large
 # datasets in order to not overwhelm
 # joblib 
-MEM_CAP = 1500000 # 500KB
+MEM_CAP = 100000 #1500000 # 500KB
 
 def load_data():
     """

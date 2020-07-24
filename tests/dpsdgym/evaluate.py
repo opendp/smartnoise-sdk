@@ -39,7 +39,7 @@ def wasserstein_test(args):
     mlflow.set_tags(
         {'wasserstein': str(name),
         # 'mlflow.runName': run_name
-        'dataset': dataset_name
+        'wasserstein_dataset': dataset_name
         }
     )
     mlflow.log_param('wasserstein_epsilon', str(epsilon))
@@ -74,7 +74,7 @@ def pMSE_test(args):
     mlflow.set_tags(
         {'pmse': str(name),
         # 'mlflow.runName': run_name
-        'dataset': dataset_name
+        'pmse_dataset': dataset_name
         }
     )
     mlflow.log_param('pmse_epsilon', str(epsilon))
@@ -104,7 +104,7 @@ def model_auc_roc(args):
     """
     Parallelizable
     """
-    model, x_test, y_test, mlflow_step, name = args
+    model, x_test, y_test, mlflow_step, name, synth_name = args
     aucroc = -1.0
     if type(model).__name__ != 'dumb_predictor':
         probs = model.predict_proba(x_test)
@@ -143,7 +143,6 @@ def model_auc_roc(args):
                 probs = probs[:,0]
                 aucroc = roc_auc_score(y_test, probs)
 
-    mlflow.log_metric(str(name) + '_' + 'aucroc', aucroc, step=mlflow_step)
     return aucroc
 
 def model_accuracy(args):
@@ -245,19 +244,18 @@ def run_model_suite(args):
         end = time.time() - start
         print('AUCROC finished in ' + str(end))
 
+        index_max_auc = np.argmax(np.array(aucrocs))
+        mlflow.set_tags({'aucroc': conf.KNOWN_MODELS_STR[index_max_auc]})
+        mlflow.log_param('aucroc_synthesizer', str(synth_name))
+        mlflow.log_param('aucroc_epsilon', str(epsilon))
+        mlflow.log_metrics({'aucroc': np.array(aucrocs)[index_max_auc]})
+
     index_max = np.argmax(np.array(accuracies))
-    mlflow.set_tags(
-        {'max_accuracy': conf.KNOWN_MODELS_STR[index_max],
-        # 'mlflow.runName': run_name
-        'dataset': dataset_name
-        }
-    )
+    mlflow.set_tags({'max_accuracy': conf.KNOWN_MODELS_STR[index_max],
+                    'dataset': dataset_name})
     mlflow.log_param('synthesizer', str(synth_name))
     mlflow.log_param('epsilon', str(epsilon))
-    mlflow.log_metrics({
-        'max_accuracy': np.array(accuracies)[index_max]})
-        #, 
-        #step=epsilon_step)
+    mlflow.log_metrics({'max_accuracy': np.array(accuracies)[index_max]})
 
     return (synth_name + '_' + str(epsilon), accuracies)
 
@@ -268,13 +266,13 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
     for d in data_dict:
         real = data_dict[d]["data"]
         target = data_dict[d]['target']
-        model_suite_real_args = (real, target, 0, test_size, seed, [], 'real', 0.0, None, False, run_name)
+        model_suite_real_args = (real, target, 0, test_size, seed, ['aucroc'], 'real_' + d, 0.0, None, False, d)
         real_accuracies = run_model_suite(model_suite_real_args)
 
         synthetic_runs = []
         for n, _ in conf.SYNTHESIZERS:
             for i, e in enumerate(epsilons):
-                run_args = (data_dict[d][n][str(e)], target, i, test_size, seed, [], n, e, real, True, run_name)
+                run_args = (data_dict[d][n][str(e)], target, i, test_size, seed, ['aucroc'], n, e, real, True, d)
                 synthetic_runs.append(run_args)
         
         start = time.time()
@@ -282,7 +280,7 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
         synthetic_accuracies = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
             map(delayed(run_model_suite), synthetic_runs))
         end = time.time() - start
-        print('ML evaluation suite finished in ' + str(end))
+        print('ML evaluation suite finished in ' + str(end) + ' for ' + d)
         evals[d] = [real_accuracies] + synthetic_accuracies
     
     return evals
