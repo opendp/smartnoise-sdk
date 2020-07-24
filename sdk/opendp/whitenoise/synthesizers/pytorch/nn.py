@@ -145,10 +145,10 @@ class DPGAN:
                 optimizer_g.step()
 
                 # manually clear gradients
-                for p in discriminator.parameters():
-                   if hasattr(p, "grad_sample"):
-                       del p.grad_sample
-                # autograd_grad_sample.clear_backprops(discriminator)
+                # for p in discriminator.parameters():
+                #    if hasattr(p, "grad_sample"):
+                #        del p.grad_sample
+                autograd_grad_sample.clear_backprops(discriminator)
 
                 if self.delta is None:
                     self.delta = 1 / data.shape[0]
