@@ -17,7 +17,7 @@ from diffprivlib.models import LogisticRegression as DPLR
 
 SEED = 42
 
-KNOWN_DATASETS =  ['car', 'mushroom', 'wine', 'adult'] # ,'mushroom', 'wine', 'car' ['wine','car','adult','nursery','mushroom'] ['car'] ['adult'] #['wine'] #['nursery'] #['mushroom']
+KNOWN_DATASETS =  ['car', 'adult', 'mushroom', 'wine'] # ,'mushroom', 'wine', 'car' ['wine','car','adult','nursery','mushroom'] ['car'] ['adult'] #['wine'] #['nursery'] #['mushroom']
 
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
                LogisticRegression, MLPClassifier,
