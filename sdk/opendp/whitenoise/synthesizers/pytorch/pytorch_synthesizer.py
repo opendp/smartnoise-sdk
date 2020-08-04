@@ -5,7 +5,7 @@ from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTr
 from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
 class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
-    def __init__(self, preprocessor, gan):
+    def __init__(self, gan, preprocessor=None):
         self.preprocessor = preprocessor
         self.gan = gan
 
@@ -39,3 +39,5 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             synth_data = self.preprocessor.inverse_transform(synth_data)
 
         return synth_data
+
+
