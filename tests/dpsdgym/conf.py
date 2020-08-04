@@ -19,23 +19,22 @@ from diffprivlib.models import GaussianNB as DPGNB
 
 SEED = 42
 
-KNOWN_DATASETS =  ['mushroom'] # ,'mushroom', 'wine', 'car' ['wine','car','adult','nursery','mushroom'] ['car'] ['adult'] #['wine'] #['nursery'] #['mushroom']
+KNOWN_DATASETS =  ['mushroom'] # ,'adult', 'wine', 'car', 'nursery'
 
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
                LogisticRegression, MLPClassifier,
-               RandomForestClassifier] # GaussianNB, 
+               RandomForestClassifier]
 
 KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
                'LogisticRegression', 'MLPClassifier',
                'GaussianNB', 'RandomForestClassifier']
 
 SYNTHESIZERS = [
-    # ('mwem', MWEMSynthesizer),
-    ('superquail', SuperQUAILSynthesizer),
+    ('mwem', MWEMSynthesizer),
     # ('dpctgan', DPCTGANSynthesizer),
     # ('dpgan',PytorchDPSynthesizer),
     # ('pategan',PytorchDPSynthesizer),
-    ('quail_mwem', QUAILSynthesizer),
+    # ('quail_mwem', QUAILSynthesizer),
     # ('quail_dpgan', QUAILSynthesizer),
     # ('quail_pategan', QUAILSynthesizer),
     # ('quail_dpctgan', QUAILSynthesizer),
@@ -65,32 +64,6 @@ SYNTH_SETTINGS = {
             'dp_classifier': DPLR,
             'class_args': {
                 'max_iter': 1000
-            }
-        }
-    },
-    'superquail': {
-        'adult': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
-            }
-        },
-        'car': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
-            }
-        },
-        'wine': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
-            }
-        },
-        'mushroom': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
             }
         }
     },
@@ -309,9 +282,9 @@ SYNTH_SETTINGS = {
         'car': {
             'dp_synthesizer': MWEMSynthesizer,
             'synth_args': {
-                'Q_count':400, #1000
-                'iterations':20,#30,
-                'mult_weights_iterations': 15,#20,
+                'Q_count':400,
+                'iterations':20,
+                'mult_weights_iterations': 15,
                 'split_factor':7,
                 'max_bin_count':400
             },
@@ -357,8 +330,7 @@ SYNTH_SETTINGS = {
                 'Q_count': 400,
                 'iterations':20,
                 'mult_weights_iterations':15,
-                'split_factor':3,
-                # 'splits':[[0,1,2],[3,4,5],[6,7,8],[9,10],[11,12],[13,14]],
+                'splits':[[0,1,2],[3,4,5],[6,7,8],[9,10],[11,12],[13,14]],
                 'max_bin_count':100
             },
             'dp_classifier': DPLR,
@@ -377,9 +349,9 @@ SYNTH_SETTINGS = {
             'max_bin_count':400
         },
         'car': {
-            'Q_count':400, #1000
-            'iterations':20,#30,
-            'mult_weights_iterations': 15,#20,
+            'Q_count':400, 
+            'iterations':20,
+            'mult_weights_iterations': 15,
             'split_factor':7,
             'max_bin_count':400
         },
@@ -401,7 +373,6 @@ SYNTH_SETTINGS = {
             'Q_count': 400,
             'iterations':20,
             'mult_weights_iterations':15,
-            #'split_factor':3,
             'splits':[[0,1,2],[3,4,5],[6,7,8],[9,10],[11,12],[13,14]],
             'max_bin_count':100
         }
