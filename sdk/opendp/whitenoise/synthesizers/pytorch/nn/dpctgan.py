@@ -11,7 +11,7 @@ from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 import ctgan
 from ctgan.transformer import DataTransformer
 from ctgan.conditional import ConditionalGenerator 
-from ctgan.models import Discriminator, Generator
+from ctgan.models import Generator
 from ctgan.sampler import Sampler 
 
 from ctgan import CTGANSynthesizer
@@ -22,7 +22,34 @@ from torchdp import PrivacyEngine, utils
 
 
 
-def __init__(self, input_dim, dis_dims, loss, pack):
+
+
+
+class Discriminator(Module):
+
+    def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
+
+        alpha = torch.rand(real_data.size(0) // pac, 1, 1, device=device)
+        alpha = alpha.repeat(1, pac, real_data.size(1))
+        alpha = alpha.view(-1, real_data.size(1))
+
+        interpolates = alpha * real_data + ((1 - alpha) * fake_data)
+
+        disc_interpolates = self(interpolates)
+
+        gradients = torch.autograd.grad(
+            outputs=disc_interpolates, inputs=interpolates,
+            grad_outputs=torch.ones(disc_interpolates.size(), device=device),
+            create_graph=True, retain_graph=True, only_inputs=True
+        )[0]
+
+        gradient_penalty = ((
+            gradients.view(-1, pac * real_data.size(1)).norm(2, dim=1) - 1
+        ) ** 2).mean() * lambda_
+
+        return gradient_penalty
+
+    def __init__(self, input_dim, dis_dims, loss, pack):
         super(Discriminator, self).__init__()
         torch.cuda.manual_seed(0)
         torch.manual_seed(0)
@@ -38,11 +65,12 @@ def __init__(self, input_dim, dis_dims, loss, pack):
 
         seq += [Linear(dim, 1)]
         if loss == 'cross_entropy':
-            print ("this should happen")
             seq += [Sigmoid()]
         self.seq = Sequential(*seq)
-        
-Discriminator.__init__ = __init__
+
+    def forward(self, input):
+        assert input.size()[0] % self.pack == 0
+        return self.seq(input.view(-1, self.packdim))
 
 
 
@@ -50,7 +78,7 @@ Discriminator.__init__ = __init__
 
 
 
-class DPCTGAN(SDGYMBaseSynthesizer, CTGANSynthesizer):
+class DPCTGAN(CTGANSynthesizer):
     """Differential Private Conditional Table GAN Synthesizer
     This code adds Differential Privacy to CTGANSynthesizer from https://github.com/sdv-dev/CTGAN 
     """
@@ -68,7 +96,7 @@ class DPCTGAN(SDGYMBaseSynthesizer, CTGANSynthesizer):
                  target_delta=None,
                  sigma = 5,
                  max_per_sample_grad_norm=1.0,
-                 budget = 3,
+                 epsilon = 3,
                  verbose=True,
                  loss = 'cross_entropy'
 
@@ -90,7 +118,7 @@ class DPCTGAN(SDGYMBaseSynthesizer, CTGANSynthesizer):
         self.disabled_dp = disabled_dp
         self.target_delta = target_delta
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
-        self.budget = budget
+        self.epsilon = epsilon
         self.epsilon_list = []
         self.alpha_list = []
         self.loss_d_list = []
@@ -99,12 +127,12 @@ class DPCTGAN(SDGYMBaseSynthesizer, CTGANSynthesizer):
         self.loss=loss
 
 
-    def train(self, train_data, categorical_columns=tuple(), ordinal_columns=tuple()):
+    def train(self, data, categorical_columns=None, ordinal_columns=None):
 
         
         self.transformer = DataTransformer()
-        self.transformer.fit(train_data, categorical_columns)
-        train_data = self.transformer.transform(train_data)
+        self.transformer.fit(data, categorical_columns)
+        train_data = self.transformer.transform(data)
 
         data_sampler = Sampler(train_data, self.transformer.output_info)
 
@@ -290,7 +318,7 @@ class DPCTGAN(SDGYMBaseSynthesizer, CTGANSynthesizer):
                         
             
             if not self.disabled_dp:
-                if self.budget < epsilon:
+                if self.epsilon < epsilon:
                     break
             self.loss_d_list.append(loss_d)
             self.loss_g_list.append(loss_g)
@@ -300,7 +328,7 @@ class DPCTGAN(SDGYMBaseSynthesizer, CTGANSynthesizer):
                   flush=True)
                 print ('epsilon is {e}, alpha is {a}'.format(e=epsilon, a = best_alpha))
 
-        return self.loss_d_list, self.loss_g_list, self.epsion_list, self.alpha_list
+        return self.loss_d_list, self.loss_g_list, self.epsilon_list, self.alpha_list
 
 
     def generate(self, n):
