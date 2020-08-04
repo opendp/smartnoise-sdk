@@ -74,7 +74,7 @@ class DPGAN:
         self.pd_cols = None
         self.pd_index = None
 
-    def train(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+    def train(self, data, categorical_columns=None, ordinal_columns=None):
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors='ignore')
