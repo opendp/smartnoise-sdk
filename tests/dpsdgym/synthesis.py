@@ -17,7 +17,7 @@ def run_synthesis(synthesis_args):
     n, s, synth_args, d, e, datasets, cat_cols = synthesis_args
     synth = s(epsilon=float(e), **synth_args)
     d_copy = datasets[d]["data"].copy()
-    sampled = synth.fit_sample(d_copy,categorical_columns=cat_cols)
+    sampled = synth.fit_sample(d_copy,categorical_columns=cat_cols.split(','))
     print(datasets[d]["name"] + ' finished. Epsilon: ' + str(e))
     datasets[d][n][str(e)] = sampled
     return (n, d, str(e), sampled)
@@ -44,7 +44,8 @@ def run_all_synthesizers(datasets, epsilons):
             for e in epsilons:
                 a_run = (n, s, synth_args, d, e, datasets, datasets[d]["categorical_columns"])
                 synthesizer_runs.append(a_run)
-    
+
+        # This needs to be moved out, and parallelized further
         start = time.time()
         job_num = len(datasets) * len(epsilons)
         results = Parallel(n_jobs=job_num, verbose=1, backend="loky")(

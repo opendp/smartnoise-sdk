@@ -40,5 +40,5 @@ if __name__ == "__main__":
         # os.environ['MLFLOW_RUN_ID'] = mlflow.active_run().info.run_id
         # assert(os.environ.get('MLFLOW_RUN_ID'))
         # print(os.environ['MLFLOW_RUN_ID'])
-        run(epsilons=[1.0], run_name='test', flags=flags)
+        run(epsilons=[0.01, 1.0, 10.0, 50.0, 100.0], run_name='test', flags=flags)
         # [0.01, 0.1, 1.0, 9.0, 45.0, 95.0] , 10.0, 100.0 , 10.0, 50.0, 100.0

@@ -8,14 +8,12 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
 from opendp.whitenoise.synthesizers.quail import QUAILSynthesizer
-from opendp.whitenoise.synthesizers.superquail import SuperQUAILSynthesizer
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
 from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN
 from dpctgan import DPCTGANSynthesizer
 
 from diffprivlib.models import LogisticRegression as DPLR
-from diffprivlib.models import GaussianNB as DPGNB
 
 SEED = 42
 
@@ -30,70 +28,17 @@ KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
                'GaussianNB', 'RandomForestClassifier']
 
 SYNTHESIZERS = [
-    # ('mwem', MWEMSynthesizer),
-    ('superquail', SuperQUAILSynthesizer),
-    # ('dpctgan', DPCTGANSynthesizer),
-    # ('dpgan',PytorchDPSynthesizer),
-    # ('pategan',PytorchDPSynthesizer),
+    ('mwem', MWEMSynthesizer),
+    ('dpctgan', DPCTGANSynthesizer),
+    ('dpgan',PytorchDPSynthesizer),
+    ('pategan',PytorchDPSynthesizer),
     ('quail_mwem', QUAILSynthesizer),
-    # ('quail_dpgan', QUAILSynthesizer),
-    # ('quail_pategan', QUAILSynthesizer),
-    # ('quail_dpctgan', QUAILSynthesizer),
+    ('quail_dpgan', QUAILSynthesizer),
+    ('quail_pategan', QUAILSynthesizer),
+    ('quail_dpctgan', QUAILSynthesizer),
 ]
 
 SYNTH_SETTINGS = {
-    'superquail': {
-        'adult': {
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            }
-        },
-        'car': {
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            }
-        },
-        'wine': {
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            }
-        },
-        'mushroom': {
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            }
-        }
-    },
-    'superquail': {
-        'adult': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
-            }
-        },
-        'car': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
-            }
-        },
-        'wine': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
-            }
-        },
-        'mushroom': {
-            'dp_classifier': DPGNB,
-            'class_args': {
-                #'max_iter': 1000
-            }
-        }
-    },
     'dpctgan': {
         'adult': {
             'epochs': 50
