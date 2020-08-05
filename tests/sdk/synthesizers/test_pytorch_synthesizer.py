@@ -9,7 +9,7 @@ from opendp.whitenoise.metadata import CollectionMetadata
 
 try:
     from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-    from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchSynthesizer
     from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
 except:
     import logging
@@ -26,9 +26,9 @@ schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
 @pytest.mark.torch
-class TestPytorchDPSynthesizer:
+class TestPytorchSynthesizer:
     def setup(self):
-        self.dpgan = PytorchDPSynthesizer(DPGAN(), GeneralTransformer())
+        self.dpgan = PytorchSynthesizer(DPGAN(), GeneralTransformer())
 
     def test_fit(self):
         self.dpgan.fit(df)

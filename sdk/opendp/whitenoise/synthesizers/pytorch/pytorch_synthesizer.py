@@ -4,7 +4,7 @@ import pandas as pd
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
 from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
-class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
+class PytorchSynthesizer(SDGYMBaseSynthesizer):
     def __init__(self, gan, preprocessor):
         self.gan = gan
         self.preprocessor = preprocessor
