@@ -9,8 +9,8 @@ from opendp.whitenoise.metadata import CollectionMetadata
 
 try:
     from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-    from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchSynthesizer
-    from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN
+    from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.whitenoise.synthesizers.pytorch.nn import PATEGAN
 except:
     import logging
     test_logger = logging.getLogger(__name__)
@@ -26,16 +26,16 @@ schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
 @pytest.mark.torch
-class TestPytorchSynthesizer:
+class TestDPGAN:
     def setup(self):
-        self.dpgan = PytorchSynthesizer(DPGAN(), GeneralTransformer())
+        self.pategan = PytorchSynthesizer(PATEGAN(), GeneralTransformer())
 
     def test_fit(self):
-        self.dpgan.fit(df)
-        assert self.dpgan.gan.generator
+        self.pategan.fit(df)
+        assert self.pategan.gan.generator
     
     def test_sample(self):
-        self.dpgan.fit(df)
+        self.pategan.fit(df)
         sample_size = len(df)
-        synth_data = self.dpgan.sample(sample_size)
+        synth_data = self.pategan.sample(sample_size)
         assert synth_data.shape == df.shape
