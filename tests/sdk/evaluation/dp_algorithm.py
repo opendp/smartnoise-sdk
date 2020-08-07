@@ -1,11 +1,11 @@
 from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.report._report import Report
-from opendp.whitenoise.evaluation.blackbox._base import BlackBoxPrivacyInterface
+from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
 
-class DPSampleInterface(BlackBoxPrivacyInterface):
+class DPSample(PrivacyAlgorithm):
     """
-    Sample implementation of BlackBoxPrivacy Interface
+    Sample implementation of PrivacyAlgorithm Interface
     that allows for the library to be stochastically tested by
     evaluator. 
     """

@@ -3,16 +3,16 @@ from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.report._report import Report
 from abc import ABC, abstractmethod
 
-class BlackBoxPrivacyInterface(ABC):
+class PrivacyAlgorithm(ABC):
 	"""
-	Interface for every black box differential privacy algorithm to implement
+	Interface for every differential privacy algorithm to implement
 	This shall help define functions that'll allow it to be evaluated whether
 	the DP histogram test passes or not for such implementations. 
 	"""
 	@abstractmethod
 	def prepare(self, analysis : object, privacy_params : PrivacyParams):
 		"""
-		Loads and compiles the specified analysis into a BlackBoxPrivacy instance
+		Loads and compiles the specified analysis into a PrivacyAlgorithm instance
 		An analysis is domain specific and can be any object. For example, 
 		it can be a graph, some sort of script written in any language, or a SQL
 		query. privacy_params are a shared format that is consumed by the evaluator
