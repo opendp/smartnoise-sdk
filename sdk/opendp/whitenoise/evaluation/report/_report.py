@@ -4,7 +4,7 @@ import numpy as np
 class Report:
 	"""
 	Defines the consistent schema of reported fields
-	that aid evaluation of a black box DP implementation
+	that aid evaluation of a DP algorithm implementation
 	* res_df: It is a dataframe that contains repeated 
 	analysis results across dimension and numerical
 	columns. It could be exact or noisy based on the 
