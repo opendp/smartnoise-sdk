@@ -88,7 +88,7 @@ class DPEValuator(Evaluator):
         bound_exceeded = np.any(np.logical_and(np.greater(d1hist, np.zeros(d1hist.size)), np.greater(d1lower, d2histupperbound))) or \
         np.any(np.logical_and(np.greater(d2hist, np.zeros(d2hist.size)), np.greater(d2lower, d1histupperbound)))
 
-        return not bound_exceeded, d1histupperbound, d2histupperbound, d1lower, d2lower
+        return not bound_exceeded, d1hist, d2hist, bin_edges, d1histupperbound, d2histupperbound, d1lower, d2lower
 
     def plot_histogram_neighbors(self, 
             fD1, 
