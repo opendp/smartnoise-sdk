@@ -5,9 +5,10 @@ from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from opendp.whitenoise.evaluation.evaluator._base import Evaluator
 import numpy as np
 from scipy import stats
+import math
 import matplotlib.pyplot as plt
 
-class DPEValuator(Evaluator):
+class DPEvaluator(Evaluator):
     def _generate_histogram_neighbors(self, 
             fD1, 
             fD2, 
@@ -66,7 +67,7 @@ class DPEValuator(Evaluator):
         # Lower and Upper bound
         if(not ep.exact):
             num_buckets = binlist.size - 1
-            critical_value = stats.norm.ppf(1-(alpha / 2 / num_buckets), loc=0.0, scale=1.0)
+            critical_value = stats.norm.ppf(1-(ep.alpha / 2 / num_buckets), loc=0.0, scale=1.0)
             d1_error_interval = critical_value * math.sqrt(num_buckets / d1size) / 2
             d2_error_interval = critical_value * math.sqrt(num_buckets / d2size) / 2
 
@@ -92,7 +93,7 @@ class DPEValuator(Evaluator):
         bound_exceeded = np.any(np.logical_and(np.greater(d1hist, np.zeros(d1hist.size)), np.greater(d1lower, d2histupperbound))) or \
         np.any(np.logical_and(np.greater(d2hist, np.zeros(d2hist.size)), np.greater(d2lower, d1histupperbound)))
 
-        return not bound_exceeded, d1hist, d2hist, bin_edges, d1histupperbound, d2histupperbound, d1lower, d2lower
+        return not bound_exceeded, d1histupperbound, d2histupperbound, d1lower, d2lower
 
     def _plot_histogram_neighbors(self, 
             fD1, 
@@ -156,9 +157,10 @@ class DPEValuator(Evaluator):
     def evaluate(self, 
 		d1 : object, 
 		d2 : object, 
-		algorithm : PrivacyAlgorithm, 
-		privacy_params : PrivacyParams, 
-		eval_params : EvaluatorParams) -> Metrics:
+		pa : PrivacyAlgorithm, 
+        algorithm : object,
+		pp : PrivacyParams, 
+		ep : EvaluatorParams) -> Metrics:
         """
 		Evaluates properties of privacy algorithm DP implementations using 
 			- DP Histogram Test
@@ -170,5 +172,17 @@ class DPEValuator(Evaluator):
 		algorithm is the DP implementation object
 		Returns a metrics object
 		"""
-        #TBD
-        return
+        metrics = Metrics()
+        pa.prepare(algorithm, pp, ep)
+        d1report = pa.release(d1)
+        d2report = pa.release(d2)
+        firstkey = list(d1report.res.keys())[0]
+
+        fD1, fD2 = np.array(d1report.res[firstkey]), np.array(d2report.res[firstkey])
+
+        d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
+        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
+            self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
+        
+        metrics.dp_res = dp_res
+        return metrics

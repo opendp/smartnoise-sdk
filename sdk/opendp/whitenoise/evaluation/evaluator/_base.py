@@ -14,7 +14,8 @@ class Evaluator(ABC):
 	def evaluate(self, 
 		d1 : object, 
 		d2 : object, 
-		algorithm : PrivacyAlgorithm, 
+		pa : PrivacyAlgorithm,
+		algorithm : object, 
 		privacy_params : PrivacyParams, 
 		eval_params : EvaluatorParams) -> Metrics:
 		"""
