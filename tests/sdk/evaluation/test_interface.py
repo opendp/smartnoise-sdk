@@ -4,14 +4,17 @@ from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.report._report import Report
 from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
+from opendp.whitenoise.evaluation.evaluator._dp_evaluator import DPEvaluator
+from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from dp_lib import DPSampleLibrary
 from dp_algorithm import DPSample
 import pandas as pd
+import numpy as np
 import random
 import pytest
 
 class TestEval:
-    def test_dp_algorithm(self):
+    def test_interface_algorithm(self):
         logging.getLogger().setLevel(logging.DEBUG)
         lib = DPSampleLibrary()
         dv = DPSample()
@@ -37,3 +40,20 @@ class TestEval:
         test_logger.debug("Actual count response: "  + str(report.res[firstkey]))
 
         assert(isinstance(report.res[firstkey], (int, float)))
+
+    def test_interface_evaluator(self):
+        logging.getLogger().setLevel(logging.DEBUG)
+        lib = DPSampleLibrary()
+        pa = DPSample()
+        metrics = Metrics()
+        # Before running the DP test, it should be default to False
+        assert(metrics.dp_res == False)
+        pp = PrivacyParams(epsilon=1.0)
+        ev = EvaluatorParams(repeat_count=500)
+        d1 = pd.DataFrame(random.sample(range(1, 1000), 100), columns = ['Usage'])
+        drop_idx = np.random.choice(d1.index, 1, replace=False)
+        d2 = d1.drop(drop_idx)
+        eval = DPEvaluator()
+        metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
+        # After evaluation, it should return True
+        assert(metrics.dp_res == True)
