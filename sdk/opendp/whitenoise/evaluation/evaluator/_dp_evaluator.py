@@ -8,7 +8,11 @@ from scipy import stats
 import matplotlib.pyplot as plt
 
 class DPEValuator(Evaluator):
-    def _generate_histogram_neighbors(self, fD1, fD2, ep : EvaluatorParams):
+    def _generate_histogram_neighbors(self, 
+            fD1, 
+            fD2, 
+            ep : EvaluatorParams
+        ):
         """
         Generate histograms given the vectors of repeated aggregation results
         applied on neighboring datasets
@@ -90,7 +94,7 @@ class DPEValuator(Evaluator):
 
         return not bound_exceeded, d1hist, d2hist, bin_edges, d1histupperbound, d2histupperbound, d1lower, d2lower
 
-    def plot_histogram_neighbors(self, 
+    def _plot_histogram_neighbors(self, 
             fD1, 
             fD2, 
             d1histupperbound, 
@@ -100,7 +104,8 @@ class DPEValuator(Evaluator):
             d1lower, 
             d2lower, 
             binlist,
-            ep : EvaluatorParams):
+            ep : EvaluatorParams
+        ):
         """
         Plot histograms given the vectors of repeated aggregation results 
         applied on neighboring datasets
