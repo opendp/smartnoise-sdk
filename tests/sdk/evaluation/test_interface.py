@@ -47,13 +47,19 @@ class TestEval:
         pa = DPSample()
         metrics = Metrics()
         # Before running the DP test, it should be default to False
+        # and Wasserstein distance should be 0 
         assert(metrics.dp_res == False)
+        assert(metrics.wasserstein_distance == 0.0)
         pp = PrivacyParams(epsilon=1.0)
         ev = EvaluatorParams(repeat_count=500)
+        # Creating neighboring datasets
         d1 = pd.DataFrame(random.sample(range(1, 1000), 100), columns = ['Usage'])
         drop_idx = np.random.choice(d1.index, 1, replace=False)
         d2 = d1.drop(drop_idx)
+        # Call evaluate
         eval = DPEvaluator()
         metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
-        # After evaluation, it should return True
+        # After evaluation, it should return True and Wasserstein distance should be > 0
         assert(metrics.dp_res == True)
+        test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
+        assert(metrics.wasserstein_distance > 0.0)
