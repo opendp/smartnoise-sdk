@@ -10,18 +10,18 @@ import opendp.whitenoise.evaluation._exploration as exp
 from opendp.whitenoise.metadata.collection import *
 
 class DPVerification:
-    """ This class contains a list of methods that can be passed DP analysis 
+    """ This class contains a list of methods that can be passed DP algorithm 
     for stochastic verification. It tries to use a set of neighboring datasets 
     D1 and D2 that differ by single individual. On these neighboring datasets, 
-    it applies the DP analysis repeatedly. 
+    it applies the DP algorithm repeatedly. 
     
-    It tests the DP condition to let the DP implementer know whether repeated analysis
+    It tests the DP condition to let the DP implementer know whether repeated algorithm
     results are not enough to re-identify D1 or D2 which differ by single individual 
     i.e. passing epsilon-DP condition. 
     
-    If the DP condition is not passed, there is a bug and analysis is not 
+    If the DP condition is not passed, there is a bug and algorithm is not 
     differentially private. Similarly, it has methods to evaluate accuracy, 
-    utility and bias of DP analysis. 
+    utility and bias of DP algorithm. 
     """
     def __init__(self, epsilon=1.0, dataset_size=10000, csv_path="."):
         """
@@ -40,7 +40,7 @@ class DPVerification:
         """
         Returns a simulated dataset of configurable size and following
         geometric distribution. Adds a couple of dimension columns for 
-        analysis related to GROUP BY queries. 
+        algorithm related to GROUP BY queries. 
         """
         np.random.seed(1)
         userids = list(range(1, self.dataset_size+1))
@@ -270,14 +270,14 @@ class DPVerification:
 
     def wasserstein_distance(self, d1hist, d2hist):
         """
-        Wasserstein Distance between histograms of repeated analysis on neighboring datasets
+        Wasserstein Distance between histograms of repeated algorithm on neighboring datasets
         """
         return stats.wasserstein_distance(d1hist, d2hist)
 
     def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
         """
         Verification of SQL aggregation mechanisms
-        Returns statistical distance measures between repeated analysis 
+        Returns statistical distance measures between repeated algorithm 
         responses on neighboring datasets
         """
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors()

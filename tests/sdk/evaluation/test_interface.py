@@ -19,12 +19,21 @@ class TestEval:
         ev = EvaluatorParams(repeat_count=500)
         df = pd.DataFrame(random.sample(range(1, 1000), 100), columns = ['Usage'])
 
-        # Preparing and releasing from Sample DP library to send noisy results to evaluator
-        dv.prepare(lib, pp, ev)
+        # Preparing and releasing from Sample DP algorithm to send noisy results to evaluator
+        dv.prepare(lib.dp_count, pp, ev)
         report = dv.release(df)
-        test_logger.debug("Repeated noisy count responses: "  + str(report.res_df.shape[0]))
-        test_logger.debug("Count of Numerical columns in DP repeated response: "  + str(len(report.num_cols)))
-        test_logger.debug("Count of Dimension columns in DP repeated response: "  + str(len(report.dim_cols)))
-        assert(report.res_df.shape[0] == ev.repeat_count)
-        assert(len(report.num_cols) == 1)
-        assert(len(report.dim_cols) == 1)
+        
+        # Test DP respose from interface
+        assert(isinstance(report.res,  dict))
+        assert(len(report.res) > 0)
+        firstkey = list(report.res.keys())[0]
+        test_logger.debug("First key name is:" + str(firstkey))
+        test_logger.debug("Repeated noisy count responses: "  + str(report.res[firstkey]))
+        assert(isinstance(firstkey, str))
+        assert(len(report.res[firstkey]) == ev.repeat_count)
+
+        # Test non-DP i.e. actual response from interface should be a single numeric return
+        report = dv.release(df, actual=True)
+        test_logger.debug("Actual count response: "  + str(report.res[firstkey]))
+
+        assert(isinstance(report.res[firstkey], (int, float)))

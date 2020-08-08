@@ -14,7 +14,7 @@ class Evaluator(ABC):
 	def evaluate(self, 
 		d1 : object, 
 		d2 : object, 
-		analysis : PrivacyAlgorithm, 
+		algorithm : PrivacyAlgorithm, 
 		privacy_params : PrivacyParams, 
 		eval_params : EvaluatorParams) -> Metrics:
 		"""
@@ -25,7 +25,7 @@ class Evaluator(ABC):
 			- Bias Test
 		
 		d1 and d2 are neighboring datasets
-		analysis is the DP implementation object
+		algorithm is the DP implementation object
 		Returns a metrics object
 		"""
 		pass
