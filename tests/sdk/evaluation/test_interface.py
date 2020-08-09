@@ -50,6 +50,9 @@ class TestEval:
         # and Wasserstein distance should be 0 
         assert(metrics.dp_res == False)
         assert(metrics.wasserstein_distance == 0.0)
+        assert(metrics.jensen_shannon_distance == 0.0)
+        assert(metrics.mse == 0.0)
+        assert(metrics.msd == 0.0)
         pp = PrivacyParams(epsilon=1.0)
         ev = EvaluatorParams(repeat_count=500)
         # Creating neighboring datasets
@@ -59,7 +62,12 @@ class TestEval:
         # Call evaluate
         eval = DPEvaluator()
         metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
-        # After evaluation, it should return True and Wasserstein distance should be > 0
+        # After evaluation, it should return True and distance metrics should be non-zero
         assert(metrics.dp_res == True)
         test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
-        assert(metrics.wasserstein_distance > 0.0)
+        test_logger.debug("Jensen Shannon Distance:" + str(metrics.jensen_shannon_distance))
+        test_logger.debug("MSE:" + str(metrics.mse))
+        test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
+        assert(metrics.jensen_shannon_distance > 0.0)
+        assert(metrics.mse > 0.0)
+        assert(metrics.msd != 0.0)

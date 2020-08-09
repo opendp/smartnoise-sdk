@@ -4,7 +4,7 @@ from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from opendp.whitenoise.evaluation.evaluator._base import Evaluator
 import numpy as np
-from scipy import stats
+from scipy import stats, spatial
 import math
 import matplotlib.pyplot as plt
 
@@ -155,6 +155,12 @@ class DPEvaluator(Evaluator):
         """
         return stats.wasserstein_distance(d1hist, d2hist)
 
+    def jensen_shannon_distance(self, d1hist, d2hist):
+        """
+        Jensen Shannon Distance between histograms of repeated algorithm on neighboring datasets
+        """
+        return spatial.distance.jensenshannon(d1hist, d2hist)
+
     """
     Implement the Evaluator interface that takes in two neighboring datasets
     D1 and D2 and a privacy algorithm. Then runs the algorithm on the 
@@ -182,14 +188,21 @@ class DPEvaluator(Evaluator):
         pa.prepare(algorithm, pp, ep)
         d1report = pa.release(d1)
         d2report = pa.release(d2)
+        d1actual = pa.release(d1, actual=True)
         firstkey = list(d1report.res.keys())[0]
 
         fD1, fD2 = np.array(d1report.res[firstkey]), np.array(d2report.res[firstkey])
+        fD_actual = d1actual.res[firstkey]
 
         d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
         dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
             self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
-        
+
+        # Compute Metrics
         metrics.dp_res = dp_res
         metrics.wasserstein_distance = self.wasserstein_distance(d1hist, d2hist)
+        metrics.jensen_shannon_distance = self.jensen_shannon_distance(d1hist, d2hist)
+        metrics.mse = np.mean((fD1 - fD_actual)**2)
+        metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
+
         return metrics
