@@ -149,17 +149,23 @@ class DPEvaluator(Evaluator):
             plt.legend(['D2', 'D1'], loc="upper right")
         plt.show()
 
-    def wasserstein_distance(self, d1hist, d2hist):
+    def wasserstein_distance(self, fD1, fD2):
         """
-        Wasserstein Distance between histograms of repeated algorithm on neighboring datasets
+        Wasserstein Distance between responses of repeated algorithm on neighboring datasets
         """
-        return stats.wasserstein_distance(d1hist, d2hist)
+        return stats.wasserstein_distance(fD1, fD2)
 
-    def jensen_shannon_distance(self, d1hist, d2hist):
+    def jensen_shannon_divergence(self, fD1, fD2):
         """
-        Jensen Shannon Distance between histograms of repeated algorithm on neighboring datasets
+        Jensen Shannon Divergence between responses of repeated algorithm on neighboring datasets
         """
-        return spatial.distance.jensenshannon(d1hist, d2hist)
+        return spatial.distance.jensenshannon(fD1, fD2)
+
+    def kl_divergence(self, fD1, fD2):
+        """
+        KL Divergence between responses of repeated algorithm on neighboring datasets
+        """
+        return stats.entropy(fD1, fD2)
 
     """
     Implement the Evaluator interface that takes in two neighboring datasets
@@ -200,9 +206,10 @@ class DPEvaluator(Evaluator):
 
         # Compute Metrics
         metrics.dp_res = dp_res
-        metrics.wasserstein_distance = self.wasserstein_distance(d1hist, d2hist)
-        metrics.jensen_shannon_distance = self.jensen_shannon_distance(d1hist, d2hist)
+        metrics.wasserstein_distance = self.wasserstein_distance(fD1, fD2)
+        metrics.jensen_shannon_divergence = self.jensen_shannon_divergence(fD1, fD2)
+        metrics.kl_divergence = self.kl_divergence(fD1, fD2)
         metrics.mse = np.mean((fD1 - fD_actual)**2)
         metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
-
+        metrics.std = np.std(fD1)
         return metrics
