@@ -1,8 +1,4 @@
-from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from opendp.whitenoise.evaluation.metrics._benchmark_metrics import BenchmarkMetrics
 from abc import ABC, abstractmethod
 
@@ -14,7 +10,7 @@ class Benchmarking(ABC):
 	for multiple parameters like epsilon, dataset size etc. 
 	"""
 	@abstractmethod
-	def benchmark(self, benchmark_params : BenchmarkParams) -> BenchmarkMetrics:
+	def benchmark(self, benchmark_params : BenchmarkParams) -> [BenchmarkMetrics]:
 		"""
 		Benchmarks properties of privacy algorithm DP implementations using metrics
 			- Privacy Promise

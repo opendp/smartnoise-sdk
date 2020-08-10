@@ -4,7 +4,6 @@ from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.whitenoise.evaluation.params._dataset_params import DatasetParams
 from opendp.whitenoise.evaluation.params._benchmark_params import BenchmarkParams
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
-from opendp.whitenoise.evaluation.metrics._benchmark_metrics import BenchmarkMetrics
 
 class BenchmarkMetrics:
 	"""
@@ -20,7 +19,7 @@ class BenchmarkMetrics:
 		):
 		self.pa = pa
 		self.algorithm = algorithm
-		self.dataset_params = dataset_params
 		self.privacy_params = privacy_params
+		self.dataset_params = dataset_params
 		self.eval_params = eval_params
 		self.metrics = metrics

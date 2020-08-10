@@ -2,9 +2,11 @@ import logging
 test_logger = logging.getLogger("eval-interface-test-logger")
 from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.whitenoise.evaluation.params._benchmark_params import BenchmarkParams
 from opendp.whitenoise.evaluation.report._report import Report
 from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
 from opendp.whitenoise.evaluation.evaluator._dp_evaluator import DPEvaluator
+from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from dp_lib import DPSampleLibrary
 from dp_algorithm import DPSample
@@ -78,3 +80,33 @@ class TestEval:
         assert(metrics.mse > 0.0)
         assert(metrics.std != 0.0)
         assert(metrics.msd != 0.0)
+
+    def test_interface_benchmark(self):
+        logging.getLogger().setLevel(logging.DEBUG)
+        lib = DPSampleLibrary()
+        pa = DPSample()
+        metrics = Metrics()
+        epsilon_list = [0.001, 0.5, 1.0, 2.0, 4.0]
+        pp = PrivacyParams(epsilon=1.0)
+        ev = EvaluatorParams(repeat_count=500)
+        # Creating neighboring datasets
+        d1 = pd.DataFrame(random.sample(range(1, 1000), 100), columns = ['Usage'])
+        drop_idx = np.random.choice(d1.index, 1, replace=False)
+        d2 = d1.drop(drop_idx)
+        benchmarking = DPBenchmarking()
+        # Preparing benchmarking params
+        pa_algorithms = {pa : lib.dp_count}
+        privacy_params_list = []
+        for epsilon in epsilon_list:
+            pp = PrivacyParams()
+            pp.epsilon = epsilon
+            privacy_params_list.append(pp)
+        d1_d2_list = [[d1, d2]]
+        benchmark_params = BenchmarkParams(pa_algorithms, privacy_params_list, d1_d2_list, ev)
+        benchmark_metrics_list = benchmarking.benchmark(benchmark_params)
+        for bm in benchmark_metrics_list:
+            test_logger.debug("Epsilon: " + str(bm.privacy_params.epsilon) + \
+                " MSE:" + str(bm.metrics.mse) + \
+                " Privacy Test: " + str(bm.metrics.dp_res))
+            assert(bm.metrics.dp_res == True)
+        assert(len(benchmark_metrics_list) == 5)
