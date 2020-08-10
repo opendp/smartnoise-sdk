@@ -65,27 +65,27 @@ class TestEval:
         d2 = d1.drop(drop_idx)
         # Call evaluate
         eval = DPEvaluator()
-        metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
+        key_metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
         # After evaluation, it should return True and distance metrics should be non-zero
-        assert(metrics.dp_res == True)
-        test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
-        test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
-        test_logger.debug("KL Divergence:" + str(metrics.kl_divergence))
-        test_logger.debug("MSE:" + str(metrics.mse))
-        test_logger.debug("Standard Deviation:" + str(metrics.std))
-        test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
-        assert(metrics.wasserstein_distance > 0.0)
-        assert(metrics.jensen_shannon_divergence > 0.0)
-        assert(metrics.kl_divergence != 0.0)
-        assert(metrics.mse > 0.0)
-        assert(metrics.std != 0.0)
-        assert(metrics.msd != 0.0)
+        for key, metrics in key_metrics.items():
+            assert(metrics.dp_res == True)
+            test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
+            test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
+            test_logger.debug("KL Divergence:" + str(metrics.kl_divergence))
+            test_logger.debug("MSE:" + str(metrics.mse))
+            test_logger.debug("Standard Deviation:" + str(metrics.std))
+            test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
+            assert(metrics.wasserstein_distance > 0.0)
+            assert(metrics.jensen_shannon_divergence > 0.0)
+            assert(metrics.kl_divergence != 0.0)
+            assert(metrics.mse > 0.0)
+            assert(metrics.std != 0.0)
+            assert(metrics.msd != 0.0)
 
     def test_interface_benchmark(self):
         logging.getLogger().setLevel(logging.DEBUG)
         lib = DPSampleLibrary()
         pa = DPSample()
-        metrics = Metrics()
         epsilon_list = [0.001, 0.5, 1.0, 2.0, 4.0]
         pp = PrivacyParams(epsilon=1.0)
         ev = EvaluatorParams(repeat_count=500)
@@ -105,8 +105,9 @@ class TestEval:
         benchmark_params = BenchmarkParams(pa_algorithms, privacy_params_list, d1_d2_list, ev)
         benchmark_metrics_list = benchmarking.benchmark(benchmark_params)
         for bm in benchmark_metrics_list:
-            test_logger.debug("Epsilon: " + str(bm.privacy_params.epsilon) + \
-                " MSE:" + str(bm.metrics.mse) + \
-                " Privacy Test: " + str(bm.metrics.dp_res))
-            assert(bm.metrics.dp_res == True)
+            for key, metrics in bm.key_metrics.items():
+                test_logger.debug("Epsilon: " + str(bm.privacy_params.epsilon) + \
+                    " MSE:" + str(metrics.mse) + \
+                    " Privacy Test: " + str(metrics.dp_res))
+                assert(metrics.dp_res == True)
         assert(len(benchmark_metrics_list) == 5)

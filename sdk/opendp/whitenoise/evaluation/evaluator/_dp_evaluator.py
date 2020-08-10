@@ -178,7 +178,7 @@ class DPEvaluator(Evaluator):
 		pa : PrivacyAlgorithm, 
         algorithm : object,
 		pp : PrivacyParams, 
-		ep : EvaluatorParams) -> Metrics:
+		ep : EvaluatorParams) -> {str : Metrics}:
         """
 		Evaluates properties of privacy algorithm DP implementations using 
 			- DP Histogram Test
@@ -190,26 +190,35 @@ class DPEvaluator(Evaluator):
 		algorithm is the DP implementation object
 		Returns a metrics object
 		"""
-        metrics = Metrics()
         pa.prepare(algorithm, pp, ep)
         d1report = pa.release(d1)
         d2report = pa.release(d2)
         d1actual = pa.release(d1, actual=True)
-        firstkey = list(d1report.res.keys())[0]
+        key_metrics = {}
 
-        fD1, fD2 = np.array(d1report.res[firstkey]), np.array(d2report.res[firstkey])
-        fD_actual = d1actual.res[firstkey]
+        for key in d1report.res.keys():
+            metrics = Metrics()
+            fD1, fD2 = np.array(d1report.res[key]), np.array(d2report.res[key])
+            fD_actual = d1actual.res[key]
 
-        d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
-        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
-            self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
+            d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
+            dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
+                self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
 
-        # Compute Metrics
-        metrics.dp_res = dp_res
-        metrics.wasserstein_distance = self.wasserstein_distance(fD1, fD2)
-        metrics.jensen_shannon_divergence = self.jensen_shannon_divergence(fD1, fD2)
-        metrics.kl_divergence = self.kl_divergence(fD1, fD2)
-        metrics.mse = np.mean((fD1 - fD_actual)**2)
-        metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
-        metrics.std = np.std(fD1)
-        return metrics
+            # Compute Metrics
+            metrics.dp_res = dp_res
+            metrics.wasserstein_distance = self.wasserstein_distance(fD1, fD2)
+            metrics.jensen_shannon_divergence = self.jensen_shannon_divergence(fD1, fD2)
+            metrics.kl_divergence = self.kl_divergence(fD1, fD2)
+            metrics.mse = np.mean((fD1 - fD_actual)**2)
+            metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
+            metrics.std = np.std(fD1)
+
+            # Add key and metrics to final result
+            key_metrics[key] = metrics
+
+            # Break if only single key needs to be evaluated in the report
+            if(ep.eval_first_key):
+                break
+
+        return key_metrics

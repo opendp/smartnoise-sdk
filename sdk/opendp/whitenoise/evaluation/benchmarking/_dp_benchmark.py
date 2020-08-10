@@ -37,6 +37,6 @@ class DPBenchmarking(Benchmarking):
 					d2 = d1_d2[1]
 					dataset_params = DatasetParams(len(d1))
 					bm = BenchmarkMetrics(pa, algorithm, pp, dataset_params, bp.eval_params, Metrics())
-					bm.metrics = ev.evaluate(d1, d2, pa, algorithm, pp, bp.eval_params)
+					bm.key_metrics = ev.evaluate(d1, d2, pa, algorithm, pp, bp.eval_params)
 					benchmark_res.append(bm)
 		return benchmark_res

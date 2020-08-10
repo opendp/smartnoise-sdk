@@ -15,11 +15,11 @@ class BenchmarkMetrics:
 			privacy_params : PrivacyParams,
 			dataset_params : DatasetParams,
 			eval_params : EvaluatorParams, 
-			metrics : Metrics
+			key_metrics : {str : Metrics}
 		):
 		self.pa = pa
 		self.algorithm = algorithm
 		self.privacy_params = privacy_params
 		self.dataset_params = dataset_params
 		self.eval_params = eval_params
-		self.metrics = metrics
+		self.key_metrics = key_metrics
