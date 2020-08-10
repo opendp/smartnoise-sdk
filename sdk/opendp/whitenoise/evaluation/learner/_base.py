@@ -3,7 +3,7 @@ from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from abc import ABC, abstractmethod
 
-class LearnerInterface:
+class Learner(ABC):
 	"""
 	Interface for smarter exploration of datasets and test queries 
 	for finding DP property violations
