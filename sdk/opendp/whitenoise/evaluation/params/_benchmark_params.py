@@ -11,10 +11,10 @@ class BenchmarkParams:
 	def __init__(self,
 			pa_algorithms : {PrivacyAlgorithm : object},
 			privacy_params_list : [PrivacyParams],
-			dataset : object,
+			d1_d2_list : [object, object],
 			eval_params : EvaluatorParams
 		):
 		self.pa_algorithms = pa_algorithms
-		self.dataset = dataset
+		self.d1_d2_list = d1_d2_list
 		self.privacy_params_list = privacy_params_list
 		self.eval_params = eval_params

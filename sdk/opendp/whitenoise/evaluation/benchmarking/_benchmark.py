@@ -14,7 +14,7 @@ class DPBenchmarking(Benchmarking):
 	like privacy, accuracy, utility and bias. Benchmark will run the evaluator
 	for multiple parameters like epsilon, dataset size etc. 
 	"""
-	def benchmark(self, benchmark_params : BenchmarkParams) -> BenchmarkMetrics:
+	def benchmark(self, bp : BenchmarkParams) -> BenchmarkMetrics:
 		"""
 		Benchmarks properties of privacy algorithm DP implementations using metrics
 			- Privacy Promise
@@ -24,6 +24,20 @@ class DPBenchmarking(Benchmarking):
 		
 		Returns a benchmark metrics object
 		"""
-		benchmark_res = BenchmarkMetrics()
-        
+		benchmark_res = []
+		ev = DPEvaluator()
+		# Iterate through the PrivacyAlgorithm instance and algorithms in it
+		for pa, algorithm in bp.pa_algorithms.items():
+			# Iterate through the neighboring datasets to test on the algorithms
+			for d1_d2 in bp.d1_d2_list:
+				# Iterate through the privacy param configurations
+				for pp in bp.privacy_params_list:
+					benchmark_res.pa = pa
+					benchmark_res.algorithm = algorithm
+					d1 = d1_d2[0]
+					d2 = d1_d2[1]
+					benchmark_res.privacy_params = pp
+					benchmark_res.eval_params = bp.eval_params
+					benchmark_res.dataset_params.dataset_size = len(d1)
+					benchmark_res.append(ev.evaluate(d1, d2, pa, algorithm, pp, bp.eval_params))
 		return benchmark_res
