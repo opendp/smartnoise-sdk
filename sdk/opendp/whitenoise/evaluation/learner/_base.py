@@ -18,9 +18,9 @@ class Learner(ABC):
 		pass
 	
 	@abstractmethod
-	def notify(self, analysis : object, metrics : Metrics, privacy_params : PrivacyParams):
+	def notify(self, algorithm : object, metrics : Metrics, privacy_params : PrivacyParams):
 		"""
-		Tells the learner about the results of an analysis. 
+		Tells the learner about the results of an algorithm. 
 		Returns null
 		"""
 		pass
@@ -28,8 +28,8 @@ class Learner(ABC):
 	@abstractmethod
 	def propose(self):
 		"""
-		Asks the learner to propose a new analysis that optimizes
+		Asks the learner to propose a new algorithm that optimizes
 		the given objective metrics.  May be totally random.  
-		Returns analysis object.
+		Returns algorithm object.
 		"""
 		pass
