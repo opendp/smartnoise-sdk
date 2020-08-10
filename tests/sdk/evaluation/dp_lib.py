@@ -12,6 +12,6 @@ class DPSampleLibrary:
         counting rows of a dataset
         """
         delta = 1/(len(df) * math.sqrt(len(df)))
-        sigmacnt = math.sqrt(privacy_params.t)*((math.sqrt(math.log(1/delta)) + math.sqrt(math.log((1/delta)) + eval_params.repeat_count)) / (math.sqrt(2)*eval_params.repeat_count))
-        dp_noise = np.random.normal(0, sigmacnt, eval_params.repeat_count)
-        return pd.DataFrame(df.shape[0] + dp_noise, columns=["Count"])
+        sigmacnt = math.sqrt(privacy_params.t)*((math.sqrt(math.log(1/delta)) + math.sqrt(math.log((1/delta)) + privacy_params.epsilon)) / (math.sqrt(2)*privacy_params.epsilon))
+        dp_noise = (len(df) + np.random.normal(0, sigmacnt, eval_params.repeat_count)).tolist()
+        return {"__key__" : dp_noise}

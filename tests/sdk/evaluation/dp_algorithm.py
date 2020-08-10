@@ -9,16 +9,20 @@ class DPSample(PrivacyAlgorithm):
     that allows for the library to be stochastically tested by
     evaluator. 
     """
-    def prepare(self, analysis: object, privacy_params: PrivacyParams, eval_params: EvaluatorParams):
+    def prepare(self, algorithm: object, privacy_params: PrivacyParams, eval_params: EvaluatorParams):
         """
-        Load the function (analysis) to be used for acting on the dataset
+        Load the algorithm to be used for acting on the dataset
         Initialize the privacy params that need to be used by the function
         for calculating differentially private noise
         """
-        self.analysis = analysis
+        self.algorithm = algorithm
         self.privacy_params = privacy_params
         self.eval_params = eval_params
 
     def release(self, dataset: object, actual = False) -> Report:
-        noisy_df = self.analysis.dp_count(dataset, self.privacy_params, self.eval_params)
-        return Report(noisy_df)
+        if(not actual):
+            noisy_res = self.algorithm(dataset, self.privacy_params, self.eval_params)
+            return Report(noisy_res)
+        else:
+            actual_res = {"__key__" : len(dataset)}
+            return Report(actual_res)

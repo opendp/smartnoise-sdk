@@ -5,29 +5,11 @@ class Report:
 	"""
 	Defines the consistent schema of reported fields
 	that aid evaluation of a DP algorithm implementation
-	* res_df: It is a dataframe that contains repeated 
-	analysis results across dimension and numerical
-	columns. It could be exact or noisy based on the 
-	parameter actual = False or True in analysis
-	* dim_cols: List of columns that contain dimension
-	strings
-	* num_cols: List of columns that contain numerical
-	DP results
+	res: It is a map<key, vector<double>> i.e. {key string, list of DP numerical results} 
+	that contains repeated algorithm results across dimension key and numerical
+	DP noisy results. 
+	If exact is set to true in release method, then it returns {key string, actual result}
+	Spec: https://docs.google.com/document/d/1VtFp4w3TRgFv7jDSEVUdKNk4VTqPkpX2jcO7qQM1YB4/edit#
 	"""
-	def __init__(self, df):
-		self.res_df = df
-		self.dim_cols = []
-		self.num_cols = []
-
-		for col in self.res_df:
-			print(self.res_df[col].dtype)
-			if(self.res_df[col].dtype != np.number):
-				self.dim_cols.append(col)
-			else:
-				self.num_cols.append(col)
-		
-		if(len(self.dim_cols) == 0):
-			self.dim_cols.append("__dim__")
-
-		if(self.dim_cols[0] == "__dim__"):
-			self.res_df[self.dim_cols[0]] = ["key"]*len(self.res_df)
+	def __init__(self, res):
+		self.res = res
