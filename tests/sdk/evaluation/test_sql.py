@@ -67,8 +67,8 @@ class TestSql:
         # Initialize params and algorithm to benchmark
         pa = DPSingletonQuery()
         pp = PrivacyParams(epsilon=1.0)
-        ev = EvaluatorParams(repeat_count=500)
-        dd = DatasetParams(dataset_size=1000)
+        ev = EvaluatorParams(repeat_count=100)
+        dd = DatasetParams(dataset_size=500)
         dv = DPSingletonQuery()
         query = "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
         dv.prepare(query, pp, ev)
