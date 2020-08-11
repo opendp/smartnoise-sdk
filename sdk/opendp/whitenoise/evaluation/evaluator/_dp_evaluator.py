@@ -28,14 +28,14 @@ class DPEvaluator(Evaluator):
         if(ep.exact):
             binlist = np.linspace(minval, maxval, 2)
         elif(ep.numbins > 0):
-            binlist = np.linspace(minval, maxval, numbins)
+            binlist = np.linspace(minval, maxval, ep.numbins)
         elif(ep.binsize == "auto"):
             iqr = np.subtract(*np.percentile(d, [75, 25]))
             numerator = 2 * iqr if iqr > 0 else maxval - minval
             denominator = n ** (1. / 3)
             binwidth = numerator / denominator # Freedman–Diaconis' choice
-            numbins = int(math.ceil((maxval - minval) / binwidth)) if maxval > minval else 20
-            binlist = np.linspace(minval, maxval, numbins)
+            ep.numbins = int(math.ceil((maxval - minval) / binwidth)) if maxval > minval else 20
+            binlist = np.linspace(minval, maxval, ep.numbins)
         else:
             # Choose bin size of unity
             binlist = np.arange(np.floor(minval),np.ceil(maxval))
