@@ -69,9 +69,7 @@ class TestSql:
         pp = PrivacyParams(epsilon=1.0)
         ev = EvaluatorParams(repeat_count=100)
         dd = DatasetParams(dataset_size=500)
-        dv = DPSingletonQuery()
         query = "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
-        dv.prepare(query, pp, ev)
 
         # Preparing neighboring datasets
         df, metadata = self.create_simulated_dataset(dd.dataset_size, "dataset")
