@@ -8,7 +8,6 @@ from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
 from opendp.whitenoise.evaluation.evaluator._dp_evaluator import DPEvaluator
 from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
-from dp_core import DPCore
 import random
 import pytest
 
@@ -19,6 +18,7 @@ class TestCore:
         Testing interface of OpenDP Core        
         """
         import opendp.whitenoise.core as wn
+        from dp_core import DPCore
         logging.getLogger().setLevel(logging.DEBUG)
         pa = DPCore()
         metrics = Metrics()
@@ -63,6 +63,7 @@ class TestCore:
         Benchmarks algorithm in OpenDP Core like DP Mean
         """
         import opendp.whitenoise.core as wn
+        from dp_core import DPCore
         logging.getLogger().setLevel(logging.DEBUG)
         pa = DPCore()
         epsilon_list = [0.001, 0.5, 1.0, 2.0, 4.0]
