@@ -10,6 +10,7 @@ from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarki
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 import random
 import pytest
+from statistics import mean
 
 class TestCore:
     @pytest.mark.skip(reason="Skipping in System build as it uses OpenDP Core")
@@ -40,7 +41,7 @@ class TestCore:
         d2.remove(drop_elem)
         # Call evaluate
         eval = DPEvaluator()
-        key_metrics = eval.evaluate(d1, d2, pa, wn.dp_mean, pp, ev)
+        key_metrics = eval.evaluate(d1, d2, pa, wn.dp_mean, mean, pp, ev)
         # After evaluation, it should return True and distance metrics should be non-zero
         for key, metrics in key_metrics.items():
             assert(metrics.dp_res == True)
@@ -76,7 +77,7 @@ class TestCore:
         d2.remove(drop_elem)
         benchmarking = DPBenchmarking()
         # Preparing benchmarking params
-        pa_algorithms = {pa : wn.dp_mean}
+        pa_algorithms = {pa : [wn.dp_mean, mean]}
         privacy_params_list = []
         for epsilon in epsilon_list:
             pp = PrivacyParams()

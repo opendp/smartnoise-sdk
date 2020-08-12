@@ -21,7 +21,7 @@ class DPSingletonQuery(PrivacyAlgorithm):
         self.privacy_params = privacy_params
         self.eval_params = eval_params
 
-    def release(self, dataset: object, actual = False) -> Report:
+    def release(self, dataset: object, actual = None) -> Report:
         """
         Dataset is a collection of [Dataset Metadata, PandasReader]
         Releases response to SQL query based on the number of repetitions
@@ -40,5 +40,5 @@ class DPSingletonQuery(PrivacyAlgorithm):
             return Report({"__key__" : noisy_values})
         else:
             reader = dataset[1]
-            exact = reader.execute_typed(self.algorithm).rows()[1:][0][0]
+            exact = reader.execute_typed(actual).rows()[1:][0][0]
             return Report({"__key__" : exact})

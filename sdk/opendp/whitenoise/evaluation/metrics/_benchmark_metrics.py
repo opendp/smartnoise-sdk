@@ -12,6 +12,7 @@ class BenchmarkMetrics:
 	def __init__(self, 
 			pa : PrivacyAlgorithm,
 			algorithm : object,
+			exact_algorithm : object,
 			privacy_params : PrivacyParams,
 			dataset_params : DatasetParams,
 			eval_params : EvaluatorParams, 
@@ -19,6 +20,7 @@ class BenchmarkMetrics:
 		):
 		self.pa = pa
 		self.algorithm = algorithm
+		self.exact_algorithm = algorithm
 		self.privacy_params = privacy_params
 		self.dataset_params = dataset_params
 		self.eval_params = eval_params
