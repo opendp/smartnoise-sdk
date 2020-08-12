@@ -20,7 +20,7 @@ class DPCore(PrivacyAlgorithm):
         self.privacy_params = privacy_params
         self.eval_params = eval_params
 
-    def release(self, dataset: object, actual = False) -> Report:
+    def release(self, dataset: object, actual = None) -> Report:
         """
         Releases report according to the OpenDP Core applying 
         functions on the dataset or return the actual report
@@ -44,5 +44,5 @@ class DPCore(PrivacyAlgorithm):
                     noisy_res["__key__"].append(agg.value)
             return Report(noisy_res)
         else:
-            actual_res = {"__key__" : sum(dataset) / len(dataset)}
+            actual_res = {"__key__" : actual(dataset)}
             return Report(actual_res)

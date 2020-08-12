@@ -79,7 +79,7 @@ class TestSql:
 
         # Call evaluate
         eval = DPEvaluator()
-        key_metrics = eval.evaluate([d1_metadata, d1], [d2_metadata, d2], pa, query, pp, ev)
+        key_metrics = eval.evaluate([d1_metadata, d1], [d2_metadata, d2], pa, query, query, pp, ev)
         # After evaluation, it should return True and distance metrics should be non-zero
         for key, metrics in key_metrics.items():
             assert(metrics.dp_res == True)

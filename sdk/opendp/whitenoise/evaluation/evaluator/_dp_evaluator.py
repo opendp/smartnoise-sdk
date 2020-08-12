@@ -177,6 +177,7 @@ class DPEvaluator(Evaluator):
 		d2 : object, 
 		pa : PrivacyAlgorithm, 
         algorithm : object,
+        actual : object,
 		pp : PrivacyParams, 
 		ep : EvaluatorParams) -> {str : Metrics}:
         """
@@ -193,7 +194,7 @@ class DPEvaluator(Evaluator):
         pa.prepare(algorithm, pp, ep)
         d1report = pa.release(d1)
         d2report = pa.release(d2)
-        d1actual = pa.release(d1, actual=True)
+        d1actual = pa.release(d1, actual=actual)
         key_metrics = {}
 
         for key in d1report.res.keys():

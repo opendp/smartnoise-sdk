@@ -19,10 +19,10 @@ class DPSample(PrivacyAlgorithm):
         self.privacy_params = privacy_params
         self.eval_params = eval_params
 
-    def release(self, dataset: object, actual = False) -> Report:
+    def release(self, dataset: object, actual = None) -> Report:
         if(not actual):
             noisy_res = self.algorithm(dataset, self.privacy_params, self.eval_params)
             return Report(noisy_res)
         else:
-            actual_res = {"__key__" : len(dataset)}
+            actual_res = {"__key__" : actual(dataset)}
             return Report(actual_res)

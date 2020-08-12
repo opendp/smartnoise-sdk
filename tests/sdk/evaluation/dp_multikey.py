@@ -21,7 +21,7 @@ class DPMultiKey(PrivacyAlgorithm):
         self.privacy_params = privacy_params
         self.eval_params = eval_params
 
-    def release(self, dataset: object, actual = False) -> Report:
+    def release(self, dataset: object, actual = None) -> Report:
         """
         Dataset is Pandas Dataframe with multiple columns and we need to sum
         elements in each column and assign a key (column name) for each column.  
@@ -35,5 +35,5 @@ class DPMultiKey(PrivacyAlgorithm):
         else:
             actual_res = {}
             for col in list(dataset):
-                actual_res[col] = sum(dataset[col].tolist())
+                actual_res[col] = actual(dataset[col].tolist())
             return Report(actual_res)
