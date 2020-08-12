@@ -10,8 +10,10 @@ from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarki
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from dp_core import DPCore
 import random
+import pytest
 
 class TestCore:
+    @pytest.mark.skip(reason="Skipping in System build as it uses OpenDP Core")
     def test_interface_core_eval(self):
         """
         Testing interface of OpenDP Core        
@@ -55,6 +57,7 @@ class TestCore:
             assert(metrics.std != 0.0)
             assert(metrics.msd != 0.0)
 
+    @pytest.mark.skip(reason="Skipping in System build as it uses OpenDP Core")
     def test_interface_core_benchmark(self):
         """
         Benchmarks algorithm in OpenDP Core like DP Mean
