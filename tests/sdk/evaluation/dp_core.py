@@ -29,16 +29,20 @@ class DPCore(PrivacyAlgorithm):
         if(not actual):
             noisy_res = {"__key__" : []}
             # Repeating analysis multiple times to collect enough samples for evaluation
-            for i in self.eval_params.repeat_count:
-                with self.algorithm() as analysis:
-                    dataset_pums = dataset
-                    count = wn.dp_count(
-                        dataset_pums['sex'] == '1',
-                        privacy_usage={'epsilon': self.privacy_params.epsilon}
+            for i in range(self.eval_params.repeat_count):
+                with wn.Analysis() as analysis:
+                    data = wn.to_float(wn.Dataset(value=dataset))
+                    agg = self.algorithm(
+                        data=data,
+                        privacy_usage={'epsilon': self.privacy_params.epsilon},
+                        data_lower=float(min(dataset)),
+                        data_upper=float(max(dataset)),
+                        data_rows=len(dataset),
+                        data_columns=1
                     )
                     analysis.release()
-                    noisy_res["__key__"].append(count.value)
+                    noisy_res["__key__"].append(agg.value)
             return Report(noisy_res)
         else:
-            actual_res = {"__key__" : len(dataset)}
+            actual_res = {"__key__" : sum(dataset) / len(dataset)}
             return Report(actual_res)
