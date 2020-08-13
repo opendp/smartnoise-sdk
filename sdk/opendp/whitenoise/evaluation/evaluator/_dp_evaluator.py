@@ -167,6 +167,15 @@ class DPEvaluator(Evaluator):
         """
         return stats.entropy(fD1, fD2)
 
+    def bias_test(self, fD1, fD_actual, sig_level):
+        """
+        1 sample t-test to check if difference in actual and noisy responses 
+        is not statistically significant
+        """
+        diff = fD1 - fD_actual
+        tset, pval = stats.ttest_1samp(diff, 0.0)
+        return (pval >= sig_level)
+
     """
     Implement the Evaluator interface that takes in two neighboring datasets
     D1 and D2 and a privacy algorithm. Then runs the algorithm on the 
@@ -214,6 +223,7 @@ class DPEvaluator(Evaluator):
             metrics.mse = np.mean((fD1 - fD_actual)**2)
             metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
             metrics.std = np.std(fD1)
+            metrics.bias_res = self.bias_test(fD1, fD_actual, ep.sig_level)
 
             # Add key and metrics to final result
             key_metrics[key] = metrics

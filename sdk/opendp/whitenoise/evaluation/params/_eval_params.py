@@ -10,7 +10,8 @@ class EvaluatorParams:
 			exact=False,
 			alpha=0.05,
 			bound = True,
-			eval_first_key = False
+			eval_first_key = False,
+			significance_level = 0.05
 		):
 		self.repeat_count = repeat_count
 		self.numbins = numbins
@@ -19,3 +20,4 @@ class EvaluatorParams:
 		self.alpha = alpha
 		self.bound = bound
 		self.eval_first_key = eval_first_key
+		self.sig_level = significance_level
