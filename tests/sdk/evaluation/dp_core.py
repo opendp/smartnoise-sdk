@@ -44,13 +44,33 @@ class DPCore(PrivacyAlgorithm):
                 noisy_res["__key__"].append(agg.value)
         return Report(noisy_res)
 
-    def actual_release(self, dataset=object):
+    def actual_release(self, dataset : object):
         """
         Returns non-private exact response from the algorithm
         """
         actual_res = {}
         if(self.algorithm == wn.dp_mean):
-            actual_res = {"__key__" : mean(dataset)}
+            with wn.Analysis(filter_level="all") as analysis:
+                data = wn.to_float(wn.Dataset(value=dataset))
+                agg = wn.mean(
+                    data=data,
+                    data_lower=float(min(dataset)),
+                    data_upper=float(max(dataset)),
+                    data_rows=len(dataset),
+                    data_columns=1
+                )
+                analysis.release()
+                actual_res["__key__"] = agg.value
         if(self.algorithm == wn.dp_sum):
-            actual_res = {"__key__" : sum(dataset)}
+            with wn.Analysis(filter_level="all") as analysis:
+                data = wn.to_float(wn.Dataset(value=dataset))
+                agg = wn.sum(
+                    data=data,
+                    data_lower=float(min(dataset)),
+                    data_upper=float(max(dataset)),
+                    data_rows=len(dataset),
+                    data_columns=1
+                )
+                analysis.release()
+                actual_res["__key__"] = agg.value
         return Report(actual_res)
