@@ -37,10 +37,9 @@ class DPBenchmarking(Benchmarking):
 					for pp in bp.privacy_params_list:
 						d1 = d1_d2[0]
 						d2 = d1_d2[1]
-						private_algorithm = algorithm[0]
-						exact_algorithm = algorithm[1]
+						private_algorithm = algorithm
 						dataset_params = DatasetParams(len(d1))
-						bm = BenchmarkMetrics(pa, private_algorithm, exact_algorithm, pp, dataset_params, bp.eval_params, Metrics())
-						bm.key_metrics = ev.evaluate(d1, d2, pa, private_algorithm, exact_algorithm, pp, bp.eval_params)
+						bm = BenchmarkMetrics(pa, private_algorithm, pp, dataset_params, bp.eval_params, Metrics())
+						bm.key_metrics = ev.evaluate(d1, d2, pa, private_algorithm, pp, bp.eval_params)
 						benchmark_res.append(bm)
 		return benchmark_res

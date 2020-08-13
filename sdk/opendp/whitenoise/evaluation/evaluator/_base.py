@@ -16,7 +16,6 @@ class Evaluator(ABC):
 		d2 : object, 
 		pa : PrivacyAlgorithm,
 		algorithm : object, 
-		actual : object,
 		privacy_params : PrivacyParams, 
 		eval_params : EvaluatorParams) -> {str : Metrics}:
 		"""

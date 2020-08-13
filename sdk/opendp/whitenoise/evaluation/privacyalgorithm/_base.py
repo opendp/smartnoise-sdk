@@ -31,3 +31,13 @@ class PrivacyAlgorithm(ABC):
 		Spec details of data structure: https://docs.google.com/document/d/1VtFp4w3TRgFv7jDSEVUdKNk4VTqPkpX2jcO7qQM1YB4/edit#heading=h.qczap2x5w84o
 		"""
 		pass
+
+	@abstractmethod
+	def actual_release(self, dataset : object) -> Report:
+		"""
+		Return a single report using the previously loaded algorithm and 
+		exact non-private response. 
+		
+		Returns reports as a in-memory map<key, double>
+		"""
+		pass

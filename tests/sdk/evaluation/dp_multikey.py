@@ -21,7 +21,7 @@ class DPMultiKey(PrivacyAlgorithm):
         self.privacy_params = privacy_params
         self.eval_params = eval_params
 
-    def release(self, dataset: object, actual = None) -> Report:
+    def release(self, dataset: object) -> Report:
         """
         Dataset is Pandas Dataframe with multiple columns and we need to sum
         elements in each column and assign a key (column name) for each column.  
@@ -29,11 +29,12 @@ class DPMultiKey(PrivacyAlgorithm):
         requested by eval_params if actual is set of False. 
         Actual response is only returned once
         """
-        if(not actual):
-            noisy_res = self.algorithm(dataset, self.privacy_params, self.eval_params)
-            return Report(noisy_res)
-        else:
-            actual_res = {}
-            for col in list(dataset):
-                actual_res[col] = actual(dataset[col].tolist())
-            return Report(actual_res)
+        noisy_res = self.algorithm(dataset, self.privacy_params, self.eval_params)
+        return Report(noisy_res)
+
+    def actual_release(self, dataset: object) -> Report:
+        """
+        Returns exact non-private response from algorithm
+        """
+        actual_res = self.algorithm(dataset, self.privacy_params, self.eval_params, actual = True)
+        return Report(actual_res)

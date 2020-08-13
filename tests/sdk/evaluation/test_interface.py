@@ -39,7 +39,7 @@ class TestEval:
         assert(len(report.res[firstkey]) == ev.repeat_count)
 
         # Test non-DP i.e. actual response from interface should be a single numeric return
-        report = dv.release(df, actual=len)
+        report = dv.actual_release(df)
         test_logger.debug("Actual count response: "  + str(report.res[firstkey]))
 
         assert(isinstance(report.res[firstkey], (int, float)))
@@ -66,7 +66,7 @@ class TestEval:
         d2 = d1.drop(drop_idx)
         # Call evaluate
         eval = DPEvaluator()
-        key_metrics = eval.evaluate(d1, d2, pa, lib.dp_count, len, pp, ev)
+        key_metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
         # After evaluation, it should return True and distance metrics should be non-zero
         for key, metrics in key_metrics.items():
             assert(metrics.dp_res == True)
@@ -96,7 +96,7 @@ class TestEval:
         d2 = d1.drop(drop_idx)
         benchmarking = DPBenchmarking()
         # Preparing benchmarking params
-        pa_algorithms = {pa : [[lib.dp_count, len]]}
+        pa_algorithms = {pa : [lib.dp_count]}
         privacy_params_list = []
         for epsilon in epsilon_list:
             pp = PrivacyParams()
@@ -137,7 +137,7 @@ class TestEval:
         d2 = d1.drop(drop_idx)
         # Call evaluate
         eval = DPEvaluator()
-        key_metrics = eval.evaluate(d1, d2, pa, lib.dp_sum, sum, pp, ev)
+        key_metrics = eval.evaluate(d1, d2, pa, lib.dp_sum, pp, ev)
         # After evaluation, it should return True and distance metrics should be non-zero
         for key, metrics in key_metrics.items():
             assert(metrics.dp_res == True)
