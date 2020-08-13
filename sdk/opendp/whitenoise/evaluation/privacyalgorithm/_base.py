@@ -20,7 +20,7 @@ class PrivacyAlgorithm(ABC):
 		pass
 	
 	@abstractmethod
-	def release(self, dataset : object, actual = None) -> Report:
+	def release(self, dataset : object) -> Report:
 		"""
 		Return a single report using the previously loaded algorithm and 
 		privacy_params applied on loaded dataset. The report must follow 
