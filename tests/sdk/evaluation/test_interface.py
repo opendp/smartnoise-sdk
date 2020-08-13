@@ -96,7 +96,7 @@ class TestEval:
         d2 = d1.drop(drop_idx)
         benchmarking = DPBenchmarking()
         # Preparing benchmarking params
-        pa_algorithms = {pa : [lib.dp_count, len]}
+        pa_algorithms = {pa : [[lib.dp_count, len]]}
         privacy_params_list = []
         for epsilon in epsilon_list:
             pp = PrivacyParams()

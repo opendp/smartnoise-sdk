@@ -28,17 +28,19 @@ class DPBenchmarking(Benchmarking):
 		benchmark_res = []
 		ev = DPEvaluator()
 		# Iterate through the PrivacyAlgorithm instance and algorithms in it
-		for pa, algorithm in bp.pa_algorithms.items():
-			# Iterate through the neighboring datasets to test on the algorithms
-			for d1_d2 in bp.d1_d2_list:
-				# Iterate through the privacy param configurations
-				for pp in bp.privacy_params_list:
-					d1 = d1_d2[0]
-					d2 = d1_d2[1]
-					private_algorithm = algorithm[0]
-					exact_algorithm = algorithm[1]
-					dataset_params = DatasetParams(len(d1))
-					bm = BenchmarkMetrics(pa, private_algorithm, exact_algorithm, pp, dataset_params, bp.eval_params, Metrics())
-					bm.key_metrics = ev.evaluate(d1, d2, pa, private_algorithm, exact_algorithm, pp, bp.eval_params)
-					benchmark_res.append(bm)
+		for pa, algorithm_list in bp.pa_algorithms.items():
+			# Iterate through each algorithm interfaceable by PrivacyAlgorithm interface
+			for algorithm in algorithm_list:
+				# Iterate through the neighboring datasets to test on the algorithms
+				for d1_d2 in bp.d1_d2_list:
+					# Iterate through the privacy param configurations
+					for pp in bp.privacy_params_list:
+						d1 = d1_d2[0]
+						d2 = d1_d2[1]
+						private_algorithm = algorithm[0]
+						exact_algorithm = algorithm[1]
+						dataset_params = DatasetParams(len(d1))
+						bm = BenchmarkMetrics(pa, private_algorithm, exact_algorithm, pp, dataset_params, bp.eval_params, Metrics())
+						bm.key_metrics = ev.evaluate(d1, d2, pa, private_algorithm, exact_algorithm, pp, bp.eval_params)
+						benchmark_res.append(bm)
 		return benchmark_res

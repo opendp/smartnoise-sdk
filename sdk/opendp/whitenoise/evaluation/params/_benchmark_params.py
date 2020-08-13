@@ -9,7 +9,7 @@ class BenchmarkParams:
     Algorithms are the list of DP algorithms that need to be benchmarked
 	"""
 	def __init__(self,
-			pa_algorithms : {PrivacyAlgorithm : [object, object]},
+			pa_algorithms : {PrivacyAlgorithm : [[object, object]]},
 			privacy_params_list : [PrivacyParams],
 			d1_d2_list : [[object, object]],
 			eval_params : EvaluatorParams
