@@ -12,7 +12,7 @@ from opendp.whitenoise.synthesizers.superquail import SuperQUAILSynthesizer
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
 from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN
-from dpctgan import DPCTGANSynthesizer
+# from dpctgan import DPCTGANSynthesizer
 
 from diffprivlib.models import LogisticRegression as DPLR
 from diffprivlib.models import GaussianNB as DPGNB
@@ -81,52 +81,52 @@ SYNTH_SETTINGS = {
             'epochs': 50
         }
     },
-    'quail_dpctgan': {
-        'adult': {
-            'dp_synthesizer': DPCTGANSynthesizer,
-            'synth_args': {
-                'epochs': 50
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'earning-class'
-        },
-        'car': {
-            'dp_synthesizer': DPCTGANSynthesizer,
-            'synth_args': {
-                'epochs': 50
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'class'
-        },
-        'wine': {
-            'dp_synthesizer': DPCTGANSynthesizer,
-            'synth_args': {
-                'epochs': 50
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'quality'
-        },
-        'mushroom': {
-            'dp_synthesizer': DPCTGANSynthesizer,
-            'synth_args': {
-                'epochs': 50
-            },
-            'dp_classifier': DPLR,
-            'class_args': {
-                'max_iter': 1000
-            },
-            'target': 'edible'
-        },
-    },
+    # 'quail_dpctgan': {
+    #     'adult': {
+    #         'dp_synthesizer': DPCTGANSynthesizer,
+    #         'synth_args': {
+    #             'epochs': 50
+    #         },
+    #         'dp_classifier': DPLR,
+    #         'class_args': {
+    #             'max_iter': 1000
+    #         },
+    #         'target': 'earning-class'
+    #     },
+    #     'car': {
+    #         'dp_synthesizer': DPCTGANSynthesizer,
+    #         'synth_args': {
+    #             'epochs': 50
+    #         },
+    #         'dp_classifier': DPLR,
+    #         'class_args': {
+    #             'max_iter': 1000
+    #         },
+    #         'target': 'class'
+    #     },
+    #     'wine': {
+    #         'dp_synthesizer': DPCTGANSynthesizer,
+    #         'synth_args': {
+    #             'epochs': 50
+    #         },
+    #         'dp_classifier': DPLR,
+    #         'class_args': {
+    #             'max_iter': 1000
+    #         },
+    #         'target': 'quality'
+    #     },
+    #     'mushroom': {
+    #         'dp_synthesizer': DPCTGANSynthesizer,
+    #         'synth_args': {
+    #             'epochs': 50
+    #         },
+    #         'dp_classifier': DPLR,
+    #         'class_args': {
+    #             'max_iter': 1000
+    #         },
+    #         'target': 'edible'
+    #     },
+    # },
     'dpgan': {
         'car': {
             'preprocessor': GeneralTransformer(),
