@@ -1,6 +1,7 @@
 import os
 import tempfile
 import requests
+import urllib
 
 import pandas as pd
 
@@ -28,6 +29,27 @@ def dataverse_loader(host, doi=None, token=None):
         stream.write(response.text)
     return pd.read_csv(path, sep="\t")
 
+def dataverse_uri_loader(dv_uri, token=None):
+    uri = urlparse(dv_uri)
+    try:
+        scheme = uri.scheme
+        host = uri.netloc
+        path = uri.path
+        query = uri.query
+    except Exception as e:
+        print(str(e))
+
+    request = urllib.requests.get(uri.scheme + '//' + uri.host + uri.path + '?' + uri.query)
+    if(token):
+        request.add_header('X-Dataverse-Key', token)
+    response = request.read()
+    response.raise_for_status()
+
+    temp_dir = tempfile.gettempdir()
+    path = os.path.join(temp_dir, "data.tsv")
+    with open(path, "w") as stream:
+        stream.write(response.text)
+    return pd.read_csv(path, sep="\t")
 
 class DataverseAdapter(DatasetAdapter):
     KEY = "dataverse_details"
