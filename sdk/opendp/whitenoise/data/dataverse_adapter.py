@@ -39,7 +39,7 @@ def dataverse_uri_loader(dv_uri, token=None):
     except Exception as e:
         print(str(e))
 
-    request = urllib.requests.get(uri.scheme + '//' + uri.host + uri.path + '?' + uri.query)
+    request = urllib.requests.get(scheme + '//' + host + path + '?' + query)
     if(token):
         request.add_header('X-Dataverse-Key', token)
     response = request.read()
