@@ -42,8 +42,7 @@ class Rewriter:
 
     def calculate_variance(self, exp, scope):
         """
-            Takes an expression for a noisy mean and rewrites
-            to a noisy sum and a noisy count
+            Calculate the variance from avg of squares and square of averages
         """
         expr = exp.expression
         quant = exp.quantifier
@@ -57,8 +56,7 @@ class Rewriter:
 
     def calculate_stddev(self, exp, scope):
         """
-            Takes an expression for a noisy mean and rewrites
-            to a noisy sum and a noisy count
+            Calculate the standard deviation from the variance
         """
         expr = AggFunction('STD', exp.quantifier, exp.expression)
         var_expr = self.calculate_variance(expr, scope)

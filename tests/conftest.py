@@ -5,8 +5,6 @@ import time
 import sklearn.datasets
 import pandas as pd
 
-#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../sdk'))
-#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../whitenoise-core-python/'))
 from opendp.whitenoise.metadata import CollectionMetadata
 from opendp.whitenoise.metadata.collection import Table, Float, String
 

@@ -9,7 +9,7 @@ from os.path import isfile, join, dirname
 dir_name = dirname(__file__)
 testpath = join(dir_name, "queries") + "/"
 
-other_dirs = [f for f in listdir(testpath) if not isfile(join(testpath, f)) and f != "parse" and f != "validate" ]
+other_dirs = [f for f in listdir(testpath) if not isfile(join(testpath, f)) and f not in ["parse", "validate", "validate_pums", "compare"]]
 
 
 validate_files = [join(testpath + "validate/", f) for f in listdir(testpath + "validate") if isfile(join(testpath + "validate", f))]

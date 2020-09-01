@@ -46,7 +46,7 @@ steps:
   - bash: |
       source activate wnoise
       pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
-      python -m pytest tests/sdk --junitxml=./TEST-TEST.xml
+      python -m pytest tests/sdk -m "not torch"  --junitxml=./TEST-TEST.xml
     displayName: "Run sdk tests"
   - bash: |
       source activate wnoise
