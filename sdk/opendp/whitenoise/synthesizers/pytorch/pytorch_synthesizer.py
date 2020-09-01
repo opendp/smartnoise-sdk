@@ -4,15 +4,22 @@ import pandas as pd
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
 from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
-class PytorchSynthesizer(SDGYMBaseSynthesizer):
-    def __init__(self, gan, preprocessor):
+class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
+    def __init__(self, gan, preprocessor=None):
+        self.preprocessor = preprocessor
         self.gan = gan
         self.preprocessor = preprocessor
 
         self.categorical_columns = None
         self.ordinal_columns = None
+        self.dtypes = None
+
+        self.data_columns = None
     
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+        if isinstance(data, pd.DataFrame):
+            self.data_columns = data.columns
+
         self.categorical_columns = categorical_columns
         self.ordinal_columns = ordinal_columns
         
@@ -21,7 +28,7 @@ class PytorchSynthesizer(SDGYMBaseSynthesizer):
             preprocessed_data = self.preprocessor.transform(data)
             self.gan.train(preprocessed_data)
         else:
-            self.gain.train(data)
+            self.gan.train(data, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
     
     def sample(self, n):
         synth_data = self.gan.generate(n)
@@ -32,4 +39,14 @@ class PytorchSynthesizer(SDGYMBaseSynthesizer):
             else:
                 synth_data = self.preprocessor.inverse_transform(synth_data)
 
+        if isinstance(synth_data, np.ndarray):
+            synth_data = pd.DataFrame(synth_data,columns=self.data_columns)
+        elif isinstance(synth_data, pd.DataFrame):
+            # TODO: Add validity check
+            synth_data.columns = self.data_columns
+        else:
+            raise ValueError("Generated data is neither numpy array nor dataframe!")
+
         return synth_data
+
+

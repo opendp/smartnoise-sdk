@@ -10,6 +10,12 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from torchdp import PrivacyEngine, utils, autograd_grad_sample
 
+try:
+    from .dpctgan import DPCTGAN
+except: 
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning('Requires "pip install ctgan" for DPCTGAN')
 from .privacy_utils import weights_init, pate, moments_acc
 
 class Generator(nn.Module):
@@ -70,7 +76,7 @@ class DPGAN:
         self.pd_cols = None
         self.pd_index = None
 
-    def train(self, data):
+    def train(self, data, categorical_columns=None, ordinal_columns=None):
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors='ignore')
@@ -146,6 +152,7 @@ class DPGAN:
                 for p in discriminator.parameters():
                     if hasattr(p, "grad_sample"):
                         del p.grad_sample
+                # autograd_grad_sample.clear_backprops(discriminator)
 
                 if self.delta is None:
                     self.delta = 1 / data.shape[0]
