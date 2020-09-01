@@ -285,12 +285,12 @@ class DPCTGAN(CTGANSynthesizer):
                 optimizerG.step()
 
                 if not self.disabled_dp:
-                    # if self.loss == 'cross_entropy':
-                    #     autograd_grad_sample.clear_backprops(discriminator)
-                    # else:
-                    for p in discriminator.parameters():
-                        if hasattr(p, "grad_sample"):
-                            del p.grad_sample 
+                    if self.loss == 'cross_entropy':
+                        autograd_grad_sample.clear_backprops(discriminator)
+                    else:
+                        for p in discriminator.parameters():
+                            if hasattr(p, "grad_sample"):
+                                del p.grad_sample 
 
                     if self.target_delta is None:
                         self.target_delta = 1/train_data.shape[0]
