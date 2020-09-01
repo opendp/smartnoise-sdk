@@ -13,8 +13,13 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
         self.categorical_columns = None
         self.ordinal_columns = None
         self.dtypes = None
+
+        self.data_columns = None
     
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+        if isinstance(data, pd.DataFrame):
+            self.data_columns = data.columns
+
         self.categorical_columns = categorical_columns
         self.ordinal_columns = ordinal_columns
         
@@ -23,7 +28,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             preprocessed_data = self.preprocessor.transform(data)
             self.gan.train(preprocessed_data)
         else:
-            self.gain.train(data)
+            self.gan.train(data, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
     
     def sample(self, n):
         synth_data = self.gan.generate(n)
@@ -35,12 +40,10 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
                 synth_data = self.preprocessor.inverse_transform(synth_data)
 
         if isinstance(synth_data, np.ndarray):
-            synth_data = pd.DataFrame(synth_data,columns=self.columns)
-
+            synth_data = pd.DataFrame(synth_data,columns=self.data_columns)
         elif isinstance(synth_data, pd.DataFrame):
-            if sum(synth_data.dtypes!=self.dtypes) > 0 :
-                convert_dict = self.dtypes.to_dict()
-                synth_data = synth_data.astype(convert_dict)
+            # TODO: Add validity check
+            synth_data.columns = self.data_columns
         else:
             raise ValueError("Generated data is neither numpy array nor dataframe!")
 

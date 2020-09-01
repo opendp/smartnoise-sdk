@@ -29,7 +29,7 @@ df = pd.read_csv(csv_path)
 @pytest.mark.torch
 class TestPytorchDPSynthesizer_DPGAN:
     def setup(self):
-        self.dpgan = PytorchSynthesizer(DPGAN(), GeneralTransformer())
+        self.dpgan = PytorchDPSynthesizer(DPGAN(), GeneralTransformer())
 
     def test_fit(self):
         self.dpgan.fit(df)
@@ -43,14 +43,14 @@ class TestPytorchDPSynthesizer_DPGAN:
 
 class TestPytorchDPSynthesizer_DPCTGAN:
     def setup(self):
-        self.dpgan = PytorchDPSynthesizer(None, DPCTGAN())
+        self.dpctgan = PytorchDPSynthesizer(DPCTGAN(), None)
 
     def test_fit(self):
-        self.dpgan.fit(df)
-        assert self.dpgan.gan.generator
+        self.dpctgan.fit(df, categorical_columns=['sex','educ','race','married'])
+        assert self.dpctgan.gan.generator
     
     def test_sample(self):
-        self.dpgan.fit(df)
+        self.dpctgan.fit(df, categorical_columns=['sex','educ','race','married'])
         sample_size = len(df)
-        synth_data = self.dpgan.sample(sample_size)
+        synth_data = self.dpctgan.sample(sample_size)
         assert synth_data.shape == df.shape
