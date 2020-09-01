@@ -5,3 +5,5 @@ mlflow
 connexion
 sklearn
 matplotlib
+ctgan
+pytorch-dp==0.1b1
