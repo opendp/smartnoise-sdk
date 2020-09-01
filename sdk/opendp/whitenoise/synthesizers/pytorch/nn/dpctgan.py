@@ -20,11 +20,6 @@ import torchdp
 from torchdp import autograd_grad_sample
 from torchdp import PrivacyEngine, utils
 
-
-
-
-
-
 class Discriminator(Module):
 
     def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
@@ -71,12 +66,6 @@ class Discriminator(Module):
     def forward(self, input):
         assert input.size()[0] % self.pack == 0
         return self.seq(input.view(-1, self.packdim))
-
-
-
-
-
-
 
 class DPCTGAN(CTGANSynthesizer):
     """Differential Private Conditional Table GAN Synthesizer
@@ -128,8 +117,6 @@ class DPCTGAN(CTGANSynthesizer):
 
 
     def train(self, data, categorical_columns=None, ordinal_columns=None):
-
-        
         self.transformer = DataTransformer()
         self.transformer.fit(data, categorical_columns)
         train_data = self.transformer.transform(data)
@@ -173,8 +160,6 @@ class DPCTGAN(CTGANSynthesizer):
         REAL_LABEL = 1 
         FAKE_LABEL = 0
         criterion = nn.BCELoss()
-
-
 
         assert self.batch_size % 2 == 0
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)

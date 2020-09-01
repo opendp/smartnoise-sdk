@@ -58,6 +58,6 @@ def wasserstein_randomization(d1_large, d2_large, iters, downsample_size=100):
         return -1 
 
     d_pd = pd.DataFrame(distances)
-    print(d_pd.describe())
+    # print(d_pd.describe())
 
     return np.mean(np.array(distances))

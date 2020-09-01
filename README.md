@@ -11,7 +11,7 @@ The tools repository for this system allow researchers and analysts to:
 
 * Use SQL dialect to create differentially private results over tabular data stores
 * Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy budget
-* Perform black-box stochastic testing against differential privacy modules
+* Perform privacy algorithm stochastic testing against differential privacy modules
 
 This differential privacy system is currently aimed at scenarios where the researcher is trusted by the data owner.  Future releases will focus on hardened scenarios where the researcher or analyst is untrusted.  
 
@@ -32,7 +32,7 @@ More information, including information about creating and integrating your own 
 
 ## Evaluator
 
-The stochastic evaluator drives black-box privacy algorithms, checking for privacy violations, accuracy, and bias.  It was inspired by Google's stochastic evaluator, and is implemented in Python.  Future releases will support more intelligent search of query input and data input space.
+The stochastic evaluator drives privacy algorithms, checking for privacy violations, accuracy, and bias.  It was inspired by Google's stochastic evaluator, and is implemented in Python.  Future releases will support more intelligent search of query input and data input space.
 
 Notebooks illustrating the use of the evaluator can be found [here](https://github.com/opendifferentialprivacy/whitenoise-samples/tree/master/evaluator).
 
