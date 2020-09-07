@@ -16,9 +16,9 @@ from ctgan.sampler import Sampler
 
 from ctgan import CTGANSynthesizer
 
-import torchdp
-from torchdp import autograd_grad_sample
-from torchdp import PrivacyEngine, utils
+import opacus
+from opacus import autograd_grad_sample
+from opacus import PrivacyEngine, utils
 
 class Discriminator(Module):
 
@@ -67,6 +67,26 @@ class Discriminator(Module):
         assert input.size()[0] % self.pack == 0
         return self.seq(input.view(-1, self.packdim))
 
+
+
+# custom for calcuate grad_sample for multiple loss.backward()
+def _custom_create_or_extend_grad_sample(
+    param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
+) -> None:
+    """
+    Create a 'grad_sample' attribute in the given parameter, or accumulate it
+    if the 'grad_sample' attribute already exists.
+    This custom code will not work when using optimizer.virtual_step()
+    """
+    
+    #print ("now this happen")
+    
+    if hasattr(param, "grad_sample"):
+        param.grad_sample = param.grad_sample + grad_sample
+        #param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
+    else:
+        param.grad_sample = grad_sample
+
 class DPCTGAN(CTGANSynthesizer):
     """Differential Private Conditional Table GAN Synthesizer
     This code adds Differential Privacy to CTGANSynthesizer from https://github.com/sdv-dev/CTGAN 
@@ -102,7 +122,7 @@ class DPCTGAN(CTGANSynthesizer):
         self.pack=pack
         self.log_frequency = log_frequency
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        # torchdp parameters
+        # opacus parameters
         self.sigma = sigma
         self.disabled_dp = disabled_dp
         self.target_delta = target_delta
@@ -114,6 +134,10 @@ class DPCTGAN(CTGANSynthesizer):
         self.loss_g_list = []
         self.verbose=verbose
         self.loss=loss
+
+        if self.loss != "cross_entropy":
+            # Monkeypatches the _create_or_extend_grad_sample function when calling opacus
+            opacus.supported_layers_grad_samplers._create_or_extend_grad_sample = _custom_create_or_extend_grad_sample
 
 
     def train(self, data, categorical_columns=None, ordinal_columns=None):
@@ -141,7 +165,7 @@ class DPCTGAN(CTGANSynthesizer):
             self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9), weight_decay=self.l2scale)
         optimizerD = optim.Adam(discriminator.parameters(), lr=2e-4, betas=(0.5, 0.9))
         
-        privacy_engine = torchdp.PrivacyEngine(
+        privacy_engine = opacus.PrivacyEngine(
             discriminator,
             batch_size=self.batch_size,
             sample_size=train_data.shape[0],
@@ -285,12 +309,12 @@ class DPCTGAN(CTGANSynthesizer):
                 optimizerG.step()
 
                 if not self.disabled_dp:
-                    if self.loss == 'cross_entropy':
-                        autograd_grad_sample.clear_backprops(discriminator)
-                    else:
-                        for p in discriminator.parameters():
-                            if hasattr(p, "grad_sample"):
-                                del p.grad_sample 
+                    #if self.loss == 'cross_entropy':
+                    #    autograd_grad_sample.clear_backprops(discriminator)
+                    #else:
+                    for p in discriminator.parameters():
+                        if hasattr(p, "grad_sample"):
+                            del p.grad_sample 
 
                     if self.target_delta is None:
                         self.target_delta = 1/train_data.shape[0]
