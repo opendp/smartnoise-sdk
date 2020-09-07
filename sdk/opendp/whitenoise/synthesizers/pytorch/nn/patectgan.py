@@ -11,9 +11,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchdp import PrivacyEngine, utils, autograd_grad_sample
 from ctgan import CTGANSynthesizer
 
-
 from .privacy_utils import weights_init, pate, moments_acc
-
 
 import numpy as np
 import torch
@@ -39,9 +37,7 @@ import torchdp
 from torchdp import autograd_grad_sample
 from torchdp import PrivacyEngine, utils
 
-
 class Discriminator(Module):
-
     def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
 
         alpha = torch.rand(real_data.size(0) // pac, 1, 1, device=device)
@@ -89,8 +85,6 @@ class Discriminator(Module):
 
 
 class PATECTGAN(CTGANSynthesizer):
-
-
     def __init__(self,
                  embedding_dim=128,
                  gen_dim=(256, 256),
@@ -139,12 +133,9 @@ class PATECTGAN(CTGANSynthesizer):
         self.pd_index = None
 
 
-    
     def train(self, data, categorical_columns=None, ordinal_columns=None):
-
-
-        # this is to make sure data has at least 1000 points, may need it become flexiable 
-        self.num_teachers = int(len(data) / 5000)
+        # this is to make sure data has at least 1000 points, may need it become flexible 
+        self.num_teachers = int(len(data) / 5000) + 1
         self.transformer = DataTransformer()
         self.transformer.fit(data, categorical_columns)
         data = self.transformer.transform(data)
@@ -198,9 +189,7 @@ class PATECTGAN(CTGANSynthesizer):
 
 
         while eps < self.epsilon:
-            
             # train teacher discriminators
-            
             for t_2 in range(self.teacher_iters):
                 for i in range(self.num_teachers):
                     
@@ -267,9 +256,7 @@ class PATECTGAN(CTGANSynthesizer):
                     
             
             # train student discriminator
-            
             for t_3 in range(self.student_iters):
-
                 data_sampler = Sampler(data, self.transformer.output_info)
                 fakez = torch.normal(mean, std=std)
 

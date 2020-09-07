@@ -12,6 +12,7 @@ from torchdp import PrivacyEngine, utils, autograd_grad_sample
 
 try:
     from .dpctgan import DPCTGAN
+    from .patectgan import PATECTGAN
 except: 
     import logging
     logger = logging.getLogger(__name__)

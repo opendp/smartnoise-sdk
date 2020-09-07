@@ -55,7 +55,7 @@ class TestPytorchDPSynthesizer_DPCTGAN:
         synth_data = self.dpctgan.sample(sample_size)
         assert synth_data.shape == df.shape
 
-class TestPytorchDPSynthesizer_DPCTGAN:
+class TestPytorchDPSynthesizer_PATECTGAN:
     def setup(self):
         self.patectgan = PytorchDPSynthesizer(PATECTGAN(), None)
 
