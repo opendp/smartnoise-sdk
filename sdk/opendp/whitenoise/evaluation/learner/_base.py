@@ -3,7 +3,7 @@ from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from abc import ABC, abstractmethod
 
-class LearnerInterface:
+class Learner(ABC):
 	"""
 	Interface for smarter exploration of datasets and test queries 
 	for finding DP property violations
@@ -18,9 +18,9 @@ class LearnerInterface:
 		pass
 	
 	@abstractmethod
-	def notify(self, analysis : object, metrics : Metrics, privacy_params : PrivacyParams):
+	def notify(self, algorithm : object, metrics : Metrics, privacy_params : PrivacyParams):
 		"""
-		Tells the learner about the results of an analysis. 
+		Tells the learner about the results of an algorithm. 
 		Returns null
 		"""
 		pass
@@ -28,8 +28,8 @@ class LearnerInterface:
 	@abstractmethod
 	def propose(self):
 		"""
-		Asks the learner to propose a new analysis that optimizes
+		Asks the learner to propose a new algorithm that optimizes
 		the given objective metrics.  May be totally random.  
-		Returns analysis object.
+		Returns algorithm object.
 		"""
 		pass

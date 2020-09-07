@@ -2,7 +2,7 @@ from opendp.whitenoise.evaluation.metrics._metrics import Metrics
 from opendp.whitenoise.evaluation.params._halton_params import HaltonParams
 from abc import ABC, abstractmethod
 
-class ExplorerInterface(ABC):
+class Explorer(ABC):
 	"""
 	DP evaluator can be invoked with various evaluation parameters
 	For example, for a SQL analysis, we can pass various datasets and 
