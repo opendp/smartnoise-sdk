@@ -266,8 +266,6 @@ class PATECTGAN(CTGANSynthesizer):
                     print("Iterator is {i},  Loss D for teacher {n} is :{j}".format(i=t_2 + 1, n=i+1,  j=loss_d.detach().cpu()))
                     
             
-
-                    #########################################################################
             # train student discriminator
             
             for t_3 in range(self.student_iters):
@@ -277,8 +275,6 @@ class PATECTGAN(CTGANSynthesizer):
 
                 condvec = self.cond_generator.sample(self.batch_size)
                 
-                
-
                 if condvec is None:
                     c1, m1, col, opt = None, None, None, None
                     real = data_sampler.sample(self.batch_size, col, opt)
@@ -316,11 +312,7 @@ class PATECTGAN(CTGANSynthesizer):
                 
                 print ('iterator {i}, student discriminator loss is {j}'.format(i=t_3, j=loss_s))
 
-
-
-
             # train generator
-
             fakez = torch.normal(mean=mean, std=std)
             condvec = self.cond_generator.sample(self.batch_size)
 
