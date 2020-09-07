@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from torchdp import PrivacyEngine, utils, autograd_grad_sample
+from opacus import PrivacyEngine, utils, autograd_grad_sample
 
 try:
     from .dpctgan import DPCTGAN
