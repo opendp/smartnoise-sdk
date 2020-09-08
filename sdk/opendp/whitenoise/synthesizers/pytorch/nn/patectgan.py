@@ -8,7 +8,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from torchdp import PrivacyEngine, utils, autograd_grad_sample
 from ctgan import CTGANSynthesizer
 
 from .privacy_utils import weights_init, pate, moments_acc
@@ -34,8 +33,6 @@ from ctgan.sampler import Sampler
 from ctgan import CTGANSynthesizer
 
 import torchdp
-from torchdp import autograd_grad_sample
-from torchdp import PrivacyEngine, utils
 
 class Discriminator(Module):
     def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
