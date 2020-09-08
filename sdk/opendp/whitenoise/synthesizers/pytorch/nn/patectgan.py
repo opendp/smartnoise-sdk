@@ -12,7 +12,6 @@ from ctgan import CTGANSynthesizer
 
 from .privacy_utils import weights_init, pate, moments_acc
 
-import numpy as np
 import torch
 from torch import optim
 from torch.nn import functional
@@ -31,8 +30,6 @@ from ctgan.models import Generator
 from ctgan.sampler import Sampler 
 
 from ctgan import CTGANSynthesizer
-
-import torchdp
 
 class Discriminator(Module):
     def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
@@ -63,7 +60,6 @@ class Discriminator(Module):
         torch.manual_seed(0)
         
         dim = input_dim * pack
-      #  print ('now dim is {}'.format(dim))
         self.pack = pack
         self.packdim = dim
         seq = []
@@ -79,7 +75,6 @@ class Discriminator(Module):
     def forward(self, input):
         assert input.size()[0] % self.pack == 0
         return self.seq(input.view(-1, self.packdim))
-
 
 class PATECTGAN(CTGANSynthesizer):
     def __init__(self,
@@ -129,7 +124,6 @@ class PATECTGAN(CTGANSynthesizer):
         self.pd_cols = None
         self.pd_index = None
 
-
     def train(self, data, categorical_columns=None, ordinal_columns=None):
         # this is to make sure data has at least 1000 points, may need it become flexible 
         self.num_teachers = int(len(data) / 5000) + 1
@@ -138,7 +132,6 @@ class PATECTGAN(CTGANSynthesizer):
         data = self.transformer.transform(data)
         data_partitions = np.array_split(data, self.num_teachers)
         
-
         data_dim = self.transformer.output_dimensions
         
         self.cond_generator = ConditionalGenerator(data, self.transformer.output_info, self.log_frequency)
@@ -156,7 +149,6 @@ class PATECTGAN(CTGANSynthesizer):
             self.dis_dim, 
             self.loss,
             self.pack).to(self.device)
-
 
         student_disc = discriminator
         student_disc.apply(weights_init)
@@ -183,7 +175,6 @@ class PATECTGAN(CTGANSynthesizer):
         REAL_LABEL = 1 
         FAKE_LABEL = 0
         criterion = nn.BCELoss()
-
 
         while eps < self.epsilon:
             # train teacher discriminators
@@ -224,12 +215,8 @@ class PATECTGAN(CTGANSynthesizer):
                     else:
                         real_cat = real
                         fake_cat = fake
-
-
-
                     
                     optimizerT[i].zero_grad()
-
 
                     if self.loss == 'cross_entropy':
                         y_fake =teacher_disc[i](fake_cat)
@@ -248,10 +235,8 @@ class PATECTGAN(CTGANSynthesizer):
 
                         loss_d = errD_real + errD_fake
 
-                    
                     print("Iterator is {i},  Loss D for teacher {n} is :{j}".format(i=t_2 + 1, n=i+1,  j=loss_d.detach().cpu()))
                     
-            
             # train student discriminator
             for t_3 in range(self.student_iters):
                 data_sampler = Sampler(data, self.transformer.output_info)
@@ -321,7 +306,6 @@ class PATECTGAN(CTGANSynthesizer):
             else:
                 cross_entropy = self._cond_loss(fake, c1, m1)
 
-
             if self.loss=='cross_entropy':
                 label_g = torch.full((int(self.batch_size/self.pack),), REAL_LABEL, dtype=float, device=self.device)
                 #label_g = torch.full(int(self.batch_size/self.pack,),1,device=self.device)
@@ -330,11 +314,9 @@ class PATECTGAN(CTGANSynthesizer):
             else:
                 loss_g = -torch.mean(y_fake) + cross_entropy
 
-            
             optimizerG.zero_grad()
             loss_g.backward()
             optimizerG.step()
-                
                 
             print ('generator is {}'.format(loss_g.detach().cpu()))
 
@@ -361,7 +343,6 @@ class PATECTGAN(CTGANSynthesizer):
                 c1 = torch.from_numpy(c1).to(self.device)
                 fakez = torch.cat([fakez, c1], dim=1)
 
-
             fake = self.generator(fakez)
             fakeact = self._apply_activate(fake)
             data.append(fakeact.detach().cpu().numpy())
@@ -370,9 +351,3 @@ class PATECTGAN(CTGANSynthesizer):
         data = data[:n]
 
         return self.transformer.inverse_transform(data, None)
-
-
-
-
-                
-                
