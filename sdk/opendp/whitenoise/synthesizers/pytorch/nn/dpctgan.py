@@ -228,7 +228,7 @@ class DPCTGAN(CTGANSynthesizer):
                     y_fake = discriminator(fake_cat)
                     
                  #   print ('y_fake is {}'.format(y_fake))
-                    label_fake = torch.full((int(self.batch_size/self.pack),), FAKE_LABEL, device=self.device)
+                    label_fake = torch.full((int(self.batch_size/self.pack),), FAKE_LABEL, dtype=torch.float, device=self.device)
                     
                 #    print ('label_fake is {}'.format(label_fake))
    
@@ -237,7 +237,7 @@ class DPCTGAN(CTGANSynthesizer):
                     optimizerD.step()
 
                     # train with real
-                    label_true = torch.full((int(self.batch_size/self.pack),), REAL_LABEL, device=self.device)
+                    label_true = torch.full((int(self.batch_size/self.pack),), REAL_LABEL, dtype=torch.float, device=self.device)
                     y_real = discriminator(real_cat)
                     errD_real = criterion(y_real, label_true)
                     errD_real.backward()
@@ -297,7 +297,8 @@ class DPCTGAN(CTGANSynthesizer):
                     cross_entropy = self._cond_loss(fake, c1, m1)
 
                 if self.loss=='cross_entropy':
-                    label_g = torch.full((int(self.batch_size/self.pack),), REAL_LABEL, device=self.device)
+                    label_g = torch.full((int(self.batch_size/self.pack),), REAL_LABEL,
+                    dtype=torch.float, device=self.device)
                     #label_g = torch.full(int(self.batch_size/self.pack,),1,device=self.device)
                     loss_g = criterion(y_fake, label_g)
                     loss_g = loss_g + cross_entropy
