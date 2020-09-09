@@ -10,7 +10,7 @@ from opendp.whitenoise.metadata import CollectionMetadata
 try:
     from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
     from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
-    from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, DPCTGAN
+    from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, DPCTGAN, PATECTGAN
 
 except:
     import logging
@@ -53,4 +53,18 @@ class TestPytorchDPSynthesizer_DPCTGAN:
         self.dpctgan.fit(df, categorical_columns=['sex','educ','race','married'])
         sample_size = len(df)
         synth_data = self.dpctgan.sample(sample_size)
+        assert synth_data.shape == df.shape
+
+class TestPytorchDPSynthesizer_PATECTGAN:
+    def setup(self):
+        self.patectgan = PytorchDPSynthesizer(PATECTGAN(), None)
+
+    def test_fit(self):
+        self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
+        assert self.patectgan.gan.generator
+    
+    def test_sample(self):
+        self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
+        sample_size = len(df)
+        synth_data = self.patectgan.sample(sample_size)
         assert synth_data.shape == df.shape

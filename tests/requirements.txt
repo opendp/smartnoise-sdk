@@ -6,5 +6,5 @@ connexion
 sklearn
 matplotlib
 ctgan
-pytorch-dp==0.1b1
-torch==1.4.0
+opacus==0.9.0
+torch==1.6.0
