@@ -49,11 +49,11 @@ class TestQuery:
         rs = reader.execute("SELECT COUNT(*) * 5 AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs[1][0] == 549 * 5)
         assert(rs[2][0] == 451 * 5)
-    def test_group_by_noisy_order(self):
-        reader = PandasReader(schema, df)
-        private_reader = PrivateReader(schema, reader, 4.0)
-        rs = private_reader.execute("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
-        assert(rs[1][0] < rs[2][0])
+    # def test_group_by_noisy_order(self):
+    #     reader = PandasReader(schema, df)
+    #     private_reader = PrivateReader(schema, reader, 4.0)
+    #     rs = private_reader.execute("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
+    #     assert(rs[1][0] < rs[2][0])
     # def test_group_by_noisy_order_desc(self):
     #     reader = PandasReader(schema, df)
     #     private_reader = PrivateReader(schema, reader, 4.0)
