@@ -3,21 +3,23 @@
         "name": "mushroom",
         "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data",
         "categorical_columns": "edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat", 
-"columns":"edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat",
+        "columns":"edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat",
         "target": "edible",
         "header": "f",
         "sep": ",",
-        "imbalanced": "f"
+        "imbalanced": "f",
+        "zipped": "f"
     },
     "car": {
         "name": "car",
         "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data",
         "categorical_columns": "buying,maint,doors,persons,lug_boot,safety,class", 
-"columns":"buying,maint,doors,persons,lug_boot,safety,class",
+        "columns":"buying,maint,doors,persons,lug_boot,safety,class",
         "target": "class",
         "header": "f",
         "sep": ",",
-        "imbalanced": "f"
+        "imbalanced": "f",
+        "zipped": "f"
     },
     "adult": {
         "name": "adult",
@@ -27,6 +29,42 @@
         "target": "earning-class",
         "header": "f",
         "sep": ",",
-        "imbalanced": "t"
+        "imbalanced": "t",
+        "zipped": "f"
+    },
+    "kdd": {
+        "name": "kdd",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/census-income.data.gz",
+        "categorical_columns": "worker_class,ind_code,occ_code,education,enroll,marital,m_ind_code,m_occ_code,race,hispanic,sex,labor,unemp,employ,tax,region,state,house,summ,m_msa,m_reg,m_with_reg,lived_year,sunbelt,family_18,father,mother,self,citizen,business,veteran,year", 
+        "columns":"age,worker_class,ind_code,occ_code,education,wage,enroll,marital,m_ind_code,m_occ_code,race,hispanic,sex,labor,unemp,employ,cgain,closs,dividends,tax,region,state,house,summ,m_msa,m_reg,m_with_reg,lived_year,sunbelt,persons_employer,family_18,father,mother,self,citizen,business,veteran,weeks,year,income",
+        "target": "income",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "t",
+        "zipped": "t",
+        "zip_name": "census-income.data"
+    },
+    "shopping": {
+        "name": "shopping",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00468/online_shoppers_intention.csv",
+        "categorical_columns": "Administrative,Informational,ProductRelated,Month,OperatingSystems,Browser,Region,TrafficType,VisitorType,Weekend,Revenue", 
+        "columns":"Administrative,Administrative_Duration,Informational,Informational_Duration,ProductRelated,ProductRelated_Duration,BounceRates,ExitRates,PageValues,SpecialDay,Month,OperatingSystems,Browser,Region,TrafficType,VisitorType,Weekend,Revenue",
+        "target": "Revenue",
+        "header": "t",
+        "sep": ",",
+        "imbalanced": "t",
+        "zipped": "f"
+    },
+    "bank": {
+        "name": "bank",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank.zip",
+        "categorical_columns": "job,marital,education,default,housing,loan,contact,month,poutcome,yesno", 
+        "columns":"age,job,marital,education,default,balance,housing,loan,contact,day,month,duration,campaign,pdays,previous,poutcome,yesno",
+        "target": "yesno",
+        "header": "t",
+        "sep": ",",
+        "imbalanced": "t",
+        "zipped": "t",
+        "zip_name": "bank-full.csv"
     }
 }

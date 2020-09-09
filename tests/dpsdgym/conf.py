@@ -7,12 +7,9 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
-from opendp.whitenoise.synthesizers.quail import QUAILSynthesizer
-from opendp.whitenoise.synthesizers.superquail import SuperQUAILSynthesizer
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN
-from dpctgan import DPCTGANSynthesizer
+from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN, DPCTGAN
 
 from diffprivlib.models import LogisticRegression as DPLR
 from diffprivlib.models import GaussianNB as DPGNB
@@ -29,7 +26,7 @@ SYNTHESIZERS = [
 ]
 
 # Add datasets on which to evaluate synthesis
-KNOWN_DATASETS =  ['mushroom'] # ,'adult', 'wine', 'car', 'nursery'
+KNOWN_DATASETS =  ['kdd'] # ,'adult', 'wine', 'car', 'nursery'
 
 # Add ML models on which to evaluate utility
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
@@ -116,11 +113,11 @@ SYNTH_SETTINGS = {
             'split_factor':4,
             'max_bin_count':400
         },
-        'wine': {
+        'kdd': {
             'Q_count':400,
             'iterations':25,
             'mult_weights_iterations':15,
-            'split_factor':3,
+            'split_factor':2,
             'max_bin_count':200
         },
         'adult': {
