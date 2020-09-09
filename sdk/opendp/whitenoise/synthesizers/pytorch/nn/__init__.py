@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from torchdp import PrivacyEngine, utils, autograd_grad_sample
+from opacus import PrivacyEngine, utils, autograd_grad_sample
 
 try:
     from .dpctgan import DPCTGAN
@@ -119,14 +119,14 @@ class DPGAN:
                 noise = torch.randn(self.batch_size, self.latent_dim, 1, 1, device=self.device)
                 noise = noise.view(-1, self.latent_dim)
                 fake_data = self.generator(noise)
-                label_fake = torch.full((self.batch_size,), 0, device=self.device)
+                label_fake = torch.full((self.batch_size,), 0, dtype=torch.float, device=self.device)
                 output = discriminator(fake_data.detach())
                 loss_d_fake = criterion(output, label_fake)
                 loss_d_fake.backward()
                 optimizer_d.step()
                 
                 # train with real data
-                label_true = torch.full((self.batch_size,), 1, device=self.device)
+                label_true = torch.full((self.batch_size,), 1, dtype=torch.float, device=self.device)
                 output = discriminator(real_data.float())
                 loss_d_real = criterion(output, label_true)
                 loss_d_real.backward()
@@ -143,7 +143,7 @@ class DPGAN:
             
                 # train generator
                 self.generator.zero_grad()
-                label_g = torch.full((self.batch_size,), 1, device=self.device)
+                label_g = torch.full((self.batch_size,), 1, dtype=torch.float, device=self.device)
                 output_g = discriminator(fake_data)
                 loss_g = criterion(output_g, label_g)
                 loss_g.backward()
@@ -255,14 +255,14 @@ class PATEGAN:
                     optimizer_t[i].zero_grad()
 
                     # train with real data
-                    label_real = torch.full((real_data.shape[0],), 1, device=self.device)
+                    label_real = torch.full((real_data.shape[0],), 1, dtype=torch.float, device=self.device)
                     output = teacher_disc[i](real_data)
                     loss_t_real = criterion(output, label_real.double())
                     loss_t_real.backward()
 
                     # train with fake data
                     noise = torch.rand(self.batch_size, self.latent_dim, device=self.device)
-                    label_fake = torch.full((self.batch_size,), 0, device=self.device)
+                    label_fake = torch.full((self.batch_size,), 0, dtype=torch.float, device=self.device)
                     fake_data = self.generator(noise.double())
                     output = teacher_disc[i](fake_data)
                     loss_t_fake = criterion(output, label_fake.double())
@@ -284,7 +284,7 @@ class PATEGAN:
                 optimizer_s.step()
 
             # train generator
-            label_g = torch.full((self.batch_size,), 1, device=self.device)
+            label_g = torch.full((self.batch_size,), 1, dtype=torch.float, device=self.device)
             noise = torch.rand(self.batch_size, self.latent_dim, device=self.device)
             gen_data = self.generator(noise.double())
             output_g = student_disc(gen_data)
