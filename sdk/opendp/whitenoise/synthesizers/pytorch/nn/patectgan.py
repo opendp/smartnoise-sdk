@@ -96,10 +96,8 @@ class PATECTGAN(CTGANSynthesizer):
                  batch_size = 500,
                  teacher_iters = 5,
                  student_iters = 5,
-                 epsilon = 5.0,
-                 delta = 1e-5
-
-                 ):
+                 epsilon = 1.0,
+                 delta = 1e-5):
 
         # CTGAN model specifi3c parameters
         self.embedding_dim = embedding_dim
@@ -124,11 +122,14 @@ class PATECTGAN(CTGANSynthesizer):
         self.pd_cols = None
         self.pd_index = None
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None):
+    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+        if update_epsilon:
+            self.epsilon = update_epsilon
+
         # this is to make sure data has at least 1000 points, may need it become flexible 
         self.num_teachers = int(len(data) / 5000) + 1
         self.transformer = DataTransformer()
-        self.transformer.fit(data, categorical_columns)
+        self.transformer.fit(data, discrete_columns=categorical_columns)
         data = self.transformer.transform(data)
         data_partitions = np.array_split(data, self.num_teachers)
         
@@ -181,7 +182,7 @@ class PATECTGAN(CTGANSynthesizer):
             for t_2 in range(self.teacher_iters):
                 for i in range(self.num_teachers):
                     
-                    print ('i is {}'.format(i))
+                    # print ('i is {}'.format(i))
                     
                     partition_data = data_partitions[i]              
                     data_sampler = Sampler(partition_data, self.transformer.output_info)
@@ -235,7 +236,7 @@ class PATECTGAN(CTGANSynthesizer):
 
                         loss_d = errD_real + errD_fake
 
-                    print("Iterator is {i},  Loss D for teacher {n} is :{j}".format(i=t_2 + 1, n=i+1,  j=loss_d.detach().cpu()))
+                    # print("Iterator is {i},  Loss D for teacher {n} is :{j}".format(i=t_2 + 1, n=i+1,  j=loss_d.detach().cpu()))
                     
             # train student discriminator
             for t_3 in range(self.student_iters):
@@ -279,7 +280,7 @@ class PATECTGAN(CTGANSynthesizer):
                 loss_s.backward()
                 optimizerS.step()
                 
-                print ('iterator {i}, student discriminator loss is {j}'.format(i=t_3, j=loss_s))
+                # print ('iterator {i}, student discriminator loss is {j}'.format(i=t_3, j=loss_s))
 
             # train generator
             fakez = torch.normal(mean=mean, std=std)
@@ -350,4 +351,6 @@ class PATECTGAN(CTGANSynthesizer):
         data = np.concatenate(data, axis=0)
         data = data[:n]
 
-        return self.transformer.inverse_transform(data, None)
+        generated_data = self.transformer.inverse_transform(data, None)
+        
+        return generated_data

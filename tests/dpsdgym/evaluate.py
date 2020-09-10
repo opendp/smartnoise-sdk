@@ -7,8 +7,13 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 from sklearn.model_selection import cross_val_score
+
+from imblearn.over_sampling import SMOTE
+
+from warnings import simplefilter
+simplefilter(action='ignore', category=FutureWarning)
 
 import mlflow
 
@@ -149,7 +154,7 @@ def model_accuracy(args):
     """
     model, x_test, y_test, mlflow_step, name, synth_name = args
     predictions = model.predict(x_test)
-    return accuracy_score(np.ravel(y_test), predictions)
+    return f1_score(np.ravel(y_test), predictions)
     
 
 def fit_a_model(args):
@@ -241,6 +246,17 @@ def run_model_suite(args):
 
     return (synth_name + '_' + str(epsilon), accuracies)
 
+def balancer(dataset, df):
+    # If our dataset is imbalanced, let's fix it
+    # here before we go on to eval
+    
+    # Make a new df made of all the columns, except the target class
+    X = df.loc[:, df.columns != dataset['target']]
+    y = df.loc[:, df.columns == dataset['target']]
+    sm = SMOTE(sampling_strategy='auto', k_neighbors=1, random_state=42)
+    X_smote, y_smote = sm.fit_resample(X, y)
+    X_smote[dataset['target']] = y_smote
+    return X_smote
 
 def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
     evals = {}
@@ -248,6 +264,11 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
     for d in data_dict:
         real = data_dict[d]["data"]
         target = data_dict[d]['target']
+
+        if conf.BALANCE and data_dict[d]['imbalanced'] == 't':
+            print('Balancing ' + str(d))
+            real = balancer(data_dict[d], real)
+
         model_suite_real_args = (real, target, 0, test_size, seed, ['aucroc'], 'real_' + d, 0.0, None, False, d)
         real_accuracies = run_model_suite(model_suite_real_args)
 
