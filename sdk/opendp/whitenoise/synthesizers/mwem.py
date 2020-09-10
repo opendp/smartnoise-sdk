@@ -285,7 +285,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 mins_data.append(min_c)
                 maxs_data.append(max_c)
                 # Dimension size (number of bins)
-                bin_count = max_c-min_c+1
+                bin_count = int(max_c-min_c+1)
                 # Here we track the min and max for the column,
                 # for sampling
                 self.mins_maxes[str(split[i])] = (min_c, max_c)

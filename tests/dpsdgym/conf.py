@@ -96,6 +96,13 @@ SYNTH_SETTINGS = {
             'splits':[[0,1,2],[3,4,5],[6,7,8],[9,10],[11,12],[13,14]],
             'max_bin_count':100
         },
+        'shopping': {
+            'Q_count':400,
+            'iterations':30,
+            'mult_weights_iterations':20,
+            'split_factor':2,
+            'max_bin_count':400
+        },
         'default': {
             'Q_count':400,
             'iterations':30,
