@@ -105,11 +105,9 @@ class DPCTGAN(CTGANSynthesizer):
                  target_delta=None,
                  sigma = 5,
                  max_per_sample_grad_norm=1.0,
-                 epsilon = 3,
+                 epsilon = 1,
                  verbose=True,
-                 loss = 'cross_entropy'
-
-                 ):
+                 loss = 'cross_entropy'):
 
         # CTGAN model specific parameters
         self.embedding_dim = embedding_dim
@@ -140,9 +138,12 @@ class DPCTGAN(CTGANSynthesizer):
             opacus.supported_layers_grad_samplers._create_or_extend_grad_sample = _custom_create_or_extend_grad_sample
 
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None):
+    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+        if update_epsilon:
+            self.epsilon = update_epsilon
+
         self.transformer = DataTransformer()
-        self.transformer.fit(data, categorical_columns)
+        self.transformer.fit(data, discrete_columns=categorical_columns)
         train_data = self.transformer.transform(data)
 
         data_sampler = Sampler(train_data, self.transformer.output_info)

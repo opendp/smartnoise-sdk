@@ -5,10 +5,11 @@ from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTr
 from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
 
 class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
-    def __init__(self, gan, preprocessor=None):
+    def __init__(self, gan, preprocessor=None, epsilon=None):
         self.preprocessor = preprocessor
         self.gan = gan
-        self.preprocessor = preprocessor
+        
+        self.epsilon = epsilon
 
         self.categorical_columns = None
         self.ordinal_columns = None
@@ -22,13 +23,17 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
 
         self.categorical_columns = categorical_columns
         self.ordinal_columns = ordinal_columns
-        
-        if self.preprocessor is not None:
+        self.dtypes = data.dtypes
+
+        if not self.epsilon:
+            self.epsilon = 1.0
+
+        if self.preprocessor:
             self.preprocessor.fit(data, categorical_columns, ordinal_columns)
             preprocessed_data = self.preprocessor.transform(data)
-            self.gan.train(preprocessed_data)
+            self.gan.train(preprocessed_data, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, update_epsilon=self.epsilon)
         else:
-            self.gan.train(data, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
+            self.gan.train(data, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, update_epsilon=self.epsilon)
     
     def sample(self, n):
         synth_data = self.gan.generate(n)
@@ -48,5 +53,3 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             raise ValueError("Generated data is neither numpy array nor dataframe!")
 
         return synth_data
-
-

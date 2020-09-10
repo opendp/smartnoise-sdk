@@ -77,7 +77,10 @@ class DPGAN:
         self.pd_cols = None
         self.pd_index = None
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None):
+    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+        if update_epsilon:
+            self.epsilon = update_epsilon
+
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors='ignore')
@@ -200,7 +203,10 @@ class PATEGAN:
         self.pd_cols = None
         self.pd_index = None
     
-    def train(self, data):
+    def train(self, data, update_epsilon=None):
+        if update_epsilon:
+            self.epsilon = update_epsilon
+            
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors='ignore')

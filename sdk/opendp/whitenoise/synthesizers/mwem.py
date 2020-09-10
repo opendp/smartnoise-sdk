@@ -51,7 +51,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.Qs = None
         self.max_retries_exp_mechanism = 50
         
-    def fit(self, data):
+    def fit(self, data, categorical_columns=None, ordinal_columns=None):
         """
         Creates a synthetic histogram distribution, based on the original data.
         Follows sdgym schema to be compatible with their benchmark system.
