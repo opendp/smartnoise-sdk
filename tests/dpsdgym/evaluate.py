@@ -154,7 +154,7 @@ def model_accuracy(args):
     """
     model, x_test, y_test, mlflow_step, name, synth_name = args
     predictions = model.predict(x_test)
-    return f1_score(np.ravel(y_test), predictions)
+    return f1_score(np.ravel(y_test), predictions, average='micro')
     
 
 def fit_a_model(args):
