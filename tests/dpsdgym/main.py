@@ -35,4 +35,4 @@ if __name__ == "__main__":
         flags = args[1:]
 
     with mlflow.start_run(run_name="test"):
-        run(epsilons=[0.01, 1.0, 10.0, 50.0, 100.0], run_name='test', flags=flags)
+        run(epsilons=[0.01], run_name='test', flags=flags) # , 0.1, 0.5, 1.0, 3.0, 6.0, 9.0

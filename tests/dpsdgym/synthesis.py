@@ -65,6 +65,7 @@ def run_all_synthesizers(datasets, epsilons):
         end = time.time() - start
         for n, d, e, sampled in results:
             datasets[d][n][e] = sampled
+
         print('Synthesis for ' + str(n) + ' finished in ' + str(end))
 
     return datasets

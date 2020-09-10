@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN, DPCTGAN
+from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN, DPCTGAN, PATECTGAN
 
 from diffprivlib.models import LogisticRegression as DPLR
 from diffprivlib.models import GaussianNB as DPGNB
@@ -19,19 +19,21 @@ SEED = 42
 
 # Turn on/off the synthesizers you want to use in eval here
 SYNTHESIZERS = [
-    ('mwem', MWEMSynthesizer),
-    # ('dpctgan', DPCTGANSynthesizer),
+    # ('mwem', MWEMSynthesizer),
+    # ('dpctgan', PytorchDPSynthesizer),
+    ('patectgan', PytorchDPSynthesizer),
     # ('dpgan',PytorchDPSynthesizer),
     # ('pategan',PytorchDPSynthesizer),
 ]
 
 # Add datasets on which to evaluate synthesis
-KNOWN_DATASETS =  ['kdd'] # ,'adult', 'wine', 'car', 'nursery'
+KNOWN_DATASETS =  ['bank'] # ,'adult', 'wine', 'car', 'nursery'
 
 # Add ML models on which to evaluate utility
-KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
-               LogisticRegression, MLPClassifier,
-               RandomForestClassifier]
+KNOWN_MODELS = [AdaBoostClassifier]
+# , BaggingClassifier,
+#                LogisticRegression, MLPClassifier,
+#                RandomForestClassifier]
 
 # Mirror strings for ML models, to log
 KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
@@ -42,18 +44,24 @@ KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
 
 SYNTH_SETTINGS = {
     'dpctgan': {
-        'adult': {
-            'epochs': 50
+        'bank': {
+            'preprocessor': GeneralTransformer(),
+            'gan': DPCTGAN(epochs=100)
         },
         'car': {
-            'epochs': 50
+            'preprocessor': GeneralTransformer(),
+            'gan': DPCTGAN(epochs=100)
         },
-        'wine': {
-            'epochs': 50
+    },
+    'patectgan': {
+        'bank': {
+            'preprocessor': GeneralTransformer(),
+            'gan': PATECTGAN(epochs=100)
         },
-        'mushroom': {
-            'epochs': 50
-        }
+        'car': {
+            'preprocessor': GeneralTransformer(),
+            'gan': PATECTGAN(epochs=100)
+        },
     },
     'dpgan': {
         'car': {
@@ -114,6 +122,13 @@ SYNTH_SETTINGS = {
             'max_bin_count':400
         },
         'kdd': {
+            'Q_count':400,
+            'iterations':25,
+            'mult_weights_iterations':15,
+            'split_factor':2,
+            'max_bin_count':200
+        },
+        'bank': {
             'Q_count':400,
             'iterations':25,
             'mult_weights_iterations':15,

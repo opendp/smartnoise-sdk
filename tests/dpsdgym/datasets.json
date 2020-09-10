@@ -62,7 +62,7 @@
         "columns":"age,job,marital,education,default,balance,housing,loan,contact,day,month,duration,campaign,pdays,previous,poutcome,yesno",
         "target": "yesno",
         "header": "t",
-        "sep": ",",
+        "sep": ";",
         "imbalanced": "t",
         "zipped": "t",
         "zip_name": "bank-full.csv"
