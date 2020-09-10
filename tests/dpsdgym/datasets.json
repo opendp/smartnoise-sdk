@@ -32,18 +32,6 @@
         "imbalanced": "t",
         "zipped": "f"
     },
-    "kdd": {
-        "name": "kdd",
-        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/census-income.data.gz",
-        "categorical_columns": "worker_class,ind_code,occ_code,education,enroll,marital,m_ind_code,m_occ_code,race,hispanic,sex,labor,unemp,employ,tax,region,state,house,summ,m_msa,m_reg,m_with_reg,lived_year,sunbelt,family_18,father,mother,self,citizen,business,veteran,year", 
-        "columns":"age,worker_class,ind_code,occ_code,education,wage,enroll,marital,m_ind_code,m_occ_code,race,hispanic,sex,labor,unemp,employ,cgain,closs,dividends,tax,region,state,house,summ,m_msa,m_reg,m_with_reg,lived_year,sunbelt,persons_employer,family_18,father,mother,self,citizen,business,veteran,weeks,year,income",
-        "target": "income",
-        "header": "f",
-        "sep": ",",
-        "imbalanced": "t",
-        "zipped": "t",
-        "zip_name": "census-income.data"
-    },
     "shopping": {
         "name": "shopping",
         "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00468/online_shoppers_intention.csv",

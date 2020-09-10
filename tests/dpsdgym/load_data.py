@@ -82,19 +82,7 @@ def load_data():
             df = df.sample(n=subsample_count)
             print("Memory consumed by " + dataset['name'] + ":" + str(df.memory_usage(index=True).sum()))
 
-        # If our dataset is imbalanced, let's fix it
-        # here before we go on to eval
-        
-        # Make a new df made of all the columns, except the target class
-        # if dataset['imbalanced'] == 't':
-        #     X = df.loc[:, df.columns != dataset['target']]
-        #     y = df.loc[:, df.columns == dataset['target']]
-        #     sm = SMOTE(sampling_strategy='auto', k_neighbors=1, random_state=42)
-        #     X_smote, y_smote = sm.fit_resample(X, y)
-        #     X_smote[dataset['target']] = y_smote
-        #     df = X_smote
-
-        return {"data": df, "target": dataset['target'], "name": dataset['name'], "categorical_columns": dataset['categorical_columns']}
+        return {"data": df, "target": dataset['target'], "name": dataset['name'], "imbalanced": dataset['imbalanced'], "categorical_columns": dataset['categorical_columns']}
 
     for d in req_datasets:
         df = retrieve_dataset(archive[d])
