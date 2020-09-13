@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN
+from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN, DPCTGAN
 
 from diffprivlib.models import LogisticRegression as DPLR
 from diffprivlib.models import GaussianNB as DPGNB
@@ -20,6 +20,8 @@ SEED = 42
 # Turn on/off the synthesizers you want to use in eval here
 SYNTHESIZERS = [
     ('mwem', MWEMSynthesizer),
+    ('dpctgan', PytorchDPSynthesizer),
+    ('dpgan', PytorchDPSynthesizer),
 ]
 
 # Add datasets on which to evaluate synthesis
@@ -40,16 +42,20 @@ KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
 SYNTH_SETTINGS = {
     'dpctgan': {
         'adult': {
-            'epochs': 50
+            'preprocessor': GeneralTransformer(),
+            'gan': DPGAN(batch_size=640, epochs=100)
         },
         'car': {
-            'epochs': 50
+            'preprocessor': GeneralTransformer(),
+            'gan': DPGAN(batch_size=640, epochs=100)
         },
         'wine': {
-            'epochs': 50
+            'preprocessor': GeneralTransformer(),
+            'gan': DPGAN(batch_size=640, epochs=100)
         },
         'mushroom': {
-            'epochs': 50
+            'preprocessor': GeneralTransformer(),
+            'gan': DPGAN(batch_size=640, epochs=100)
         }
     },
     'dpgan': {
