@@ -21,27 +21,29 @@ def run(epsilons, run_name, flags, dataset):
     if 'ml_eval' in flags:
         results = run_ml_eval(data_dicts, epsilons, run_name)
         print(results)
-    # TODO: Maybe dump the results?
-    # with open('artifact.json', 'w') as f:
-    #     json.dump(results, f, cls=JSONEncoder)
+    with open('artifact.json', 'w') as f:
+        json.dump(results, f)
+    mlflow.log_artifact("artifact.json", "results.json")
 
-flag_options = ['wasserstein', 'ml_eval', 'sra', 'pmse']
+flag_options = ['wasserstein', 'ml_eval', 'pmse']
 
 if __name__ == "__main__":
     # TODO: Add epsilon flag to specify epsilons pre run
     args = sys.argv
-    epsilon_str = args[1] if not args[1].startswith("'") else args[1][1:-1]
-    epsilons = json.loads(epsilon_str)
-    dataset = args[2]
+    epsilons = [0.01, 0.1, 0.5, 1.0, 3.0, 6.0, 9.0]
+    dataset = args[1]
 
-    if len(args) > 3:
-        if args[3] == 'all' or args == None:
+    if len(args) > 2:
+        if args[2] == 'all' or args == None:
             flags = flag_options
         else:
-            flags = args[3]
+            flags = args[2]
     else:
         flags = flag_options
 
 
     with mlflow.start_run(run_name="test"):
+        mlflow.log_param("epsilons", str(epsilons))
+        mlflow.log_param("dataset", dataset)
+        mlflow.log_param("flags", str(flags))
         run(epsilons=epsilons, run_name='test', flags=flags, dataset=dataset)

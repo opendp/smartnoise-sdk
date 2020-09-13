@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 
@@ -70,7 +69,7 @@ def load_data(datasets):
             subsample_count = int(len(df.index) * reduct_ratio)
             df = df.sample(n=subsample_count)
             print("Memory consumed by " + dataset['name'] + ":" + str(df.memory_usage(index=True).sum()))
-        
+
         # If our dataset is imbalanced, let's fix it
         # here before we go on to eval
 

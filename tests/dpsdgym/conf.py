@@ -25,7 +25,7 @@ SYNTHESIZERS = [
 ]
 
 # Add datasets on which to evaluate synthesis
-KNOWN_DATASETS =  ['mushroom'] # ,'adult', 'wine', 'car', 'nursery'
+KNOWN_DATASETS =  ['mushroom', 'adult', 'wine', 'car', 'nursery']
 
 # Add ML models on which to evaluate utility
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
@@ -56,6 +56,10 @@ SYNTH_SETTINGS = {
         'mushroom': {
             'preprocessor': GeneralTransformer(),
             'gan': DPGAN(batch_size=640, epochs=100)
+        },
+        'nursery': {
+            'preprocessor': GeneralTransformer(),
+            'gan': DPGAN(batch_size=640, epochs=100)
         }
     },
     'dpgan': {
@@ -74,6 +78,10 @@ SYNTH_SETTINGS = {
         'adult': {
             'preprocessor': GeneralTransformer(),
             'gan': DPGAN(batch_size=640, epochs=100)
+        },
+        'nursery': {
+            'preprocessor': GeneralTransformer(),
+            'gan': DPGAN(batch_size=640, epochs=100)
         }
     },
     'pategan': {
@@ -90,6 +98,10 @@ SYNTH_SETTINGS = {
             'gan': PATEGAN(batch_size=640)
         },
         'adult': {
+            'preprocessor': GeneralTransformer(),
+            'gan': PATEGAN(batch_size=1280)
+        },
+        'nursery': {
             'preprocessor': GeneralTransformer(),
             'gan': PATEGAN(batch_size=1280)
         }
