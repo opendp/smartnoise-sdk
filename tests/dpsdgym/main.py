@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import mlflow
+import json
 
 import conf
 
@@ -10,8 +11,8 @@ from load_data import load_data
 from synthesis import run_all_synthesizers
 from evaluate import run_ml_eval, run_wasserstein, run_pMSE
 
-def run(epsilons, run_name, flags):
-    loaded_datasets = load_data()
+def run(epsilons, run_name, flags, dataset):
+    loaded_datasets = load_data(dataset)
     data_dicts = run_all_synthesizers(loaded_datasets, epsilons)
     if 'wasserstein' in flags:
         run_wasserstein(data_dicts, 50, run_name)
@@ -29,10 +30,17 @@ flag_options = ['wasserstein', 'ml_eval', 'sra', 'pmse']
 if __name__ == "__main__":
     # TODO: Add epsilon flag to specify epsilons pre run
     args = sys.argv
-    if args[1] == 'all' or args == None:
+    epsilons = json.loads(args[1])
+    dataset = args[2]
+
+    if len(args) > 3:
+        if args[3] == 'all' or args == None:
+            flags = flag_options
+        else:
+            flags = args[3]
+    else:
         flags = flag_options
-    else: 
-        flags = args[1:]
+
 
     with mlflow.start_run(run_name="test"):
-        run(epsilons=[0.01, 1.0, 10.0, 50.0, 100.0], run_name='test', flags=flags)
+        run(epsilons=epsilons, run_name='test', flags=flags, dataset=dataset)

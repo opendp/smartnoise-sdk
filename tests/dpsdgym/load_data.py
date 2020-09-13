@@ -1,4 +1,3 @@
-import conf
 
 import numpy as np
 import pandas as pd
@@ -15,10 +14,9 @@ from imblearn.over_sampling import SMOTE
 # is ~4000000 bytes 
 MEM_CAP = 1000000 #1500000
 
-def load_data():
+def load_data(datasets):
     """
-    Takes in optional dataset list. Otherwise grabs them
-    from the conf.py file.
+    Takes in optional dataset list.
 
     Returns a dictionary of datasets.
     {
@@ -30,7 +28,7 @@ def load_data():
     import io
     import json
 
-    req_datasets = conf.KNOWN_DATASETS
+    req_datasets = [datasets] if isinstance("datasets", str) else datasets
 
     with open('datasets.json') as j:
         dsets = j.read()

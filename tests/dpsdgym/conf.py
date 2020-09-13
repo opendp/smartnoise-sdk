@@ -7,12 +7,9 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
-from opendp.whitenoise.synthesizers.quail import QUAILSynthesizer
-from opendp.whitenoise.synthesizers.superquail import SuperQUAILSynthesizer
 from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
 from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
 from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN
-from dpctgan import DPCTGANSynthesizer
 
 from diffprivlib.models import LogisticRegression as DPLR
 from diffprivlib.models import GaussianNB as DPGNB
@@ -23,9 +20,6 @@ SEED = 42
 # Turn on/off the synthesizers you want to use in eval here
 SYNTHESIZERS = [
     ('mwem', MWEMSynthesizer),
-    # ('dpctgan', DPCTGANSynthesizer),
-    # ('dpgan',PytorchDPSynthesizer),
-    # ('pategan',PytorchDPSynthesizer),
 ]
 
 # Add datasets on which to evaluate synthesis
@@ -33,8 +27,8 @@ KNOWN_DATASETS =  ['mushroom'] # ,'adult', 'wine', 'car', 'nursery'
 
 # Add ML models on which to evaluate utility
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
-               LogisticRegression, MLPClassifier,
-               RandomForestClassifier]
+                LogisticRegression, MLPClassifier,
+                RandomForestClassifier]
 
 # Mirror strings for ML models, to log
 KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
@@ -103,7 +97,7 @@ SYNTH_SETTINGS = {
             'max_bin_count':400
         },
         'car': {
-            'Q_count':400, 
+            'Q_count':400,
             'iterations':20,
             'mult_weights_iterations': 15,
             'split_factor':7,

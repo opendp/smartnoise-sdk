@@ -14,7 +14,7 @@ import mlflow
 
 from joblib import Parallel, delayed
 
-import conf 
+import conf
 from metrics.sra import sra
 from metrics.wasserstein import wasserstein_randomization
 from metrics.pmse import pmse_ratio
@@ -26,7 +26,7 @@ class dumb_predictor():
     """
     def __init__(self, label):
         self.label = label
-        
+
     def predict(self, instances):
         return np.full(len(instances), self.label)
 

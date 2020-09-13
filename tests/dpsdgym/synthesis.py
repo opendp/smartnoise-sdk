@@ -8,7 +8,7 @@ import mlflow
 
 from joblib import Parallel, delayed
 
-import conf 
+import conf
 
 def run_synthesis(synthesis_args):
     """
