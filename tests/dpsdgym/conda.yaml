@@ -3,6 +3,7 @@ name: tutorial
 channels:
   - defaults
 dependencies:
+  - python=3.7
   - numpy>=1.14.3
   - pandas==0.25.3
   - scikit-learn=0.19.1
@@ -13,3 +14,7 @@ dependencies:
     - imblearn
     - scipy
     - diffprivlib
+    - torch
+    - opacus
+    - ctgan
+    - git+https://github.com/opendifferentialprivacy/whitenoise-system#subdirectory=sdk

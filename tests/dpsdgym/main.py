@@ -30,7 +30,8 @@ flag_options = ['wasserstein', 'ml_eval', 'sra', 'pmse']
 if __name__ == "__main__":
     # TODO: Add epsilon flag to specify epsilons pre run
     args = sys.argv
-    epsilons = json.loads(args[1])
+    epsilon_str = args[1] if not args[1].startswith("'") else args[1][1:-1]
+    epsilons = json.loads(epsilon_str)
     dataset = args[2]
 
     if len(args) > 3:
