@@ -1,9 +1,7 @@
 import os
 import tempfile
 import requests
-import urllib.parse as urlparse
-from urllib.parse import parse_qs
-
+import urllib.parse as parser
 
 import pandas as pd
 
@@ -32,18 +30,22 @@ def dataverse_loader(host, doi=None, token=None):
     return pd.read_csv(path, sep="\t")
 
 def dataverse_uri_loader(dv_uri):
-    uri = urlparse.urlparse(dv_uri)
+    uri = parser.urlparse(dv_uri)
     try:
         scheme = uri.scheme
         host = uri.netloc
         path = uri.path
-        doi_kv = uri.query.split("&")[0]
-        doi = parse_qs(uri.query)['persistentId']
-        token = parse_qs(uri.query)['token']
+        kv = uri.query.split("&")
     except Exception as e:
         print(str(e))
 
-    request = requests.get(scheme + '//' + host + path + '?' + doi_kv)
+    doi_key = 'persistentId'
+    token_key = 'token'
+    kv_arr = [pair.split('=') for pair in kv]
+    kv_dict = dict(kv_arr)
+    doi = kv_dict[doi_key]
+    token = kv_dict[token_key]
+    request = requests.get('uri://' + host + path + '?' + doi_key + '=' + doi)
     if(token):
         request.add_header('X-Dataverse-Key', token)
     response = request.read()
