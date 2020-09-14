@@ -12,8 +12,15 @@ from opendp.whitenoise.data import dataverse_loader
         {"host": "https://dataverse.harvard.edu", "doi": "doi:10.7910/DVN/E9QKIZ/TRLS9U"},
         {"host": "https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/E9QKIZ/TRLS9U",},
         {"host":
-         "https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/E9QKIZ/TRLS9U", "token": os.environ.get("WHITENOISE_DATAVERSE_TEST_TOKEN"),}
+         "https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/E9QKIZ/TRLS9U", "token": os.environ.get("WHITENOISE_DATAVERSE_TEST_TOKEN"),},
+        {"uri":
+         "https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/E9QKIZ/TRLS9U&token=" + os.environ.get('WHITENOISE_DATAVERSE_TEST_TOKEN')}
     ])
 def test_with_doi(dataverse_details):
     df = dataverse_loader(dataverse_details["host"], dataverse_details.get("doi"), dataverse_details.get("token"))
     assert df is not None
+
+def test_uri_only(dataverse_details):
+    df = dataverse_uri_loader(dataverse_details["uri"])
+    assert df is not None
+    
