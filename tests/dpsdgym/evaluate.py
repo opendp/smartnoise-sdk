@@ -7,8 +7,13 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 from sklearn.model_selection import cross_val_score
+
+from imblearn.over_sampling import SMOTE
+
+from warnings import simplefilter
+simplefilter(action='ignore', category=FutureWarning)
 
 import mlflow
 
@@ -36,16 +41,18 @@ def wasserstein_test(args):
     """
     d1, d2, iterations, mlflow_step, name, epsilon, synth_name, dataset_name = args
     wass = wasserstein_randomization(d1, d2, iterations)
-    mlflow.set_tags(
-        {'wasserstein': str(name),
-        'wasserstein_dataset': dataset_name
-        }
-    )
-    mlflow.log_param('wasserstein_epsilon', str(epsilon))
-    mlflow.log_param('wasserstein_synthesizer', str(synth_name))
-    mlflow.log_metrics({
-        'wasserstein_score': wass,
-        })
+    with mlflow.start_run(nested=True):
+        mlflow.set_tags(
+            {'wasserstein': str(name),
+            'wasserstein_dataset': dataset_name,
+            'synth_name': synth_name
+            }
+        )
+        mlflow.log_param('wasserstein_epsilon', str(epsilon))
+        mlflow.log_param('wasserstein_synthesizer', str(synth_name))
+        mlflow.log_metrics({
+            'wasserstein_score': wass,
+            })
     return wass
 
 def run_wasserstein(data_dicts, iterations, run_name):
@@ -58,8 +65,9 @@ def run_wasserstein(data_dicts, iterations, run_name):
 
     start = time.time()
     job_num = len(wass_runs)
-    results = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
-        map(delayed(wasserstein_test), wass_runs))
+    # results = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
+    #    map(delayed(wasserstein_test), wass_runs))
+    results = [x for x in map(wasserstein_test, wass_runs)]
     end = time.time() - start
     print('Metrics of Wasserstein randomization finished in ' + str(end))
     return results
@@ -70,17 +78,19 @@ def pMSE_test(args):
     """
     d1, d2, mlflow_step, name, epsilon, synth_name, dataset_name = args
     pmse = pmse_ratio(d1, d2)
-    mlflow.set_tags(
-        {'pmse': str(name),
-        'pmse_dataset': dataset_name
-        }
-    )
-    mlflow.log_param('pmse_epsilon', str(epsilon))
-    mlflow.log_param('pmse_synthesizer', str(synth_name))
-    mlflow.log_metrics({
-        'pmse_score': pmse,
-        })
-    return pmse
+    with mlflow.start_run(nested=True):
+        mlflow.set_tags(
+            {'pmse': str(name),
+             'pmse_dataset': dataset_name,
+             'synth_name': synth_name,
+            }
+        )
+        mlflow.log_param('pmse_epsilon', str(epsilon))
+        mlflow.log_param('pmse_synthesizer', str(synth_name))
+        mlflow.log_metrics({
+            'pmse_score': pmse,
+            })
+    return float(pmse)
 
 def run_pMSE(data_dicts, run_name):
     pmse_runs = []
@@ -92,8 +102,9 @@ def run_pMSE(data_dicts, run_name):
 
     start = time.time()
     job_num = len(pmse_runs)
-    results = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
-        map(delayed(pMSE_test), pmse_runs))
+    # results = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
+    #    map(delayed(pMSE_test), pmse_runs))
+    results = [x for x in map(pMSE_test, pmse_runs)]
     end = time.time() - start
     print('Metrics of pMSE finished in ' + str(end))
     return results
@@ -149,7 +160,7 @@ def model_accuracy(args):
     """
     model, x_test, y_test, mlflow_step, name, synth_name = args
     predictions = model.predict(x_test)
-    return accuracy_score(np.ravel(y_test), predictions)
+    return f1_score(np.ravel(y_test), predictions, average='micro')
     
 
 def fit_a_model(args):
@@ -218,29 +229,43 @@ def run_model_suite(args):
     end = time.time() - start
     print('Evaluating models finished in ' + str(end))
 
-    if 'aucroc' in flags:
-        start = time.time()
-        job_num = len(predictors)
-        aucrocs = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
-            map(delayed(model_auc_roc), predictors))
-        end = time.time() - start
-        print('AUCROC finished in ' + str(end))
+    with mlflow.start_run(nested=True):
+        if 'aucroc' in flags:
+            start = time.time()
+            job_num = len(predictors)
+            aucrocs = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
+                map(delayed(model_auc_roc), predictors))
+            end = time.time() - start
+            print('AUCROC finished in ' + str(end))
 
-        index_max_auc = np.argmax(np.array(aucrocs))
-        mlflow.set_tags({'aucroc': conf.KNOWN_MODELS_STR[index_max_auc]})
-        mlflow.log_param('aucroc_synthesizer', str(synth_name))
-        mlflow.log_param('aucroc_epsilon', str(epsilon))
-        mlflow.log_metrics({'aucroc': np.array(aucrocs)[index_max_auc]})
+            index_max_auc = np.argmax(np.array(aucrocs))
+            mlflow.set_tags({'aucroc': conf.KNOWN_MODELS_STR[index_max_auc],
+                             'synth_name': synth_name
+                             })
+            mlflow.log_param('aucroc_synthesizer', str(synth_name))
+            mlflow.log_param('aucroc_epsilon', str(epsilon))
+            mlflow.log_metrics({'aucroc': np.array(aucrocs)[index_max_auc]})
 
-    index_max = np.argmax(np.array(accuracies))
-    mlflow.set_tags({'max_accuracy': conf.KNOWN_MODELS_STR[index_max],
-                    'dataset': dataset_name})
-    mlflow.log_param('synthesizer', str(synth_name))
-    mlflow.log_param('epsilon', str(epsilon))
-    mlflow.log_metrics({'max_accuracy': np.array(accuracies)[index_max]})
+        index_max = np.argmax(np.array(accuracies))
+        mlflow.set_tags({'max_accuracy': conf.KNOWN_MODELS_STR[index_max],
+                        'dataset': dataset_name})
+        mlflow.log_param('synthesizer', str(synth_name))
+        mlflow.log_param('epsilon', str(epsilon))
+        mlflow.log_metrics({'max_accuracy': np.array(accuracies)[index_max]})
 
     return (synth_name + '_' + str(epsilon), accuracies)
 
+def balancer(dataset, df):
+    # If our dataset is imbalanced, let's fix it
+    # here before we go on to eval
+    
+    # Make a new df made of all the columns, except the target class
+    X = df.loc[:, df.columns != dataset['target']]
+    y = df.loc[:, df.columns == dataset['target']]
+    sm = SMOTE(sampling_strategy='auto', k_neighbors=1, random_state=42)
+    X_smote, y_smote = sm.fit_resample(X, y)
+    X_smote[dataset['target']] = y_smote
+    return X_smote
 
 def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
     evals = {}
@@ -248,6 +273,11 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
     for d in data_dict:
         real = data_dict[d]["data"]
         target = data_dict[d]['target']
+
+        if conf.BALANCE and data_dict[d]['imbalanced'] == 't':
+            print('Balancing ' + str(d))
+            real = balancer(data_dict[d], real)
+
         model_suite_real_args = (real, target, 0, test_size, seed, ['aucroc'], 'real_' + d, 0.0, None, False, d)
         real_accuracies = run_model_suite(model_suite_real_args)
 
@@ -259,8 +289,9 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
         
         start = time.time()
         job_num = len(synthetic_runs)
-        synthetic_accuracies = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
-            map(delayed(run_model_suite), synthetic_runs))
+        # synthetic_accuracies = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
+        #    map(delayed(run_model_suite), synthetic_runs))
+        synthetic_accuracies = [x for x in map(run_model_suite, synthetic_runs)]
         end = time.time() - start
         print('ML evaluation suite finished in ' + str(end) + ' for ' + d)
         evals[d] = [real_accuracies] + synthetic_accuracies

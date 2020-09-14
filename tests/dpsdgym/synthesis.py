@@ -10,6 +10,9 @@ from joblib import Parallel, delayed
 
 import conf 
 
+from warnings import simplefilter
+simplefilter(action='ignore', category=FutureWarning)
+
 def run_synthesis(synthesis_args):
     """
     A parallel run of the synthesis step
@@ -52,7 +55,12 @@ def run_all_synthesizers(datasets, epsilons):
         print('Synthesizer: '+ str(n))
         for d in datasets:
             datasets[d][n] = {}
-            synth_args = conf.SYNTH_SETTINGS[n][d]
+
+            if d in conf.SYNTH_SETTINGS[n]:
+                synth_args = conf.SYNTH_SETTINGS[n][d]
+            else:
+                synth_args = conf.SYNTH_SETTINGS[n]['default']
+
             for e in epsilons:
                 a_run = (n, s, synth_args, d, e, datasets, datasets[d]["categorical_columns"])
                 synthesizer_runs.append(a_run)
@@ -65,6 +73,7 @@ def run_all_synthesizers(datasets, epsilons):
         end = time.time() - start
         for n, d, e, sampled in results:
             datasets[d][n][e] = sampled
+
         print('Synthesis for ' + str(n) + ' finished in ' + str(end))
 
     return datasets
