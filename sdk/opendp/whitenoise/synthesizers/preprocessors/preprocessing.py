@@ -9,7 +9,7 @@ def get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
     for col_name in df:
         column = df[col_name]
 
-        if col_name in categorical_columns:
+        if categorical_columns and col_name in categorical_columns:
             bins = column.value_counts().index.tolist()
             meta.append({
                 "name": col_name,
@@ -17,7 +17,7 @@ def get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
                 "size": len(bins),
                 "bins": bins
             })
-        elif col_name in ordinal_columns:
+        elif ordinal_columns and col_name in ordinal_columns:
             value_count = list(dict(column.value_counts()).items())
             value_count = sorted(value_count, key=lambda x: -x[1])
             bins = list(map(lambda x: x[0], value_count))

@@ -11,6 +11,9 @@ from load_data import load_data
 from synthesis import run_all_synthesizers
 from evaluate import run_ml_eval, run_wasserstein, run_pMSE
 
+from warnings import simplefilter
+simplefilter(action='ignore', category=FutureWarning)
+
 def run(epsilons, run_name, flags, dataset):
     loaded_datasets = load_data(dataset)
     data_dicts = run_all_synthesizers(loaded_datasets, epsilons)

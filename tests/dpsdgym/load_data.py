@@ -1,7 +1,11 @@
+import conf
+
 import numpy as np
 import pandas as pd
 
 from imblearn.over_sampling import SMOTE
+
+import zipfile
 
 # NOTE: Temporary
 # We add a memory cap here for now, which
@@ -13,9 +17,10 @@ from imblearn.over_sampling import SMOTE
 # is ~4000000 bytes 
 MEM_CAP = 1000000 #1500000
 
-def load_data(datasets):
+def load_data():
     """
-    Takes in optional dataset list.
+    Takes in optional dataset list. Otherwise grabs them
+    from the conf.py file.
 
     Returns a dictionary of datasets.
     {
@@ -27,7 +32,7 @@ def load_data(datasets):
     import io
     import json
 
-    req_datasets = [datasets] if isinstance("datasets", str) else datasets
+    req_datasets = conf.KNOWN_DATASETS
 
     with open('datasets.json') as j:
         dsets = j.read()
@@ -36,16 +41,23 @@ def load_data(datasets):
     loaded_datasets = {}
 
     def retrieve_dataset(dataset):
-        r = requests.post(dataset['url'])
-        if r.ok:
-            data = r.content.decode('utf8')
-            sep = dataset['sep']
-            df = pd.read_csv(io.StringIO(data), names=dataset['columns'].split(','), sep=sep, index_col=False)
+        if dataset['zipped'] == 'f':
+            r = requests.post(dataset['url'])
+            if r.ok:
+                data = r.content.decode('utf8')
+                df = pd.read_csv(io.StringIO(data), names=dataset['columns'].split(','), sep=dataset['sep'], index_col=False)
+                if dataset['header'] == "t":
+                    df = df.iloc[1:]
+                return df
+
+            raise "Unable to retrieve dataset: " + dataset
+        else:
+            r = requests.get(dataset['url'])
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            df = pd.read_csv(z.open(dataset['zip_name']), names=dataset['columns'].split(','), sep=dataset['sep'], index_col=False)
             if dataset['header'] == "t":
                 df = df.iloc[1:]
             return df
-
-        raise "Unable to retrieve dataset: " + dataset
 
     def select_column(scol):
         # Zero indexed, inclusive
@@ -70,19 +82,7 @@ def load_data(datasets):
             df = df.sample(n=subsample_count)
             print("Memory consumed by " + dataset['name'] + ":" + str(df.memory_usage(index=True).sum()))
 
-        # If our dataset is imbalanced, let's fix it
-        # here before we go on to eval
-
-        # Make a new df made of all the columns, except the target class
-        if dataset['imbalanced'] == 't':
-            X = df.loc[:, df.columns != dataset['target']]
-            y = df.loc[:, df.columns == dataset['target']]
-            sm = SMOTE(sampling_strategy='auto', k_neighbors=1, random_state=42)
-            X_smote, y_smote = sm.fit_resample(X, y)
-            X_smote[dataset['target']] = y_smote
-            df = X_smote
-
-        return {"data": df, "target": dataset['target'], "name": dataset['name'], "categorical_columns": dataset['categorical_columns']}
+        return {"data": df, "target": dataset['target'], "name": dataset['name'], "imbalanced": dataset['imbalanced'], "categorical_columns": dataset['categorical_columns']}
 
     for d in req_datasets:
         df = retrieve_dataset(archive[d])
