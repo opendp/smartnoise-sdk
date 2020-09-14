@@ -19,7 +19,7 @@ import mlflow
 
 from joblib import Parallel, delayed
 
-import conf 
+import conf
 from metrics.sra import sra
 from metrics.wasserstein import wasserstein_randomization
 from metrics.pmse import pmse_ratio
@@ -31,7 +31,7 @@ class dumb_predictor():
     """
     def __init__(self, label):
         self.label = label
-        
+
     def predict(self, instances):
         return np.full(len(instances), self.label)
 
@@ -43,16 +43,13 @@ def wasserstein_test(args):
     wass = wasserstein_randomization(d1, d2, iterations)
     with mlflow.start_run(nested=True):
         mlflow.set_tags(
-            {'wasserstein': str(name),
-            'wasserstein_dataset': dataset_name,
-            'synth_name': synth_name
+            {'metric_name': str(name),
+             'dataset': dataset_name,
+             'wasserstein_score': str(wass),
+             'epsilon': str(epsilon),
+             'synthesizer': str(synth_name)
             }
         )
-        mlflow.log_param('wasserstein_epsilon', str(epsilon))
-        mlflow.log_param('wasserstein_synthesizer', str(synth_name))
-        mlflow.log_metrics({
-            'wasserstein_score': wass,
-            })
     return wass
 
 def run_wasserstein(data_dicts, iterations, run_name):
@@ -80,16 +77,13 @@ def pMSE_test(args):
     pmse = pmse_ratio(d1, d2)
     with mlflow.start_run(nested=True):
         mlflow.set_tags(
-            {'pmse': str(name),
-             'pmse_dataset': dataset_name,
-             'synth_name': synth_name,
+            {'metric_name': str(name),
+             'dataset': dataset_name,
+             'epsilon': str(epsilon),
+             'synthesizer': str(synth_name),
+             'pmse_score': str(pmse),
             }
         )
-        mlflow.log_param('pmse_epsilon', str(epsilon))
-        mlflow.log_param('pmse_synthesizer', str(synth_name))
-        mlflow.log_metrics({
-            'pmse_score': pmse,
-            })
     return float(pmse)
 
 def run_pMSE(data_dicts, run_name):
@@ -118,7 +112,7 @@ def model_auc_roc(args):
     if type(model).__name__ != 'dumb_predictor':
         probs = model.predict_proba(x_test)
         unique = np.array(np.unique(y_test))
-        
+
         if len(unique) > 2:
             try:
                 aucroc = roc_auc_score(y_test, probs, multi_class='ovr')
@@ -131,7 +125,7 @@ def model_auc_roc(args):
                     for m in missing_classes:
                         ind = np.where(model.classes_==m)
                         cols.append(ind[0].tolist())
-                        
+
                     existant_probs = np.delete(probs, cols, axis=1)
 
                     for i, row in enumerate(existant_probs):
@@ -207,7 +201,7 @@ def run_model_suite(args):
         model_args = conf.MODEL_ARGS[m_name]
         fit_model = (model, model_args, x_train_synth, y_train_synth, x_test_synth, y_test_synth)
         models_to_run.append(fit_model)
-    
+
     start = time.time()
     job_num = len(models_to_run)
     fitted_models = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
@@ -221,7 +215,7 @@ def run_model_suite(args):
         m_name = type(classifier).__name__
         pred = (classifier, x_t, y_t, epsilon_step, m_name, synth_name)
         predictors.append(pred)
-    
+
     start = time.time()
     job_num = len(predictors)
     accuracies = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
@@ -239,26 +233,23 @@ def run_model_suite(args):
             print('AUCROC finished in ' + str(end))
 
             index_max_auc = np.argmax(np.array(aucrocs))
-            mlflow.set_tags({'aucroc': conf.KNOWN_MODELS_STR[index_max_auc],
-                             'synth_name': synth_name
+            mlflow.set_tags({'model_auc': conf.KNOWN_MODELS_STR[index_max_auc],
+                             'aucroc': str(np.array(aucrocs)[index_max_auc])
                              })
-            mlflow.log_param('aucroc_synthesizer', str(synth_name))
-            mlflow.log_param('aucroc_epsilon', str(epsilon))
-            mlflow.log_metrics({'aucroc': np.array(aucrocs)[index_max_auc]})
 
         index_max = np.argmax(np.array(accuracies))
-        mlflow.set_tags({'max_accuracy': conf.KNOWN_MODELS_STR[index_max],
-                        'dataset': dataset_name})
-        mlflow.log_param('synthesizer', str(synth_name))
-        mlflow.log_param('epsilon', str(epsilon))
-        mlflow.log_metrics({'max_accuracy': np.array(accuracies)[index_max]})
+        mlflow.set_tags({'model_max_accuracy': conf.KNOWN_MODELS_STR[index_max],
+                         'dataset': dataset_name,
+                         'synthesizer': str(synth_name),
+                         'epsilon': str(epsilon),
+                         'max_accuracy': str(np.array(accuracies)[index_max])})
 
     return (synth_name + '_' + str(epsilon), accuracies)
 
 def balancer(dataset, df):
     # If our dataset is imbalanced, let's fix it
     # here before we go on to eval
-    
+
     # Make a new df made of all the columns, except the target class
     X = df.loc[:, df.columns != dataset['target']]
     y = df.loc[:, df.columns == dataset['target']]
@@ -269,7 +260,7 @@ def balancer(dataset, df):
 
 def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
     evals = {}
-    
+
     for d in data_dict:
         real = data_dict[d]["data"]
         target = data_dict[d]['target']
@@ -286,7 +277,7 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
             for i, e in enumerate(epsilons):
                 run_args = (data_dict[d][n][str(e)], target, i, test_size, seed, ['aucroc'], n, e, real, True, d)
                 synthetic_runs.append(run_args)
-        
+
         start = time.time()
         job_num = len(synthetic_runs)
         # synthetic_accuracies = Parallel(n_jobs=job_num, verbose=1, backend="loky")(
@@ -295,5 +286,5 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
         end = time.time() - start
         print('ML evaluation suite finished in ' + str(end) + ' for ' + d)
         evals[d] = [real_accuracies] + synthetic_accuracies
-    
+
     return evals
