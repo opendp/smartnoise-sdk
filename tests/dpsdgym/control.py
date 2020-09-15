@@ -1,9 +1,9 @@
 import mlflow
+from azureml.core import Workspace
+from conf import KNOWN_DATASETS
 
-mlflow.set_experiment("synth_data_evals")
-
-datasets = ['adult','mushroom','shopping','car']
-for dataset in datasets:
-    mlflow.projects.run(".", parameters={"dataset": dataset}, backend="azureml",
-                        backend_config={"COMPUTE": "cpu-cluster"},
-                        synchronous=False)
+mlflow.set_experiment("smartnoise_synth_data_eval")
+for i in range(10):
+    for dataset in KNOWN_DATASETS:
+        mlflow.projects.run(".", parameters={"dataset": dataset},
+                            synchronous=False)
