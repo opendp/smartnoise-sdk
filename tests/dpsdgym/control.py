@@ -1,5 +1,4 @@
 import mlflow
-from azureml.core import Workspace
 from conf import KNOWN_DATASETS
 
 mlflow.set_experiment("smartnoise_synth_data_eval")
