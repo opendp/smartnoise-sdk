@@ -44,13 +44,13 @@ KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
 SYNTH_SETTINGS = {
     'dpctgan': {
         'default': {
-            'preprocessor': GeneralTransformer(),
+            
             'gan': DPCTGAN(epochs=100)
         }
     },
     'patectgan': {
         'default': {
-            'preprocessor': GeneralTransformer(),
+            
             'gan': PATECTGAN(epochs=100)
         },
     },
