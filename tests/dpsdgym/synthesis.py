@@ -36,7 +36,7 @@ def run_synthesis(synthesis_args):
         d_copy = datasets[d]["data"].copy()
         sampled = synth.fit_sample(d_copy,categorical_columns=cat_cols.split(','))
         end_time = time.time()
-        mlflow.set_tags({"synthesizer": type(s),
+        mlflow.set_tags({"synthesizer": type(synth),
                          "args": str(synth_args),
                          "epsilon": str(e),
                          "dataset": str(datasets),
