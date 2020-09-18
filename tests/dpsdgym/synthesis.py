@@ -8,7 +8,7 @@ import mlflow
 
 from joblib import Parallel, delayed
 
-import conf 
+import conf
 
 from warnings import simplefilter
 simplefilter(action='ignore', category=FutureWarning)
@@ -30,11 +30,19 @@ def run_synthesis(synthesis_args):
     :rtype: tuple
     """
     n, s, synth_args, d, e, datasets, cat_cols = synthesis_args
-    synth = s(epsilon=float(e), **synth_args)
-    d_copy = datasets[d]["data"].copy()
-    sampled = synth.fit_sample(d_copy,categorical_columns=cat_cols.split(','))
-    print(datasets[d]["name"] + ' finished. Epsilon: ' + str(e))
-    datasets[d][n][str(e)] = sampled
+    with mlflow.start_run(nested=True):
+        start_time = time.time()
+        synth = s(epsilon=float(e), **synth_args)
+        d_copy = datasets[d]["data"].copy()
+        sampled = synth.fit_sample(d_copy,categorical_columns=cat_cols.split(','))
+        end_time = time.time()
+        mlflow.set_tags({"synthesizer": type(s),
+                         "args": str(synth_args),
+                         "epsilon": str(e),
+                         "dataset": str(datasets),
+                         "duration_seconds": str(end_time - start_time)})
+        print(datasets[d]["name"] + ' finished. Epsilon: ' + str(e))
+        datasets[d][n][str(e)] = sampled
     return (n, d, str(e), sampled)
 
 def run_all_synthesizers(datasets, epsilons):
