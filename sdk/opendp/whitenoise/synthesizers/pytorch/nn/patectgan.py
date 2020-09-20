@@ -276,7 +276,8 @@ class PATECTGAN(CTGANSynthesizer):
                 alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
 
                 loss_s = criterion(output, predictions.float().to(self.device))
-
+                
+                optimizerS.zero_grad()
                 loss_s.backward()
                 optimizerS.step()
                 
