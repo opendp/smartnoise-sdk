@@ -6,6 +6,5 @@ entry_points:
   main:
     parameters:
       dataset: {type: string,  default: "bank"}
-      epsilons: {type: list,  default: [0.01, 0.1, 0.5, 1.0, 3.0, 6.0, 9.0]}
       eval_metrics: {type: string, default: "all"}
-    command: "python main.py {epsilons} {dataset} {eval_metrics}"
+    command: "python main.py {dataset} {eval_metrics}"
