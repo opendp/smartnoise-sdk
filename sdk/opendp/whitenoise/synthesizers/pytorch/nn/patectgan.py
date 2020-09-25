@@ -302,10 +302,10 @@ class PATECTGAN(CTGANSynthesizer):
             else:
                 y_fake = student_disc(fakeact)
 
-            if condvec is None:
-                cross_entropy = 0
-            else:
-                cross_entropy = self._cond_loss(fake, c1, m1)
+           # if condvec is None:
+            cross_entropy = 0
+            #else:
+            #    cross_entropy = self._cond_loss(fake, c1, m1)
 
             if self.loss=='cross_entropy':
                 label_g = torch.full((int(self.batch_size/self.pack),), REAL_LABEL, dtype=torch.float, device=self.device)
