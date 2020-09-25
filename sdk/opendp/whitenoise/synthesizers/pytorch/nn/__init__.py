@@ -286,6 +286,7 @@ class PATEGAN:
                 alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
 
                 loss_s = criterion(output, predictions.to(self.device))
+                optimizer_s.zero_grad()
                 loss_s.backward()
                 optimizer_s.step()
 
@@ -295,6 +296,7 @@ class PATEGAN:
             gen_data = self.generator(noise.double())
             output_g = student_disc(gen_data)
             loss_g = criterion(output_g, label_g.double())
+            optimizer_g.zero_grad()
             loss_g.backward()
             optimizer_g.step()
 
