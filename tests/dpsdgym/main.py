@@ -45,7 +45,7 @@ def _parse_args():
 if __name__ == "__main__":
 
     args = _parse_args()
-    print(args)
+    
     with mlflow.start_run(run_name="test"):
         mlflow.log_param("epsilons", str(args.epsilon))
         mlflow.log_param("dataset", args.dataset)
