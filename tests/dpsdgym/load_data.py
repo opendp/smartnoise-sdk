@@ -32,8 +32,6 @@ def load_data(datasets):
     import io
     import json
 
-    req_datasets = [datasets] if isinstance("datasets", str) else datasets
-
     with open('datasets.json') as j:
         dsets = j.read()
     archive = json.loads(dsets)
@@ -84,7 +82,7 @@ def load_data(datasets):
 
         return {"data": df, "target": dataset['target'], "name": dataset['name'], "imbalanced": dataset['imbalanced'], "categorical_columns": dataset['categorical_columns']}
 
-    for d in req_datasets:
+    for d in datasets:
         df = retrieve_dataset(archive[d])
         encoded_df_dict = encode_categorical(df, archive[d]) 
         loaded_datasets[d] = encoded_df_dict

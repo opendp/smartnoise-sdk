@@ -28,8 +28,14 @@ SYNTHESIZERS = [
     ('pategan',PytorchDPSynthesizer),
 ]
 
+# Define the defaults epsilons you want to use in eval
+EPSILONS = [0.01, 0.1, 0.5, 1.0, 3.0, 6.0, 9.0]
+
 # Add datasets on which to evaluate synthesis
-KNOWN_DATASETS =  ['bank','adult','mushroom','shopping','car'] 
+KNOWN_DATASETS =  ['bank','adult','mushroom','shopping','car']
+
+# Default metrics used to evaluate differential privacy 
+KNOWN_METRICS = ['wasserstein', 'ml_eval', 'pmse']
 
 # Add ML models on which to evaluate utility
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
