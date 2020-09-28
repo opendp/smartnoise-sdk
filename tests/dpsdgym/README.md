@@ -56,17 +56,17 @@ Make sure you have the following installed in a conda env, before running the ev
 ## Usage
 Once the configuration/datasets are set up, the entire evaluation pipeline, with all metrics, can be run through the eval script
 ```
-python main.py all
+python main.py
 ```
-Flags can be used to specify which metrics to run in the evaluation. You could equivalently run
+Flags can be specified to specify which metrics, epsilon and datasets should be used to run the evaluation:
 ```
-python main.py wasserstein pmse ml_eval sra
+python main.py -d bank adult -e 0.01 0.1 1 -m pmse ml_eval wasserstein
 ```
 (Note that `sra` can only be run if `ml_eval` is also run.)
 
 The default epsilon increments for the evaluation (different privacy settings):
 ```python
-epsilons=[0.01, 0.1, 1.0, 10.0, 50.0, 100.0]
+EPSILONS=[0.01, 0.1, 1.0, 10.0, 50.0, 100.0]
 ```
 Epsilon here is usually graphed on a log scale, hence the big jumps in privacy. Adding more fine grained epsilons, especially in the earlier values, is probably a good idea.
 
