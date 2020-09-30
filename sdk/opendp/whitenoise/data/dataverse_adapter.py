@@ -45,10 +45,8 @@ def dataverse_uri_loader(dv_uri):
     kv_dict = dict(kv_arr)
     doi = kv_dict[doi_key]
     token = kv_dict[token_key]
-    request = requests.get('uri://' + host + path + '?' + doi_key + '=' + doi)
-    if(token):
-        request.add_header('X-Dataverse-Key', token)
-    response = request.read()
+    url = 'https://' + host + path + '?' + doi_key + '=' + doi;
+    response = requests.get(url, headers={'X-Dataverse-Key': '%s' % token}) if token else requests.get(url)
     response.raise_for_status()
 
     temp_dir = tempfile.gettempdir()
