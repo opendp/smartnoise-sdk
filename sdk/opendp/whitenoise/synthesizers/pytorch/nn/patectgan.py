@@ -30,29 +30,21 @@ from ctgan.models import Generator
 from ctgan.sampler import Sampler 
 
 from ctgan import CTGANSynthesizer
+from torch.autograd import Variable, grad
 
 class Discriminator(Module):
-    def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
 
-        alpha = torch.rand(real_data.size(0) // pac, 1, 1, device=device)
-        alpha = alpha.repeat(1, pac, real_data.size(1))
-        alpha = alpha.view(-1, real_data.size(1))
+    def dragan_penalty(self, real_data, device='cpu', pac=10, lambda_=10):
 
-        interpolates = alpha * real_data + ((1 - alpha) * fake_data)
+        alpha = torch.rand(real_data.shape[0],1).expand(real_data.shape)
+        x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + 0.5 * real_data.std() * torch.rand(real_data.shape)), requires_grad=True)
 
-        disc_interpolates = self(interpolates)
+        pred_hat = self(x_hat.float())
 
-        gradients = torch.autograd.grad(
-            outputs=disc_interpolates, inputs=interpolates,
-            grad_outputs=torch.ones(disc_interpolates.size(), device=device),
-            create_graph=True, retain_graph=True, only_inputs=True
-        )[0]
+        gradients = torch.autograd.grad(outputs=pred_hat, inputs=x_hat, grad_outputs=torch.ones(pred_hat.size()), create_graph=True, retain_graph=True, only_inputs=True)[0]
+        dragan_penalty = lambda_ * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
 
-        gradient_penalty = ((
-            gradients.view(-1, pac * real_data.size(1)).norm(2, dim=1) - 1
-        ) ** 2).mean() * lambda_
-
-        return gradient_penalty
+        return dragan_penalty
 
     def __init__(self, input_dim, dis_dims, loss, pack):
         super(Discriminator, self).__init__()
@@ -89,21 +81,23 @@ class PATECTGAN(CTGANSynthesizer):
                  target_delta=None,
                  sigma = 5,
                  max_per_sample_grad_norm=1.0,
-                 verbose=True,
+                 verbose=False,
                  loss = 'cross_entropy',
-
+                 regularization = None, #regularizations supported: 'dragan'
                  binary=False,
                  batch_size = 500,
                  teacher_iters = 5,
                  student_iters = 5,
-                 epsilon = 1.0,
-                 delta = 1e-5):
+                 sample_per_teacher = 1000,
+                 epsilon = 8.0,
+                 delta = 1e-5,
+                 noise_multiplier = 1e-3,
+                 moments_order = 100):
 
         # CTGAN model specifi3c parameters
         self.embedding_dim = embedding_dim
         self.gen_dim = gen_dim
         self.dis_dim = dis_dim
-
         self.l2scale = l2scale
         self.batch_size = batch_size
         self.epochs = epochs
@@ -112,6 +106,10 @@ class PATECTGAN(CTGANSynthesizer):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.verbose=verbose
         self.loss=loss
+        self.regularization=regularization
+        self.sample_per_teacher = sample_per_teacher
+        self.noise_multiplier = noise_multiplier
+        self.moments_order = moments_order
 
         self.binary = binary
         self.batch_size = batch_size
@@ -126,8 +124,9 @@ class PATECTGAN(CTGANSynthesizer):
         if update_epsilon:
             self.epsilon = update_epsilon
 
-        # this is to make sure data has at least 1000 points, may need it become flexible 
-        self.num_teachers = int(len(data) / 5000) + 1
+        # this is to make sure each teacher has some samples
+        sample_per_teacher = self.sample_per_teacher if self.sample_per_teacher < len(data) else 1000
+        self.num_teachers = int(len(data) / sample_per_teacher) + 1
         self.transformer = DataTransformer()
         self.transformer.fit(data, discrete_columns=categorical_columns)
         data = self.transformer.transform(data)
@@ -158,16 +157,14 @@ class PATECTGAN(CTGANSynthesizer):
         for i in range (self.num_teachers):
             teacher_disc[i].apply(weights_init)
 
-        optimizerG = optim.Adam(
-            self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9), weight_decay=self.l2scale)
+        optimizerG = optim.Adam(self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9), weight_decay=self.l2scale)
         optimizerS = optim.Adam(student_disc.parameters(), lr=2e-4, betas=(0.5, 0.9))
         optimizerT = [optim.Adam(teacher_disc[i].parameters(), lr=2e-4, betas=(0.5, 0.9)) for i in range(self.num_teachers)]
-
-        criterion = nn.BCELoss()
-
-        noise_multiplier = 1e-3
-        alphas = torch.tensor([0.0 for i in range(100)])
-        l_list = 1 + torch.tensor(range(100))
+        
+        
+        noise_multiplier = self.noise_multiplier
+        alphas = torch.tensor([0.0 for i in range(self.moments_order)])
+        l_list = 1 + torch.tensor(range(self.moments_order))
         eps = 0
         
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
@@ -175,22 +172,22 @@ class PATECTGAN(CTGANSynthesizer):
         
         REAL_LABEL = 1 
         FAKE_LABEL = 0
-        criterion = nn.BCELoss()
+
+        criterion = nn.BCELoss() if(self.loss == "cross_entropy") else self.WLoss
+
+        if(self.verbose):
+            print("using loss {} and regularization {}".format(self.loss,self.regularization))
 
         while eps < self.epsilon:
             # train teacher discriminators
             for t_2 in range(self.teacher_iters):
                 for i in range(self.num_teachers):
                     
-                    # print ('i is {}'.format(i))
-                    
                     partition_data = data_partitions[i]              
                     data_sampler = Sampler(partition_data, self.transformer.output_info)
                     fakez = torch.normal(mean, std=std)
 
                     condvec = cond_generator[i].sample(self.batch_size)
-                    
-                    
 
                     if condvec is None:
                         c1, m1, col, opt = None, None, None, None
@@ -219,25 +216,20 @@ class PATECTGAN(CTGANSynthesizer):
                     
                     optimizerT[i].zero_grad()
 
-                    if self.loss == 'cross_entropy':
-                        y_fake =teacher_disc[i](fake_cat)
-                        
-                        label_fake = torch.full((int(self.batch_size/self.pack),), FAKE_LABEL, dtype=torch.float, device=self.device)
-                        errD_fake = criterion(y_fake, label_fake.float())
-                        errD_fake.backward()
-                        optimizerT[i].step()
-
-                        # train with real
-                        label_true = torch.full((int(self.batch_size/self.pack),), REAL_LABEL, dtype=torch.float, device=self.device)
-                        y_real = teacher_disc[i](real_cat)
-                        errD_real = criterion(y_real, label_true.float())
-                        errD_real.backward()
-                        optimizerT[i].step()
-
-                        loss_d = errD_real + errD_fake
-
-                    # print("Iterator is {i},  Loss D for teacher {n} is :{j}".format(i=t_2 + 1, n=i+1,  j=loss_d.detach().cpu()))
+                    y_all = torch.cat([teacher_disc[i](fake_cat), teacher_disc[i](real_cat)])
+                    label_fake = torch.full((int(self.batch_size/self.pack),1), FAKE_LABEL, dtype=torch.float, device=self.device)
+                    label_true = torch.full((int(self.batch_size/self.pack),1), REAL_LABEL, dtype=torch.float, device=self.device)
+                    labels = torch.cat([label_fake, label_true])
                     
+                    errD = criterion(y_all, labels)
+                    errD.backward()
+
+                    if(self.regularization == 'dragan'):
+                        pen = teacher_disc[i].dragan_penalty(real_cat)
+                        pen.backward(retain_graph=True)
+                    
+                    optimizerT[i].step()
+
             # train student discriminator
             for t_3 in range(self.student_iters):
                 data_sampler = Sampler(data, self.transformer.output_info)
@@ -276,54 +268,71 @@ class PATECTGAN(CTGANSynthesizer):
                 alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
 
                 loss_s = criterion(output, predictions.float().to(self.device))
-                
+
                 optimizerS.zero_grad()
                 loss_s.backward()
+
+                if(self.regularization == 'dragan'):
+                    vals = torch.cat([predictions, fake_data], axis=1)
+                    ordered = vals[vals[:,0].sort()[1]]
+                    data_list = torch.split(ordered, predictions.shape[0] - int(predictions.sum().item()))
+                    synth_cat = torch.cat(data_list[1:], axis=0)[:, 1:]
+                    pen = student_disc.dragan_penalty(synth_cat)
+                    pen.backward(retain_graph=True)
+
                 optimizerS.step()
-                
-                # print ('iterator {i}, student discriminator loss is {j}'.format(i=t_3, j=loss_s))
 
-            # train generator
-            fakez = torch.normal(mean=mean, std=std)
-            condvec = self.cond_generator.sample(self.batch_size)
+                #train generator
+                fakez = torch.normal(mean=mean, std=std)
+                condvec = self.cond_generator.sample(self.batch_size)
 
-            if condvec is None:
-                c1, m1, col, opt = None, None, None, None
-            else:
-                c1, m1, col, opt = condvec
-                c1 = torch.from_numpy(c1).to(self.device)
-                m1 = torch.from_numpy(m1).to(self.device)
-                fakez = torch.cat([fakez, c1], dim=1)
+                if condvec is None:
+                    c1, m1, col, opt = None, None, None, None
+                else:
+                    c1, m1, col, opt = condvec
+                    c1 = torch.from_numpy(c1).to(self.device)
+                    m1 = torch.from_numpy(m1).to(self.device)
+                    fakez = torch.cat([fakez, c1], dim=1)
+    
+                fake = self.generator(fakez)
+                fakeact = self._apply_activate(fake)
+    
+                if c1 is not None:
+                    y_fake = student_disc(torch.cat([fakeact, c1], dim=1))
+                else:
+                    y_fake = student_disc(fakeact)
+    
+                if condvec is None:
+                    cross_entropy = 0
+                else:
+                    cross_entropy = self._cond_loss(fake, c1, m1)
 
-            fake = self.generator(fakez)
-            fakeact = self._apply_activate(fake)
+                if self.loss=='cross_entropy':
+                    label_g = torch.full((int(self.batch_size/self.pack),1), REAL_LABEL, dtype=torch.float, device=self.device)
+                    loss_g = criterion(y_fake, label_g.float())
+                    loss_g = loss_g + cross_entropy
+                else:
+                    loss_g = -torch.mean(y_fake) + cross_entropy
 
-            if c1 is not None:
-                y_fake = student_disc(torch.cat([fakeact, c1], dim=1))
-            else:
-                y_fake = student_disc(fakeact)
+                optimizerG.zero_grad()
+                loss_g.backward()
+                optimizerG.step()
 
-           # if condvec is None:
-            cross_entropy = 0
-            #else:
-            #    cross_entropy = self._cond_loss(fake, c1, m1)
+                eps = min((alphas - math.log(self.delta)) / l_list)
+            
+            if(self.verbose):
+                print ('eps: {:f} \t G: {:f} \t D: {:f}'.format(eps, loss_g.detach().cpu(), loss_s.detach().cpu()))
 
-            if self.loss=='cross_entropy':
-                label_g = torch.full((int(self.batch_size/self.pack),), REAL_LABEL, dtype=torch.float, device=self.device)
-                #label_g = torch.full(int(self.batch_size/self.pack,),1,device=self.device)
-                loss_g = criterion(y_fake, label_g.float())
-                loss_g = loss_g + cross_entropy
-            else:
-                loss_g = -torch.mean(y_fake) + cross_entropy
+            #exit()
 
-            optimizerG.zero_grad()
-            loss_g.backward()
-            optimizerG.step()
-                
-            print ('generator is {}'.format(loss_g.detach().cpu()))
-
-            eps = min((alphas - math.log(self.delta)) / l_list)
-
+    def WLoss(self, output, labels):
+        vals = torch.cat([labels, output], axis=1)
+        ordered = vals[vals[:, 0].sort()[1]]
+        data_list = torch.split(ordered, labels.shape[0] - int(labels.sum().item()))
+        fake_score = data_list[0][:, 1]
+        true_score = torch.cat(data_list[1:], axis=0)[:, 1]
+        w_loss = -(torch.mean(true_score) - torch.mean(fake_score))
+        return w_loss
 
     def generate(self, n):
         self.generator.eval()
