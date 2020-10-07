@@ -1,17 +1,22 @@
+# Implement different aggregation functions that can be passed through the verification tests
 import random
 import math
 import numpy as np
 import pandas as pd
 
+import mlflow
 import json
 import sys
 import os
+# import yarrow
 
 from opendp.whitenoise.sql import PandasReader, PrivateReader
+from opendp.whitenoise.sql.private_reader import PrivateReaderOptions
 from opendp.whitenoise.reader.rowset import TypedRowset
 from opendp.whitenoise.mechanisms.laplace import Laplace
 from opendp.whitenoise.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
+
 
 class Aggregation:
     """
@@ -148,26 +153,38 @@ class Aggregation:
             noisy_values.append(res.rows()[1:][0][0])
         return np.array(noisy_values), actual, low_bounds, high_bounds
 
-    def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
+    def run_agg_query_df(self, df, metadata, query, confidence):
         """
         Run the query using the private reader and input query
         Get query response back for multiple dimensions and aggregations
         """
         # Getting exact result
         reader = PandasReader(metadata, df)
-        exact = reader.execute_typed(query).rows()[1:]
+        try:
+            exact = reader.execute_typed(query).rows()[1:]
+        except Exception as e:             
+            return None, "ValueError_reader", str(type(e))+str(e), None 
         exact_res = []
         for row in exact:
             exact_res.append(row)
-
-        private_reader = PrivateReader(metadata, reader, self.epsilon)
-        query_ast = private_reader.parse_query_string(query)
-
+        prOptions = PrivateReaderOptions(censor_dims = False)
+        private_reader = PrivateReader(metadata, reader, self.epsilon, options=prOptions)
+        try: 
+            query_ast = private_reader.parse_query_string(query)                 
+            # query_ast.select = ast_transform.select
+        except Exception as e:             
+            return None, "ValueError_parsequerystring", str(type(e))+str(e), None 
         # Distinguishing dimension and measure columns
-        srs_orig = private_reader.reader.execute_ast_typed(query_ast)
+        try:
+            srs_orig = private_reader.reader.execute_ast_typed(query_ast)
+        except Exception as e:             
+            return None, "ValueError_parsequerystring", str(type(e))+str(e), None 
         srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
-
-        sample_res = private_reader._execute_ast(query_ast, True)
+        try:
+            sample_res = private_reader._execute_ast(query_ast, True)
+            
+        except Exception as e:             
+            return None,  "ValueError_privatereader", str(type(e))+str(e), None 
         headers = sample_res.colnames
 
         dim_cols = []
@@ -197,10 +214,13 @@ class Aggregation:
                 num_rows.append(list(zip(values)))
 
             res.extend(list(zip(*dim_rows, *num_rows)))
-
-        exact_df = pd.DataFrame(exact_res, columns=headers)
+        try:
+            exact_df = pd.DataFrame(exact_res, columns=headers)
+        except Exception as e:             
+            return None, "exact_df_error", str(type(e))+str(e), None 
         noisy_df = pd.DataFrame(res, columns=headers)
-
+        if noisy_df.empty:
+            return None, "noisy_df_empty", None, None
         # Add a dummy dimension column for cases where no dimensions available for merging D1 and D2
         if(len(dim_cols) == 0):
             dim_cols.append("__dim__")

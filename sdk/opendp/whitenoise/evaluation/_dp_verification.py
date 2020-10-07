@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from numpy.linalg import norm
+from scipy.stats import entropy
 import copy
 import os
 from scipy import stats
@@ -273,6 +275,13 @@ class DPVerification:
         Wasserstein Distance between histograms of repeated algorithm on neighboring datasets
         """
         return stats.wasserstein_distance(d1hist, d2hist)
+    
+    def JSD(self, P, Q):
+        _P = P / norm(P, ord=1)
+        _Q = Q / norm(Q, ord=1)
+        _M = 0.5 * (_P + _Q)
+        return 0.5 * (entropy(_P, _M) + entropy(_Q, _M))
+
 
     def aggtest(self, f, colname, numbins=0, binsize="auto", debug=False, plot=True, bound=True, exact=False):
         """
@@ -349,53 +358,69 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, acc_res, utility_res, bias_res
 
-    def dp_groupby_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
+    def dp_groupby_query_test(self, d1_query, d2_query,gen_neighbors = True, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95): 
         """
         Allows DP Predicate test on both singleton and GROUP BY SQL queries
-        """
-        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
-        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
-
-        d1_res, d1_exact, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
-        d2_res, d2_exact, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
-
+        """    
+        ag = agg.Aggregation(t=1, repeat_count=repeat_count)    
+        if(gen_neighbors):
+            d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
+        else:
+            d1, d2, d1_metadata, d2_metadata = self.d1, self.d2, self.d1_metadata, self.d2_metadata
+        d1_res, d1_exact, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence)
+        if d1_res is None:
+            errormessage = d1_exact
+            errormessage_detail = dim_cols
+            return None, errormessage, errormessage_detail, d1, d2
+        d2_res, d2_exact, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence)
+        if d2_res is None:
+            errormessage = d2_exact
+            errormessage_detail = dim_cols
+            return None, errormessage, errormessage_detail, d1, d2        
+        if len(num_cols)==0:            
+            print("num_cols_is_zero")
+            return None, "num_cols_is_zero", None,d1, d2
         res_list = []
         for col in num_cols:
             d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
             exact_gp = d1_exact.groupby(dim_cols)[col].apply(list).reset_index(name=col)
-            # Both D1 and D2 should have dimension key for histograms to be created
-            d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='inner')
-            d1_d2 = d1_d2.merge(exact_gp, on=dim_cols, how='left')
+            # Full outer join after flattening the results above to one row per dimension key
+            # We cannot be sure if every dimension key has a response in every repeated query run because of tau thresholding
+            # That's why we do a full outer join and flatten whatever vector of results we get for the numerical column across repeat runs
+            # This is what we use for generating the histogram of results for that dimension key
+            d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='outer')####
+            if d1_d2.empty:
+                return None, "d1_d2 table empty", None, d1, d2
+            try:
+                d1_d2 = d1_d2.merge(exact_gp, on=dim_cols, how='left')
+            except Exception as e: 
+                return None, "d1_d2 not merge with exact", str(type(e))+str(e),d1, d2
             n_cols = len(d1_d2.columns)
             for index, row in d1_d2.iterrows():
                 # fD1 and fD2 will have the results of the K repeated query results that can be passed through histogram test
                 # These results are for that particular numerical column and the specific dimension key of d1_d2
-                fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 3]])
-                fD2 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 2]])
-                exact_val = d1_d2.iloc[index, n_cols - 1][0]
+                try:
+                    fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 3]])
+                    fD2 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 2]])
+                    exact_val = d1_d2.iloc[index, n_cols - 1][0]
+                except Exception as e: 
+                    return None, "d1_d2 table empty", str(type(e))+str(e),d1, d2
+                  
                 d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
+                if d1hist is None:
+                    return None, d2hist, bin_edges, d1, d2
                 d1size, d2size = fD1.size, fD2.size
-                dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
-
-                # Accuracy Test
-                #low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
-                #high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
-                #acc_res, utility_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
-                acc_res, utility_res = None, None
-                bias_res, msd = self.bias_test(exact_val, fD1)
-                res_list.append([dp_res, acc_res, utility_res, bias_res, msd])
-                if(plot):
-                    self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
-
-        res_list = res_list.values() if hasattr(res_list, "values") else res_list  # TODO why is this needed?
+                dp_res = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)[0]
+                ks_res = self.ks_test(fD1, fD2)[0]
+                # ws_res = self.wasserstein_distance(d1hist, d2hist)
+                ws_res = self.JSD(d1hist, d2hist)
+                res_list.append([dp_res, ks_res, ws_res])
         dp_res = np.all(np.array([res[0] for res in res_list]))
-        #acc_res = np.all(np.array([res[1] for res in res_list]))
-        #utility_res = np.all(np.array([res[2] for res in res_list]))
-        acc_res, utility_res = None, None
-        bias_res = np.all(np.array([res[3] for res in res_list]))
-        return dp_res, acc_res, utility_res, bias_res
-
+        ks_res = (np.array([res[1] for res in res_list])).max()
+        ws_res = (np.array([res[2] for res in res_list])).max()
+        return dp_res, ks_res, ws_res, d1, d2
+    
     def dp_powerset_test(self, query_str, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, test_cases=5):
         """
         Use the powerset based neighboring datasets to scan through 

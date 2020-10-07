@@ -1,7 +1,7 @@
 from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
 from opendp.whitenoise.evaluation.metrics._metrics import Metrics
-from abc import ABC, abstractmethod
+
 
 class Learner(ABC):
 	"""

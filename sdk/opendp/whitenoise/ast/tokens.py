@@ -77,12 +77,26 @@ class Sql:
     """
         base type for all Sql AST nodes
     """
+    def __init__(self):
+        self.parent = None 
+    
+    def set_parent(self):
+        for c in self.children():
+            if c and isinstance(c, Sql):
+                c.parent = self
 
     def __str__(self):
         return " ".join([str(c) for c in self.children() if c is not None])
 
     def __eq__(self, other):
-        return all([s == o for s, o in zip(self.children(), other.children())])
+        if (self is None) or (other is None):
+            return ((self is None) and (other is None))
+        else:
+            # return all([ print('='*100,'\n', 's: ', s, type(s) ,'\n', 'o: ', o, type(o), '\n', 'self: ', self, '\n', 'self children: ',self.children(), '\n', 'other: ',other, '\n', 'other children: ',other.children(), '\n', '='*100) if (type(s) == type('ab') or type(o) == type('ab')) else s == o for s, o in zip(self.children(), other.children())])
+            return all([s == o for s, o in zip(self.children(), other.children())])
+        # return all([s == o for s, o in zip(self.children(), other.children())])
+        # return all([ print('='*100,'\n', 's: ', s, type(s) ,'\n', 'o: ', o, type(o), '\n', 'self: ', self, '\n', 'self children: ',self.children(), '\n', 'other: ',other, '\n', 'other children: ',other.children(), '\n', '='*100) if ( s is None or o is None) else s == o for s, o in zip(self.children(), other.children())])
+        
 
     def symbol_name(self):
         return str(hex(hash(self) % (2**16)))
