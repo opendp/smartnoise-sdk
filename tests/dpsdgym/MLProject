@@ -1,13 +1,10 @@
 name: DPSDGYM Evaluation
 
-# 1. create new conda env: conda create -n my_env
-# 2. requirements: pip install -r eval_req.txt
-# 3. conda env export > eval_env.yaml
-conda_env: eval_env.yaml
+conda_env: conda.yaml
 
 entry_points:
   main:
     parameters:
-      eval_metrics: all
-      epsilons: [0.01, 0.1, 1.0, 9.0, 45.0, 95.0]
-    command: "python eval.py {eval_metrics} {epsilons}"
+      dataset: {type: string,  default: "bank"}
+      eval_metrics: {type: string, default: "all"}
+    command: "python main.py {dataset} {eval_metrics}"

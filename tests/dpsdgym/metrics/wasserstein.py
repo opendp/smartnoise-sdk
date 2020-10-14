@@ -44,12 +44,15 @@ def wasserstein_randomization(d1_large, d2_large, iters, downsample_size=100):
     for i in range(iters):
         np.random.shuffle(d3)
         n_1, n_2 = d3[:l_1], d3[l_1:]
-        try:
-            # PyEMD is sometimes memory intensive
-            # Let's reduce bins if so
-            dist = emd_samples(n_1, n_2, bins='auto')
-        except MemoryError:
-            dist = emd_samples(n_1, n_2, bins=10)
+        # TODO: Readdress the constraints of PyEMD
+        # For now, decrease bin size drastically for
+        # more efficient computation
+        # try:
+        #     # PyEMD is sometimes memory intensive
+        #     # Let's reduce bins if so
+        #     dist = emd_samples(n_1, n_2, bins='auto')
+        # except MemoryError:
+        dist = emd_samples(n_1, n_2, bins=10)
         distances.append(dist)
     
     # Safety check, to see if there are any valid 
