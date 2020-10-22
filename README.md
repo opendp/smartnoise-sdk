@@ -1,7 +1,7 @@
 [**Please note that we recently renamed this toolkit.**](https://projects.iq.harvard.edu/opendp/blog/building-inclusive-community)
 
 <a href="https://opendifferentialprivacy.github.io"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
-## System: Tools for Differential Privacy
+## SmartNoise System: Tools for Differential Privacy
 See also the accompanying [SmartNoise Core repository](https://github.com/opendifferentialprivacy/smartnoise-core) and [SmartNoise Samples repository](https://github.com/opendifferentialprivacy/smartnoise-samples) for this system. </br>
 
 
