@@ -1,13 +1,13 @@
 import logging
 test_logger = logging.getLogger("eval-interface-test-logger")
-from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.whitenoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.whitenoise.evaluation.report._report import Report
-from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.whitenoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
-from opendp.whitenoise.evaluation.metrics._metrics import Metrics
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
+from opendp.smartnoise.evaluation.report._report import Report
+from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
+from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
+from opendp.smartnoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
+from opendp.smartnoise.evaluation.metrics._metrics import Metrics
 from dp_lib import DPSampleLibrary
 from dp_algorithm import DPSample
 import pandas as pd
@@ -27,7 +27,7 @@ class TestEval:
         # Preparing and releasing from Sample DP algorithm to send noisy results to evaluator
         dv.prepare(lib.dp_count, pp, ev)
         report = dv.release(df)
-        
+
         # Test DP respose from interface
         assert(isinstance(report.res,  dict))
         assert(len(report.res) > 0)
@@ -49,7 +49,7 @@ class TestEval:
         pa = DPSample()
         metrics = Metrics()
         # Before running the DP test, it should be default to False
-        # and Wasserstein distance should be 0 
+        # and Wasserstein distance should be 0
         assert(metrics.dp_res == False)
         assert(metrics.wasserstein_distance == 0.0)
         assert(metrics.jensen_shannon_divergence == 0.0)

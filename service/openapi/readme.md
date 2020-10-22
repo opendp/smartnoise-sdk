@@ -37,7 +37,7 @@ python:
     no-namespace-folders: true
     output-folder: restclient
     package-version: 1.5.0
-    base-folder: ./../../sdk/opendp/whitenoise/client/
+    base-folder: ./../../sdk/opendp/smartnoise/client/
 ```
 
 ## Temporary output folder to save output-artifact and source maps files. Please do not check in these files.
@@ -68,4 +68,3 @@ output-artifact:
   - swagger-document.norm.json.map
   - swagger-document.norm.yaml.map
 ```
-

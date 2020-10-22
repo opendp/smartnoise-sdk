@@ -2,7 +2,7 @@ import pytest
 import math
 import numpy as np
 from scipy.stats import norm
-from opendp.whitenoise.mechanisms.laplace import Laplace
+from opendp.smartnoise.mechanisms.laplace import Laplace
 
 #
 #   Unit tests
