@@ -80,7 +80,7 @@ class Aggregation:
     def dp_mechanism_count(self, df, colname):
         """
         Returns repeatedly applied noise adding mechanisms
-        like Laplace and Gaussian available in WhiteNoise-System to count query
+        like Laplace and Gaussian available in SmartNoise-SDK to count query
         """
         exact_count = df[colname].count()
         mech = Laplace(self.epsilon)
@@ -91,7 +91,7 @@ class Aggregation:
     def dp_mechanism_sum(self, df, colname):
         """
         Returns repeatedly applied noise adding mechanisms
-        like Laplace and Gaussian available in WhiteNoise-System to sum query.
+        like Laplace and Gaussian available in SmartNoise-SDK to sum query.
         Sensitivity is set as absolute difference between max and min values
         within the column
         """

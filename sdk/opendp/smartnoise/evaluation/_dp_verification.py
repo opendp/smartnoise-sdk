@@ -332,7 +332,7 @@ class DPVerification:
     def dp_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95, get_exact=True):
         """
         Applying singleton queries repeatedly against DP SQL-92 implementation
-        by WhiteNoise-System
+        by SmartNoise-SDK
         """
         ag = agg.Aggregation(t=1, repeat_count=repeat_count)
         d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
