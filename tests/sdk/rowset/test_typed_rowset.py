@@ -2,7 +2,7 @@ import pytest
 import string
 import numpy as np
 import random
-from opendp.whitenoise.reader.rowset import TypedRowset
+from opendp.smartnoise.reader.rowset import TypedRowset
 
 """
 Basic unit tests for typed rowset

@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from opendp.whitenoise.data import dataverse_loader
+from opendp.smartnoise.data import dataverse_loader
 
 
 #  example dataset

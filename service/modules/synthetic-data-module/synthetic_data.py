@@ -8,15 +8,15 @@ import subprocess
 
 import numpy as np
 import pandas as pd
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_reader, load_metadata, load_dataset
-from opendp.whitenoise.sql.private_reader import PrivateReader
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_reader, load_metadata, load_dataset
+from opendp.smartnoise.sql.private_reader import PrivateReader
 from pandasql import sqldf
 
 from sdgym.constants import CONTINUOUS
 from sdgym.synthesizers.utils import Transformer
 
-from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
+from opendp.smartnoise.synthesizers.mwem import MWEMSynthesizer
 
 # List of supported DP synthesizers
 SUPPORTED_SYNTHESIZERS = {'MWEMSynthesizer': MWEMSynthesizer}
@@ -27,7 +27,7 @@ DATASET_CLIENT = get_dataset_client()
 def load_data(dataset_name, budget):
     """
     Only works with categorical/ordinal columns as of now
-    
+
     SQL scenario...?
     """
     # Load dataset from service (dataset is pd.DataFrame)
@@ -38,7 +38,7 @@ def load_data(dataset_name, budget):
     # NOTE: As of right now, any data clipping per schema is not
     # required for the supported synthetic data scenarios
 
-    # TODO: Support categorical, ordinal and continuous specification through schema 
+    # TODO: Support categorical, ordinal and continuous specification through schema
     categorical_columns = []
     ordinal_columns = [] # range(0,len(data))
 
@@ -67,7 +67,7 @@ def release_data(release_dataset_name, dataset_type, details, budget, release_co
 
 if __name__ == "__main__":
     # Example run args: "PUMS" "MWEMSynthesizer" 1000 3.0 1.0 pums_released
-    # NOTE: MWEMSynthesizer actually ignores sample_size, 
+    # NOTE: MWEMSynthesizer actually ignores sample_size,
     # returns synthetic_samples_size == real_dataset_size
     dataset_name = sys.argv[1]
     synthesizer_name = sys.argv[2]
@@ -78,27 +78,27 @@ if __name__ == "__main__":
 
     with mlflow.start_run():
         dataset, dataset_document, synth_schema, prev_schema = load_data(dataset_name, budget)
-            
+
         # Try to get an instance of synthesizer
         try:
             synthesizer = SUPPORTED_SYNTHESIZERS[synthesizer_name]()
         except:
             raise ValueError('Specified synthesizer is not supported.')
-        
+
         # TODO: Add check to validate dataset.to_numpy
         synthesizer.fit(dataset.to_numpy(), synth_schema['categorical_columns'], synth_schema['ordinal_columns'])
         synthetic_data = synthesizer.sample(int(sample_size))
-        
+
 
         # Create new synthetic dataframe
-        df = pd.DataFrame(synthetic_data, 
+        df = pd.DataFrame(synthetic_data,
             index=dataset.index,
             columns=dataset.columns)
-        
+
         # Retrieve dataset details
         details = getattr(dataset_document, dataset_document.dataset_type)
 
-        # Release dataset first, if successful, add the dataframe csv to the path, as well as schema 
+        # Release dataset first, if successful, add the dataframe csv to the path, as well as schema
         if release_data(release_dataset_name, "csv_details", {'local_path': details.local_path}, budget, release_cost, []):
             # TODO: Only supports csv scenario as of now
             df.to_csv(os.path.join(os.path.dirname(details.local_path), release_dataset_name + '.csv'), index=False)
@@ -108,4 +108,3 @@ if __name__ == "__main__":
         with open("result.json", "w") as stream:
             json.dump({"released_dataset_name": release_dataset_name}, stream)
         mlflow.log_artifact("result.json")
-        

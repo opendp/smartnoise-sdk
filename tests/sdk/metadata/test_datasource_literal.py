@@ -1,4 +1,4 @@
-from opendp.whitenoise.metadata.collection import *
+from opendp.smartnoise.metadata.collection import *
 import copy
 
 class TestDSMetadataLiteral:
