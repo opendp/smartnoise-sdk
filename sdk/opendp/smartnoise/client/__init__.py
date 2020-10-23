@@ -22,8 +22,8 @@ class _MockCredentials(object):
 
 
 def _get_client():
-    port = os.environ.get("WHITENOISE_SERVICE_PORT", "5000")
-    url = os.environ.get("WHITENOISE_SERVICE_URL", "localhost:{}".format(port))
+    port = os.environ.get("SMARTNOISE_SERVICE_PORT", "5000")
+    url = os.environ.get("SMARTNOISE_SERVICE_URL", "localhost:{}".format(port))
 
     base_url = "{}/api/".format(url)
     base_url = base_url if base_url.startswith("http") else "http://" + base_url

@@ -1,6 +1,6 @@
 class SDGYMBaseSynthesizer():
     """
-    Base for Whitenoise Synthesizers, based off of SDGymBaseSynthesizer
+    Base for SmartNoise Synthesizers, based off of SDGymBaseSynthesizer
     (to allow for benchmarking)
     """
 

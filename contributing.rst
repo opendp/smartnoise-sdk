@@ -1,10 +1,10 @@
-Contributing to WhiteNoise
+Contributing to SmartNoise
 =============================
-Contributions to WhiteNoise are welcome from all members of the community. This document is here to simplify the onboarding experience for contributors, contributions to this document are also welcome.
+Contributions to SmartNoise are welcome from all members of the community. This document is here to simplify the onboarding experience for contributors, contributions to this document are also welcome.
 
 System requirements
 =============================
-WhiteNoise-system is python based. The initial setup will require a python
+SmartNoise-sdk is python based. The initial setup will require a python
 environment, ideally isolated with conda or venv. Below we have a conda based example for setting up the SDK and Service requirements
 
 .. code-block:: bash
@@ -23,7 +23,7 @@ Verifying your SDK installation is running:
 
     pytest tests/sdk
 
-Additional requirements are needed for contributing to the WhiteNoise Service:
+Additional requirements are needed for contributing to the SmartNoise Service:
 
 .. code-block:: bash
 
