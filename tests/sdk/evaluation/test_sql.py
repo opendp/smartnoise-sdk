@@ -1,16 +1,16 @@
 import logging
 test_logger = logging.getLogger("sql-test-logger")
-from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.whitenoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.whitenoise.evaluation.params._dataset_params import DatasetParams
-from opendp.whitenoise.evaluation.report._report import Report
-from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.whitenoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
-from opendp.whitenoise.evaluation.metrics._metrics import Metrics
-from opendp.whitenoise.sql import PandasReader
-from opendp.whitenoise.metadata.collection import *
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
+from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
+from opendp.smartnoise.evaluation.report._report import Report
+from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
+from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
+from opendp.smartnoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
+from opendp.smartnoise.evaluation.metrics._metrics import Metrics
+from opendp.smartnoise.sql import PandasReader
+from opendp.smartnoise.metadata.collection import *
 from dp_singleton_query import DPSingletonQuery
 import pytest
 import pandas as pd
@@ -21,8 +21,8 @@ class TestSql:
     def create_simulated_dataset(self, dataset_size, file_name):
         """
         Returns a simulated dataset of configurable size and following
-        geometric distribution. Adds a couple of dimension columns for 
-        algorithm related to GROUP BY queries. 
+        geometric distribution. Adds a couple of dimension columns for
+        algorithm related to GROUP BY queries.
         """
         np.random.seed(1)
         userids = list(range(1, dataset_size+1))

@@ -1,15 +1,15 @@
-from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.whitenoise.evaluation.report._report import Report
-from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.whitenoise.reader.rowset import TypedRowset
-from opendp.whitenoise.sql import PrivateReader
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.report._report import Report
+from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
+from opendp.smartnoise.reader.rowset import TypedRowset
+from opendp.smartnoise.sql import PrivateReader
 
 class DPSingletonQuery(PrivacyAlgorithm):
     """
     Sample implementation of PrivacyAlgorithm Interface
     that allows for the library to be stochastically tested by
-    evaluator. 
+    evaluator.
     """
     def prepare(self, algorithm : object, privacy_params: PrivacyParams, eval_params: EvaluatorParams):
         """
