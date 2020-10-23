@@ -5,12 +5,12 @@ import pytest
 import string
 import pandas as pd
 
-from opendp.whitenoise.metadata import CollectionMetadata
+from opendp.smartnoise.metadata import CollectionMetadata
 
 try:
-    from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-    from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
-    from opendp.whitenoise.synthesizers.pytorch.nn import PATEGAN
+    from opendp.smartnoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
+    from opendp.smartnoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.smartnoise.synthesizers.pytorch.nn import PATEGAN
 except:
     import logging
     test_logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class TestDPGAN:
     def test_fit(self):
         self.pategan.fit(df)
         assert self.pategan.gan.generator
-    
+
     def test_sample(self):
         self.pategan.fit(df)
         sample_size = len(df)

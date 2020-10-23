@@ -22,7 +22,7 @@ DEPENDENCIES = [
     "pandasql",
     "statsmodels",
     "pyyaml",
-    "opendp-whitenoise-core"
+    "opendp-smartnoise-core"
 ]
 
 EXTRAS = { }
@@ -32,14 +32,14 @@ with open("DESCRIPTION.md", "r", encoding="utf-8") as f:
 inline_license = ""
 
 setup(
-    name="opendp-whitenoise",
+    name="opendp-smartnoise",
 
     version=SELFVERSION,
 
     description="",
     long_description=README,
     long_description_content_type="text/markdown",
-    author="opendp-whitenoise",
+    author="opendp-smartnoise",
     license=inline_license,
     packages=find_packages(exclude=["*.tests"]),
 

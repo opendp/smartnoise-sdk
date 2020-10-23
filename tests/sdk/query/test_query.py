@@ -5,10 +5,10 @@ import pandas as pd
 from pandasql import sqldf
 import math
 
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.sql import PrivateReader, PandasReader
-from opendp.whitenoise.sql.parse import QueryParser
-from opendp.whitenoise.reader.rowset import TypedRowset
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.sql import PrivateReader, PandasReader
+from opendp.smartnoise.sql.parse import QueryParser
+from opendp.smartnoise.reader.rowset import TypedRowset
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -140,7 +140,7 @@ class TestQuery:
         query = "SELECT COUNT(*) FROM PUMS.PUMS GROUP BY married"
         reader = PandasReader(schema, df)
         qp = QueryParser(schema)
-        q = qp.query(query)        
+        q = qp.query(query)
         for eps in epsilons:
             for d in max_contribs:
                 for delta in deltas:
