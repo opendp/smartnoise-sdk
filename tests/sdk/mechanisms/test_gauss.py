@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from scipy.stats import norm
-from opendp.whitenoise.mechanisms.gaussian import Gaussian
+from opendp.smartnoise.mechanisms.gaussian import Gaussian
 
 #   Unit tests
 #

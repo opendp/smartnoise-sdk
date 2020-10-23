@@ -18,8 +18,8 @@ app=Flask(__name__, specification_dir=specification_dir)
 app.add_api(os.path.join("openapi", "swagger.yml"))
 
 
-port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5000))
-os.environ["WHITENOISE_SERVICE_PORT"] = str(port)
+port = int(os.environ.get("SMARTNOISE_SERVICE_PORT", 5000))
+os.environ["SMARTNOISE_SERVICE_PORT"] = str(port)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=port)

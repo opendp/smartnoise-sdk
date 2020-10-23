@@ -1,5 +1,5 @@
 import pytest
-from opendp.whitenoise.report import Result, Report, Interval, Intervals
+from opendp.smartnoise.report import Result, Report, Interval, Intervals
 
 class TestRelease:
     def test_release(self):

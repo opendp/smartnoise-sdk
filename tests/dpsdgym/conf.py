@@ -5,15 +5,15 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
-from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
-from opendp.whitenoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
-from opendp.whitenoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-from opendp.whitenoise.synthesizers.pytorch.nn import DPGAN, PATEGAN, DPCTGAN, PATECTGAN
+from opendp.smartnoise.synthesizers.mwem import MWEMSynthesizer
+from opendp.smartnoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+from opendp.smartnoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
+from opendp.smartnoise.synthesizers.pytorch.nn import DPGAN, PATEGAN, DPCTGAN, PATECTGAN
 
 from diffprivlib.models import LogisticRegression as DPLR
 from diffprivlib.models import GaussianNB as DPGNB
 
-# Keep seed consistent for reproducibility 
+# Keep seed consistent for reproducibility
 SEED = 42
 
 # Turn on/off balancing imbalanced data with SMOTE
@@ -40,7 +40,7 @@ KNOWN_METRICS = ['wasserstein', 'ml_eval', 'pmse']
 # Add ML models on which to evaluate utility
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
                LogisticRegression, MLPClassifier,
-               RandomForestClassifier] 
+               RandomForestClassifier]
 
 # Mirror strings for ML models, to log
 KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
@@ -50,13 +50,13 @@ KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
 SYNTH_SETTINGS = {
     'dpctgan': {
         'default': {
-            
+
             'gan': DPCTGAN(epochs=100)
         }
     },
     'patectgan': {
         'default': {
-            
+
             'gan': PATECTGAN(epochs=100)
         },
     },
@@ -74,7 +74,7 @@ SYNTH_SETTINGS = {
     },
     'mwem': {
         'car': {
-            'Q_count':400, 
+            'Q_count':400,
             'iterations':20,
             'mult_weights_iterations': 15,
             'split_factor':7,
