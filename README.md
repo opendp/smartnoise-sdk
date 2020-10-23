@@ -19,7 +19,7 @@ New mechanisms and algorithms will be available in coming weeks.
 
 ## Data Access
 
-The data access library intercepts SQL queries and processes the queries to return differentially private results.  It is implemented in Python and designed to operate like any ODBC or DBAPI source.  We provide support for PostgreSQL, SQL Server, Spark, Presto, and Pandas. 
+The data access library intercepts SQL queries and processes the queries to return differentially private results.  It is implemented in Python and designed to operate like any ODBC or DBAPI source.  We provide support for PostgreSQL, SQL Server, Spark, Presto, and Pandas.
 
 Detailed documentation, as well as information about plugging in to other database backends, can be found [here](https://github.com/opendifferentialprivacy/smartnoise-samples/tree/master/docs).
 

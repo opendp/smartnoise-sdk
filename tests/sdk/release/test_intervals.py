@@ -1,5 +1,5 @@
 import pytest
-from opendp.whitenoise.report import Interval, Intervals
+from opendp.smartnoise.report import Interval, Intervals
 
 
 class TestIntervals:

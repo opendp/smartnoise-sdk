@@ -4,8 +4,8 @@ import pandas as pd
 
 import pytest
 
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_dataset
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_dataset
 
 ## READ TESTS ##
 @pytest.mark.parametrize("dataset_name", ["example"])
@@ -41,7 +41,7 @@ def test_read_release_no_penalty(dataset_client, dataset_name):
     READ (RELEASE) TEST
     Further readrelease calls do not incur budget
     """
-    dataset_client.custom_headers = {'client_guid': 'mock_user_guid'} 
+    dataset_client.custom_headers = {'client_guid': 'mock_user_guid'}
     dataset_document = dataset_client.read_released(dataset_name)
     df = load_dataset(dataset_document)
     assert isinstance(df, pd.pandas.core.frame.DataFrame)
@@ -61,7 +61,7 @@ def test_release_csv(dataset_client, release_request):
     RELEASE TEST
     Proper usage
     """
-    dataset_client.custom_headers = {'client_guid': 'mock_user_guid'} 
+    dataset_client.custom_headers = {'client_guid': 'mock_user_guid'}
     budget_check = release_request["budget"] - release_request["release_cost"]
     dataset = dataset_client.release(release_request)
     assert dataset.dataset_name == "local_csv_again"
@@ -86,10 +86,10 @@ def test_release_exception_rerelease(dataset_client, release_request):
     RELEASE TEST
     Checks an exception when trying to release a dataset with the same name
     """
-    dataset_client.custom_headers = {'client_guid': 'mock_user_guid'} 
+    dataset_client.custom_headers = {'client_guid': 'mock_user_guid'}
     with pytest.raises(Exception) as error:
         response = dataset_client.release(release_request)
-    
+
     assert error.typename == "HttpOperationError"
 
 ## REGISTER TESTS ##
@@ -192,5 +192,5 @@ def test_auth_register_release_csv(dataset):
     for c in invalid_clients:
         with pytest.raises(Exception) as error:
             c.read_released(release_dataset.dataset_name)
-        
+
         assert error.typename == "HttpOperationError"
