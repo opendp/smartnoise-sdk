@@ -1,7 +1,7 @@
-from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.whitenoise.evaluation.report._report import Report
-from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.report._report import Report
+from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
 import opendp.whitenoise.core as wn
 from statistics import mean
 

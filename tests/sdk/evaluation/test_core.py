@@ -1,13 +1,13 @@
 import logging
 test_logger = logging.getLogger("eval-interface-test-logger")
-from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.whitenoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.whitenoise.evaluation.report._report import Report
-from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.whitenoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
-from opendp.whitenoise.evaluation.metrics._metrics import Metrics
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
+from opendp.smartnoise.evaluation.report._report import Report
+from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
+from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
+from opendp.smartnoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
+from opendp.smartnoise.evaluation.metrics._metrics import Metrics
 import random
 import pytest
 from statistics import mean
