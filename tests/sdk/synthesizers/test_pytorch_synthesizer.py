@@ -68,3 +68,31 @@ class TestPytorchDPSynthesizer_PATECTGAN:
         sample_size = len(df)
         synth_data = self.patectgan.sample(sample_size)
         assert synth_data.shape == df.shape
+
+class TestPytorchDPSynthesizer_PATECTDRAGAN:
+    def setup(self):
+        self.patectgan = PytorchDPSynthesizer(PATECTGAN(regularization='dragan'), None)
+
+    def test_fit(self):
+        self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
+        assert self.patectgan.gan.generator
+
+    def test_sample(self):
+        self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
+        sample_size = len(df)
+        synth_data = self.patectgan.sample(sample_size)
+        assert synth_data.shape == df.shape
+
+class TestPytorchDPSynthesizer_WPATECTDRAGAN:
+    def setup(self):
+        self.patectgan = PytorchDPSynthesizer(PATECTGAN(loss='wasserstein', regularization='dragan'), None)
+
+    def test_fit(self):
+        self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
+        assert self.patectgan.gan.generator
+
+    def test_sample(self):
+        self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
+        sample_size = len(df)
+        synth_data = self.patectgan.sample(sample_size)
+        assert synth_data.shape == df.shape

@@ -34,14 +34,14 @@ from torch.autograd import Variable, grad
 
 class Discriminator(Module):
 
-    def dragan_penalty(self, real_data, device='cpu', pac=10, lambda_=10):
-
-        alpha = torch.rand(real_data.shape[0],1).expand(real_data.shape)
-        x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + 0.5 * real_data.std() * torch.rand(real_data.shape)), requires_grad=True)
+    def dragan_penalty(self, real_data, device='cpu', c=10, lambda_=10):
+        alpha = torch.rand(real_data.shape[0],1, device=device).expand(real_data.shape)
+        delta = torch.normal(mean=0.0, std=c, size=real_data.shape, device=device) # 0.5 * real_data.std() * torch.rand(real_data.shape)
+        x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + delta), requires_grad=True)
 
         pred_hat = self(x_hat.float())
 
-        gradients = torch.autograd.grad(outputs=pred_hat, inputs=x_hat, grad_outputs=torch.ones(pred_hat.size()), create_graph=True, retain_graph=True, only_inputs=True)[0]
+        gradients = torch.autograd.grad(outputs=pred_hat, inputs=x_hat, grad_outputs=torch.ones(pred_hat.size(), device=device), create_graph=True, retain_graph=True, only_inputs=True)[0]
         dragan_penalty = lambda_ * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
 
         return dragan_penalty
@@ -82,7 +82,7 @@ class PATECTGAN(CTGANSynthesizer):
                  sigma = 5,
                  max_per_sample_grad_norm=1.0,
                  verbose=False,
-                 loss = 'cross_entropy',
+                 loss = 'cross_entropy',#losses supported: 'cross_entropy', 'wasserstein'
                  regularization = None, #regularizations supported: 'dragan'
                  binary=False,
                  batch_size = 500,
@@ -106,7 +106,7 @@ class PATECTGAN(CTGANSynthesizer):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.verbose=verbose
         self.loss=loss
-        self.regularization=regularization
+        self.regularization = regularization if self.loss != 'wasserstein' else 'dragan'
         self.sample_per_teacher = sample_per_teacher
         self.noise_multiplier = noise_multiplier
         self.moments_order = moments_order
@@ -162,8 +162,8 @@ class PATECTGAN(CTGANSynthesizer):
         
         
         noise_multiplier = self.noise_multiplier
-        alphas = torch.tensor([0.0 for i in range(self.moments_order)])
-        l_list = 1 + torch.tensor(range(self.moments_order))
+        alphas = torch.tensor([0.0 for i in range(self.moments_order)], device=self.device)
+        l_list = 1 + torch.tensor(range(self.moments_order), device=self.device)
         eps = 0
 
         mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
@@ -183,7 +183,7 @@ class PATECTGAN(CTGANSynthesizer):
                 for i in range(self.num_teachers):                   
                     partition_data = data_partitions[i]              
                     data_sampler = Sampler(partition_data, self.transformer.output_info)
-                    fakez = torch.normal(mean, std=std)
+                    fakez = torch.normal(mean, std=std).to(self.device)
 
                     condvec = cond_generator[i].sample(self.batch_size)
 
@@ -223,7 +223,7 @@ class PATECTGAN(CTGANSynthesizer):
                     errD.backward()
 
                     if(self.regularization == 'dragan'):
-                        pen = teacher_disc[i].dragan_penalty(real_cat)
+                        pen = teacher_disc[i].dragan_penalty(real_cat, device=self.device)
                         pen.backward(retain_graph=True)
                     
                     optimizerT[i].step()
@@ -258,12 +258,12 @@ class PATECTGAN(CTGANSynthesizer):
                     fake_cat = fake
 
                 fake_data = fake_cat
-                predictions, votes = pate(fake_data, teacher_disc, noise_multiplier)
+                predictions, votes = pate(fake_data, teacher_disc, noise_multiplier, device=self.device)
 
                 output = student_disc(fake_data.detach())
 
                 # update moments accountant
-                alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
+                alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list, device=self.device)
 
                 loss_s = criterion(output, predictions.float().to(self.device))
 
@@ -275,7 +275,7 @@ class PATECTGAN(CTGANSynthesizer):
                     ordered = vals[vals[:,0].sort()[1]]
                     data_list = torch.split(ordered, predictions.shape[0] - int(predictions.sum().item()))
                     synth_cat = torch.cat(data_list[1:], axis=0)[:, 1:]
-                    pen = student_disc.dragan_penalty(synth_cat)
+                    pen = student_disc.dragan_penalty(synth_cat, device=self.device)
                     pen.backward(retain_graph=True)
 
                 optimizerS.step()
