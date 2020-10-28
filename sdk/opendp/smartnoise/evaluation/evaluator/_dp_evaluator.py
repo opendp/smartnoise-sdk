@@ -28,14 +28,14 @@ class DPEvaluator(Evaluator):
         if(ep.exact):
             binlist = np.linspace(minval, maxval, 2)
         elif(ep.numbins > 0):
-            binlist = np.linspace(minval, maxval, numbins)
+            binlist = np.linspace(minval, maxval, ep.numbins)
         elif(ep.binsize == "auto"):
             iqr = np.subtract(*np.percentile(d, [75, 25]))
             numerator = 2 * iqr if iqr > 0 else maxval - minval
             denominator = n ** (1. / 3)
             binwidth = numerator / denominator # Freedman–Diaconis' choice
-            numbins = int(math.ceil((maxval - minval) / binwidth)) if maxval > minval else 20
-            binlist = np.linspace(minval, maxval, numbins)
+            ep.numbins = int(math.ceil((maxval - minval) / binwidth)) if maxval > minval else 20
+            binlist = np.linspace(minval, maxval, ep.numbins)
         else:
             # Choose bin size of unity
             binlist = np.arange(np.floor(minval),np.ceil(maxval))
@@ -167,6 +167,15 @@ class DPEvaluator(Evaluator):
         """
         return stats.entropy(fD1, fD2)
 
+    def bias_test(self, fD1, fD_actual, sig_level):
+        """
+        1 sample t-test to check if difference in actual and noisy responses 
+        is not statistically significant
+        """
+        diff = fD1 - fD_actual
+        tset, pval = stats.ttest_1samp(diff, 0.0)
+        return (pval >= sig_level)
+
     """
     Implement the Evaluator interface that takes in two neighboring datasets
     D1 and D2 and a privacy algorithm. Then runs the algorithm on the
@@ -177,8 +186,8 @@ class DPEvaluator(Evaluator):
 		d2 : object,
 		pa : PrivacyAlgorithm,
         algorithm : object,
-		pp : PrivacyParams,
-		ep : EvaluatorParams) -> Metrics:
+        pp : PrivacyParams, 
+		ep : EvaluatorParams) -> {str : Metrics}:
         """
 		Evaluates properties of privacy algorithm DP implementations using
 			- DP Histogram Test
@@ -190,26 +199,36 @@ class DPEvaluator(Evaluator):
 		algorithm is the DP implementation object
 		Returns a metrics object
 		"""
-        metrics = Metrics()
         pa.prepare(algorithm, pp, ep)
         d1report = pa.release(d1)
         d2report = pa.release(d2)
-        d1actual = pa.release(d1, actual=True)
-        firstkey = list(d1report.res.keys())[0]
+        d1actual = pa.actual_release(d1)
+        key_metrics = {}
 
-        fD1, fD2 = np.array(d1report.res[firstkey]), np.array(d2report.res[firstkey])
-        fD_actual = d1actual.res[firstkey]
+        for key in d1report.res.keys():
+            metrics = Metrics()
+            fD1, fD2 = np.array(d1report.res[key]), np.array(d2report.res[key])
+            fD_actual = d1actual.res[key]
 
-        d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
-        dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
-            self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
+            d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
+            dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
+                self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
 
-        # Compute Metrics
-        metrics.dp_res = dp_res
-        metrics.wasserstein_distance = self.wasserstein_distance(fD1, fD2)
-        metrics.jensen_shannon_divergence = self.jensen_shannon_divergence(fD1, fD2)
-        metrics.kl_divergence = self.kl_divergence(fD1, fD2)
-        metrics.mse = np.mean((fD1 - fD_actual)**2)
-        metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
-        metrics.std = np.std(fD1)
-        return metrics
+            # Compute Metrics
+            metrics.dp_res = dp_res
+            metrics.wasserstein_distance = self.wasserstein_distance(fD1, fD2)
+            metrics.jensen_shannon_divergence = self.jensen_shannon_divergence(fD1, fD2)
+            metrics.kl_divergence = self.kl_divergence(fD1, fD2)
+            metrics.mse = np.mean((fD1 - fD_actual)**2)
+            metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
+            metrics.std = np.std(fD1)
+            metrics.bias_res = self.bias_test(fD1, fD_actual, ep.sig_level)
+
+            # Add key and metrics to final result
+            key_metrics[key] = metrics
+
+            # Break if only single key needs to be evaluated in the report
+            if(ep.eval_first_key):
+                break
+
+        return key_metrics
