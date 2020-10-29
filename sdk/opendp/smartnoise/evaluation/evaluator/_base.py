@@ -15,9 +15,9 @@ class Evaluator(ABC):
 		d1 : object,
 		d2 : object,
 		pa : PrivacyAlgorithm,
-		algorithm : object,
-		privacy_params : PrivacyParams,
-		eval_params : EvaluatorParams) -> Metrics:
+		algorithm : object, 
+		privacy_params : PrivacyParams, 
+		eval_params : EvaluatorParams) -> {str : Metrics}:
 		"""
 		Evaluates properties of privacy algorithm DP implementations using
 			- DP Histogram Test
@@ -27,6 +27,7 @@ class Evaluator(ABC):
 
 		d1 and d2 are neighboring datasets
 		algorithm is the DP implementation object
+		actual is the non-private implementation object
 		Returns a metrics object
 		"""
 		pass

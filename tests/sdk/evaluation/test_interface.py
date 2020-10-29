@@ -10,6 +10,7 @@ from opendp.smartnoise.evaluation.benchmarking._dp_benchmark import DPBenchmarki
 from opendp.smartnoise.evaluation.metrics._metrics import Metrics
 from dp_lib import DPSampleLibrary
 from dp_algorithm import DPSample
+from dp_multikey import DPMultiKey
 import pandas as pd
 import numpy as np
 import random
@@ -38,7 +39,7 @@ class TestEval:
         assert(len(report.res[firstkey]) == ev.repeat_count)
 
         # Test non-DP i.e. actual response from interface should be a single numeric return
-        report = dv.release(df, actual=True)
+        report = dv.actual_release(df)
         test_logger.debug("Actual count response: "  + str(report.res[firstkey]))
 
         assert(isinstance(report.res[firstkey], (int, float)))
@@ -65,27 +66,27 @@ class TestEval:
         d2 = d1.drop(drop_idx)
         # Call evaluate
         eval = DPEvaluator()
-        metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
+        key_metrics = eval.evaluate(d1, d2, pa, lib.dp_count, pp, ev)
         # After evaluation, it should return True and distance metrics should be non-zero
-        assert(metrics.dp_res == True)
-        test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
-        test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
-        test_logger.debug("KL Divergence:" + str(metrics.kl_divergence))
-        test_logger.debug("MSE:" + str(metrics.mse))
-        test_logger.debug("Standard Deviation:" + str(metrics.std))
-        test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
-        assert(metrics.wasserstein_distance > 0.0)
-        assert(metrics.jensen_shannon_divergence > 0.0)
-        assert(metrics.kl_divergence != 0.0)
-        assert(metrics.mse > 0.0)
-        assert(metrics.std != 0.0)
-        assert(metrics.msd != 0.0)
+        for key, metrics in key_metrics.items():
+            assert(metrics.dp_res == True)
+            test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
+            test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
+            test_logger.debug("KL Divergence:" + str(metrics.kl_divergence))
+            test_logger.debug("MSE:" + str(metrics.mse))
+            test_logger.debug("Standard Deviation:" + str(metrics.std))
+            test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
+            assert(metrics.wasserstein_distance > 0.0)
+            assert(metrics.jensen_shannon_divergence > 0.0)
+            assert(metrics.kl_divergence != 0.0)
+            assert(metrics.mse > 0.0)
+            assert(metrics.std != 0.0)
+            assert(metrics.msd != 0.0)
 
     def test_interface_benchmark(self):
         logging.getLogger().setLevel(logging.DEBUG)
         lib = DPSampleLibrary()
         pa = DPSample()
-        metrics = Metrics()
         epsilon_list = [0.001, 0.5, 1.0, 2.0, 4.0]
         pp = PrivacyParams(epsilon=1.0)
         ev = EvaluatorParams(repeat_count=500)
@@ -95,7 +96,7 @@ class TestEval:
         d2 = d1.drop(drop_idx)
         benchmarking = DPBenchmarking()
         # Preparing benchmarking params
-        pa_algorithms = {pa : lib.dp_count}
+        pa_algorithms = {pa : [lib.dp_count]}
         privacy_params_list = []
         for epsilon in epsilon_list:
             pp = PrivacyParams()
@@ -105,8 +106,50 @@ class TestEval:
         benchmark_params = BenchmarkParams(pa_algorithms, privacy_params_list, d1_d2_list, ev)
         benchmark_metrics_list = benchmarking.benchmark(benchmark_params)
         for bm in benchmark_metrics_list:
-            test_logger.debug("Epsilon: " + str(bm.privacy_params.epsilon) + \
-                " MSE:" + str(bm.metrics.mse) + \
-                " Privacy Test: " + str(bm.metrics.dp_res))
-            assert(bm.metrics.dp_res == True)
+            for key, metrics in bm.key_metrics.items():
+                test_logger.debug("Epsilon: " + str(bm.privacy_params.epsilon) + \
+                    " MSE:" + str(metrics.mse) + \
+                    " Privacy Test: " + str(metrics.dp_res))
+                assert(metrics.dp_res == True)
         assert(len(benchmark_metrics_list) == 5)
+
+    def test_interface_multikey(self):
+        logging.getLogger().setLevel(logging.DEBUG)
+        lib = DPSampleLibrary()
+        pa = DPMultiKey()
+        metrics = Metrics()
+        # Before running the DP test, it should be default to False
+        # and Wasserstein distance should be 0 
+        assert(metrics.dp_res == False)
+        assert(metrics.wasserstein_distance == 0.0)
+        assert(metrics.jensen_shannon_divergence == 0.0)
+        assert(metrics.kl_divergence == 0.0)
+        assert(metrics.mse == 0.0)
+        assert(metrics.std == 0.0)
+        assert(metrics.msd == 0.0)
+        pp = PrivacyParams(epsilon=1.0)
+        ev = EvaluatorParams(repeat_count=500)
+        # Creating neighboring datasets
+        col1 = list(range(0, 1000))
+        col2 = list(range(-1000, 0))
+        d1 = pd.DataFrame(list(zip(col1, col2)), columns=['Col1', 'Col2'])
+        drop_idx = np.random.choice(d1.index, 1, replace=False)
+        d2 = d1.drop(drop_idx)
+        # Call evaluate
+        eval = DPEvaluator()
+        key_metrics = eval.evaluate(d1, d2, pa, lib.dp_sum, pp, ev)
+        # After evaluation, it should return True and distance metrics should be non-zero
+        for key, metrics in key_metrics.items():
+            assert(metrics.dp_res == True)
+            test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
+            test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
+            test_logger.debug("KL Divergence:" + str(metrics.kl_divergence))
+            test_logger.debug("MSE:" + str(metrics.mse))
+            test_logger.debug("Standard Deviation:" + str(metrics.std))
+            test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
+            assert(metrics.wasserstein_distance > 0.0)
+            assert(metrics.jensen_shannon_divergence > 0.0)
+            assert(metrics.kl_divergence != 0.0)
+            assert(metrics.mse > 0.0)
+            assert(metrics.std != 0.0)
+            assert(metrics.msd != 0.0)

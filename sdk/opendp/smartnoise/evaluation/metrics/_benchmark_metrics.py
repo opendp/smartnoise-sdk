@@ -9,17 +9,17 @@ class BenchmarkMetrics:
 	"""
 	Defines the fields available in the metrics payload object
 	"""
-	def __init__(self,
+	def __init__(self, 
 			pa : PrivacyAlgorithm,
 			algorithm : object,
 			privacy_params : PrivacyParams,
 			dataset_params : DatasetParams,
-			eval_params : EvaluatorParams,
-			metrics : Metrics
+			eval_params : EvaluatorParams, 
+			key_metrics : {str : Metrics}
 		):
 		self.pa = pa
 		self.algorithm = algorithm
 		self.privacy_params = privacy_params
 		self.dataset_params = dataset_params
 		self.eval_params = eval_params
-		self.metrics = metrics
+		self.key_metrics = key_metrics
