@@ -1,16 +1,16 @@
 import logging
 test_logger = logging.getLogger("sql-test-logger")
-from opendp.whitenoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.whitenoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.whitenoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.whitenoise.evaluation.params._dataset_params import DatasetParams
-from opendp.whitenoise.evaluation.report._report import Report
-from opendp.whitenoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.whitenoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.whitenoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
-from opendp.whitenoise.evaluation.metrics._metrics import Metrics
-from opendp.whitenoise.sql import PandasReader
-from opendp.whitenoise.metadata.collection import *
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
+from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
+from opendp.smartnoise.evaluation.report._report import Report
+from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
+from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
+from opendp.smartnoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
+from opendp.smartnoise.evaluation.metrics._metrics import Metrics
+from opendp.smartnoise.sql import PandasReader
+from opendp.smartnoise.metadata.collection import *
 from dp_singleton_query import DPSingletonQuery
 import pytest
 import pandas as pd
@@ -21,8 +21,8 @@ class TestSql:
     def create_simulated_dataset(self, dataset_size, file_name):
         """
         Returns a simulated dataset of configurable size and following
-        geometric distribution. Adds a couple of dimension columns for 
-        algorithm related to GROUP BY queries. 
+        geometric distribution. Adds a couple of dimension columns for
+        algorithm related to GROUP BY queries.
         """
         np.random.seed(1)
         userids = list(range(1, dataset_size+1))
@@ -69,9 +69,7 @@ class TestSql:
         pp = PrivacyParams(epsilon=1.0)
         ev = EvaluatorParams(repeat_count=100)
         dd = DatasetParams(dataset_size=500)
-        dv = DPSingletonQuery()
         query = "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
-        dv.prepare(query, pp, ev)
 
         # Preparing neighboring datasets
         df, metadata = self.create_simulated_dataset(dd.dataset_size, "dataset")
@@ -81,18 +79,19 @@ class TestSql:
 
         # Call evaluate
         eval = DPEvaluator()
-        metrics = eval.evaluate([d1_metadata, d1], [d2_metadata, d2], pa, query, pp, ev)
+        key_metrics = eval.evaluate([d1_metadata, d1], [d2_metadata, d2], pa, query, pp, ev)
         # After evaluation, it should return True and distance metrics should be non-zero
-        assert(metrics.dp_res == True)
-        test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
-        test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
-        test_logger.debug("KL Divergence:" + str(metrics.kl_divergence))
-        test_logger.debug("MSE:" + str(metrics.mse))
-        test_logger.debug("Standard Deviation:" + str(metrics.std))
-        test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
-        assert(metrics.wasserstein_distance > 0.0)
-        assert(metrics.jensen_shannon_divergence > 0.0)
-        assert(metrics.kl_divergence != 0.0)
-        assert(metrics.mse > 0.0)
-        assert(metrics.std != 0.0)
-        assert(metrics.msd != 0.0)
+        for key, metrics in key_metrics.items():
+            assert(metrics.dp_res == True)
+            test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
+            test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
+            test_logger.debug("KL Divergence:" + str(metrics.kl_divergence))
+            test_logger.debug("MSE:" + str(metrics.mse))
+            test_logger.debug("Standard Deviation:" + str(metrics.std))
+            test_logger.debug("Mean Signed Deviation:" + str(metrics.msd))
+            assert(metrics.wasserstein_distance > 0.0)
+            assert(metrics.jensen_shannon_divergence > 0.0)
+            assert(metrics.kl_divergence != 0.0)
+            assert(metrics.mse > 0.0)
+            assert(metrics.std != 0.0)
+            assert(metrics.msd != 0.0)

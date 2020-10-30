@@ -3,9 +3,9 @@ import sklearn.datasets
 import pandas as pd
 
 
-from opendp.whitenoise.sql import execute_private_query, PandasReader
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.metadata.collection import Table, Float
+from opendp.smartnoise.sql import execute_private_query, PandasReader
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.metadata.collection import Table, Float
 
 def test_sklearn_query():
    sklearn_dataset = sklearn.datasets.load_iris()

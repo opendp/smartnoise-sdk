@@ -5,8 +5,8 @@ import time
 import sklearn.datasets
 import pandas as pd
 
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.metadata.collection import Table, Float, String
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.metadata.collection import Table, Float, String
 
 from subprocess import Popen, PIPE
 from threading import Thread
@@ -15,10 +15,10 @@ import pytest
 
 from requests import Session
 
-from opendp.whitenoise.client import _get_client
-from opendp.whitenoise.client.restclient.rest_client import RestClient
-from opendp.whitenoise.client.restclient.models.secret import Secret
-DATAVERSE_TOKEN_ENV_VAR = "WHITENOISE_DATAVERSE_TEST_TOKEN"
+from opendp.smartnoise.client import _get_client
+from opendp.smartnoise.client.restclient.rest_client import RestClient
+from opendp.smartnoise.client.restclient.models.secret import Secret
+DATAVERSE_TOKEN_ENV_VAR = "SMARTNOISE_DATAVERSE_TEST_TOKEN"
 
 # Add the utils directory to the path
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -96,8 +96,8 @@ if not os.path.exists(reddit_schema_path):
 
 @pytest.fixture(scope="session")
 def client():
-    url = os.environ.get("WHITENOISE_SERVICE_URL", "localhost")
-    port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5001))
+    url = os.environ.get("SMARTNOISE_SERVICE_URL", "localhost")
+    port = int(os.environ.get("SMARTNOISE_SERVICE_PORT", 5001))
 
     client = _get_client()
     if DATAVERSE_TOKEN_ENV_VAR in os.environ:
