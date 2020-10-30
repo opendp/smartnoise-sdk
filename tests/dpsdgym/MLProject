@@ -6,5 +6,6 @@ entry_points:
   main:
     parameters:
       dataset: {type: string,  default: "bank"}
-      eval_metrics: {type: string, default: "all"}
-    command: "python main.py {dataset} {eval_metrics}"
+      eval_metrics: {type: string, default: "pmse ml_eval wasserstein"}
+      epsilons: {type: string, default: "1.0"}
+    command: "python main.py -d {dataset} -m {eval_metrics} -e {epsilons}"

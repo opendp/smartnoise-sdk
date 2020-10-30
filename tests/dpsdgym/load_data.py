@@ -6,6 +6,7 @@ import pandas as pd
 from imblearn.over_sampling import SMOTE
 
 import zipfile
+import os
 
 # NOTE: Temporary
 # We add a memory cap here for now, which
@@ -32,7 +33,8 @@ def load_data(datasets):
     import io
     import json
 
-    with open('datasets.json') as j:
+    datasets_json = os.path.join(os.path.dirname(os.path.abspath(__file__)),'datasets.json')
+    with open(datasets_json) as j:
         dsets = j.read()
     archive = json.loads(dsets)
 

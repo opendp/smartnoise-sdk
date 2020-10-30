@@ -40,12 +40,22 @@ def _parse_args():
     parser.add_argument('-e', '--epsilon', nargs="+", default=conf.EPSILONS, help="Epsilons values for which the models will be evaluated")
     parser.add_argument('-m', '--metric', nargs="+", default=conf.KNOWN_METRICS, help="Differential privacy metrics for which the models will be evaluated")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    if isinstance(args.dataset[0], str) and len(args.dataset)==1:
+        args.dataset = args.dataset[0].split()
+
+    if isinstance(args.epsilon[0], str) and len(args.epsilon)==1:
+        args.epsilon = args.epsilon[0].split()
+
+    if isinstance(args.metric[0], str) and len(args.metric)==1:
+        args.metric = args.metric[0].split()
+
+    return args
 
 if __name__ == "__main__":
 
     args = _parse_args()
-    
+
     with mlflow.start_run(run_name="test"):
         mlflow.log_param("epsilons", str(args.epsilon))
         mlflow.log_param("dataset", args.dataset)
