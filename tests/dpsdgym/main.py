@@ -3,6 +3,9 @@ import os
 import time
 import mlflow
 import json
+import argparse
+import textwrap
+
 
 import conf
 
@@ -28,25 +31,23 @@ def run(epsilons, run_name, flags, dataset):
         json.dump(results, f)
     mlflow.log_artifact("artifact.json", "results.json")
 
-flag_options = ['wasserstein', 'ml_eval', 'pmse']
+def _parse_args():
+    parser = argparse.ArgumentParser(prog="DPSDGYM", 
+                                    description="Differentially private synthetic data generators evaluation suite", 
+                                    epilog="Sample command: python main.py -d bank adult -e 0.01 0.1 1 -m pmse ml_eval wasserstein")
+
+    parser.add_argument('-d', '--dataset', nargs="+", default=conf.KNOWN_DATASETS, help="Datasets names on which the benchmarks will be executed")
+    parser.add_argument('-e', '--epsilon', nargs="+", default=conf.EPSILONS, help="Epsilons values for which the models will be evaluated")
+    parser.add_argument('-m', '--metric', nargs="+", default=conf.KNOWN_METRICS, help="Differential privacy metrics for which the models will be evaluated")
+
+    return parser.parse_args()
 
 if __name__ == "__main__":
-    # TODO: Add epsilon flag to specify epsilons pre run
-    args = sys.argv
-    epsilons = [0.01, 0.1, 0.5, 1.0, 3.0, 6.0, 9.0]
-    dataset = args[1]
 
-    if len(args) > 2:
-        if args[2] == 'all' or args == None:
-            flags = flag_options
-        else:
-            flags = args[2]
-    else:
-        flags = flag_options
-
-
+    args = _parse_args()
+    
     with mlflow.start_run(run_name="test"):
-        mlflow.log_param("epsilons", str(epsilons))
-        mlflow.log_param("dataset", dataset)
-        mlflow.log_param("flags", str(flags))
-        run(epsilons=epsilons, run_name='test', flags=flags, dataset=dataset)
+        mlflow.log_param("epsilons", str(args.epsilon))
+        mlflow.log_param("dataset", args.dataset)
+        mlflow.log_param("flags", str(args.metric))
+        run(epsilons=args.epsilon, run_name='test', flags=args.metric, dataset=args.dataset)

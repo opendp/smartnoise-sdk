@@ -46,6 +46,21 @@ Documentation for SDK functionality: [here](https://opendifferentialprivacy.gith
 Service API specification: [here](https://github.com/opendifferentialprivacy/smartnoise-system/blob/master/service/openapi/swagger.yml)
 
 ## Getting started
+### venv setup
+```shell
+virtualenv -p `which python3` venv
+source venv/bin/activate
+pip3 install -U scikit-learn scipy matplotlib
+pip3 install opendp-smartnoise
+```
+## conda setup
+```shell
+conda create -n dev_smartnoise python=3.7
+conda activate dev_smartnoise
+pip install -U scikit-learn scipy matplotlib
+pip install opendp-smartnoise
+```
+### Script
 ```python
 import sklearn.datasets
 import pandas as pd
@@ -69,6 +84,7 @@ schema = CollectionMetadata([iris], "csv")
 reader = PandasReader(schema, sklearn_df)
 rowset = execute_private_query(schema, reader, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
 df = pd.DataFrame(rowset[1:], columns=rowset[0])
+with pd.option_context('display.max_rows', None, 'display.max_columns', 3): print(df)
 ```
 ## SmartNoise Samples
 Samples of DP SQL functionality: [here](https://github.com/opendifferentialprivacy/smartnoise-samples/blob/master/data/README.md)
