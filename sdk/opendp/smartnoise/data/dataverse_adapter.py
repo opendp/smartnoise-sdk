@@ -1,6 +1,7 @@
 import os
 import tempfile
 import requests
+import urllib.parse as parser
 
 import pandas as pd
 
@@ -28,6 +29,31 @@ def dataverse_loader(host, doi=None, token=None):
         stream.write(response.text)
     return pd.read_csv(path, sep="\t")
 
+def dataverse_uri_loader(dv_uri):
+    uri = parser.urlparse(dv_uri)
+    try:
+        scheme = uri.scheme
+        host = uri.netloc
+        path = uri.path
+        kv = uri.query.split("&")
+    except Exception as e:
+        print(str(e))
+
+    doi_key = 'persistentId'
+    token_key = 'token'
+    kv_arr = [pair.split('=') for pair in kv]
+    kv_dict = dict(kv_arr)
+    doi = kv_dict[doi_key]
+    token = kv_dict[token_key]
+    url = 'https://' + host + path + '?' + doi_key + '=' + doi;
+    response = requests.get(url, headers={'X-Dataverse-Key': '%s' % token}) if token else requests.get(url)
+    response.raise_for_status()
+
+    temp_dir = tempfile.gettempdir()
+    path = os.path.join(temp_dir, "data.tsv")
+    with open(path, "w") as stream:
+        stream.write(response.text)
+    return pd.read_csv(path, sep="\t")
 
 class DataverseAdapter(DatasetAdapter):
     KEY = "dataverse_details"
