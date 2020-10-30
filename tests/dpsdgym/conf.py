@@ -21,11 +21,11 @@ BALANCE = True
 
 # Turn on/off the synthesizers you want to use in eval here
 SYNTHESIZERS = [
-#    ('mwem', MWEMSynthesizer),
-#    ('dpctgan', PytorchDPSynthesizer),
+    ('mwem', MWEMSynthesizer),
+    ('dpctgan', PytorchDPSynthesizer),
     ('patectgan', PytorchDPSynthesizer),
-#    ('dpgan',PytorchDPSynthesizer),
-#    ('pategan',PytorchDPSynthesizer),
+    ('dpgan',PytorchDPSynthesizer),
+    ('pategan',PytorchDPSynthesizer),
 ]
 
 # Define the defaults epsilons you want to use in eval

@@ -20,7 +20,7 @@ import mlflow
 from joblib import Parallel, delayed
 
 import conf
-from metrics.sra import sra #Why is SRA not computed?
+from metrics.sra import sra
 from metrics.wasserstein import wasserstein_randomization
 from metrics.pmse import pmse_ratio
 

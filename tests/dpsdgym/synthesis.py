@@ -39,7 +39,7 @@ def run_synthesis(synthesis_args):
         mlflow.set_tags({"synthesizer": type(synth),
                          "args": str(synth_args),
                          "epsilon": str(e),
-                         "dataset": str(datasets),
+                         "dataset": str(d),
                          "duration_seconds": str(end_time - start_time)})
         print(datasets[d]["name"] + ' finished. Epsilon: ' + str(e))
         datasets[d][n][str(e)] = sampled
