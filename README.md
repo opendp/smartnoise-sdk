@@ -52,17 +52,17 @@ source venv/bin/activate
 pip3 install -U scikit-learn scipy matplotlib
 pip3 install opendp-smartnoise
 ## Getting started with conda
-
+```
 ```shell
 conda create -n dev_smartnoise python=3.7
 conda activate dev_smartnoise
 pip install -U scikit-learn scipy matplotlib
 pip install opendp-smartnoise
-
+```
 ```python
 import sklearn.datasets
 import pandas as pd
-
+```
 from opendp.smartnoise.sql import execute_private_query, PandasReader
 from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.metadata.collection import Table, Float
