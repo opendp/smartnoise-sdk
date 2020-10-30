@@ -3,10 +3,10 @@ import pandas as pd
 import csv
 import logging
 
-from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
-from opendp.whitenoise.evaluation.learner._dp_env import DPEnv
-from opendp.whitenoise.evaluation.learner._generate import Grammar
-from opendp.whitenoise.evaluation.learner._computeactions import compute_action
+from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
+from opendp.smartnoise.evaluation.learner._dp_env import DPEnv
+from opendp.smartnoise.evaluation.learner._generate import Grammar
+from opendp.smartnoise.evaluation.learner._computeactions import compute_action
 
 logging.basicConfig(filename="Q-learning.log", level=logging.DEBUG)
 

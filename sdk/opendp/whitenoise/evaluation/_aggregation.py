@@ -8,10 +8,9 @@ import mlflow
 import json
 import sys
 import os
-# import yarrow
 
 from opendp.whitenoise.sql import PandasReader, PrivateReader
-from opendp.whitenoise.sql.private_reader import PrivateReaderOptions
+# from opendp.whitenoise.sql.private_reader import PrivateReaderOptions
 from opendp.whitenoise.reader.rowset import TypedRowset
 from opendp.whitenoise.mechanisms.laplace import Laplace
 from opendp.whitenoise.mechanisms.gaussian import Gaussian
@@ -167,8 +166,9 @@ class Aggregation:
         exact_res = []
         for row in exact:
             exact_res.append(row)
-        prOptions = PrivateReaderOptions(censor_dims = False)
-        private_reader = PrivateReader(metadata, reader, self.epsilon, options=prOptions)
+        # prOptions = PrivateReaderOptions(censor_dims = False)
+        # private_reader = PrivateReader(metadata, reader, self.epsilon, options=prOptions)
+        private_reader = PrivateReader(metadata, reader, self.epsilon)
         try: 
             query_ast = private_reader.parse_query_string(query)                 
             # query_ast.select = ast_transform.select

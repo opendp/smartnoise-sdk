@@ -1,6 +1,6 @@
-from opendp.whitenoise.evaluation.learner._transformation import *
-from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
-from opendp.whitenoise.ast import tokens
+from opendp.smartnoise.evaluation.learner._transformation import *
+from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
+from opendp.smartnoise.ast import tokens
 
 def compute_action(ep: LearnerParams):
     columns = ep.columns
@@ -11,7 +11,7 @@ def compute_action(ep: LearnerParams):
     OP = [tokens.Op('+'),tokens.Op('-'), tokens.Op('*'), tokens.Op('/'), tokens.Op('%')]
     COLUMNS= columns + ['Allcolumns']
     AGGFUNC=[SUM, COUNT, AVG]
-    MAXNODELEN=30
+    MAXNODELEN=ep.MAXNODELEN
     METHOD=[
         #modify nodes
         AddNumericLiteral, 

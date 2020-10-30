@@ -6,7 +6,7 @@
 import numpy as np
 import string
 from itertools import chain
-from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
+from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 
 class Token(object):
     def __init__(self, token, children):

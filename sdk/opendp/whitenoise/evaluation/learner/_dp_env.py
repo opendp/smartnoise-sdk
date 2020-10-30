@@ -4,13 +4,12 @@ import gym
 from gym import spaces
 import numpy as np
 import pandas as pd
-from opendp.whitenoise.sql import PandasReader, PrivateReader
-from opendp.whitenoise.sql.private_reader import PrivateReaderOptions
-from opendp.whitenoise.evaluation._dp_verification import DPVerification
-import opendp.whitenoise.evaluation._exploration as exp
-from opendp.whitenoise.evaluation.learner._transformation import *
-from opendp.whitenoise.evaluation.learner._computeactions import compute_action
-from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
+from opendp.smartnoise.sql import PandasReader, PrivateReader
+from opendp.smartnoise.evaluation._dp_verification import DPVerification
+import opendp.smartnoise.evaluation._exploration as exp
+from opendp.smartnoise.evaluation.learner._transformation import *
+from opendp.smartnoise.evaluation.learner._computeactions import compute_action
+from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 
 import random
 import copy
@@ -43,15 +42,16 @@ class DPEnv(gym.Env):
         self.pool = list(range(ep.observation_space-2, 1, -1))
         self.info = {}
         self.output=[]
-        self.episode = 0
+        self.episode = 1
         self.reward = 0
        
 
   
-    def QuerytoAST(query, meta, data):
+    def QuerytoAST(self, query, meta, data):
         reader = PandasReader(meta, data)
-        prOptions = PrivateReaderOptions(censor_dims = False)
-        private_reader = PrivateReader(meta, reader, epsilon = 1, options=prOptions)    
+        # prOptions = PrivateReaderOptions(censor_dims = False)
+        # private_reader = PrivateReader(meta, reader, epsilon = 1, options=prOptions)
+        private_reader = PrivateReader(meta, reader, self.epsilon)    
         try:
             ast = private_reader.parse_query_string(query) 
         except:
@@ -146,7 +146,7 @@ class DPEnv(gym.Env):
         ast_transform = self.observe(query)
         d1_query = query
         d2_query = query.replace("d1.d1", "d2.d2")  
-        dp_res, ks_res, ws_res, d1, d2 = self.dv.dp_groupby_query_test(d1_query, d2_query,repeat_count=500)
+        dp_res, ks_res, ws_res, d1, d2 = self.dv.dp_groupby_query_test_rl(d1_query, d2_query,repeat_count=500)
         message = None
         message_detail = None
         if dp_res is None and ks_res in ['ValueError_parsequerystring', 'ValueError_reader', 'exact_df_error']:

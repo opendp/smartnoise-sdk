@@ -13,6 +13,7 @@ class LearnerParams:
         self.observation_space = 1000
         self.columns = ['UserId', 'Role', 'Usage']
         self.numofquery = 1000
+        self.MAXNODELEN=30
         
         
 

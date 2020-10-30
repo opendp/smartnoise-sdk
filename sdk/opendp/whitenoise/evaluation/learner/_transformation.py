@@ -1,12 +1,12 @@
 
 import random
-from opendp.whitenoise.ast.tokens import *
-from opendp.whitenoise.ast.expression import *
-from opendp.whitenoise.ast import tokens
-from opendp.whitenoise.ast.expressions import *
-from opendp.whitenoise.sql import PandasReader, PrivateReader
-from opendp.whitenoise.sql.private_reader import PrivateReaderOptions
-from opendp.whitenoise.evaluation.params._learner_params import LearnerParams
+from opendp.smartnoise.ast.tokens import *
+from opendp.smartnoise.ast.expression import *
+from opendp.smartnoise.ast import tokens
+from opendp.smartnoise.ast.expressions import *
+from opendp.smartnoise.sql import PandasReader, PrivateReader
+# from opendp.smartnoise.sql.private_reader import PrivateReaderOptions
+from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 
 
 
@@ -15,15 +15,16 @@ def columns_to_select(ep: LearnerParams):
     # return ['UserId', 'Role', 'Usage']
     return columns
 
-def QuerytoAST(query, meta, data):
-    reader = PandasReader(meta, data)
-    prOptions = PrivateReaderOptions(censor_dims = False)
-    private_reader = PrivateReader(meta, reader, epsilon = 1, options=prOptions)    
-    try:
-        ast = private_reader.parse_query_string(query) 
-    except:
-        return
-    return ast
+# def QuerytoAST(query, meta, data):
+#     reader = PandasReader(meta, data)
+#     # prOptions = PrivateReaderOptions(censor_dims = False)
+#     # private_reader = PrivateReader(meta, reader, epsilon = 1, options=prOptions)    
+#     private_reader = PrivateReader(meta, reader, self.epsilon)
+#     try:
+#         ast = private_reader.parse_query_string(query) 
+#     except:
+#         return
+#     return ast
 
 def FindNode(ast):
     # ne = ast.select.namedExpressions 

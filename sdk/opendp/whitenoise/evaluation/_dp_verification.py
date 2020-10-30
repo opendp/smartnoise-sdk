@@ -1,15 +1,17 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import math
+import pandas as pd		
+import numpy as np		
+import matplotlib.pyplot as plt		
+import math		
+import copy		
+import os		
+from scipy import stats		
+
 from numpy.linalg import norm
 from scipy.stats import entropy
-import copy
-import os
-from scipy import stats
-import opendp.whitenoise.evaluation._aggregation as agg
-import opendp.whitenoise.evaluation._exploration as exp
-from opendp.whitenoise.metadata.collection import *
+
+import opendp.smartnoise.evaluation._aggregation as agg		
+import opendp.smartnoise.evaluation._exploration as exp		
+from opendp.smartnoise.metadata.collection import *
 
 class DPVerification:
     """ This class contains a list of methods that can be passed DP algorithm 
@@ -358,7 +360,54 @@ class DPVerification:
             self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
         return dp_res, acc_res, utility_res, bias_res
 
-    def dp_groupby_query_test(self, d1_query, d2_query,gen_neighbors = True, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95): 
+    def dp_groupby_query_test(self, d1_query, d2_query, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95):
+        """
+        Allows DP Predicate test on both singleton and GROUP BY SQL queries
+        """
+        ag = agg.Aggregation(t=1, repeat_count=repeat_count)
+        d1, d2, d1_metadata, d2_metadata = self.generate_neighbors(load_csv=True)
+
+        d1_res, d1_exact, dim_cols, num_cols = ag.run_agg_query_df(d1, d1_metadata, d1_query, confidence, file_name = "d1")
+        d2_res, d2_exact, dim_cols, num_cols = ag.run_agg_query_df(d2, d2_metadata, d2_query, confidence, file_name = "d2")
+
+        res_list = []
+        for col in num_cols:
+            d1_gp = d1_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            d2_gp = d2_res.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            exact_gp = d1_exact.groupby(dim_cols)[col].apply(list).reset_index(name=col)
+            # Both D1 and D2 should have dimension key for histograms to be created
+            d1_d2 = d1_gp.merge(d2_gp, on=dim_cols, how='inner')
+            d1_d2 = d1_d2.merge(exact_gp, on=dim_cols, how='left')
+            n_cols = len(d1_d2.columns)
+            for index, row in d1_d2.iterrows():
+                # fD1 and fD2 will have the results of the K repeated query results that can be passed through histogram test
+                # These results are for that particular numerical column and the specific dimension key of d1_d2
+                fD1 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 3]])
+                fD2 = np.array([val[0] for val in d1_d2.iloc[index, n_cols - 2]])
+                exact_val = d1_d2.iloc[index, n_cols - 1][0]
+                d1hist, d2hist, bin_edges = self.generate_histogram_neighbors(fD1, fD2, binsize="auto")
+                d1size, d2size = fD1.size, fD2.size
+                dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = self.dp_test(d1hist, d2hist, bin_edges, d1size, d2size, debug)
+
+                # Accuracy Test
+                #low = np.array([val[1] for val in d1_d2.iloc[index, n_cols - 2]])
+                #high = np.array([val[2] for val in d1_d2.iloc[index, n_cols - 2]])
+                #acc_res, utility_res, within_bounds = self.accuracy_test(exact_val, low, high, confidence)
+                acc_res, utility_res = None, None
+                bias_res, msd = self.bias_test(exact_val, fD1)
+                res_list.append([dp_res, acc_res, utility_res, bias_res, msd])
+                if(plot):
+                    self.plot_histogram_neighbors(fD1, fD2, d1histupperbound, d2histupperbound, d1hist, d2hist, d1lower, d2lower, bin_edges, bound, exact)
+
+        res_list = res_list.values() if hasattr(res_list, "values") else res_list  # TODO why is this needed?
+        dp_res = np.all(np.array([res[0] for res in res_list]))
+        #acc_res = np.all(np.array([res[1] for res in res_list]))
+        #utility_res = np.all(np.array([res[2] for res in res_list]))
+        acc_res, utility_res = None, None
+        bias_res = np.all(np.array([res[3] for res in res_list]))
+        return dp_res, acc_res, utility_res, bias_res
+
+    def dp_groupby_query_test_rl(self, d1_query, d2_query,gen_neighbors = True, debug=False, plot=True, bound=True, exact=False, repeat_count=10000, confidence=0.95): 
         """
         Allows DP Predicate test on both singleton and GROUP BY SQL queries
         """    
