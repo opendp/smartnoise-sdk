@@ -45,7 +45,8 @@ Documentation for SDK functionality: [here](https://opendifferentialprivacy.gith
 ### Experimental
 Service API specification: [here](https://github.com/opendifferentialprivacy/smartnoise-system/blob/master/service/openapi/swagger.yml)
 
-## Getting started with venv
+## Getting started
+### venv setup
 ```shell
 virtualenv -p `which python3` venv
 source venv/bin/activate
@@ -53,16 +54,18 @@ pip3 install -U scikit-learn scipy matplotlib
 pip3 install opendp-smartnoise
 ## Getting started with conda
 ```
+## conda setup
 ```shell
 conda create -n dev_smartnoise python=3.7
 conda activate dev_smartnoise
 pip install -U scikit-learn scipy matplotlib
 pip install opendp-smartnoise
 ```
+### Script
 ```python
 import sklearn.datasets
 import pandas as pd
-```
+
 from opendp.smartnoise.sql import execute_private_query, PandasReader
 from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.metadata.collection import Table, Float
