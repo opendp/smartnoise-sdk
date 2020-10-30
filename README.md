@@ -52,7 +52,6 @@ virtualenv -p `which python3` venv
 source venv/bin/activate
 pip3 install -U scikit-learn scipy matplotlib
 pip3 install opendp-smartnoise
-## Getting started with conda
 ```
 ## conda setup
 ```shell
