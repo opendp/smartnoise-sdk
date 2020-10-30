@@ -1,8 +1,8 @@
 import pytest
 
-from opendp.whitenoise.reader.base import Reader
-from opendp.whitenoise.sql.reader.engine import Engine
-from opendp.whitenoise.sql.reader import PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
+from opendp.smartnoise.reader.base import Reader
+from opendp.smartnoise.sql.reader.engine import Engine
+from opendp.smartnoise.sql.reader import PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
 
 READERS = PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
 

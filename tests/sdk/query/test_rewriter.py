@@ -1,9 +1,9 @@
 from os import listdir
 from os.path import isfile, join, dirname
 
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.sql import Rewriter
-from opendp.whitenoise.sql.parse import QueryParser
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.sql import Rewriter
+from opendp.smartnoise.sql.parse import QueryParser
 
 
 dir_name = dirname(__file__)

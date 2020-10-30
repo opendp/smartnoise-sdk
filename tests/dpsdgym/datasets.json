@@ -1,0 +1,58 @@
+{
+    "mushroom": {
+        "name": "mushroom",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data",
+        "categorical_columns": "edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat", 
+        "columns":"edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat",
+        "target": "edible",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "f",
+        "zipped": "f"
+    },
+    "car": {
+        "name": "car",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data",
+        "categorical_columns": "buying,maint,doors,persons,lug_boot,safety,class", 
+        "columns":"buying,maint,doors,persons,lug_boot,safety,class",
+        "target": "class",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "f",
+        "zipped": "f"
+    },
+    "adult": {
+        "name": "adult",
+        "url": "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data",
+        "categorical_columns": "workclass,education,marital-status,occupation,relationship,race,sex,native-country,earning-class", 
+        "columns":"age,workclass,fnlwgt,education,education-num,marital-status,occupation,relationship,race,sex,capital-gain,capital-loss,hours-per-week,native-country,earning-class",
+        "target": "earning-class",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "t",
+        "zipped": "f"
+    },
+    "shopping": {
+        "name": "shopping",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00468/online_shoppers_intention.csv",
+        "categorical_columns": "Administrative,Informational,ProductRelated,Month,OperatingSystems,Browser,Region,TrafficType,VisitorType,Weekend,Revenue", 
+        "columns":"Administrative,Administrative_Duration,Informational,Informational_Duration,ProductRelated,ProductRelated_Duration,BounceRates,ExitRates,PageValues,SpecialDay,Month,OperatingSystems,Browser,Region,TrafficType,VisitorType,Weekend,Revenue",
+        "target": "Revenue",
+        "header": "t",
+        "sep": ",",
+        "imbalanced": "t",
+        "zipped": "f"
+    },
+    "bank": {
+        "name": "bank",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank.zip",
+        "categorical_columns": "job,marital,education,default,housing,loan,contact,month,poutcome,yesno", 
+        "columns":"age,job,marital,education,default,balance,housing,loan,contact,day,month,duration,campaign,pdays,previous,poutcome,yesno",
+        "target": "yesno",
+        "header": "t",
+        "sep": ";",
+        "imbalanced": "t",
+        "zipped": "t",
+        "zip_name": "bank-full.csv"
+    }
+}

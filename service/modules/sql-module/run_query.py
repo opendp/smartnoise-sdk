@@ -4,9 +4,9 @@ import sys
 
 import pandas as pd
 
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_reader, load_metadata
-from opendp.whitenoise.sql import PrivateReader
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_reader, load_metadata
+from opendp.smartnoise.sql import PrivateReader
 
 
 if __name__ == "__main__":

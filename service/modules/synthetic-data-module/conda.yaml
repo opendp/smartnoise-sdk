@@ -6,5 +6,4 @@ dependencies:
     - mlflow
     - pandasql
     - pandas
-    - opendp-whitenoise
-    - sdgym
+    - opendp-smartnoise

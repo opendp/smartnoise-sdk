@@ -5,10 +5,10 @@ import pandas as pd
 import math
 import pytest
 
-from opendp.whitenoise.sql.dpsu import preprocess_df_from_query, run_dpsu
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.sql.parse import QueryParser
-from opendp.whitenoise.sql import PrivateReader, PandasReader
+from opendp.smartnoise.sql.dpsu import preprocess_df_from_query, run_dpsu
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.sql.parse import QueryParser
+from opendp.smartnoise.sql import PrivateReader, PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 

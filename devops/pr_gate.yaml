@@ -6,7 +6,7 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  artifactFeed: whitenoise-feed
+  artifactFeed: smartnoise-feed
 
 steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
@@ -17,7 +17,7 @@ steps:
   - bash: |
       source activate wnoise
       pip install -e ./sdk
-    displayName: Install opendp-whitenoise
+    displayName: Install opendp-smartnoise
 
   - bash: |
       source activate wnoise
@@ -46,7 +46,7 @@ steps:
   - bash: |
       source activate wnoise
       pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
-      python -m pytest tests/sdk --junitxml=./TEST-TEST.xml
+      python -m pytest tests/sdk -m "not torch"  --junitxml=./TEST-TEST.xml
     displayName: "Run sdk tests"
   - bash: |
       source activate wnoise
@@ -62,4 +62,3 @@ steps:
 
   - publish: $(System.DefaultWorkingDirectory)/pip_freeze.txt
     artifact: PipFreeze
-

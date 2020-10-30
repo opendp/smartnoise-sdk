@@ -2,12 +2,13 @@ import subprocess
 import os
 
 import pytest
+import warnings
 import string
 import numpy as np
 import pandas as pd
 
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.synthesizers.mwem import MWEMSynthesizer
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.synthesizers.mwem import MWEMSynthesizer
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -20,6 +21,8 @@ df = df.drop(["income"], axis=1)
 nf = df.to_numpy().astype(int)
 
 synth = MWEMSynthesizer(split_factor=3)
+
+faux_synth = MWEMSynthesizer(split_factor=1)
 
 test_data = np.array([[1,1,1],[2,2,2],[3,3,3]])
 
@@ -39,7 +42,7 @@ class TestMWEM:
     def test_fit(self):
         synth.fit(nf)
         assert synth.histograms
-    
+
     def test_sample(self):
         sample_size = nf.shape[0]
         synthetic = synth.sample(sample_size)
@@ -48,7 +51,7 @@ class TestMWEM:
     def test_initialize_A(self):
         h = synth._initialize_A(test_histogram,(3,3,3))
         assert int(np.sum(h)) == int(np.sum(test_histogram))
-    
+
     def test_histogram_from_data_attributes(self):
         three_dims = synth._histogram_from_data_attributes(test_data,np.array([[0,1,2]]))
         one_dims = synth._histogram_from_data_attributes(test_data,np.array([np.array([0]),np.array([1]),np.array([2])]))
@@ -83,6 +86,12 @@ class TestMWEM:
         reordered = synth._reorder(splits)
         reconstructed = np.hstack((m1,m2))
         assert (original == reconstructed[:, reordered]).all()
-    
+
     def test_generate_splits(self):
         assert (synth._generate_splits(3,3) == np.array([[0, 1, 2]])).all()
+
+    # TODO: More split tests
+
+    def test_faux_fit(self):
+        pytest.warns(Warning, faux_synth.fit, test_data)
+        assert faux_synth.histograms
