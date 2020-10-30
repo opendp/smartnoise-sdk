@@ -6,4 +6,4 @@ dependencies:
     - mlflow
     - pandas
     - diffprivlib
-    - opendp-whitenoise
+    - opendp-smartnoise

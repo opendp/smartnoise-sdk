@@ -7,10 +7,10 @@ import logging
 import numpy as np
 import pandas as pd
 
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_metadata, load_dataset
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_metadata, load_dataset
 
-from opendp.whitenoise.models import DPLinearRegression
+from opendp.smartnoise.models import DPLinearRegression
 #  TODO add a test for both this and log_reg module in smoke tests
 
 
@@ -73,4 +73,3 @@ if __name__ == "__main__":
         with open("result.json", "w") as stream:
             json.dump(results, stream)
         mlflow.log_artifact("result.json")
-

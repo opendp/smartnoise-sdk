@@ -3,8 +3,8 @@ import pandas as pd
 
 import pytest
 
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_dataset
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_dataset
 
 @pytest.mark.dataverse_token
 @pytest.mark.parametrize("dataset_name", ["demo_dataverse"])
