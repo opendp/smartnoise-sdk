@@ -2,11 +2,7 @@ import os
 import pytest
 import pandas as pd
 
-<<<<<<< HEAD
-from opendp.whitenoise.data import dataverse_loader, dataverse_uri_loader
-=======
-from opendp.smartnoise.data import dataverse_loader
->>>>>>> master
+from opendp.smartnoise.data import dataverse_loader, dataverse_uri_loader
 
 
 #  example dataset
