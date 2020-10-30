@@ -45,7 +45,7 @@ def run_synthesis(synthesis_args):
         datasets[d][n][str(e)] = sampled
     return (n, d, str(e), sampled)
 
-def run_all_synthesizers(datasets, epsilons):
+def run_all_synthesizers(datasets, epsilons, save_models_path, run_name):
     """
     Run each synthesizer on each dataset for specified epsilons
 

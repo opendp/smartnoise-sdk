@@ -288,3 +288,16 @@ def run_ml_eval(data_dict, epsilons, run_name, seed=42, test_size=0.25):
         evals[d] = [real_accuracies] + synthetic_accuracies
 
     return evals
+
+def run_sra(data):
+    res = {}
+    for d in data:
+        real = data[d][0][1]
+        t = [data[d][0]]
+        synth = data[d][1:]
+        for s in synth:
+            rank = sra(real, s[1])
+            s = s + (rank,)
+            t.append(s)
+        res[d] = t
+    return res

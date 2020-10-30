@@ -21,11 +21,11 @@ BALANCE = True
 
 # Turn on/off the synthesizers you want to use in eval here
 SYNTHESIZERS = [
-    ('mwem', MWEMSynthesizer),
-    ('dpctgan', PytorchDPSynthesizer),
+#    ('mwem', MWEMSynthesizer),
+#    ('dpctgan', PytorchDPSynthesizer),
     ('patectgan', PytorchDPSynthesizer),
-    ('dpgan',PytorchDPSynthesizer),
-    ('pategan',PytorchDPSynthesizer),
+#    ('dpgan',PytorchDPSynthesizer),
+#    ('pategan',PytorchDPSynthesizer),
 ]
 
 # Define the defaults epsilons you want to use in eval
@@ -35,7 +35,7 @@ EPSILONS = [0.01, 0.1, 0.5, 1.0, 3.0, 6.0, 9.0]
 KNOWN_DATASETS =  ['bank','adult','mushroom','shopping','car']
 
 # Default metrics used to evaluate differential privacy 
-KNOWN_METRICS = ['wasserstein', 'ml_eval', 'pmse']
+KNOWN_METRICS = ['wasserstein', 'ml_eval', 'pmse', 'sra']
 
 # Add ML models on which to evaluate utility
 KNOWN_MODELS = [AdaBoostClassifier, BaggingClassifier,
