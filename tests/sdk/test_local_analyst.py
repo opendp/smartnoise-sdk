@@ -2,7 +2,6 @@
 import sklearn.datasets
 import pandas as pd
 
-
 from opendp.smartnoise.sql import execute_private_query, PandasReader
 from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.metadata.collection import Table, Float
