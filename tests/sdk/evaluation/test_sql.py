@@ -35,13 +35,13 @@ class TestSql:
         df = pd.DataFrame(list(zip(userids, segments, roles, usage)), columns=['UserId', 'Segment', 'Role', 'Usage'])
 
         # Storing the data as a CSV
-        metadata = Table(file_name, file_name, dataset_size, \
+        metadata = Table(file_name, file_name,  \
             [\
                 String("UserId", dataset_size, True), \
                 String("Segment", 3, False), \
                 String("Role", 2, False), \
                 Int("Usage", 0, 25)
-            ])
+            ], dataset_size)
 
         return df, metadata
 

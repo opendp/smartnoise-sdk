@@ -57,7 +57,7 @@ class CollectionMetadata:
 """
 class Table:
     """Information about a single tabular data source"""
-    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, clamp_counts=False, clamp_columns=True, rows_exact=None, use_dpsu=None):
+    def __init__(self, schema, name, columns, rowcount=0, rows_exact=None, row_privacy=False, max_ids=1, sample_max_ids=True, clamp_counts=False, clamp_columns=True, use_dpsu=None):
         """Instantiate information about a tabular data source.
 
         :param schema: The schema is the SQL-92 schema used for disambiguating table names.  See
@@ -226,11 +226,11 @@ class CollectionYamlLoader:
         clamp_columns = bool(t["clamp_columns"]) if "clamp_columns" in t else True
 
         columns = []
-        colnames = [cn for cn in t.keys() if cn not in ["rows", "rows_exact", "row_privacy", "max_ids", "sample_max_ids"]]
+        colnames = [cn for cn in t.keys() if cn not in ["rows", "rows_exact", "row_privacy", "max_ids", "sample_max_ids", "clamp_counts", "clamp_columns", "use_dpsu"]]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 
-        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, clamp_counts, clamp_columns, rows_exact, use_dpsu)
+        return Table(schema, table, columns, rowcount, rows_exact, row_privacy, max_ids, sample_max_ids, clamp_counts, clamp_columns, use_dpsu)
 
     def load_column(self, column, c):
         is_key = False if "private_id" not in c else bool(c["private_id"])

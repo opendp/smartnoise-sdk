@@ -72,12 +72,12 @@ sklearn_dataset = sklearn.datasets.load_iris()
 sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)
 
 
-iris = Table("dbo", "iris", 150, [
+iris = Table("dbo", "iris", [
     Float("sepal length (cm)", 4, 8),
     Float("sepal width (cm)", 2, 5),
     Float("petal length (cm)", 1, 7),
     Float("petal width (cm)", 0, 3)
-])
+], 150)
 schema = CollectionMetadata([iris], "csv")
 
 reader = PandasReader(sklearn_df, schema)

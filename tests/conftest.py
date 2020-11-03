@@ -35,12 +35,12 @@ if not os.path.exists(iris_dataset_path):
 
 iris_schema_path = os.path.join(root_url, "service", "datasets", "iris.yaml")
 if not os.path.exists(iris_schema_path):
-    iris = Table("iris", "iris", 150, [
+    iris = Table("iris", "iris", [
                 Float("sepal length (cm)", 4, 8),
                 Float("sepal width (cm)", 2, 5),
                 Float("petal length (cm)", 1, 7),
                 Float("petal width (cm)", 0, 3)
-    ])
+    ], 150)
     schema = CollectionMetadata([iris], "csv")
     schema.to_file(iris_schema_path, "iris")
 
@@ -87,10 +87,10 @@ if not os.path.exists(reddit_dataset_path):
 
 reddit_schema_path = os.path.join(root_url, "service", "datasets", "reddit.yaml")
 if not os.path.exists(reddit_schema_path):
-    reddit = Table("reddit", "reddit", 500000, [
+    reddit = Table("reddit", "reddit",  [
                 String("author", card=10000, is_key=True),
                 String("ngram", card=10000)
-    ], False, max_ids=500)
+    ], 500000, None, False, max_ids=500)
     schema = CollectionMetadata([reddit], "csv")
     schema.to_file(reddit_schema_path, "reddit")
 
