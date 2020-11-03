@@ -81,6 +81,7 @@ class PrivateReader(Reader):
         self._options.clamp_counts = any([t.clamp_counts for t in tables])
         self._options.max_contrib = max([t.max_ids for t in tables])
         self._options.use_dpsu = any([t.use_dpsu for t in tables])
+        self._options.clamp_columns = any([t.clamp_columns for t in tables])
 
         self.rewriter.options.row_privacy = self._options.row_privacy
         self.rewriter.options.reservoir_sample = self._options.reservoir_sample
