@@ -32,6 +32,8 @@ class CollectionMetadata:
         return "\n\n".join([str(self.m_tables[table]) for table in self.m_tables.keys()])
     def tables(self):
         return [self.m_tables[tname] for tname in self.m_tables.keys()]
+    def __iter__(self):
+        return self.tables()
 
     @staticmethod
     def from_file(filename):
@@ -92,6 +94,8 @@ class Table:
         return [self.m_columns[name] for name in self.m_columns.keys() if self.m_columns[name].is_key == True]
     def columns(self):
         return [self.m_columns[name] for name in self.m_columns.keys()]
+    def __iter__(self):
+        return self.columns()
     def table_name(self):
         return (self.schema + "." if len(self.schema.strip()) > 0 else "") + self.name
 
