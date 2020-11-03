@@ -8,7 +8,7 @@ import re
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
-    def __init__(self, metadata, df):
+    def __init__(self, df, metadata):
         super().__init__()
         self.df = df
         self.metadata, self.original_column_names = self._sanitize_metadata(metadata)

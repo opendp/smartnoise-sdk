@@ -55,7 +55,7 @@ class CollectionMetadata:
 """
 class Table:
     """Information about a single tabular data source"""
-    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None):
+    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, clamp_counts=False, rows_exact=None, use_dpsu=None):
         """Instantiate information about a tabular data source.
 
         :param schema: The schema is the SQL-92 schema used for disambiguating table names.  See
@@ -72,6 +72,8 @@ class Table:
         self.max_ids = max_ids
         self.sample_max_ids = sample_max_ids
         self.rows_exact = rows_exact
+        self.use_dpsu = use_dpsu
+        self.clamp_counts = clamp_counts
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
     def __getitem__(self, colname):
@@ -214,13 +216,15 @@ class CollectionYamlLoader:
         row_privacy = bool(t["row_privacy"]) if "row_privacy" in t else False
         max_ids = int(t["max_ids"]) if "max_ids" in t else 1
         sample_max_ids = bool(t["sample_max_ids"]) if "sample_max_ids" in t else None
+        use_dpsu = bool(t["use_dpsu"]) if "use_dpsu" in t else None
+        clamp_counts = bool(t["clamp_counts"]) if "clamp_counts" in t else None
 
         columns = []
         colnames = [cn for cn in t.keys() if cn not in ["rows", "rows_exact", "row_privacy", "max_ids", "sample_max_ids"]]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 
-        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, rows_exact)
+        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, clamp_counts, rows_exact, use_dpsu)
 
     def load_column(self, column, c):
         is_key = False if "private_id" not in c else bool(c["private_id"])
@@ -267,6 +271,10 @@ class CollectionYamlLoader:
                 table["sample_max_ids"] = t.sample_max_ids
             if t.rows_exact is not None:
                 table["rows_exact"] = t.rows_exact
+            if t.use_dpsu is not None:
+                table["use_dpsu"] = t.use_dpsu
+            if t.clamp_counts is not None:
+                table["clamp_counts"] = t.clamp_counts
 
             for c in t.columns():
                 cname = c.name

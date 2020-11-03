@@ -74,8 +74,8 @@ class TestSql:
         # Preparing neighboring datasets
         df, metadata = self.create_simulated_dataset(dd.dataset_size, "dataset")
         d1_dataset, d2_dataset, d1_metadata, d2_metadata = self.generate_neighbors(df, metadata)
-        d1 = PandasReader(d1_metadata, d1_dataset)
-        d2 = PandasReader(d2_metadata, d2_dataset)
+        d1 = PandasReader(d1_dataset, d1_metadata)
+        d2 = PandasReader(d2_dataset, d2_metadata)
 
         # Call evaluate
         eval = DPEvaluator()

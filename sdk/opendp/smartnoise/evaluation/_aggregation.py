@@ -125,12 +125,12 @@ class Aggregation:
         Run the query using the private reader and input query
         Get query response back
         """
-        reader = PandasReader(metadata, df)
+        reader = PandasReader(df, metadata)
         actual = 0.0
         # VAR not supported in Pandas Reader. So not needed to fetch actual on every aggregation
         if(get_exact):
             actual = reader.execute_typed(query).rows()[1:][0][0]
-        private_reader = PrivateReader(metadata, reader, self.epsilon)
+        private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
 
         srs_orig = private_reader.reader.execute_ast_typed(query_ast)
@@ -154,13 +154,13 @@ class Aggregation:
         Get query response back for multiple dimensions and aggregations
         """
         # Getting exact result
-        reader = PandasReader(metadata, df)
+        reader = PandasReader(df, metadata)
         exact = reader.execute_typed(query).rows()[1:]
         exact_res = []
         for row in exact:
             exact_res.append(row)
 
-        private_reader = PrivateReader(metadata, reader, self.epsilon)
+        private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
 
         # Distinguishing dimension and measure columns
