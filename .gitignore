@@ -46,6 +46,9 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+service/datasets/d1.csv
+service/datasets/d2.csv
+service/datasets/simulation.csv
 
 # Translations
 *.mo
@@ -106,6 +109,12 @@ venv.bak/
 # mlflow
 mlruns
 result.json
+
+# VS Code
+.vscode/
+
+# DS_Store
+.DS_Store
 
 # datasets
 iris.csv
