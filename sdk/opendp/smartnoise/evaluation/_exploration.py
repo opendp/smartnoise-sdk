@@ -42,11 +42,11 @@ class Exploration:
         userids = ["A" + str(user) for user in userids]
         usage = list(sample)
         df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', self.numerical_col_name])
-        metadata = Table(file_name, file_name, self.dataset_size, \
+        metadata = Table(file_name, file_name,  \
         [\
             String("UserId", self.dataset_size, True),\
             Int(self.numerical_col_name, min(usage), max(usage))
-        ])
+        ], self.dataset_size)
         return df, metadata
 
     def generate_halton_samples(self, bounds, dims, n_sample=10):
@@ -80,11 +80,11 @@ class Exploration:
                     min_val = min_val if max_val > min_val else 0
                     max_val = max_val if max_val > min_val else abs(max_val)
 
-                    d1_table = Table("d1_" + filename, "d1_" + filename, len(d1), \
+                    d1_table = Table("d1_" + filename, "d1_" + filename,  \
                     [\
                         String("UserId", len(d1), True),\
                         Int(self.numerical_col_name, min_val, max_val)
-                    ])
+                    ], len(d1))
                     d2_table = copy.copy(d1_table)
                     d2_table.schema, d2_table.name, d2_table.rowcount = "d2_" + filename, "d2_" + filename, d1_table.rowcount - 1
                     d1_metadata, d2_metadata = CollectionMetadata([d1_table], "csv"), CollectionMetadata([d2_table], "csv")

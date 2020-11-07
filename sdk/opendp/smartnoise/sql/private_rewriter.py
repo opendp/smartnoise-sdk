@@ -22,8 +22,8 @@ class Rewriter:
 
     """
 
-    def __init__(self, metadata, options=None):
-        self.options = RewriterOptions() if options is None else options
+    def __init__(self, metadata):
+        self.options = RewriterOptions()
         self.metadata = metadata
 
     def calculate_avg(self, exp, scope):

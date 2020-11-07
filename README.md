@@ -7,7 +7,7 @@ See also the accompanying [SmartNoise Core repository](https://github.com/opendi
 
 ##
 
-The tools repository for the SmartNoise System allows researchers and analysts to: 
+The tools SmartNoise SDK allows researchers and analysts to: 
 
 * Use SQL dialect to create differentially private results over tabular data stores
 * Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy budget
@@ -15,7 +15,6 @@ The tools repository for the SmartNoise System allows researchers and analysts t
 
 This SmartNoise System is currently aimed at scenarios where differential privacy can be used in scenarios where the researcher is trusted by the data owner.  Future releases will focus on hardened scenarios where the researcher or analyst is untrusted.  
 
-New mechanisms and algorithms will be available in coming weeks.
 
 ## Data Access
 
@@ -73,16 +72,16 @@ sklearn_dataset = sklearn.datasets.load_iris()
 sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)
 
 
-iris = Table("dbo", "iris", 150, [
+iris = Table("dbo", "iris", [
     Float("sepal length (cm)", 4, 8),
     Float("sepal width (cm)", 2, 5),
     Float("petal length (cm)", 1, 7),
     Float("petal width (cm)", 0, 3)
-])
+], 150)
 schema = CollectionMetadata([iris], "csv")
 
-reader = PandasReader(schema, sklearn_df)
-rowset = execute_private_query(schema, reader, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
+reader = PandasReader(sklearn_df, schema)
+rowset = execute_private_query(reader, schema, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
 df = pd.DataFrame(rowset[1:], columns=rowset[0])
 with pd.option_context('display.max_rows', None, 'display.max_columns', 3): print(df)
 ```
