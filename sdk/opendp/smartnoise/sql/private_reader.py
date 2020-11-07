@@ -1,4 +1,5 @@
 import logging
+import warnings
 import math
 import numpy as np
 from .dpsu import run_dpsu
@@ -32,6 +33,13 @@ class PrivateReader(Reader):
             :param options: A PrivateReaderOptions with flags that change the behavior of the privacy
                 engine.
         """
+        # check for old calling convention
+        if isinstance(metadata, Reader):
+            warnings.warn("[reader] API has changed to pass (reader, metadata).  Please update code to pass reader first and metadata second.  This will be a breaking change in future versions.", Warning)
+            tmp = reader
+            reader = metadata
+            metadata = tmp
+
         if isinstance(reader, Reader):
             self.reader = reader
         else:
@@ -43,6 +51,7 @@ class PrivateReader(Reader):
         else:
             raise ValueError("Parameter metadata must be of type CollectionMetadata. Got {0}", str(type(metadata)))
 
+        
         self.rewriter = Rewriter(metadata)
         self.epsilon_per_column = epsilon_per_column
         if epsilon is not None:

@@ -1,6 +1,7 @@
 import os
 import subprocess
 import copy
+import pytest
 
 import pandas as pd
 from pandasql import sqldf
@@ -160,3 +161,25 @@ class TestQuery:
                     assert(private_reader._options.max_contrib == d)
                     r = private_reader.execute_ast(q)
                     assert(math.isclose(private_reader.tau, gaus_rho, rel_tol=0.03, abs_tol=2))
+    def test_legacy_params_private_reader(self):
+        reader = PandasReader(df, schema)
+        # params swapped
+        with pytest.warns(Warning):
+            private_reader = PrivateReader(schema, reader, 1.0)
+        assert(isinstance(private_reader.reader, PandasReader))
+        # doubled up params of wrong type should fail
+        with pytest.raises(Exception):
+            private_reader = PrivateReader(schema, schema, 1.0)
+        with pytest.raises(Exception):
+            private_reader = PrivateReader(reader, reader, 1.0)
+    def test_legacy_params_pandas_reader(self):
+        # params swapped
+        with pytest.warns(Warning):
+            reader = PandasReader(schema, df)
+        assert("metadata.collection.CollectionMetadata" in str(type(reader.metadata)))
+        # doubled up params of wrong type should fail
+        with pytest.raises(Exception):
+            reader = PandasReader(schema, schema)
+        with pytest.raises(Exception):
+            reader = PandasReader(df, df)
+
