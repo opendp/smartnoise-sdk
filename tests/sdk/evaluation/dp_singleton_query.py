@@ -28,7 +28,7 @@ class DPSingletonQuery(PrivacyAlgorithm):
         requested by eval_params if actual is set of False. 
         
         """
-        private_reader = PrivateReader(dataset[0], dataset[1], self.privacy_params.epsilon)
+        private_reader = PrivateReader(dataset[1], dataset[0], self.privacy_params.epsilon)
         query_ast = private_reader.parse_query_string(self.algorithm)
         srs_orig = private_reader.reader.execute_ast_typed(query_ast)
         noisy_values = []

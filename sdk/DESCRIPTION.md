@@ -2,7 +2,7 @@
 
 The SmartNoise tools allow researchers and analysts to: 
 
-* Use SQL dialect to ceate differentially private results over tabular data stores
+* Use SQL dialect to create differentially private results over tabular data stores
 * Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy budget
 * Perform privacy algorithm stochastic testing against differential privacy modules
 

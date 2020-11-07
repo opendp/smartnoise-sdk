@@ -21,5 +21,5 @@ class LocalCSVAdapter(DatasetAdapter):
         return CollectionMetadata.from_file(dataset_document.csv_details.local_path.split(".")[0] + ".yaml")
 
     def _load_reader(dataset_document):
-        return PandasReader(LocalCSVAdapter.load_metadata(dataset_document),
-                               LocalCSVAdapter.load_df(dataset_document))
+        return PandasReader( LocalCSVAdapter.load_df(dataset_document), LocalCSVAdapter.load_metadata(dataset_document))
+
