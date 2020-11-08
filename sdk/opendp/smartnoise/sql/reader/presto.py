@@ -1,10 +1,10 @@
 import os
 
-from opendp.smartnoise.ast.ast import Relation
-from opendp.smartnoise.ast.tokens import Literal
-from opendp.smartnoise.ast.expression import Expression
-from opendp.smartnoise.ast.expressions.numeric import BareFunction
-from opendp.smartnoise.ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
+from opendp.smartnoise._ast.ast import Relation
+from opendp.smartnoise._ast.tokens import Literal
+from opendp.smartnoise._ast.expression import Expression
+from opendp.smartnoise._ast.expressions.numeric import BareFunction
+from opendp.smartnoise._ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 

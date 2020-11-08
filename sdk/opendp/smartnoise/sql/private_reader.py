@@ -7,7 +7,7 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
 
-from opendp.smartnoise.ast.expressions import sql as ast
+from opendp.smartnoise._ast.expressions import sql as ast
 from opendp.smartnoise.reader import Reader
 
 from opendp.smartnoise.mechanisms.gaussian import Gaussian
