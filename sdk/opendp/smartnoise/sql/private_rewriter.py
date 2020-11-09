@@ -5,7 +5,7 @@ from .parse import QueryParser
 from opendp.smartnoise._ast import Validate
 
 from opendp.smartnoise._ast.validate import Validate
-from opendp.smartnoise._ast.ast import (Select, From, Query, AliasedRelation, Where, Aggregate, Order
+from opendp.smartnoise._ast.ast import (Select, From, Query, AliasedRelation, Where, Aggregate, Order,
                                         Literal, Column, TableColumn, AllColumns,
                                         NamedExpression, NestedExpression, Expression, Seq,
                                         AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression)
