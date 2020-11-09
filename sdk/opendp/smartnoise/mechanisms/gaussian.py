@@ -4,16 +4,15 @@ from .rand import normal as rand_normal
 from .base import AdditiveNoiseMechanism
 from scipy.stats import norm
 from opendp.smartnoise.report import Result, Interval, Intervals
-
+from opendp.smartnoise.core import core_library
 
 class Gaussian(AdditiveNoiseMechanism):
-    def __init__(self, eps, delta=1.0E-16, sensitivity=1.0, max_contrib=1, interval_widths=[0.95], n_rows=None):
-        super().__init__(eps, delta, sensitivity, max_contrib, interval_widths, n_rows)
-        self.sd = (math.sqrt(math.log(1/delta)) + math.sqrt(math.log(1/delta) + self.eps)) / (math.sqrt(2) * self.eps)
+    def __init__(self, epsilon, delta=1.0E-16, sensitivity=1.0, max_contrib=1):
+        super().__init__(epsilon, delta, sensitivity, max_contrib)
+        self.sd = sensitivity * max_contrib * math.sqrt(2.0 * math.log(1.25 / delta)) / epsilon
 
     def release(self, vals, compute_accuracy=False, bootstrap=False):
-        noise = rand_normal(0.0, self.sd * self.max_contrib * self.sensitivity, len(vals))
-        reported_vals = [n + v for n, v in zip(noise, vals)]
+        reported_vals = [core_library.gaussian_mechanism(v, self.eps, self.delta, self.sensitivity * self.max_contrib, False) for v in vals]
         mechanism = "Gaussian"
         statistic = "additive_noise"
         source = None
@@ -29,13 +28,3 @@ class Gaussian(AdditiveNoiseMechanism):
             intervals = Intervals([Interval(confidence, accuracy) for confidence, accuracy in zip(self.interval_widths, accuracy)])
             intervals.extend(reported_vals)
         return Result(mechanism, statistic, source, reported_vals, epsilon, delta, sensitivity, self.sd, max_contrib, intervals)
-
-    def bounds(self, bootstrap=False):
-        if not bootstrap:
-            _bounds = []
-            for a in self.interval_widths:
-                edge = (1.0 - a) / 2.0
-                _bounds.append(norm.ppf([edge, 1 - edge], 0.0, self.sd * self.max_contrib * self.sensitivity))
-            return _bounds
-        else:
-            return super().bounds(bootstrap)

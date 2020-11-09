@@ -86,6 +86,7 @@ class PrivateReader(Reader):
         self.metadata.compare = self.reader.compare
         tables = self.metadata.tables()
         self._options.row_privacy = any([t.row_privacy for t in tables])
+        self._options.censor_dims = not any([not t.censor_dims for t in tables])
         self._options.reservoir_sample = any([t.sample_max_ids for t in tables])
         self._options.clamp_counts = any([t.clamp_counts for t in tables])
         self._options.max_contrib = max([t.max_ids for t in tables])
@@ -202,7 +203,7 @@ class PrivateReader(Reader):
             kc_pos = kcc_pos.pop()
 
         # make a list of mechanisms in column order
-        mechs = [Gaussian(self.epsilon_per_column, self.delta, s, max_contrib, self.interval_widths) if s is not None else None for s in sens]
+        mechs = [Gaussian(self.epsilon_per_column, self.delta, s, max_contrib) if s is not None else None for s in sens]
 
         # execute the subquery against the backend and load in tuples
         if cache_exact:

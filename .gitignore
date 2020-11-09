@@ -116,6 +116,10 @@ result.json
 # DS_Store
 .DS_Store
 
+# Local copy of core_library
+sdk/opendp/smartnoise/core/
+
+
 # datasets
 iris.csv
 iris.yaml
