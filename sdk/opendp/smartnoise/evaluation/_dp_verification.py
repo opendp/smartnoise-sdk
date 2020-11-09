@@ -55,13 +55,13 @@ class DPVerification:
         # Storing the data as a CSV
         file_path = os.path.join(self.file_dir, self.csv_path, file_name + ".csv")
         df.to_csv(file_path, sep=',', encoding='utf-8', index=False)
-        metadata = Table(file_name, file_name, self.dataset_size, \
+        metadata = Table(file_name, file_name,  \
             [\
                 String("UserId", self.dataset_size, True), \
                 String("Segment", 3, False), \
                 String("Role", 2, False), \
                 Int("Usage", 0, 25)
-            ])
+            ], self.dataset_size)
 
         return df, file_path, file_name, metadata
 

@@ -32,6 +32,8 @@ class CollectionMetadata:
         return "\n\n".join([str(self.m_tables[table]) for table in self.m_tables.keys()])
     def tables(self):
         return [self.m_tables[tname] for tname in self.m_tables.keys()]
+    def __iter__(self):
+        return self.tables()
 
     @staticmethod
     def from_file(filename):
@@ -55,7 +57,7 @@ class CollectionMetadata:
 """
 class Table:
     """Information about a single tabular data source"""
-    def __init__(self, schema, name, rowcount, columns, row_privacy=False, max_ids=1, sample_max_ids=True, rows_exact=None):
+    def __init__(self, schema, name, columns, rowcount=0, rows_exact=None, row_privacy=False, max_ids=1, sample_max_ids=True, clamp_counts=False, clamp_columns=True, use_dpsu=None):
         """Instantiate information about a tabular data source.
 
         :param schema: The schema is the SQL-92 schema used for disambiguating table names.  See
@@ -72,6 +74,9 @@ class Table:
         self.max_ids = max_ids
         self.sample_max_ids = sample_max_ids
         self.rows_exact = rows_exact
+        self.use_dpsu = use_dpsu
+        self.clamp_counts = clamp_counts
+        self.clamp_columns = clamp_columns
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
     def __getitem__(self, colname):
@@ -89,6 +94,8 @@ class Table:
         return [self.m_columns[name] for name in self.m_columns.keys() if self.m_columns[name].is_key == True]
     def columns(self):
         return [self.m_columns[name] for name in self.m_columns.keys()]
+    def __iter__(self):
+        return self.columns()
     def table_name(self):
         return (self.schema + "." if len(self.schema.strip()) > 0 else "") + self.name
 
@@ -214,13 +221,16 @@ class CollectionYamlLoader:
         row_privacy = bool(t["row_privacy"]) if "row_privacy" in t else False
         max_ids = int(t["max_ids"]) if "max_ids" in t else 1
         sample_max_ids = bool(t["sample_max_ids"]) if "sample_max_ids" in t else None
+        use_dpsu = bool(t["use_dpsu"]) if "use_dpsu" in t else None
+        clamp_counts = bool(t["clamp_counts"]) if "clamp_counts" in t else None
+        clamp_columns = bool(t["clamp_columns"]) if "clamp_columns" in t else True
 
         columns = []
-        colnames = [cn for cn in t.keys() if cn not in ["rows", "rows_exact", "row_privacy", "max_ids", "sample_max_ids"]]
+        colnames = [cn for cn in t.keys() if cn not in ["rows", "rows_exact", "row_privacy", "max_ids", "sample_max_ids", "clamp_counts", "clamp_columns", "use_dpsu"]]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 
-        return Table(schema, table, rowcount, columns, row_privacy, max_ids, sample_max_ids, rows_exact)
+        return Table(schema, table, columns, rowcount, rows_exact, row_privacy, max_ids, sample_max_ids, clamp_counts, clamp_columns, use_dpsu)
 
     def load_column(self, column, c):
         is_key = False if "private_id" not in c else bool(c["private_id"])
@@ -267,6 +277,12 @@ class CollectionYamlLoader:
                 table["sample_max_ids"] = t.sample_max_ids
             if t.rows_exact is not None:
                 table["rows_exact"] = t.rows_exact
+            if t.use_dpsu is not None:
+                table["use_dpsu"] = t.use_dpsu
+            if t.clamp_counts is not None:
+                table["clamp_counts"] = t.clamp_counts
+            if t.clamp_columns is not None:
+                table["clamp_columns"] = t.clamp_columns
 
             for c in t.columns():
                 cname = c.name
