@@ -2,7 +2,6 @@ import random
 import string
 
 from .parse import QueryParser
-from opendp.smartnoise._ast import Validate
 
 from opendp.smartnoise._ast.validate import Validate
 from opendp.smartnoise._ast.ast import (Select, From, Query, AliasedRelation, Where, Aggregate, Order,
