@@ -1,4 +1,4 @@
-from opendp.smartnoise.ast.tokens import *
+from opendp.smartnoise._ast.tokens import *
 
 import numpy as np
 

@@ -1,5 +1,5 @@
 import pytest
-from opendp.smartnoise.ast import Validate
+from opendp.smartnoise._ast.validate import Validate
 from opendp.smartnoise.sql.parse import QueryParser
 from opendp.smartnoise.metadata import CollectionMetadata
 
