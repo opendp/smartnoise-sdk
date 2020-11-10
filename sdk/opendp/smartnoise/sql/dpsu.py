@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from opendp.smartnoise.sql.parse import QueryParser
 from opendp.smartnoise._ast.ast import Table
-from opendp.smartnoise._mechanisms.rand import laplace
+from opendp.smartnoise.sql._mechanisms.rand import laplace
 
 sys_rand = random.SystemRandom()
 

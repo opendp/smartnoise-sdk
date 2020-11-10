@@ -10,7 +10,7 @@ from .reader import PandasReader
 from opendp.smartnoise._ast.expressions import sql as ast
 from opendp.smartnoise.reader import Reader
 
-from opendp.smartnoise._mechanisms.gaussian import Gaussian
+from ._mechanisms.gaussian import Gaussian
 from opendp.smartnoise.report import Interval, Intervals, Result
 from opendp.smartnoise.reader.rowset import TypedRowset
 

@@ -9,7 +9,7 @@ import os
 
 from opendp.smartnoise.sql import PandasReader, PrivateReader
 from opendp.smartnoise.reader.rowset import TypedRowset
-from opendp.smartnoise._mechanisms.gaussian import Gaussian
+from opendp.smartnoise.sql._mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 class Aggregation:
@@ -17,11 +17,10 @@ class Aggregation:
     Implement different aggregation functions that can be passed through
     the verification tests
     """
-    def __init__(self, epsilon=1.0, t=1, repeat_count=10000, mechanism="Gaussian"):
+    def __init__(self, epsilon=1.0, t=1, repeat_count=10000):
         self.epsilon = epsilon
         self.t = t
         self.repeat_count = repeat_count
-        self.mechanism = mechanism
 
     def exact_count(self, df, colname):
         """
@@ -81,8 +80,7 @@ class Aggregation:
         Returns repeatedly applied noise adding mechanism to count query
         """
         exact_count = df[colname].count()
-        if(self.mechanism == "Gaussian"):
-            mech = Gaussian(self.epsilon)
+        mech = Gaussian(self.epsilon)
         return np.array([mech.release([exact_count]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_sum(self, df, colname):
@@ -93,8 +91,7 @@ class Aggregation:
         """
         exact_sum = df[colname].sum()
         M = float(abs(max(df[colname]) - min(df[colname])))
-        if(self.mechanism == "Gaussian"):
-            mech = Gaussian(self.epsilon, 10E-5, M)
+        mech = Gaussian(self.epsilon, 10E-5, M)
         return np.array([mech.release([exact_sum]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_mean(self, df, colname):
