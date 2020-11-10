@@ -9,8 +9,7 @@ import os
 
 from opendp.smartnoise.sql import PandasReader, PrivateReader
 from opendp.smartnoise.reader.rowset import TypedRowset
-from opendp.smartnoise.mechanisms.laplace import Laplace
-from opendp.smartnoise.mechanisms.gaussian import Gaussian
+from opendp.smartnoise.sql._mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 class Aggregation:
@@ -18,11 +17,10 @@ class Aggregation:
     Implement different aggregation functions that can be passed through
     the verification tests
     """
-    def __init__(self, epsilon=1.0, t=1, repeat_count=10000, mechanism="Laplace"):
+    def __init__(self, epsilon=1.0, t=1, repeat_count=10000):
         self.epsilon = epsilon
         self.t = t
         self.repeat_count = repeat_count
-        self.mechanism = mechanism
 
     def exact_count(self, df, colname):
         """
@@ -79,27 +77,21 @@ class Aggregation:
 
     def dp_mechanism_count(self, df, colname):
         """
-        Returns repeatedly applied noise adding mechanisms
-        like Laplace and Gaussian available in SmartNoise-SDK to count query
+        Returns repeatedly applied noise adding mechanism to count query
         """
         exact_count = df[colname].count()
-        mech = Laplace(self.epsilon)
-        if(self.mechanism == "Gaussian"):
-            mech = Gaussian(self.epsilon)
+        mech = Gaussian(self.epsilon)
         return np.array([mech.release([exact_count]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_sum(self, df, colname):
         """
-        Returns repeatedly applied noise adding mechanisms
-        like Laplace and Gaussian available in SmartNoise-SDK to sum query.
+        Returns repeatedly applied noise adding mechanisms to sum query.
         Sensitivity is set as absolute difference between max and min values
         within the column
         """
         exact_sum = df[colname].sum()
         M = float(abs(max(df[colname]) - min(df[colname])))
-        mech = Laplace(self.epsilon, sensitivity = M)
-        if(self.mechanism == "Gaussian"):
-            mech = Gaussian(self.epsilon)
+        mech = Gaussian(self.epsilon, 10E-5, M)
         return np.array([mech.release([exact_sum]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_mean(self, df, colname):

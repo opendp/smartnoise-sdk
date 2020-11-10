@@ -16,7 +16,7 @@ steps:
 
   - bash: |
       source activate wnoise
-      pip install -e ./sdk
+      pip install ./sdk
     displayName: Install opendp-smartnoise
 
   - bash: |

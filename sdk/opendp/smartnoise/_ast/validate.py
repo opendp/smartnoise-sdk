@@ -106,7 +106,8 @@ class QueryConstraints:
             syms = r.all_symbols(AllColumns())
             tcs = [s for name, s in syms if type(s) is TableColumn ]
             if not any([tc.is_key for tc in tcs]):
-                raise ValueError("Source relation must include a private key column: " + str(r))
+                if not any([tc.row_privacy for tc in tcs]):
+                    raise ValueError("Source relation must include a private key column: " + str(r))
         if type(r) is Join:
             raise ValueError("Support for JOIN queries is currently disabled")
             if type(r.criteria) is not UsingJoinCriteria:
