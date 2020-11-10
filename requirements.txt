@@ -1,2 +1,0 @@
-sdk/
-opendp-smartnoise-core
