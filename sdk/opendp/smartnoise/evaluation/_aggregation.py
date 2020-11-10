@@ -9,7 +9,7 @@ import os
 
 from opendp.smartnoise.sql import PandasReader, PrivateReader
 from opendp.smartnoise.reader.rowset import TypedRowset
-from opendp.smartnoise.mechanisms.gaussian import Gaussian
+from opendp.smartnoise._mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 class Aggregation:
