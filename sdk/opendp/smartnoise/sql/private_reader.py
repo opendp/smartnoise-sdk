@@ -7,6 +7,7 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
 
+from opendp.smartnoise._ast.ast import Top
 from opendp.smartnoise._ast.expressions import sql as ast
 from opendp.smartnoise.reader import Reader
 
@@ -16,6 +17,7 @@ from opendp.smartnoise.reader.rowset import TypedRowset
 
 module_logger = logging.getLogger(__name__)
 
+import itertools
 
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results
@@ -330,6 +332,24 @@ class PrivateReader(Reader):
                 out = out.sortBy(sort_func)
             else:
                 out = sorted(out, key=sort_func)
+
+            # check for LIMIT or TOP
+            limit_rows = None
+            if query.limit is not None:
+                if query.select.quantifier is not None:
+                    raise ValueError("Query cannot have both LIMIT and TOP set")
+                limit_rows = query.limit.n
+            elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
+                limit_rows = query.select.quantifier.n
+            if limit_rows is not None:
+                if hasattr(db_rs, 'rdd'):
+                    # it's a dataframe
+                    out = db_rs.limit(limit_rows)
+                elif hasattr(db_rs, 'map'):
+                    # it's an RDD
+                    out = db_rs.limit(limit_rows)
+                else:
+                    out = itertools.islice(out, limit_rows)
 
         # output it
         if hasattr(out, 'toDF'):

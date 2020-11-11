@@ -125,7 +125,7 @@ class Rewriter:
                 child_scope.push_name(ge.expression)
 
         select = Seq([self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
-        select = Select(None, select)
+        select = Select(query.select.quantifier, select)
 
         subquery = Query(child_scope.select(), query.source, query.where, query.agg, None, None, None)
         subquery = self.exact_aggregates(subquery)
