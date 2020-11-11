@@ -119,8 +119,13 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SqlSmallParser#caseExpression.
-    def visitCaseExpression(self, ctx:SqlSmallParser.CaseExpressionContext):
+    # Visit a parse tree produced by SqlSmallParser#caseBaseExpr.
+    def visitCaseBaseExpr(self, ctx:SqlSmallParser.CaseBaseExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#caseWhenExpr.
+    def visitCaseWhenExpr(self, ctx:SqlSmallParser.CaseWhenExprContext):
         return self.visitChildren(ctx)
 
 
@@ -136,6 +141,11 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#whenExpression.
     def visitWhenExpression(self, ctx:SqlSmallParser.WhenExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#whenBaseExpression.
+    def visitWhenBaseExpression(self, ctx:SqlSmallParser.WhenBaseExpressionContext):
         return self.visitChildren(ctx)
 
 
@@ -204,66 +214,6 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SqlSmallParser#allExpression.
-    def visitAllExpression(self, ctx:SqlSmallParser.AllExpressionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#stringLiteral.
-    def visitStringLiteral(self, ctx:SqlSmallParser.StringLiteralContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#numberLiteral.
-    def visitNumberLiteral(self, ctx:SqlSmallParser.NumberLiteralContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#trueLiteral.
-    def visitTrueLiteral(self, ctx:SqlSmallParser.TrueLiteralContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#falseLiteral.
-    def visitFalseLiteral(self, ctx:SqlSmallParser.FalseLiteralContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#nullLiteral.
-    def visitNullLiteral(self, ctx:SqlSmallParser.NullLiteralContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#logicalNot.
-    def visitLogicalNot(self, ctx:SqlSmallParser.LogicalNotContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#comparison.
-    def visitComparison(self, ctx:SqlSmallParser.ComparisonContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#predicated.
-    def visitPredicated(self, ctx:SqlSmallParser.PredicatedContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#conjunction.
-    def visitConjunction(self, ctx:SqlSmallParser.ConjunctionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#disjunction.
-    def visitDisjunction(self, ctx:SqlSmallParser.DisjunctionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#nestedBoolean.
-    def visitNestedBoolean(self, ctx:SqlSmallParser.NestedBooleanContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by SqlSmallParser#betweenCondition.
     def visitBetweenCondition(self, ctx:SqlSmallParser.BetweenConditionContext):
         return self.visitChildren(ctx)
@@ -276,16 +226,6 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#isCondition.
     def visitIsCondition(self, ctx:SqlSmallParser.IsConditionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#comparisonOperator.
-    def visitComparisonOperator(self, ctx:SqlSmallParser.ComparisonOperatorContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SqlSmallParser#booleanValue.
-    def visitBooleanValue(self, ctx:SqlSmallParser.BooleanValueContext):
         return self.visitChildren(ctx)
 
 
@@ -324,6 +264,41 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlSmallParser#boolColumn.
+    def visitBoolColumn(self, ctx:SqlSmallParser.BoolColumnContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#logicalNot.
+    def visitLogicalNot(self, ctx:SqlSmallParser.LogicalNotContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#comparison.
+    def visitComparison(self, ctx:SqlSmallParser.ComparisonContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#predicated.
+    def visitPredicated(self, ctx:SqlSmallParser.PredicatedContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#conjunction.
+    def visitConjunction(self, ctx:SqlSmallParser.ConjunctionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#disjunction.
+    def visitDisjunction(self, ctx:SqlSmallParser.DisjunctionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#nestedBoolean.
+    def visitNestedBoolean(self, ctx:SqlSmallParser.NestedBooleanContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlSmallParser#bareFunction.
     def visitBareFunction(self, ctx:SqlSmallParser.BareFunctionContext):
         return self.visitChildren(ctx)
@@ -341,6 +316,46 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#powerFunction.
     def visitPowerFunction(self, ctx:SqlSmallParser.PowerFunctionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#comparisonOperator.
+    def visitComparisonOperator(self, ctx:SqlSmallParser.ComparisonOperatorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#booleanValue.
+    def visitBooleanValue(self, ctx:SqlSmallParser.BooleanValueContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#allExpression.
+    def visitAllExpression(self, ctx:SqlSmallParser.AllExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#stringLiteral.
+    def visitStringLiteral(self, ctx:SqlSmallParser.StringLiteralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#numberLiteral.
+    def visitNumberLiteral(self, ctx:SqlSmallParser.NumberLiteralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#trueLiteral.
+    def visitTrueLiteral(self, ctx:SqlSmallParser.TrueLiteralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#falseLiteral.
+    def visitFalseLiteral(self, ctx:SqlSmallParser.FalseLiteralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#nullLiteral.
+    def visitNullLiteral(self, ctx:SqlSmallParser.NullLiteralContext):
         return self.visitChildren(ctx)
 
 

@@ -127,11 +127,11 @@ class Rewriter:
         select = Seq([self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
         select = Select(None, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
+        subquery = Query(child_scope.select(), query.source, query.where, query.agg, None, None, None)
         subquery = self.exact_aggregates(subquery)
         subquery = [AliasedRelation(subquery, "exact_aggregates")]
 
-        q = Query(select, From(subquery), None, query.agg, None, query.order, query.limit)
+        q = Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit)
 
         return QueryParser(self.metadata).query(str(q))
 
@@ -153,7 +153,7 @@ class Rewriter:
         select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
+        subquery = Query(child_scope.select(), query.source, query.where, query.agg, None, None, None)
         if self.options.reservoir_sample and not self.options.row_privacy:
             subquery = self.per_key_random(subquery)
             subquery = [AliasedRelation(subquery, "per_key_random")]
