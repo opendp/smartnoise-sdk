@@ -46,7 +46,7 @@ aggregationClause
     ;
 
 havingClause
-    : HAVING booleanExpression | qualifiedColumnName
+    : HAVING booleanExpression 
     ;
 
 orderClause

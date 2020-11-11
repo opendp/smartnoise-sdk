@@ -356,7 +356,7 @@ class BooleanExpressionVisitor(SqlSmallVisitor):
         return BetweenCondition(lower, upper, is_not)
 
     def visitQualifiedColumnName(self, ctx):
-        return Column(ctx.getText())
+        return ColumnBoolean(Column(ctx.getText()))
 
 
 def allText(ctx):

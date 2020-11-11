@@ -34,9 +34,15 @@ names_d2 = ["sd2", "dd2"]
 vals_str = ["Smart", "Noise"]
 names_str = ["smart", "noise"]
 
+vals_f = ["false", False]
+names_f = ["s_f",  "b_f"]
+
+vals_t = ["true", True]
+names_t = ["s_t", "b_t"]
+
 # now load all the values into a bindings dict
-vals = vals_5 + vals_7 + vals_d1 + vals_d2 + vals_str
-names = names_5 + names_7 + names_d1 + names_d2 + names_str
+vals = vals_5 + vals_7 + vals_d1 + vals_d2 + vals_str + vals_t + vals_f
+names = names_5 + names_7 + names_d1 + names_d2 + names_str + names_t + names_f
 bindings = dict((name.lower(), val ) for name, val in zip(names, vals))
 
 class TestLogical:
@@ -351,15 +357,16 @@ class TestLogical:
         assert(BooleanCompare(Column(names_str[0]), '<=', Literal(vals_str[0])).evaluate(bindings))
         assert(BooleanCompare(Literal(vals_str[0]), '<=', Column(names_str[0])).evaluate(bindings))
     def test_and(self):
-        cond = BooleanCompare(Literal(True), 'and', Literal(True))
-        assert cond.evaluate(None)
-        cond = BooleanCompare(Literal("True"), 'and', Literal(True))
-        assert cond.evaluate(None)
-        cond = BooleanCompare(Literal(True), 'and', Literal("True"))
-        assert cond.evaluate(None)
-        cond = BooleanCompare(Literal(False), 'and', Literal(True))
-        assert not cond.evaluate(None)
-        cond = BooleanCompare(Literal("False"), 'and', Literal(True))
-        assert not cond.evaluate(None)
-        cond = BooleanCompare(Literal(False), 'and', Literal("true"))
-        assert not cond.evaluate(None)
+        for tv, tn in zip(vals_t, names_t):
+            for tvb, tnb in zip(vals_t, names_t):
+                # All True
+                if not (isinstance(tv, str) and isinstance(tvb, str)):
+                    assert BooleanCompare(Literal(tv), 'and', Literal(tvb)).evaluate(None)
+                    assert BooleanCompare(Column(tn), 'and', Literal(tvb)).evaluate(bindings)
+                    assert BooleanCompare(Literal(tv), 'and', Column(tnb)).evaluate(bindings)
+            for fv, fn in zip(vals_f, names_f):
+                # All False
+                if not (isinstance(tv, str) and isinstance(fv, str)):
+                    assert not BooleanCompare(Literal(tv), 'and', Literal(fv)).evaluate(None)
+                    assert not BooleanCompare(Column(tn), 'and', Literal(fv)).evaluate(bindings)
+                    assert not BooleanCompare(Literal(tv), 'and', Column(fn)).evaluate(bindings)

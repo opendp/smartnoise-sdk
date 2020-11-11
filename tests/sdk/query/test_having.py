@@ -123,15 +123,13 @@ class TestOtherTypes:
         res = self.reader.execute(query)
         assert len(res) > 75
 
-        #query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING married"
-        #res = self.reader.execute(query)
-        #print(len(res))
-        #assert len(res) == 72
+        query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING married"
+        res = self.reader.execute(query)
+        assert len(res) == 72
 
-        #query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING n > 10 OR married"
-        #res = self.reader.execute(query)
-        #print(len(res))
-        #assert len(res) > 75
+        query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING n > 10 OR married"
+        res = self.reader.execute(query)
+        assert len(res) > 75
 
         query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING married = 0"
         res = self.reader.execute(query)
@@ -141,10 +139,9 @@ class TestOtherTypes:
         res = self.reader.execute(query)
         assert len(res) > 75
 
-        #query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING NOT married"
-        #res = self.reader.execute(query)
-        #print(len(res))
-        #assert len(res) == 73
+        query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING NOT married"
+        res = self.reader.execute(query)
+        assert len(res) == 73
 
         query = "SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married HAVING n > 10 OR NOT married"
         res = self.reader.execute(query)

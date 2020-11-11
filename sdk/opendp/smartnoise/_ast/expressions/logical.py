@@ -66,7 +66,22 @@ class BooleanCompare(SqlExpr):
         except:
             raise ValueError("We don't know how to compare {0} {1} {2} of mismatched types {3} and {4}".format(l, self.op, r, str(type(l)), str(type(r))))
         
-        return res
+        return parse_bool(res)
+
+class ColumnBoolean(SqlExpr):
+    """A qualified column name that was parsed in a context that requires boolean"""
+    def __init__(self, expression):
+        self.expression = expression
+    def symbol(self, relations):
+        return ColumnBoolean(self.expression.symbol(relations))
+    def type(self):
+        return bool
+    def sensitivity(self):
+        return 1
+    def children(self):
+        return [self.expression]
+    def evaluate(self, bindings):
+        return parse_bool(self.expression.evaluate(bindings))
 
 class NestedBoolean(SqlExpr):
     """A nested expression with no name"""
@@ -81,7 +96,7 @@ class NestedBoolean(SqlExpr):
     def children(self):
         return [Token("("), self.expression, Token(")")]
     def evaluate(self, bindings):
-        return self.expression.evaluate(bindings)
+        return parse_bool(self.expression.evaluate(bindings))
 
 class LogicalNot(SqlExpr):
     """Negation of a boolean expression"""
