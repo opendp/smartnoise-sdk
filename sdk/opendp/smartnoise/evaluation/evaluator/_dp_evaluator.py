@@ -181,6 +181,15 @@ class DPEvaluator(Evaluator):
         tset, pval = stats.ttest_1samp(diff, 0.0)
         return (pval >= sig_level)
 
+    def bias_test(self, fD1, fD_actual, sig_level):
+        """
+        1 sample t-test to check if difference in actual and noisy responses 
+        is not statistically significant
+        """
+        diff = fD1 - fD_actual
+        tset, pval = stats.ttest_1samp(diff, 0.0)
+        return (pval >= sig_level)
+
     """
     Implement the Evaluator interface that takes in two neighboring datasets
     D1 and D2 and a privacy algorithm. Then runs the algorithm on the

@@ -1,7 +1,7 @@
 import pytest
-from opendp.whitenoise.ast import Validate
-from opendp.whitenoise.sql.parse import QueryParser
-from opendp.whitenoise.metadata import CollectionMetadata
+from opendp.smartnoise._ast.validate import Validate
+from opendp.smartnoise.sql.parse import QueryParser
+from opendp.smartnoise.metadata import CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname

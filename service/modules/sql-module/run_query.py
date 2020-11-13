@@ -4,9 +4,9 @@ import sys
 
 import pandas as pd
 
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_reader, load_metadata
-from opendp.whitenoise.sql import PrivateReader
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_reader, load_metadata
+from opendp.smartnoise.sql import PrivateReader
 
 
 if __name__ == "__main__":
@@ -22,7 +22,7 @@ if __name__ == "__main__":
         budget_per_column = budget / PrivateReader.get_budget_multiplier(metadata,
                                                                          reader,
                                                                          query)
-        private_reader = PrivateReader(metadata, reader, budget_per_column)
+        private_reader = PrivateReader(reader, metadata, budget_per_column)
 
         rowset = private_reader.execute(query)
         result = {"query_result": rowset}

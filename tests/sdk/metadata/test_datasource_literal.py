@@ -1,14 +1,14 @@
-from opendp.whitenoise.metadata.collection import *
+from opendp.smartnoise.metadata.collection import *
 import copy
 
 class TestDSMetadataLiteral:
     def test_create_ds_literal(self):
-        table1 = Table("dbo", "d1", 5000, \
+        table1 = Table("dbo", "d1", \
             [\
                 String("DeviceID", 0, True),\
                 Boolean("Refurbished"), \
                 Float("Temperature", 20.0, 70.0)
-            ])
+            ], 5000)
 
         table2 = copy.copy(table1)
         table2.name = "d2"

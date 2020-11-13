@@ -1,19 +1,19 @@
 import pytest
-from opendp.whitenoise.ast import Validate
-from opendp.whitenoise.sql.parse import QueryParser
-from opendp.whitenoise.metadata import CollectionMetadata
+from opendp.smartnoise._ast.validate import Validate
+from opendp.smartnoise.sql.parse import QueryParser
+from opendp.smartnoise.metadata import CollectionMetadata
 
 from os import listdir
 from os.path import isfile, join, dirname
 import subprocess
 
-"""Unit test driver for testing valid and invalid queries that 
+"""Unit test driver for testing valid and invalid queries that
     use the PUMS schema.
 
 All queries in tests/validate_pums.sql should pass validation
 All queries in tests/validate_pums_fail.sql should parse and build AST, but fail validation
 
-In other words, these tests should catch simple cases of valid SQL 
+In other words, these tests should catch simple cases of valid SQL
     that violates differential privacy rules, which the validator is
     expected to prevent.
 

@@ -5,10 +5,10 @@ import pandas as pd
 import math
 import pytest
 
-from opendp.whitenoise.sql.dpsu import preprocess_df_from_query, run_dpsu
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.sql.parse import QueryParser
-from opendp.whitenoise.sql import PrivateReader, PandasReader
+from opendp.smartnoise.sql.dpsu import preprocess_df_from_query, run_dpsu
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.sql.parse import QueryParser
+from opendp.smartnoise.sql import PrivateReader, PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -42,12 +42,12 @@ class TestDPSU:
     @pytest.mark.skip("max_ids needs to be overriden")
     def test_dpsu_vs_korolova(self):
         query = "SELECT ngram, COUNT(*) as n FROM reddit.reddit GROUP BY ngram ORDER BY n desc"
-        reader = PandasReader(schema, df)
-        private_reader = PrivateReader(schema, reader, 3.0)
+        reader = PandasReader(df, schema)
+        private_reader = PrivateReader(reader, schema, 3.0)
         private_reader.options.max_contrib = 10
         result = private_reader.execute_typed(query)
 
-        private_reader_korolova = PrivateReader(schema, reader, 3.0)
+        private_reader_korolova = PrivateReader(reader, schema, 3.0)
         private_reader_korolova.options.dpsu = False
         private_reader_korolova.options.max_contrib = 10
         korolova_result = private_reader_korolova.execute_typed(query)
@@ -61,7 +61,7 @@ class TestDPSU:
         pums_csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.csv"))
         pums_schema = CollectionMetadata.from_file(pums_meta_path)
         pums_df = pd.read_csv(pums_csv_path)
-        pums_reader = PandasReader(pums_schema, pums_df)
+        pums_reader = PandasReader(pums_df, pums_schema)
         query = "SELECT COUNT(*) FROM PUMS.PUMS"
         cost = PrivateReader.get_budget_multiplier(pums_schema, pums_reader, query)
 

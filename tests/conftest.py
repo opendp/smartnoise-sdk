@@ -5,8 +5,8 @@ import time
 import sklearn.datasets
 import pandas as pd
 
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.metadata.collection import Table, Float, String
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.metadata.collection import Table, Float, String
 
 from subprocess import Popen, PIPE
 from threading import Thread
@@ -15,10 +15,10 @@ import pytest
 
 from requests import Session
 
-from opendp.whitenoise.client import _get_client
-from opendp.whitenoise.client.restclient.rest_client import RestClient
-from opendp.whitenoise.client.restclient.models.secret import Secret
-DATAVERSE_TOKEN_ENV_VAR = "WHITENOISE_DATAVERSE_TEST_TOKEN"
+from opendp.smartnoise.client import _get_client
+from opendp.smartnoise.client.restclient.rest_client import RestClient
+from opendp.smartnoise.client.restclient.models.secret import Secret
+DATAVERSE_TOKEN_ENV_VAR = "SMARTNOISE_DATAVERSE_TEST_TOKEN"
 
 # Add the utils directory to the path
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -35,12 +35,12 @@ if not os.path.exists(iris_dataset_path):
 
 iris_schema_path = os.path.join(root_url, "service", "datasets", "iris.yaml")
 if not os.path.exists(iris_schema_path):
-    iris = Table("iris", "iris", 150, [
+    iris = Table("iris", "iris", [
                 Float("sepal length (cm)", 4, 8),
                 Float("sepal width (cm)", 2, 5),
                 Float("petal length (cm)", 1, 7),
                 Float("petal width (cm)", 0, 3)
-    ])
+    ], 150)
     schema = CollectionMetadata([iris], "csv")
     schema.to_file(iris_schema_path, "iris")
 
@@ -87,17 +87,17 @@ if not os.path.exists(reddit_dataset_path):
 
 reddit_schema_path = os.path.join(root_url, "service", "datasets", "reddit.yaml")
 if not os.path.exists(reddit_schema_path):
-    reddit = Table("reddit", "reddit", 500000, [
+    reddit = Table("reddit", "reddit",  [
                 String("author", card=10000, is_key=True),
                 String("ngram", card=10000)
-    ], False, max_ids=500)
+    ], 500000, None, False, max_ids=500)
     schema = CollectionMetadata([reddit], "csv")
     schema.to_file(reddit_schema_path, "reddit")
 
 @pytest.fixture(scope="session")
 def client():
-    url = os.environ.get("WHITENOISE_SERVICE_URL", "localhost")
-    port = int(os.environ.get("WHITENOISE_SERVICE_PORT", 5001))
+    url = os.environ.get("SMARTNOISE_SERVICE_URL", "localhost")
+    port = int(os.environ.get("SMARTNOISE_SERVICE_PORT", 5001))
 
     client = _get_client()
     if DATAVERSE_TOKEN_ENV_VAR in os.environ:

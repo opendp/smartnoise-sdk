@@ -7,8 +7,8 @@ import logging
 import numpy as np
 import pandas as pd
 
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_metadata, load_dataset
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_metadata, load_dataset
 
 from diffprivlib.mechanisms import Vector
 from diffprivlib.utils import PrivacyLeakWarning, DiffprivlibCompatibilityWarning, warn_unused_args
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         dataset = load_dataset(dataset_document)
         schema = load_metadata(dataset_document)
 
-        # use column names to get X and y from dataset to pass to LogisticRegression 
+        # use column names to get X and y from dataset to pass to LogisticRegression
         X = dataset[x_features]
         y = np.ravel(dataset[y_targets]) # use ravel to convert the column vector to a 1d array to avoid issues later using fit
 

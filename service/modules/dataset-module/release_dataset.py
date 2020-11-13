@@ -6,9 +6,9 @@ import yaml
 
 import pandas as pd
 
-from opendp.whitenoise.client import get_dataset_client
-from opendp.whitenoise.data.adapters import load_reader, load_metadata, load_dataset
-from opendp.whitenoise.sql.private_reader import PrivateReader
+from opendp.smartnoise.client import get_dataset_client
+from opendp.smartnoise.data.adapters import load_reader, load_metadata, load_dataset
+from opendp.smartnoise.sql.private_reader import PrivateReader
 from pandasql import sqldf
 
 """
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     private_dataset_name = sys.argv[1]
     release_dataset_name = sys.argv[2]
     budget = sys.argv[3]
-    
+
     with mlflow.start_run():
         service_client = get_dataset_client()
         dataset_document = service_client.read(private_dataset_name, budget)
@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
         prev_path = dataset_document['csv_details']['path']
         new_path = os.path.join(os.path.dirname(prev_path), release_dataset_name + '.csv')
-        
+
         prev_schema = dataset_document['csv_details']['schema']
         new_schema = os.path.join(os.path.dirname(prev_schema), release_dataset_name + '.yaml')
 
@@ -52,6 +52,6 @@ if __name__ == "__main__":
         with open("result.json", "w") as stream:
             json.dump({"released_dataset_name": release_dataset_name}, stream)
         mlflow.log_artifact("result.json")
-        
+
         # TODO: Perform basic dataset_document validation
         service_client.release(new_dataset)

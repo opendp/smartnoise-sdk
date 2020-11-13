@@ -8,9 +8,9 @@ import sys
 import subprocess
 import os
 import pytest
-from opendp.whitenoise.evaluation._dp_verification import DPVerification
-from opendp.whitenoise.evaluation._exploration import Exploration
-from opendp.whitenoise.evaluation._aggregation import Aggregation
+from opendp.smartnoise.evaluation._dp_verification import DPVerification
+from opendp.smartnoise.evaluation._exploration import Exploration
+from opendp.smartnoise.evaluation._aggregation import Aggregation
 
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url, "service", "datasets"))
@@ -68,13 +68,13 @@ class TestStochastic:
 
     @pytest.mark.skip
     def test_dp_gaussian_mechanism_count(self):
-        ag = Aggregation(t=1, repeat_count=500, mechanism = "Gaussian")
+        ag = Aggregation(t=1, repeat_count=500)
         dp_count, ks_count, ws_count = dv.aggtest(ag.dp_mechanism_count, 'UserId', binsize="auto", plot=False, debug = False)
         assert(dp_count)
 
     @pytest.mark.skip
     def test_dp_gaussian_mechanism_sum(self):
-        ag = Aggregation(t=1, repeat_count=500, mechanism = "Gaussian")
+        ag = Aggregation(t=1, repeat_count=500)
         dp_sum, ks_sum, ws_sum = dv.aggtest(ag.dp_mechanism_sum, 'Usage', binsize="auto", plot=False, debug=False)
         assert(dp_sum)
 

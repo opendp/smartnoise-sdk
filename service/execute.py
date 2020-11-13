@@ -1,7 +1,7 @@
 import json
 import os
 
-from flask import abort 
+from flask import abort
 
 import mlflow
 from mlflow.tracking.client import MlflowClient
@@ -17,7 +17,7 @@ def run(details):
     """
 
     params = json.loads(details["params"])
-    project_uri = details["project_uri"]  # TODO only support whitenoise modules
+    project_uri = details["project_uri"]  # TODO only support smartnoise modules
     if project_uri.startswith("http://") or project_uri.startswith("https://"):
         abort(400, "Only modules are supported uri {} is not".format(project_uri))
 

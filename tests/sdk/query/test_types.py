@@ -1,7 +1,7 @@
 from os.path import dirname, join
 
-from opendp.whitenoise.metadata import CollectionMetadata
-from opendp.whitenoise.sql.parse import QueryParser
+from opendp.smartnoise.metadata import CollectionMetadata
+from opendp.smartnoise.sql.parse import QueryParser
 
 dir_name = dirname(__file__)
 
