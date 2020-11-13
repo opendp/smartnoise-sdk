@@ -6,7 +6,7 @@ test_logger = logging.getLogger("test-logger")
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 from opendp.smartnoise.evaluation.learner._generate import Grammar
 from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors, write_to_csv
-from opendp.smartnoise.evaluation.learner import bandit
+from opendp.smartnoise.evaluation.learner import _bandit
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
