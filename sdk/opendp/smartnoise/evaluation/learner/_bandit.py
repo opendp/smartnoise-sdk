@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd 
 
@@ -23,7 +24,9 @@ class bandit():
  
     def generate_query(self, ep: LearnerParams):
         #generate query pool
-        with open ("select.cfg", "r") as cfg:
+        select_path = os.path.join(os.path.dirname(__file__),"select.cfg")
+        print(select_path)
+        with open (select_path, "r") as cfg:
             rules=cfg.readlines()
             grammar = Grammar(ep)
             numofquery = ep.numofquery
