@@ -4,11 +4,7 @@ from .rand import normal as rand_normal
 from .base import AdditiveNoiseMechanism
 from scipy.stats import norm
 from opendp.smartnoise.report import Result, Interval, Intervals
-<<<<<<< HEAD:sdk/opendp/smartnoise/mechanisms/gaussian.py
-
-=======
 from opendp.smartnoise.core import core_library
->>>>>>> master:sdk/opendp/smartnoise/sql/_mechanisms/gaussian.py
 
 class Gaussian(AdditiveNoiseMechanism):
     def __init__(self, epsilon, delta=1.0E-16, sensitivity=1.0, max_contrib=1):

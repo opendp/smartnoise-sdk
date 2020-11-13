@@ -1,8 +1,4 @@
-<<<<<<< HEAD:sdk/opendp/smartnoise/ast/expressions/sql.py
-from opendp.smartnoise.ast.tokens import *
-=======
 from opendp.smartnoise._ast.tokens import *
->>>>>>> master:sdk/opendp/smartnoise/_ast/expressions/sql.py
 
 """
     SQL-specific expressions
