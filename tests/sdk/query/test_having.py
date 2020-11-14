@@ -17,6 +17,9 @@ git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" "
 meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.csv"))
 
+meta = CollectionMetadata.from_file(meta_path)
+meta["PUMS.PUMS"].censor_dims = False
+
 
 class TestBaseTypes:
     def setup_class(cls):
@@ -27,10 +30,12 @@ class TestBaseTypes:
         private_reader = PrivateReader(reader, meta, 10.0, 10E-3)
         cls.reader = private_reader
 
-    def test_queries(self):
+    def test_queries(self, reader_factory):
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING income > 100000"
-        res = self.reader.execute(query)
-        assert len(res) < 100 # actual is 14, but noise is huge
+        for factory in reader_factory:
+            reader = factory.create_private(meta, 10.0, 10E-3)
+            res = reader.execute(query)
+            assert len(res) < 100 # actual is 14, but noise is huge
 
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING sex = 1"
         res = self.reader.execute(query)
