@@ -18,17 +18,18 @@ from dp_singleton_query import DPSingletonQuery
 
 
 class TestBandit():
-    def __init__(self):
+    def __setup__(self):
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
         self.pa = DPSingletonQuery() 
 
-    def bandit(self, query):
+    def test_bandit(self):
+        query = "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
         df, metadata = create_simulated_dataset(self.dd.dataset_size, "dataset")
         d1_dataset, d2_dataset, d1_metadata, d2_metadata = generate_neighbors(df, metadata)
-        d1 = PandasReader(d1_metadata, d1_dataset)
-        d2 = PandasReader(d2_metadata, d2_dataset)
+        d1 = PandasReader(d1_dataset, d1_metadata)
+        d2 = PandasReader(d2_dataset, d2_metadata)
         eval = DPEvaluator()
         pa = DPSingletonQuery()
         key_metrics = eval.evaluate([d1_metadata, d1], [d2_metadata, d2], pa, query, self.pp, self.ev)
@@ -40,8 +41,3 @@ class TestBandit():
             test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
             test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
         print('done')
-
-
-b = TestBandit()
-query = "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
-b.bandit(query)
