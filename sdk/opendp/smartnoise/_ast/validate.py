@@ -1,4 +1,4 @@
-from .ast import *
+from ._ast import *
 
 class Validate(object):
     """
