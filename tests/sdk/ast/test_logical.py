@@ -1,0 +1,372 @@
+import pytest
+from opendp.smartnoise._ast.expressions.logical import *
+from opendp.smartnoise._ast.tokens import Column, Literal
+from datetime import date
+import numpy as np
+
+"""
+    Test evaluation of logical operators.  We need to support
+    operands of various types, including:
+        * Parsed atomic types
+        * Atomic types loaded from the database
+        * String literal representations of types
+        * Column names bound to a column value in the row
+
+    Test harness creates arrays with several representations of
+    values for numeric, date, and string
+"""
+
+vals_5 = [5, 5.0, "5", "5.0", np.float(5.0), np.int(5)]
+names_5 = ["i5", "f5", "si5", "sf5", "npf5", "npi5"]
+
+vals_7 = [7, 7.0, "7", "7.0"]
+names_7 = ["i7", "f7", "si7", "sf7"]
+
+d1_str = "1978-06-30"
+d2_str = "1984-10-14"
+
+vals_d1 = [d1_str, date.fromisoformat(d1_str)]
+names_d1 = ["sd1", "dd1"]
+
+vals_d2 = [d2_str, date.fromisoformat(d2_str)]
+names_d2 = ["sd2", "dd2"]
+
+vals_str = ["Smart", "Noise"]
+names_str = ["smart", "noise"]
+
+vals_f = ["false", False]
+names_f = ["s_f",  "b_f"]
+
+vals_t = ["true", True]
+names_t = ["s_t", "b_t"]
+
+# now load all the values into a bindings dict
+vals = vals_5 + vals_7 + vals_d1 + vals_d2 + vals_str + vals_t + vals_f
+names = names_5 + names_7 + names_d1 + names_d2 + names_str + names_t + names_f
+bindings = dict((name.lower(), val ) for name, val in zip(names, vals))
+
+class TestLogical:
+    def test_eq(Self):
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            # All True
+            for v5b, n5b in zip(vals_5, names_5):
+                if not (isinstance(v5, str) and isinstance(v5b, str)):
+                    assert(BooleanCompare(Literal(v5), '=', Literal(v5b)).evaluate(None))
+                    assert(BooleanCompare(Column(n5), '=', Literal(v5b)).evaluate(bindings))
+                    assert(BooleanCompare(Literal(v5), '=', Column(n5b)).evaluate(bindings))
+            # All False
+            for v7, n7 in zip(vals_7, names_7):
+                if not (isinstance(v5, str) and isinstance(v7, str)):
+                    assert(not BooleanCompare(Literal(v5), '=', Literal(v7)).evaluate(None))
+                    assert(not BooleanCompare(Column(n5), '=', Literal(v7)).evaluate(bindings))
+                    assert(not BooleanCompare(Literal(v5), '=', Column(n7)).evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d1b, n1b in zip(vals_d1, names_d1):
+                # all True
+                comp = BooleanCompare(Literal(d1b), '=', Literal(d1))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n1b), '=', Literal(d1))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1b), '=', Column(n1))
+                assert(comp.evaluate(bindings))
+            for d2, n2 in zip(vals_d2, names_d2):
+                # all False
+                comp = BooleanCompare(Literal(d1), '=', Literal(d2))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n1), '=', Literal(d2))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1), '=', Column(n2))
+                assert(not comp.evaluate(bindings))
+        # test strings
+        # All True
+        assert(BooleanCompare(Literal(vals_str[0]), '=', Literal(vals_str[0])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[0]), '=', Literal(vals_str[0])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[0]), '=', Column(names_str[0])).evaluate(bindings))
+        # All False
+        assert(not BooleanCompare(Literal(vals_str[1]), '=', Literal(vals_str[0])).evaluate(None))
+        assert(not BooleanCompare(Column(names_str[1]), '=', Literal(vals_str[0])).evaluate(bindings))
+        assert(not BooleanCompare(Literal(vals_str[1]), '=', Column(names_str[0])).evaluate(bindings))
+    def test_neq(Self):
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            # All False
+            for v5b, n5b in zip(vals_5, names_5):
+                if not (isinstance(v5, str) and isinstance(v5b, str)):
+                    assert(not BooleanCompare(Literal(v5), '!=', Literal(v5b)).evaluate(None))
+                    assert(not BooleanCompare(Column(n5), '!=', Literal(v5b)).evaluate(bindings))
+                    assert(not BooleanCompare(Literal(v5), '!=', Column(n5b)).evaluate(bindings))
+            # All True
+            for v7, n7 in zip(vals_7, names_7):
+                if not (isinstance(v5, str) and isinstance(v7, str)):
+                    assert(BooleanCompare(Literal(v5), '<>', Literal(v7)).evaluate(None))
+                    assert(BooleanCompare(Column(n5), '!=', Literal(v7)).evaluate(bindings))
+                    assert(BooleanCompare(Literal(v5), '<>', Column(n7)).evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d1b, n1b in zip(vals_d1, names_d1):
+                # all False
+                comp = BooleanCompare(Literal(d1b), '!=', Literal(d1))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n1b), '<>', Literal(d1))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1b), '!=', Column(n1))
+                assert(not comp.evaluate(bindings))
+            for d2, n2 in zip(vals_d2, names_d2):
+                # all True
+                comp = BooleanCompare(Literal(d1), '!=', Literal(d2))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n1), '<>', Literal(d2))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1), '!=', Column(n2))
+                assert(comp.evaluate(bindings))
+        # test strings
+        # All False
+        assert(not BooleanCompare(Literal(vals_str[0]), '!=', Literal(vals_str[0])).evaluate(None))
+        assert(not BooleanCompare(Column(names_str[0]), '<>', Literal(vals_str[0])).evaluate(bindings))
+        assert(not BooleanCompare(Literal(vals_str[0]), '!=', Column(names_str[0])).evaluate(bindings))
+        # All True
+        assert(BooleanCompare(Literal(vals_str[1]), '!=', Literal(vals_str[0])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[1]), '<>', Literal(vals_str[0])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[1]), '!=', Column(names_str[0])).evaluate(bindings))
+
+    def test_gt(self):
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            for v7, n7 in zip(vals_7, names_7):
+                # all True
+                comp = BooleanCompare(Literal(v7), '>', Literal(v5))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n7), '>', Literal(v5))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v7), '>', Column(n5))
+                assert(comp.evaluate(bindings))
+                # all False
+                comp = BooleanCompare(Literal(v5), '>', Literal(v7))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n5), '>', Literal(v7))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v5), '>', Column(n7))
+                assert(not comp.evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d2, n2 in zip(vals_d2, names_d2):
+                # all True
+                comp = BooleanCompare(Literal(d2), '>', Literal(d1))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n2), '>', Literal(d1))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d2), '>', Column(n1))
+                assert(comp.evaluate(bindings))
+                # all False
+                comp = BooleanCompare(Literal(d1), '>', Literal(d2))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n1), '>', Literal(d2))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1), '>', Column(n2))
+                assert(not comp.evaluate(bindings))
+        # test strings
+        # All True
+        assert(BooleanCompare(Literal(vals_str[0]), '>', Literal(vals_str[1])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[0]), '>', Literal(vals_str[1])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[0]), '>', Column(names_str[1])).evaluate(bindings))
+        # All False
+        assert(not BooleanCompare(Literal(vals_str[1]), '>', Literal(vals_str[0])).evaluate(None))
+        assert(not BooleanCompare(Column(names_str[1]), '>', Literal(vals_str[0])).evaluate(bindings))
+        assert(not BooleanCompare(Literal(vals_str[1]), '>', Column(names_str[0])).evaluate(bindings))
+    def test_lt(self):
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            for v7, n7 in zip(vals_7, names_7):
+                # all False
+                comp = BooleanCompare(Literal(v7), '<', Literal(v5))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n7), '<', Literal(v5))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v7), '<', Column(n5))
+                assert(not comp.evaluate(bindings))
+                # all True
+                comp = BooleanCompare(Literal(v5), '<', Literal(v7))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n5), '<', Literal(v7))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v5), '<', Column(n7))
+                assert(comp.evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d2, n2 in zip(vals_d2, names_d2):
+                # all False
+                comp = BooleanCompare(Literal(d2), '<', Literal(d1))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n2), '<', Literal(d1))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d2), '<', Column(n1))
+                assert(not comp.evaluate(bindings))
+                # all True
+                comp = BooleanCompare(Literal(d1), '<', Literal(d2))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n1), '<', Literal(d2))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1), '<', Column(n2))
+                assert(comp.evaluate(bindings))
+        # test strings
+        # All False
+        assert(not BooleanCompare(Literal(vals_str[0]), '<', Literal(vals_str[1])).evaluate(None))
+        assert(not BooleanCompare(Column(names_str[0]), '<', Literal(vals_str[1])).evaluate(bindings))
+        assert(not BooleanCompare(Literal(vals_str[0]), '<', Column(names_str[1])).evaluate(bindings))
+        # All True
+        assert(BooleanCompare(Literal(vals_str[1]), '<', Literal(vals_str[0])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[1]), '<', Literal(vals_str[0])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[1]), '<', Column(names_str[0])).evaluate(bindings))
+    def test_gte(self):
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            for v7, n7 in zip(vals_7, names_7):
+                # all True
+                comp = BooleanCompare(Literal(v7), '>=', Literal(v5))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n7), '>=', Literal(v5))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v7), '>=', Column(n5))
+                assert(comp.evaluate(bindings))
+                # all False
+                comp = BooleanCompare(Literal(v5), '>=', Literal(v7))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n5), '>=', Literal(v7))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v5), '>=', Column(n7))
+                assert(not comp.evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d2, n2 in zip(vals_d2, names_d2):
+                # all True
+                comp = BooleanCompare(Literal(d2), '>=', Literal(d1))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n2), '>=', Literal(d1))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d2), '>=', Column(n1))
+                assert(comp.evaluate(bindings))
+                # all False
+                comp = BooleanCompare(Literal(d1), '>=', Literal(d2))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n1), '>=', Literal(d2))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1), '>=', Column(n2))
+                assert(not comp.evaluate(bindings))
+        # test strings
+        # All True
+        assert(BooleanCompare(Literal(vals_str[0]), '>=', Literal(vals_str[1])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[0]), '>=', Literal(vals_str[1])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[0]), '>=', Column(names_str[1])).evaluate(bindings))
+        # All False
+        assert(not BooleanCompare(Literal(vals_str[1]), '>=', Literal(vals_str[0])).evaluate(None))
+        assert(not BooleanCompare(Column(names_str[1]), '>=', Literal(vals_str[0])).evaluate(bindings))
+        assert(not BooleanCompare(Literal(vals_str[1]), '>=', Column(names_str[0])).evaluate(bindings))
+        # Test equality
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            # All True
+            for v5b, n5b in zip(vals_5, names_5):
+                if not (isinstance(v5, str) and isinstance(v5b, str)):
+                    assert(BooleanCompare(Literal(v5), '>=', Literal(v5b)).evaluate(None))
+                    assert(BooleanCompare(Column(n5), '>=', Literal(v5b)).evaluate(bindings))
+                    assert(BooleanCompare(Literal(v5), '>=', Column(n5b)).evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d1b, n1b in zip(vals_d1, names_d1):
+                # all True
+                comp = BooleanCompare(Literal(d1b), '>=', Literal(d1))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n1b), '>=', Literal(d1))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1b), '>=', Column(n1))
+                assert(comp.evaluate(bindings))
+        # test strings
+        # All True
+        assert(BooleanCompare(Literal(vals_str[0]), '>=', Literal(vals_str[0])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[0]), '>=', Literal(vals_str[0])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[0]), '>=', Column(names_str[0])).evaluate(bindings))
+
+    def test_lte(self):
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            for v7, n7 in zip(vals_7, names_7):
+                # all False
+                comp = BooleanCompare(Literal(v7), '<=', Literal(v5))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n7), '<=', Literal(v5))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v7), '<=', Column(n5))
+                assert(not comp.evaluate(bindings))
+                # all True
+                comp = BooleanCompare(Literal(v5), '<=', Literal(v7))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n5), '<=', Literal(v7))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(v5), '<=', Column(n7))
+                assert(comp.evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d2, n2 in zip(vals_d2, names_d2):
+                # all False
+                comp = BooleanCompare(Literal(d2), '<=', Literal(d1))
+                assert(not comp.evaluate(None))
+                comp = BooleanCompare(Column(n2), '<=', Literal(d1))
+                assert(not comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d2), '<=', Column(n1))
+                assert(not comp.evaluate(bindings))
+                # all True
+                comp = BooleanCompare(Literal(d1), '<=', Literal(d2))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n1), '<=', Literal(d2))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1), '<=', Column(n2))
+                assert(comp.evaluate(bindings))
+        # test strings
+        # All False
+        assert(not BooleanCompare(Literal(vals_str[0]), '<=', Literal(vals_str[1])).evaluate(None))
+        assert(not BooleanCompare(Column(names_str[0]), '<=', Literal(vals_str[1])).evaluate(bindings))
+        assert(not BooleanCompare(Literal(vals_str[0]), '<=', Column(names_str[1])).evaluate(bindings))
+        # All True
+        assert(BooleanCompare(Literal(vals_str[1]), '<=', Literal(vals_str[0])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[1]), '<=', Literal(vals_str[0])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[1]), '<=', Column(names_str[0])).evaluate(bindings))
+        # Test equality
+        # test numeric values
+        for v5, n5 in zip(vals_5, names_5):
+            # All True
+            for v5b, n5b in zip(vals_5, names_5):
+                if not (isinstance(v5, str) and isinstance(v5b, str)):
+                    assert(BooleanCompare(Literal(v5), '<=', Literal(v5b)).evaluate(None))
+                    assert(BooleanCompare(Column(n5), '<=', Literal(v5b)).evaluate(bindings))
+                    assert(BooleanCompare(Literal(v5), '<=', Column(n5b)).evaluate(bindings))
+        # test dates
+        for d1, n1 in zip(vals_d1, names_d1):
+            for d1b, n1b in zip(vals_d1, names_d1):
+                # all True
+                comp = BooleanCompare(Literal(d1b), '<=', Literal(d1))
+                assert(comp.evaluate(None))
+                comp = BooleanCompare(Column(n1b), '<=', Literal(d1))
+                assert(comp.evaluate(bindings))
+                comp = BooleanCompare(Literal(d1b), '<=', Column(n1))
+                assert(comp.evaluate(bindings))
+        # test strings
+        # All True
+        assert(BooleanCompare(Literal(vals_str[0]), '<=', Literal(vals_str[0])).evaluate(None))
+        assert(BooleanCompare(Column(names_str[0]), '<=', Literal(vals_str[0])).evaluate(bindings))
+        assert(BooleanCompare(Literal(vals_str[0]), '<=', Column(names_str[0])).evaluate(bindings))
+    def test_and(self):
+        for tv, tn in zip(vals_t, names_t):
+            for tvb, tnb in zip(vals_t, names_t):
+                # All True
+                if not (isinstance(tv, str) and isinstance(tvb, str)):
+                    assert BooleanCompare(Literal(tv), 'and', Literal(tvb)).evaluate(None)
+                    assert BooleanCompare(Column(tn), 'and', Literal(tvb)).evaluate(bindings)
+                    assert BooleanCompare(Literal(tv), 'and', Column(tnb)).evaluate(bindings)
+            for fv, fn in zip(vals_f, names_f):
+                # All False
+                if not (isinstance(tv, str) and isinstance(fv, str)):
+                    assert not BooleanCompare(Literal(tv), 'and', Literal(fv)).evaluate(None)
+                    assert not BooleanCompare(Column(tn), 'and', Literal(fv)).evaluate(bindings)
+                    assert not BooleanCompare(Literal(tv), 'and', Column(fn)).evaluate(bindings)

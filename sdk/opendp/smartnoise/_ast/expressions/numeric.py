@@ -1,12 +1,13 @@
 from opendp.smartnoise._ast.tokens import *
 import numpy as np
+import operator
 
 ops = {
-    '+': np.add,
-    '-': np.subtract,
-    '/': np.true_divide,
-    '*': np.multiply,
-    '%': np.mod
+    '+': operator.add,
+    '-': operator.sub,
+    '/': operator.truediv,
+    '*': operator.mul,
+    '%': operator.mod
 }
 
 funcs = {
