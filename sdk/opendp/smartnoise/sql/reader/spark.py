@@ -1,8 +1,8 @@
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
 
-from opendp.smartnoise.ast.tokens import Literal
-from opendp.smartnoise.ast.expressions.numeric import BareFunction
+from opendp.smartnoise._ast.tokens import Literal
+from opendp.smartnoise._ast.expressions.numeric import BareFunction
 
 
 class SparkReader(SqlReader):

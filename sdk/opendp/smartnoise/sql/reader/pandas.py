@@ -1,15 +1,20 @@
 from .sql_base import SqlReader, NameCompare
 from .engine import Engine
-
 import copy
+import warnings
 import re
-
 
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
-    def __init__(self, metadata, df):
+    def __init__(self, df, metadata):
         super().__init__()
+        # using string here, because we don't want to import .metadata due to circular reference
+        if "metadata.collection.CollectionMetadata" in str(type(df)):
+            warnings.warn("[df] API has changed to pass (df, metadata).  Please update code to pass df first and metadata second.  This will be a breaking change in future versions.", Warning)
+            tmp = df
+            df = metadata
+            metadata = tmp
         self.df = df
         self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
 

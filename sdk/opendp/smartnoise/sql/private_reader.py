@@ -1,4 +1,5 @@
 import logging
+import warnings
 import math
 import numpy as np
 from .dpsu import run_dpsu
@@ -6,20 +7,22 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
 
-from opendp.smartnoise.ast.expressions import sql as ast
+from opendp.smartnoise._ast.ast import Top
+from opendp.smartnoise._ast.expressions import sql as ast
 from opendp.smartnoise.reader import Reader
 
-from opendp.smartnoise.mechanisms.gaussian import Gaussian
+from ._mechanisms.gaussian import Gaussian
 from opendp.smartnoise.report import Interval, Intervals, Result
 from opendp.smartnoise.reader.rowset import TypedRowset
 
 module_logger = logging.getLogger(__name__)
 
+import itertools
 
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results
     """
-    def __init__(self, metadata, reader, epsilon_per_column=1.0, delta=10E-16,
+    def __init__(self, reader, metadata, epsilon_per_column=1.0, delta=10E-16,
                  interval_widths=None, options=None, epsilon=None):
         """Create a new private reader.
 
@@ -32,9 +35,25 @@ class PrivateReader(Reader):
             :param options: A PrivateReaderOptions with flags that change the behavior of the privacy
                 engine.
         """
-        self.options = options if options is not None else PrivateReaderOptions()
-        self.metadata = metadata
-        self.reader = reader
+        # check for old calling convention
+        if isinstance(metadata, Reader):
+            warnings.warn("[reader] API has changed to pass (reader, metadata).  Please update code to pass reader first and metadata second.  This will be a breaking change in future versions.", Warning)
+            tmp = reader
+            reader = metadata
+            metadata = tmp
+
+        if isinstance(reader, Reader):
+            self.reader = reader
+        else:
+            raise ValueError("Parameter reader must be of type Reader")
+
+        # using string here, because we don't want to import .metadata due to circular reference
+        if "metadata.collection.CollectionMetadata" in str(type(metadata)):
+            self.metadata = metadata
+        else:
+            raise ValueError("Parameter metadata must be of type CollectionMetadata. Got {0}", str(type(metadata)))
+
+        
         self.rewriter = Rewriter(metadata)
         self.epsilon_per_column = epsilon_per_column
         if epsilon is not None:
@@ -44,6 +63,9 @@ class PrivateReader(Reader):
                 raise Exception(message)
             else:
                 module_logger.warning(message)
+        if options is not None:
+            raise ValueError("Options has been deprecated.  Use metadata")
+        self._options = PrivateReaderOptions()
 
         self.delta = delta
         self.interval_widths = interval_widths
@@ -64,14 +86,23 @@ class PrivateReader(Reader):
     def refresh_options(self):
         self.rewriter = Rewriter(self.metadata)
         self.metadata.compare = self.reader.compare
-        self.rewriter.options.row_privacy = self.options.row_privacy
-        self.rewriter.options.reservoir_sample = self.options.reservoir_sample
-        self.rewriter.options.clamp_columns = self.options.clamp_columns
-        self.rewriter.options.max_contrib = self.options.max_contrib
+        tables = self.metadata.tables()
+        self._options.row_privacy = any([t.row_privacy for t in tables])
+        self._options.censor_dims = not any([not t.censor_dims for t in tables])
+        self._options.reservoir_sample = any([t.sample_max_ids for t in tables])
+        self._options.clamp_counts = any([t.clamp_counts for t in tables])
+        self._options.max_contrib = max([t.max_ids for t in tables])
+        self._options.use_dpsu = any([t.use_dpsu for t in tables])
+        self._options.clamp_columns = any([t.clamp_columns for t in tables])
+
+        self.rewriter.options.row_privacy = self._options.row_privacy
+        self.rewriter.options.reservoir_sample = self._options.reservoir_sample
+        self.rewriter.options.clamp_columns = self._options.clamp_columns
+        self.rewriter.options.max_contrib = self._options.max_contrib
 
     @staticmethod
     def get_budget_multiplier(schema, reader, query):
-        return len(PrivateReader(schema, reader, 1).get_privacy_cost(query))
+        return len(PrivateReader(reader, schema, 1).get_privacy_cost(query))
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -87,8 +118,8 @@ class PrivateReader(Reader):
 
     def rewrite_ast(self, query):
         query_max_contrib = query.max_ids
-        if self.options.max_contrib is None or self.options.max_contrib > query_max_contrib:
-            self.options.max_contrib = query_max_contrib
+        if self._options.max_contrib is None or self._options.max_contrib > query_max_contrib:
+            self._options.max_contrib = query_max_contrib
 
         self.refresh_options()
         query = self.rewriter.query(query)
@@ -101,10 +132,10 @@ class PrivateReader(Reader):
         return subquery.numeric_symbols()
 
     def _get_reader(self, query_ast):
-        if query_ast.agg is not None and self.options.use_dpsu and isinstance(self.reader, PandasReader):
+        if query_ast.agg is not None and self._options.use_dpsu and isinstance(self.reader, PandasReader):
             query = str(query_ast)
             dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
-            return PandasReader(self.metadata, dpsu_df)
+            return PandasReader(dpsu_df, self.metadata)
         else:
             return self.reader
 
@@ -139,7 +170,7 @@ class PrivateReader(Reader):
             raise ValueError("Please pass AST to _execute.")
 
         subquery, query = self.rewrite_ast(query)
-        max_contrib = self.options.max_contrib if self.options.max_contrib is not None else 1
+        max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
         thresh_scale = math.sqrt(max_contrib) * ((math.sqrt(math.log(1/self.delta)) + math.sqrt(math.log(1/self.delta) + self.epsilon_per_column)) / (math.sqrt(2) * self.epsilon_per_column))
         self.tau = 1 + thresh_scale * math.sqrt(2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.delta)))
 
@@ -174,7 +205,7 @@ class PrivateReader(Reader):
             kc_pos = kcc_pos.pop()
 
         # make a list of mechanisms in column order
-        mechs = [Gaussian(self.epsilon_per_column, self.delta, s, max_contrib, self.interval_widths) if s is not None else None for s in sens]
+        mechs = [Gaussian(self.epsilon_per_column, self.delta, s, max_contrib) if s is not None else None for s in sens]
 
         # execute the subquery against the backend and load in tuples
         if cache_exact:
@@ -194,7 +225,7 @@ class PrivateReader(Reader):
             self.cached_ast = None
             db_rs = self._get_reader(subquery).execute_ast(subquery)
 
-        clamp_counts = self.options.clamp_counts
+        clamp_counts = self._options.clamp_counts
 
         def process_row(row_in):
             # pull out tuple values
@@ -224,7 +255,7 @@ class PrivateReader(Reader):
         else:
             out = map(process_row, db_rs[1:])
 
-        if subquery.agg is not None and self.options.censor_dims:
+        if subquery.agg is not None and self._options.censor_dims:
             if hasattr(out, 'filter'):
                 # it's an RDD
                 tau = self.tau
@@ -235,7 +266,7 @@ class PrivateReader(Reader):
         # get column information for outer query
         out_syms = query.all_symbols()
         out_types = [s[1].type() for s in out_syms]
-        out_colnames = [s[0] for s in out_syms]
+        out_col_names = [s[0] for s in out_syms]
 
         def convert(val, type):
             if type == 'string' or type == 'unknown':
@@ -263,6 +294,19 @@ class PrivateReader(Reader):
         else:
             out = map(process_out_row, out)
 
+        def filter_aggregate(row, condition):
+            bindings = dict((name.lower(), val ) for name, val in zip(out_col_names, row))
+            keep = condition.evaluate(bindings)
+            return keep
+
+        if query.having is not None:
+            condition = query.having.condition
+            if hasattr(out, 'filter'):
+                # it's an RDD
+                out = out.filter(lambda row: filter_aggregate(row, condition))
+            else:
+                out = filter(lambda row: filter_aggregate(row, condition), out)
+
         # sort it if necessary
         if query.order is not None:
             sort_fields = []
@@ -270,9 +314,9 @@ class PrivateReader(Reader):
                 if type(si.expression) is not ast.Column:
                     raise ValueError("We only know how to sort by column names right now")
                 colname = si.expression.name.lower()
-                if colname not in out_colnames:
-                    raise ValueError("Can't sort by {0}, because it's not in output columns: {1}".format(colname, out_colnames))
-                colidx = out_colnames.index(colname)
+                if colname not in out_col_names:
+                    raise ValueError("Can't sort by {0}, because it's not in output columns: {1}".format(colname, out_col_names))
+                colidx = out_col_names.index(colname)
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
                     desc = True
@@ -289,15 +333,33 @@ class PrivateReader(Reader):
             else:
                 out = sorted(out, key=sort_func)
 
+            # check for LIMIT or TOP
+            limit_rows = None
+            if query.limit is not None:
+                if query.select.quantifier is not None:
+                    raise ValueError("Query cannot have both LIMIT and TOP set")
+                limit_rows = query.limit.n
+            elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
+                limit_rows = query.select.quantifier.n
+            if limit_rows is not None:
+                if hasattr(db_rs, 'rdd'):
+                    # it's a dataframe
+                    out = db_rs.limit(limit_rows)
+                elif hasattr(db_rs, 'map'):
+                    # it's an RDD
+                    out = db_rs.limit(limit_rows)
+                else:
+                    out = itertools.islice(out, limit_rows)
+
         # output it
         if hasattr(out, 'toDF'):
             # Pipeline RDD
-            return out.toDF(out_colnames)
+            return out.toDF(out_col_names)
         elif hasattr(out, 'map'):
             # Bare RDD
             return out
         else:
-            return TypedRowset([out_colnames] + list(out), out_types)
+            return TypedRowset([out_col_names] + list(out), out_types)
 
     def execute_ast(self, query):
         """Executes an AST representing a SQL query

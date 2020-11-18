@@ -11,7 +11,6 @@ class SyntaxErrorListener():
     def reportAmbiguity(self, recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs):
         # use DiagnosticErrorListener() to get full diagnostics
         # use this stub to raise ValueError if needed for unit tests to throw specific ambiguity errors
-        # raise ValueError("Ambiguity")
         pass
     def reportAttemptingFullContext(self, recognizer, dfa, startIndex, stopIndex, conflictingAlts, configs):
         # use DiagnosticErrorListener() to get full diagnostics
