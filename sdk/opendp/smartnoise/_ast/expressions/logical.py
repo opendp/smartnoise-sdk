@@ -29,38 +29,33 @@ class BooleanCompare(SqlExpr):
         return 1
     def children(self):
         return [self.left, self.op, self.right]
+    def coerce_string(self, val, typed_val):
+        # SQL-92 rules for casting types in comparison
+        if isinstance(typed_val, bool):
+            return parse_bool(val)
+        elif isinstance(typed_val, int):
+            try:
+                v = int(val)
+            except:
+                v = float(val)
+            return v
+        elif isinstance(typed_val, float):
+            return float(val)
+        elif isinstance(typed_val, datetime):
+            return datetime.fromisoformat(val)
+        elif isinstance(typed_val, date):
+            return date.fromisoformat(val)
+        else:
+            return val
+
     def evaluate(self, bindings):
         l = self.left.evaluate(bindings)
         r = self.right.evaluate(bindings)
         if (type(l) != type(r)):
             if isinstance(l, str):
-                if isinstance(r, bool):
-                    l = parse_bool(l)
-                elif isinstance(r, int):
-                    try:
-                        l = int(l)
-                    except:
-                        l = float(l)
-                elif isinstance(r, float):
-                    l = float(l)
-                elif isinstance(r, datetime):
-                    l = datetime.fromisoformat(l)
-                elif isinstance(r, date):
-                    l = date.fromisoformat(l)
+                l = self.coerce_string(l, r)
             elif isinstance(r, str):
-                if isinstance(l, bool):
-                    r = parse_bool(r)
-                elif isinstance(l, int):
-                    try:
-                        r = int(r)
-                    except:
-                        r = float(r)
-                elif isinstance(l, float):
-                    r = float(r)
-                elif isinstance(l, datetime):
-                    r = datetime.fromisoformat(r)
-                elif isinstance(l, date):
-                    r = date.fromisoformat(r)
+                r = self.coerce_string(r, l)
         try:
             res = bool(ops[self.op.lower()](l, r))
         except:
