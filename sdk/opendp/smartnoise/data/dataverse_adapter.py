@@ -74,5 +74,4 @@ class DataverseAdapter(DatasetAdapter):
 
     @staticmethod
     def _load_reader(dataset_document):
-        return PandasReader(DataverseAdapter.load_metadata(dataset_document),
-                               DataverseAdapter.load_df(dataset_document))
+        return PandasReader(DataverseAdapter.load_df(dataset_document), DataverseAdapter.load_metadata(dataset_document))

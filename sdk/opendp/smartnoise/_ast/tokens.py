@@ -84,7 +84,7 @@ class Sql:
         if other is None:
             return False
         else:
-            return all([s == o for s, o in zip(self.children(), other.children())])        
+            return all([s == o for s, o in zip(self.children(), other.children())])
 
     def symbol_name(self):
         return str(hex(hash(self) % (2**16)))
