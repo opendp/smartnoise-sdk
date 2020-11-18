@@ -286,24 +286,29 @@ class ExpressionVisitor(SqlSmallVisitor):
         return OverClause(partition, order)
 
 class CaseExpressionVisitor(SqlSmallVisitor):
-    def visitCaseExpression(self, ctx):
-        wxp = ctx.whenExpression()
+    def visitCaseBaseExpr(self, ctx):
+        wxp = ctx.whenBaseExpression()
         whenExpressions = [self.visit(we) for we in wxp] if wxp is not None else None
         expression = ExpressionVisitor().visit(ctx.baseCaseExpr) if ctx.baseCaseExpr is not None else None
         else_expr = ExpressionVisitor().visit(ctx.elseExpr) if ctx.elseExpr is not None else None
+        return CaseExpression(expression, whenExpressions, else_expr)
 
+    def visitCaseWhenExpr(self, ctx):
+        wxp = ctx.whenExpression()
+        whenExpressions = [self.visit(we) for we in wxp] if wxp is not None else None
+        expression = None
+        else_expr = ExpressionVisitor().visit(ctx.elseExpr) if ctx.elseExpr is not None else None
         return CaseExpression(expression, whenExpressions, else_expr)
 
     def visitWhenExpression(self, ctx):
-        booleanExpression = BooleanExpressionVisitor().visit(ctx.baseBoolExpr) if ctx.baseBoolExpr is not None else None
-        expression = ExpressionVisitor().visit(ctx.baseWhenExpr) if ctx.baseWhenExpr is not None else None
-
-        retExpr = booleanExpression if booleanExpression is not None else (expression if expression is not None else None)
-
+        expression = BooleanExpressionVisitor().visit(ctx.baseBoolExpr) if ctx.baseBoolExpr is not None else None
         thenExpression = ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
+        return WhenExpression(expression , thenExpression)
 
-        return WhenExpression(retExpr , thenExpression)
-
+    def visitWhenBaseExpression(self, ctx):
+        expression = ExpressionVisitor().visit(ctx.baseWhenExpr) if ctx.baseWhenExpr is not None else None
+        thenExpression = ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
+        return WhenExpression(expression , thenExpression)
 
 class BooleanExpressionVisitor(SqlSmallVisitor):
     def visitLogicalNot(self, ctx):
@@ -349,6 +354,9 @@ class BooleanExpressionVisitor(SqlSmallVisitor):
         lower = ExpressionVisitor().visit(ctx.lower)
         upper = ExpressionVisitor().visit(ctx.upper)
         return BetweenCondition(lower, upper, is_not)
+
+    def visitQualifiedColumnName(self, ctx):
+        return ColumnBoolean(Column(ctx.getText()))
 
 
 def allText(ctx):

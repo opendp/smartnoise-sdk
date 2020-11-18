@@ -7,6 +7,7 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
 
+from opendp.smartnoise._ast.ast import Top
 from opendp.smartnoise._ast.expressions import sql as ast
 from opendp.smartnoise.reader import Reader
 
@@ -16,6 +17,7 @@ from opendp.smartnoise.reader.rowset import TypedRowset
 
 module_logger = logging.getLogger(__name__)
 
+import itertools
 
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results
@@ -264,7 +266,7 @@ class PrivateReader(Reader):
         # get column information for outer query
         out_syms = query.all_symbols()
         out_types = [s[1].type() for s in out_syms]
-        out_colnames = [s[0] for s in out_syms]
+        out_col_names = [s[0] for s in out_syms]
 
         def convert(val, type):
             if type == 'string' or type == 'unknown':
@@ -292,6 +294,19 @@ class PrivateReader(Reader):
         else:
             out = map(process_out_row, out)
 
+        def filter_aggregate(row, condition):
+            bindings = dict((name.lower(), val ) for name, val in zip(out_col_names, row))
+            keep = condition.evaluate(bindings)
+            return keep
+
+        if query.having is not None:
+            condition = query.having.condition
+            if hasattr(out, 'filter'):
+                # it's an RDD
+                out = out.filter(lambda row: filter_aggregate(row, condition))
+            else:
+                out = filter(lambda row: filter_aggregate(row, condition), out)
+
         # sort it if necessary
         if query.order is not None:
             sort_fields = []
@@ -299,9 +314,9 @@ class PrivateReader(Reader):
                 if type(si.expression) is not ast.Column:
                     raise ValueError("We only know how to sort by column names right now")
                 colname = si.expression.name.lower()
-                if colname not in out_colnames:
-                    raise ValueError("Can't sort by {0}, because it's not in output columns: {1}".format(colname, out_colnames))
-                colidx = out_colnames.index(colname)
+                if colname not in out_col_names:
+                    raise ValueError("Can't sort by {0}, because it's not in output columns: {1}".format(colname, out_col_names))
+                colidx = out_col_names.index(colname)
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
                     desc = True
@@ -318,15 +333,33 @@ class PrivateReader(Reader):
             else:
                 out = sorted(out, key=sort_func)
 
+            # check for LIMIT or TOP
+            limit_rows = None
+            if query.limit is not None:
+                if query.select.quantifier is not None:
+                    raise ValueError("Query cannot have both LIMIT and TOP set")
+                limit_rows = query.limit.n
+            elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
+                limit_rows = query.select.quantifier.n
+            if limit_rows is not None:
+                if hasattr(db_rs, 'rdd'):
+                    # it's a dataframe
+                    out = db_rs.limit(limit_rows)
+                elif hasattr(db_rs, 'map'):
+                    # it's an RDD
+                    out = db_rs.limit(limit_rows)
+                else:
+                    out = itertools.islice(out, limit_rows)
+
         # output it
         if hasattr(out, 'toDF'):
             # Pipeline RDD
-            return out.toDF(out_colnames)
+            return out.toDF(out_col_names)
         elif hasattr(out, 'map'):
             # Bare RDD
             return out
         else:
-            return TypedRowset([out_colnames] + list(out), out_types)
+            return TypedRowset([out_col_names] + list(out), out_types)
 
     def execute_ast(self, query):
         """Executes an AST representing a SQL query
