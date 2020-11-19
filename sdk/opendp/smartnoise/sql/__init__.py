@@ -26,7 +26,7 @@ __all__ = ["PandasReader",
 def execute_private_query(reader, schema, budget, query):
     if not isinstance(reader, SqlReader):
         warnings.warn("[reader] API has changed to pass (reader, metadata). Please update code to pass reader first and metadata second. This will be a breaking change in future versions.", Warning)
-        tmp = reader
+        tmp = schema
         schema = reader
         reader = tmp
     schema = reader.metadata if hasattr(reader, "metadata") else schema
