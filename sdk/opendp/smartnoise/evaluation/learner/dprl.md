@@ -12,7 +12,7 @@
     querypool = generate_query(100)
     b.bandit(querypool, exportascsv=True)
 ##### - input: To initiate Bandit, you'll need PrivacyParams, EvaluatorParams and DatasetParams to be defined. Querypool will also be needed as a list of SQL queries. You can utilize generate_query,py, which does brute force SQL Generation via context free grammer for you.
-##### - Default: PrivacyParams(epsilon=1.0), EvaluatorParams(repeat_count=100),DatasetParams(dataset_size=500). 
+##### - default: PrivacyParams(epsilon=1.0), EvaluatorParams(repeat_count=100),DatasetParams(dataset_size=500). 
 ##### - output: return a list of each query's DP test result (dict, contains 'dpresult', 'error', 'js_distance', 'query')
 
 #### In the Q-learning approach, a seed query is given randomly, and a random action towards query AST will be executed, a reward of 0 (invalid query), 1(valid query), jenson_shannon distance of probability distribution of repeated query response as reward if pass the DP test, 20 if DP test fail. The agent will learn to manipuate the query to be more complex until fail the DP test in order to get higher reward.  A report will be generated for user to scan through the dp test results. Exampler code:
@@ -20,7 +20,7 @@
     querypool = generate_query(1000)
     b.qlearning(querypool, exportascsv=True)
 ##### - input: To initial Qlearning, you'll need LeanerParams PrivacyParams, EvaluatorParams and DatasetParams to be defined.
-##### - Default: PrivacyParams(epsilon=1.0), EvaluatorParams(repeat_count=100),DatasetParams(dataset_size=500), LearnerParams(observation_space=1000, num_episodes=200, num_steps=100, eps = 0.1, lr = .8, y = .9, columns = ['UserId', 'Role', 'Usage'], MAXNODELEN=30). 
+##### - default: PrivacyParams(epsilon=1.0), EvaluatorParams(repeat_count=100),DatasetParams(dataset_size=500), LearnerParams(observation_space=1000, num_episodes=200, num_steps=100, eps = 0.1, lr = .8, y = .9, columns = ['UserId', 'Role', 'Usage'], MAXNODELEN=30). 
 - observation_space: number of query uplimit in the state space
 - eps: exploration epsilon
 - lr: learning rate
