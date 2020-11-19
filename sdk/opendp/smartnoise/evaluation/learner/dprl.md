@@ -12,8 +12,8 @@
     b.bandit(querypool)
 #### input: To initiate Bandit, you'll need PrivacyParams, EvaluatorParams and DatasetParams to be defined. 
 #### Default: PrivacyParams(epsilon=1.0), EvaluatorParams(repeat_count=100),DatasetParams(dataset_size=500). 
-#### Querypool will also be needed as a list of SQL queries. You can utilize generate_query,py, which does brute force SQL Generation via context free grammer for you.
-#### output: return a list of each query's DP test result (dict, contains 'dpresult', 'error', 'js_distance', 'query')
+- Querypool will also be needed as a list of SQL queries. You can utilize generate_query,py, which does brute force SQL Generation via context free grammer for you.
+- output: return a list of each query's DP test result (dict, contains 'dpresult', 'error', 'js_distance', 'query')
 
 #### In the Q-learning approach, a seed query is given randomly, and a random action towards query AST will be executed, a reward of 0 (invalid query), 1(valid query), jenson_shannon distance of probability distribution of repeated query response as reward if pass the DP test, 20 if DP test fail. The agent will learn to manipuate the query to be more complex until fail the DP test in order to get higher reward.  A report in csv format will be generated for user to scan through the dp test results. Exampler code:
     Q = Qlearning()
@@ -26,9 +26,9 @@
 - eps: exploration epsilon
 - lr: learning rate
 - y: discount rate
-#### columns: columns in dataset 
-#### MAXNODELEN: max number of nodes in a query (to limit the length of the SQL query)
-#### output: return a list of each query's DP test result (dict, contains 'original_query', 'chosen_action', 'new_query', 'episode', 'dpresult', 'reward', 'message', 'd1', 'd2')
+- columns: columns in dataset 
+- MAXNODELEN: max number of nodes in a query (to limit the length of the SQL query)
+- output: return a list of each query's DP test result (dict, contains 'original_query', 'chosen_action', 'new_query', 'episode', 'dpresult', 'reward', 'message', 'd1', 'd2')
 
 
 
