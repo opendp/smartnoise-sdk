@@ -7,7 +7,7 @@
 | True           | 100548 |
 
 #### One may easily infer from the result that user with pid=1 is married. We seek to optimize the query search step using bandit and Q-learning approach. The goal is to help user to catch DP bugs(if any) for a DP test they built. 
-#### In the bandit approach, a number of queries will be generally according to a set of grammer rules, and will be tested in batch. A report will be generated for user to scan through the dp test results on large batch of auto generated queries.Exampler code:
+#### 1. In the bandit approach, a number of queries will be generally according to a set of grammer rules, and will be tested in batch. A report will be generated for user to scan through the dp test results on large batch of auto generated queries.Exampler code:
     b = Bandit(PrivacyParams, EvaluatorParams, DatasetParams)
     querypool = generate_query(100)
     b.bandit(querypool, exportascsv=True)
@@ -15,7 +15,7 @@
 ##### - default: PrivacyParams(epsilon=1.0), EvaluatorParams(repeat_count=100),DatasetParams(dataset_size=500). 
 ##### - output: return a list of each query's DP test result (dict, contains 'dpresult', 'error', 'js_distance', 'query')
 
-#### In the Q-learning approach, a seed query is given randomly, and a random action towards query AST will be executed, a reward of 0 (invalid query), 1(valid query), jenson_shannon distance of probability distribution of repeated query response as reward if pass the DP test, 20 if DP test fail. The agent will learn to manipuate the query to be more complex until fail the DP test in order to get higher reward.  A report will be generated for user to scan through the dp test results. Exampler code:
+#### 2. In the Q-learning approach, a seed query is given randomly, and a random action towards query AST will be executed, a reward of 0 (invalid query), 1(valid query), jenson_shannon distance of probability distribution of repeated query response as reward if pass the DP test, 20 if DP test fail. The agent will learn to manipuate the query to be more complex until fail the DP test in order to get higher reward.  A report will be generated for user to scan through the dp test results. Exampler code:
     b = QLearning(LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams)
     querypool = generate_query(1000)
     b.qlearning(querypool, exportascsv=True)
