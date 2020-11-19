@@ -20,7 +20,7 @@ def test_sklearn_query():
    schema = CollectionMetadata([iris], "csv")
 
    reader = PandasReader(sklearn_df, schema)
-   rowset = execute_private_query(schema, reader, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
+   rowset = execute_private_query(reader, schema, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
    df = pd.DataFrame(rowset[1:], columns=rowset[0])
    assert df is not None
    assert len(df) == 1
