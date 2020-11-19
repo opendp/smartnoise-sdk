@@ -1,15 +1,16 @@
 
 import random
-from opendp.smartnoise._ast.tokens import *
-from opendp.smartnoise._ast.expression import *
-from opendp.smartnoise._ast import tokens
-from opendp.smartnoise._ast.expressions import *
+from opendp.smartnoise.ast.tokens import *
+from opendp.smartnoise.ast.expression import *
+from opendp.smartnoise.ast import tokens
+from opendp.smartnoise.ast.expressions import *
 from opendp.smartnoise.sql import PandasReader, PrivateReader
 # from opendp.smartnoise.sql.private_reader import PrivateReaderOptions
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 
 
-def set_parent(s:SqlExpr):
+
+def set_parent(s):
     for c in s.children():
         if c and isinstance(c, Sql):
             c.parent = s

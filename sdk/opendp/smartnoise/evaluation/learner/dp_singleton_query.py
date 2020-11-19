@@ -35,10 +35,10 @@ class DPSingletonQuery(PrivacyAlgorithm):
         for idx in range(self.eval_params.repeat_count):
             srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
             res = private_reader._execute_ast(query_ast, True)
-            try:
+            if not res.rows()[1:]:
+                return Report({"__key__" : "noisy_values_empty"})
+            else:
                 noisy_values.append(res.rows()[1:][0][0])
-            except Exception as e: 
-                return Report({"__key__" : "noisy_values_empty, " + str(type(e))+ ", "+str(e)})
         return Report({"__key__" : noisy_values})
 
     def actual_release(self, dataset):
@@ -48,7 +48,7 @@ class DPSingletonQuery(PrivacyAlgorithm):
         """
         reader = dataset[1]
         try:
-            exact = reader.execute_typed(self.algorithm).rows()[1:][0][0]
+            exact = reader.execute_typed(self.algorithm).rows()[1:][0][0] #ValueError: Trying to load unknown type unknown
         except Exception as e: 
             return Report({"__key__" : "exact_value_error, " + str(type(e))+ ", " + str(e)})
         return Report({"__key__" : exact})

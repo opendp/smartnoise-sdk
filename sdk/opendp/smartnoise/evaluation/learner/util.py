@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import copy
 import csv
+import os
 from opendp.smartnoise.metadata.collection import *
+from opendp.smartnoise.evaluation.learner._generate import Grammar
 
 
 
@@ -23,13 +25,13 @@ def create_simulated_dataset(dataset_size, file_name):
     df = pd.DataFrame(list(zip(userids, segments, roles, usage)), columns=['UserId', 'Segment', 'Role', 'Usage'])
 
     # Storing the data as a CSV
-    metadata = Table(file_name, file_name, \
+    metadata = Table(file_name, file_name, dataset_size, \
         [\
             String("UserId", dataset_size, True), \
             String("Segment", 3, False), \
             String("Role", 2, False), \
             Int("Usage", 0, 25)
-        ], dataset_size)
+        ])
 
     return df, metadata
 
@@ -50,6 +52,19 @@ def generate_neighbors(df, metadata, flag='bandit'):
 
     return d1, d2, d1_metadata, d2_metadata
 
+def generate_query(numofquery):
+    #generate query pool
+    select_path = os.path.join(os.path.dirname(__file__),"select.cfg")
+    print(select_path)
+    with open (select_path, "r") as cfg:
+        rules=cfg.readlines()
+        grammar = Grammar(numofquery)
+        grammar.load(rules)
+    
+    querypool = [] 
+    for i in range(numofquery):   
+        querypool.append(str(grammar.generate('statement')))
+    return querypool
 
 def write_to_csv(filename, data, flag):
     with open(filename, 'w', newline='') as csvfile:

@@ -2,52 +2,36 @@ import numpy as np
 import pandas as pd 
 import csv
 import logging
-
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
 from opendp.smartnoise.evaluation.learner._dp_env import DPEnv
 from opendp.smartnoise.evaluation.learner._generate import Grammar
 from opendp.smartnoise.evaluation.learner._computeactions import compute_action
-from opendp.smartnoise.evaluation.learner.util import write_to_csv
+from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors, generate_query, write_to_csv
 logging.basicConfig(filename="Q-learning.log", level=logging.DEBUG)
 
-class Qlearning():
+class QLearning():
     """
     Use Q-learning to conduct reinforcement learning based query search in evaluator
     """
+    def __init__(self,  LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams):
+        self.lp = LearnerParams(observation_space=30000, num_episodes=200, num_steps=200)
+        self.pp = PrivacyParams(epsilon=1.0)
+        self.ev = EvaluatorParams(repeat_count=100)
+        self.dd = DatasetParams(dataset_size=500)
    
-    def Qlearning(self, ep: LearnerParams):       
-        generate query pool
-        with open ("select.cfg", "r") as cfg:
-            rules=cfg.readlines()
-            grammar = Grammar(ep)
-            numofquery = grammar.numofquery
-            grammar.load(rules)
-
-
-        text_file = open("querypool.txt", "w")
-        querypool = [] 
-        for i in range(numofquery):   
-            text_file.write(str(grammar.generate('statement')))
-            text_file.write('\n')
-            querypool.append(str(grammar.generate('statement')))
-        text_file.close()
-
-        fin1 = open("QueryPool.txt", "rt")
-        querypool = [] 
-        toreturn = []
-        for line in fin1:
-            querypool.append(line[:-1])
-
+    def qlearning(self, querypool,exportascsv=False):       
         # available transformation actions to AST
-        available_actions = compute_action(ep)
-
-        env = DPEnv(ep, querypool, available_actions)
+        available_actions = compute_action(self.lp)
+        env = DPEnv(self.lp, self.pp, self.ev, self.dd, querypool, available_actions)
         # Set learning parameters
-        eps = ep.eps
-        lr = ep.lr
-        y = ep.y
-        num_episodes = ep.num_episodes
-        num_steps = ep.num_steps
+        eps = self.lp.eps
+        lr = self.lp.lr
+        y = self.lp.y
+        num_episodes = self.lp.num_episodes
+        num_steps = self.lp.num_steps
         #Initialize table with all zeros
         Q = np.zeros([env.observation_space.n,env.action_space.n])
         for i in range(num_episodes):            
@@ -80,6 +64,3 @@ class Qlearning():
             write_to_csv('Q-learning.csv', env.output, flag='qlearning')        
 
 
-Q = Qlearning()
-ep = LearnerParams()
-Q.Qlearning(ep)

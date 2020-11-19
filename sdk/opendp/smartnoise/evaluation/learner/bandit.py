@@ -3,8 +3,7 @@ import numpy as np
 import pandas as pd 
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.learner._generate import Grammar
-from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors, write_to_csv
+from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors, generate_query, write_to_csv
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
@@ -15,34 +14,14 @@ from opendp.smartnoise.sql import PandasReader
 from dp_singleton_query import DPSingletonQuery
 
 
-class bandit():
-    def __init__(self):
+class Bandit():
+    def __init__(self, PrivacyParams, EvaluatorParams, DatasetParams):
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
         self.pa = DPSingletonQuery()
- 
-    def generate_query(self, ep: LearnerParams):
-        #generate query pool
-        select_path = os.path.join(os.path.dirname(__file__),"select.cfg")
-        print(select_path)
-        with open (select_path, "r") as cfg:
-            rules=cfg.readlines()
-            grammar = Grammar(ep)
-            numofquery = ep.numofquery
-            grammar.load(rules)
 
-
-        text_file = open("querypool.txt", "w")
-        querypool = [] 
-        for i in range(numofquery):   
-            text_file.write(str(grammar.generate('statement')))
-            text_file.write('\n')
-            querypool.append(str(grammar.generate('statement')))
-        text_file.close()
-        return querypool
-
-    def bandit(self, querypool):
+    def bandit(self, querypool, exportascsv=False):
         output = []
         for i in range(len(querypool)):
             df, metadata = create_simulated_dataset(self.dd.dataset_size, "dataset")
@@ -67,9 +46,7 @@ class bandit():
                 js_res = (np.array([res[1] for res in res_list])).max()
                 print(querypool[i],dp_res, js_res)
                 output.append({"query":querypool[i], "dpresult": dp_res,"js_distance": js_res, "error":None})   
-        write_to_csv('Bandit.csv', output, flag='bandit')   
-
-b = bandit()
-ep = LearnerParams()
-querypool = b.generate_query(ep)
-b.bandit(querypool)
+        if exportascsv:
+            write_to_csv('Bandit.csv', output, flag='bandit')
+        else:
+            return output

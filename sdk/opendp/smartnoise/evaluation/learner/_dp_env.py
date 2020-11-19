@@ -13,42 +13,29 @@ from opendp.smartnoise.evaluation._dp_verification import DPVerification
 import opendp.smartnoise.evaluation._exploration as exp
 from opendp.smartnoise.evaluation.learner._transformation import *
 from opendp.smartnoise.evaluation.learner._computeactions import compute_action
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
 from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
 from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors
 from opendp.smartnoise.metadata.collection import *
 from dp_singleton_query import DPSingletonQuery
 
 
-import pickle
-def save_obj(obj, name ):
-    with open(name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
-def load_obj(name ):
-    with open(name + '.pkl', 'rb') as f:
-        return pickle.load(f)
 class DPEnv(gym.Env):
     """Custom Environment that follows gym interface"""
-    def __init__(self, ep:LearnerParams, querypool, available_actions):
-        # self.dv = DPVerification(dataset_size=dataset_size)
-        self.pp = PrivacyParams(epsilon=1.0)
-        self.ev = EvaluatorParams(repeat_count=100)
-        self.dd = DatasetParams(dataset_size=500)
-        self.ep = ep
+    def __init__(self, LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams, querypool, available_actions):
+        self.pp = PrivacyParams
+        self.ev = EvaluatorParams
+        self.dd = DatasetParams
+        self.lp = LearnerParams
         self.state =  0
-        self.query = ep.seedquery
+        self.query = None
         self.querypool = querypool
         self.available_actions = available_actions
         self.action_space = spaces.Discrete(int(len(self.available_actions)))
-        self.observation_space = spaces.Discrete(int(ep.observation_space))# number of query
-        self.total_query = ep.observation_space
+        self.observation_space = spaces.Discrete(int(self.lp.observation_space))# number of query
         self.df, self.metadata = create_simulated_dataset(self.dd.dataset_size, "dataset")
-        self.state_query_pair_base = {0:ep.seedquery, ep.observation_space-1:"invalid"}
-        self.pool = list(range(ep.observation_space-2, 1, -1))
+        self.state_query_pair_base = {}
+        self.pool = list(range(self.lp.observation_space-2, 1, -1))
         self.info = {}
         self.output=[]
         self.episode = 0
@@ -64,7 +51,6 @@ class DPEnv(gym.Env):
             ast = private_reader.parse_query_string(query) 
         except:
             return
-        #save_obj(ast, "ast")
         return ast
 
     def observe(self, query):
@@ -95,7 +81,7 @@ class DPEnv(gym.Env):
             msg['reward']=0
             self.info=msg
             self.output.append(msg)
-            return self.total_query-1, 0, True,  self.info
+            return int(self.lp.observation_space)-1, 0, True,  self.info
         elif new_query == original_query:
             msg['episode'] = self.episode
             msg['dpresult']='ActionResultedSameQuery'
@@ -134,8 +120,8 @@ class DPEnv(gym.Env):
         self.query = start
         self.state =  0
         self.reward = 0
-        self.state_query_pair_base = {0:start, self.total_query-1:"invalid"}
-        self.pool = list(range(self.total_query-2, 1, -1))
+        self.state_query_pair_base = {0:start, self.lp.observation_space-1:"invalid"}
+        self.pool = list(range(self.lp.observation_space-1, 0, -1))
         return 0 
 
     def render(self, mode='human'):
@@ -165,8 +151,8 @@ class DPEnv(gym.Env):
             message = "dp_res_False"
         elif key_metrics['__key__'].dp_res == True and key_metrics['__key__'].jensen_shannon_divergence == math.inf:
             self._game_ended = True
-            dpresult = "DP_FAIL"
-            self.reward =20
+            dpresult = "DP_BUG"
+            self.reward =1
             message = "jsdistance_is_inf"            
         else:
             res_list = []
@@ -187,9 +173,9 @@ class DPEnv(gym.Env):
         # if query exceed the state_space
         if self.reward == 20:
             return True
-        if self.state == self.total_query-1:
+        if self.state == int(self.lp.observation_space)-1:
             return True
-        if len(self.state_query_pair_base) >= self.total_query-1:
+        if len(self.state_query_pair_base) >= int(self.lp.observation_space)-1:
             return True
         return False
 
