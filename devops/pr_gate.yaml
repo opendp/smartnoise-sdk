@@ -41,7 +41,7 @@ steps:
 
   - bash: |
       source activate wnoise
-      flake8 sdk/opendp/smartnoise/sql/dpsu.py sdk/opendp/smartnoise/reader/
+      flake8 sdk/opendp/smartnoise/sql/dpsu.py sdk/opendp/smartnoise/reader/ -v
     displayName: "Run flake8"
 
   - bash: |
