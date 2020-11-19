@@ -53,6 +53,6 @@ class TestQlearning():
                     break
                 assert((info['dpresult'] == 'DP_PASS') | (info['dpresult'] == 'ActionResultedSameQuery') | (info['dpresult'] == 'DP_BUG'))
 
-        def test_qlearning(self):
-            querypool = ["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"]
-            self.qlearning(querypool, exportascsv=True)
+    def test_qlearning(self):
+        querypool = ["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"]
+        self.qlearning(querypool, exportascsv=True)
