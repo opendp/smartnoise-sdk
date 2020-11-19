@@ -15,13 +15,13 @@ from dp_singleton_query import DPSingletonQuery
 
 
 class Bandit():
-    def __init__(self, PrivacyParams, EvaluatorParams, DatasetParams):
+    def __init__(self):
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
         self.pa = DPSingletonQuery()
 
-    def bandit(self, querypool, exportascsv=False):
+    def learn(self, querypool, export_as_csv=False):
         output = []
         for i in range(len(querypool)):
             df, metadata = create_simulated_dataset(self.dd.dataset_size, "dataset")
@@ -34,7 +34,7 @@ class Bandit():
             if key_metrics['__key__'].dp_res is None:
                 dp_res = key_metrics['__key__'].dp_res
                 error =  key_metrics['__key__'].error
-                output.append({"query":querypool[i], "dpresult": dp_res, "jensen_shannon_divergence":None, "error": error})   
+                output.append({"query":querypool[i], "dpresult": dp_res, "jensen_shannon_divergence":None, "error": error})
             else:
                 res_list = []
                 for key, metrics in key_metrics.items():
@@ -43,8 +43,8 @@ class Bandit():
                     res_list.append([dp_res, js_res])
                 dp_res = np.all(np.array([res[0] for res in res_list]))
                 js_res = (np.array([res[1] for res in res_list])).max()
-                output.append({"query":querypool[i], "dpresult": dp_res,"jensen_shannon_divergence": js_res, "error":None})   
-        if exportascsv:
+                output.append({"query":querypool[i], "dpresult": dp_res,"jensen_shannon_divergence": js_res, "error":None})
+        if export_as_csv:
             write_to_csv('Bandit.csv', output, flag='bandit')
         else:
             return output

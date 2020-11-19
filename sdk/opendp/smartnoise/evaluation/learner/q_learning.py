@@ -16,16 +16,16 @@ class QLearning():
     """
     Use Q-learning to conduct reinforcement learning based query search in evaluator
     """
-    def __init__(self,  LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams):
-        self.lp = LearnerParams
+    def __init__(self, learner_params):
+        self.lp = learner_params
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
-   
-    def qlearning(self, querypool,exportascsv=False):       
+
+    def learn(self, query_pool, export_as_csv=False):
         # available transformation actions to AST
         available_actions = compute_action(self.lp)
-        env = DPEnv(self.lp, self.pp, self.ev, self.dd, querypool, available_actions)
+        env = DPEnv(self.lp, self.pp, self.ev, self.dd, query_pool, available_actions)
         # Set learning parameters
         eps = self.lp.eps
         lr = self.lp.lr
@@ -34,7 +34,7 @@ class QLearning():
         num_steps = self.lp.num_steps
         #Initialize table with all zeros
         Q = np.zeros([env.observation_space.n,env.action_space.n])
-        for i in range(num_episodes):            
+        for i in range(num_episodes):
             logging.debug("%s episode" %i)
             #Reset environment and get first new observation
             s = env.reset()
@@ -61,7 +61,7 @@ class QLearning():
                 env.render()
                 if d == True:
                     break
-        if exportascsv:
+        if export_as_csv:
             write_to_csv('Q-learning.csv', env.output, flag='qlearning')
         else:
-            return env.output      
+            return env.output

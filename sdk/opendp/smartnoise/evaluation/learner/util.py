@@ -52,17 +52,16 @@ def generate_neighbors(df, metadata, flag='bandit'):
 
     return d1, d2, d1_metadata, d2_metadata
 
-def generate_query(numofquery):
+def generate_query(numofquery, select_path):
     #generate query pool
-    select_path = os.path.join(os.path.dirname(__file__),"select.cfg")
     print(select_path)
     with open (select_path, "r") as cfg:
         rules=cfg.readlines()
         grammar = Grammar(numofquery)
         grammar.load(rules)
-    
-    querypool = [] 
-    for i in range(numofquery):   
+
+    querypool = []
+    for i in range(numofquery):
         querypool.append(str(grammar.generate('statement')))
     return querypool
 
