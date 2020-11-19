@@ -29,6 +29,9 @@ def execute_private_query(reader, schema, budget, query):
         reader = tmp
     schema = reader.metadata if hasattr(reader, "metadata") else schema
     query = reader._sanitize_query(query) if hasattr(reader, "_sanitize_query") else query
-    return PrivateReader(reader, schema, budget).execute(query)
+    rowset = PrivateReader(reader, schema, budget).execute(query)
+    return pd.DataFrame(rowset[1:], columns=rowset[0])
+
+
 
 
