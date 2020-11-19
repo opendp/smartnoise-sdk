@@ -61,6 +61,10 @@ class QLearning():
                 env.render()
                 if d == True:
                     break
-            write_to_csv('Q-learning.csv', env.output, flag='qlearning')        
+        if exportascsv:
+            write_to_csv('Q-learning.csv', env.output, flag='qlearning') 
+        else:
+            return output   
+
 
 
