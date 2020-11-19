@@ -26,7 +26,7 @@ class TestBandit():
         b = Bandit()
         select_path = os.path.join(os.path.dirname(__file__), "select.cfg")
         querypool = generate_query(3, select_path)
-        output = b.bandit(["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"] + querypool)
+        output = b.learn(["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"] + querypool)
         assert(output[0]['dpresult'] == True)
         assert(output[0]['jensen_shannon_divergence'] > 0.0)
 
