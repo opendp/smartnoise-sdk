@@ -1,13 +1,16 @@
-from opendp.smartnoise.ast.tokens import *
-
+from opendp.smartnoise._ast.tokens import *
+import operator
 import numpy as np
+from datetime import datetime, date
 
 ops = {
-    '>': np.greater,
-    '<': np.less,
-    '>=': np.greater_equal,
-    '<=': np.less_equal,
-    '=': np.equal,
+    '>': operator.gt,
+    '<': operator.lt,
+    '>=': operator.ge,
+    '<=': operator.le,
+    '=': operator.eq,
+    '!=': operator.ne,
+    '<>': operator.ne,
     'and': np.logical_and,
     'or': np.logical_or
 }
@@ -26,10 +29,54 @@ class BooleanCompare(SqlExpr):
         return 1
     def children(self):
         return [self.left, self.op, self.right]
+    def coerce_string(self, val, typed_val):
+        # SQL-92 rules for casting types in comparison
+        if isinstance(typed_val, bool):
+            return parse_bool(val)
+        elif isinstance(typed_val, int):
+            try:
+                v = int(val)
+            except:
+                v = float(val)
+            return v
+        elif isinstance(typed_val, float):
+            return float(val)
+        elif isinstance(typed_val, datetime):
+            return datetime.fromisoformat(val)
+        elif isinstance(typed_val, date):
+            return date.fromisoformat(val)
+        else:
+            return val
+
     def evaluate(self, bindings):
         l = self.left.evaluate(bindings)
         r = self.right.evaluate(bindings)
-        return ops[self.op.lower()](l, r)
+        if (type(l) != type(r)):
+            if isinstance(l, str):
+                l = self.coerce_string(l, r)
+            elif isinstance(r, str):
+                r = self.coerce_string(r, l)
+        try:
+            res = bool(ops[self.op.lower()](l, r))
+        except:
+            raise ValueError("We don't know how to compare {0} {1} {2} of mismatched types {3} and {4}".format(l, self.op, r, str(type(l)), str(type(r))))
+        
+        return parse_bool(res)
+
+class ColumnBoolean(SqlExpr):
+    """A qualified column name that was parsed in a context that requires boolean"""
+    def __init__(self, expression):
+        self.expression = expression
+    def symbol(self, relations):
+        return ColumnBoolean(self.expression.symbol(relations))
+    def type(self):
+        return bool
+    def sensitivity(self):
+        return 1
+    def children(self):
+        return [self.expression]
+    def evaluate(self, bindings):
+        return parse_bool(self.expression.evaluate(bindings))
 
 class NestedBoolean(SqlExpr):
     """A nested expression with no name"""
@@ -44,7 +91,7 @@ class NestedBoolean(SqlExpr):
     def children(self):
         return [Token("("), self.expression, Token(")")]
     def evaluate(self, bindings):
-        return self.expression.evaluate(bindings)
+        return parse_bool(self.expression.evaluate(bindings))
 
 class LogicalNot(SqlExpr):
     """Negation of a boolean expression"""
@@ -59,7 +106,8 @@ class LogicalNot(SqlExpr):
     def children(self):
         return [Token("NOT"), self.expression]
     def evaluate(self, bindings):
-        return np.logical_not(self.expression.evaluate(bindings))
+        val = self.expression.evaluate(bindings)
+        return not parse_bool(val)
 
 class PredicatedExpression(SqlExpr):
     def __init__(self, expression, predicate):
@@ -178,3 +226,21 @@ class IIFFunction(SqlExpr):
         self.no = no
     def children(self):
         return [Token('IIF'), Token('('), self.test, Token(','), self.yes, Token(','), self.no, Token(')') ]
+
+def parse_bool(v):
+    if isinstance(v, bool):
+        return v
+    elif isinstance(v, (int, float, np.int)):
+        if float(v) == 0.0:
+            return False
+        elif float(v) == 1.0:
+            return True
+        else:
+            return v
+    elif isinstance(v, str):
+        if v.lower() == "true" or v == "1":
+            return True
+        elif v.lower() == "false" or v == "0":
+            return False
+        else:
+            return v

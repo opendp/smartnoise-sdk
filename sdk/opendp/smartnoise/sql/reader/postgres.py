@@ -53,9 +53,9 @@ class PostgresReader(SqlReader):
         sql = "\\c " + dbname
         self.execute(sql)
 
-    class PostgresSerializer:
-        def serialize(self, query):
-            return str(query)
+class PostgresSerializer:
+    def serialize(self, query):
+        return str(query)
 
 class PostgresNameCompare(NameCompare):
     def __init__(self, search_path=None):

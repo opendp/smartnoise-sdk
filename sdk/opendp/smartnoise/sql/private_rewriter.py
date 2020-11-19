@@ -2,13 +2,12 @@ import random
 import string
 
 from .parse import QueryParser
-from opendp.smartnoise.ast import Validate
 
-from opendp.smartnoise.ast.validate import Validate
-from opendp.smartnoise.ast.ast import Select, From, Query, AliasedRelation, Where, Aggregate, Order
-from opendp.smartnoise.ast.ast import Literal, Column, TableColumn, AllColumns
-from opendp.smartnoise.ast.ast import NamedExpression, NestedExpression, Expression, Seq
-from opendp.smartnoise.ast.ast import AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression
+from opendp.smartnoise._ast.validate import Validate
+from opendp.smartnoise._ast.ast import (Select, From, Query, AliasedRelation, Where, Aggregate, Order,
+                                        Literal, Column, TableColumn, AllColumns,
+                                        NamedExpression, NestedExpression, Expression, Seq,
+                                        AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression)
 
 class Rewriter:
     """
@@ -22,8 +21,8 @@ class Rewriter:
 
     """
 
-    def __init__(self, metadata, options=None):
-        self.options = RewriterOptions() if options is None else options
+    def __init__(self, metadata):
+        self.options = RewriterOptions()
         self.metadata = metadata
 
     def calculate_avg(self, exp, scope):
@@ -126,13 +125,13 @@ class Rewriter:
                 child_scope.push_name(ge.expression)
 
         select = Seq([self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
-        select = Select(None, select)
+        select = Select(query.select.quantifier, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
+        subquery = Query(child_scope.select(), query.source, query.where, query.agg, None, None, None)
         subquery = self.exact_aggregates(subquery)
         subquery = [AliasedRelation(subquery, "exact_aggregates")]
 
-        q = Query(select, From(subquery), None, query.agg, None, query.order, query.limit)
+        q = Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit)
 
         return QueryParser(self.metadata).query(str(q))
 
@@ -154,7 +153,7 @@ class Rewriter:
         select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, query.having, None, None)
+        subquery = Query(child_scope.select(), query.source, query.where, query.agg, None, None, None)
         if self.options.reservoir_sample and not self.options.row_privacy:
             subquery = self.per_key_random(subquery)
             subquery = [AliasedRelation(subquery, "per_key_random")]

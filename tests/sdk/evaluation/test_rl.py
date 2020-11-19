@@ -10,16 +10,15 @@ from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
 from opendp.smartnoise.evaluation.learner._dp_env import DPEnv
 from opendp.smartnoise.evaluation.learner._generate import Grammar
 from opendp.smartnoise.evaluation.learner._computeactions import compute_action
- 
 
 
 class TestQlearning():
-    def __init__(self,  LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams):
+    def __init__(self):
         self.lp = LearnerParams(observation_space=30000, num_episodes=200, num_steps=200)
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
-   
+
     def qlearning(self, querypool,exportascsv=False): 
         available_actions = compute_action(self.lp)
         env = DPEnv(self.lp, self.pp, self.ev, self.dd, querypool, available_actions)
@@ -53,9 +52,7 @@ class TestQlearning():
                 if d == True:
                     break
                 assert((info['dpresult'] == 'DP_PASS') | (info['dpresult'] == 'ActionResultedSameQuery') | (info['dpresult'] == 'DP_BUG'))
-            print('done')
 
-
-Q = TestQlearning(LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams)
-querypool = ["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"]
-Q.qlearning(querypool, exportascsv=True)
+        def test_qlearning(self):
+            querypool = ["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"]
+            self.qlearning(querypool, exportascsv=True)

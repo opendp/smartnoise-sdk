@@ -18,7 +18,7 @@ from dp_singleton_query import DPSingletonQuery
 
 
 class TestBandit():
-    def __init__(self, PrivacyParams, EvaluatorParams, DatasetParams):
+    def __init__(self):
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
@@ -40,9 +40,7 @@ class TestBandit():
             assert(metrics.jensen_shannon_divergence > 0.0)
             test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
             test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
-        print('done')
 
-
-b = TestBandit(PrivacyParams, EvaluatorParams, DatasetParams)
-query= "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
-b.bandit(query)
+    def test_bandit(self):
+        query= "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
+        self.bandit(query)

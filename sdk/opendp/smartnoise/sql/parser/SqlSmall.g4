@@ -38,7 +38,7 @@ selectClause
 fromClause : FROM relation (',' relation)*;
 
 whereClause
-    : WHERE booleanExpression
+    : WHERE booleanExpression 
     ;
 
 aggregationClause
@@ -46,7 +46,7 @@ aggregationClause
     ;
 
 havingClause
-    : HAVING booleanExpression
+    : HAVING booleanExpression 
     ;
 
 orderClause
@@ -97,7 +97,8 @@ relationPrimary
     ;
 
 caseExpression
-    : CASE (baseCaseExpr=expression)? (whenExpression)+ (ELSE elseExpr=expression)? END
+    : CASE baseCaseExpr=expression (whenBaseExpression)+ (ELSE elseExpr=expression)? END #caseBaseExpr
+    | CASE (whenExpression)+ (ELSE elseExpr=expression)? END #caseWhenExpr
     ;
 
 namedExpression
@@ -108,7 +109,8 @@ namedExpressionSeq
     : namedExpression (',' namedExpression)*
     ;
 
-whenExpression : (WHEN (baseBoolExpr=booleanExpression | baseWhenExpr=expression) THEN thenExpr=expression);
+whenExpression : (WHEN baseBoolExpr=booleanExpression THEN thenExpr=expression);
+whenBaseExpression : (WHEN baseWhenExpr=expression THEN thenExpr=expression);
 
 expression
     : name=qualifiedColumnName                                                       #columnName
@@ -126,6 +128,51 @@ expression
     | '(' expression ')'                                                        #nestedExpr
     ;
 
+
+
+
+predicate
+    : NOT? kind=BETWEEN lower=expression AND upper=expression #betweenCondition
+    | NOT? kind=IN '(' expression (',' expression)* ')' #inCondition
+    | IS NOT? kind=(NULL | TRUE | FALSE) #isCondition
+    ;
+
+functionExpression
+    : bareFunction              #bareFunc
+    | roundFunction             #roundFunc
+    | powerFunction             #powerFunc
+    | function=aggregateFunctionName '(' setQuantifier? expression ')' #aggFunc
+    | function=mathFunctionName '(' expression ')' #mathFunc
+    | IIF '(' test=booleanExpression ',' yes=expression ',' no=expression ')' #iifFunc
+    | CHOOSE '(' index=expression (',' literal)+ ')' # chooseFunc
+    ;
+
+booleanExpression
+    : NOT booleanExpression   #logicalNot
+    | left=expression op=comparisonOperator right=expression  #comparison
+    | left=booleanExpression AND right=booleanExpression #conjunction
+    | left=booleanExpression OR right=booleanExpression #disjunction
+    | '(' booleanExpression ')' #nestedBoolean
+    | expression predicate #predicated
+    | name=qualifiedColumnName #boolColumn
+    ;
+
+bareFunction : function=bareFunctionName '(' ')';
+
+rankingFunction: function=rankingFunctionName  '(' ')' overClause;
+
+roundFunction : ROUND '(' expression ',' digits=number ')';
+
+powerFunction : POWER '(' expression ',' number ')';
+
+comparisonOperator
+    : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
+    ;
+
+booleanValue
+    : TRUE | FALSE
+    ;
+
 allExpression
     : ASTERISK
     | identifier '.' ASTERISK
@@ -139,47 +186,6 @@ literal
     | NULL      #nullLiteral
     ;
 
-booleanExpression
-    : NOT booleanExpression                                    #logicalNot
-    | left=expression op=comparisonOperator right=expression       #comparison
-    | left=booleanExpression AND right=booleanExpression #conjunction
-    | left=booleanExpression OR right=booleanExpression #disjunction
-    | '(' booleanExpression ')' #nestedBoolean
-    | expression predicate #predicated
-    ;
-
-predicate
-    : NOT? kind=BETWEEN lower=expression AND upper=expression #betweenCondition
-    | NOT? kind=IN '(' expression (',' expression)* ')' #inCondition
-    | IS NOT? kind=(NULL | TRUE | FALSE) #isCondition
-    ;
-
-comparisonOperator
-    : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
-    ;
-
-booleanValue
-    : TRUE | FALSE
-    ;
-
-
-functionExpression
-    : bareFunction              #bareFunc
-    | roundFunction             #roundFunc
-    | powerFunction             #powerFunc
-    | function=aggregateFunctionName '(' setQuantifier? expression ')' #aggFunc
-    | function=mathFunctionName '(' expression ')' #mathFunc
-    | IIF '(' test=booleanExpression ',' yes=expression ',' no=expression ')' #iifFunc
-    | CHOOSE '(' index=expression (',' literal)+ ')' # chooseFunc
-    ;
-
-bareFunction : function=bareFunctionName '(' ')';
-
-rankingFunction: function=rankingFunctionName  '(' ')' overClause;
-
-roundFunction : ROUND '(' expression ',' digits=number ')';
-
-powerFunction : POWER '(' expression ',' number ')';
 
 rankingFunctionName : ROW_NUMBER | RANK | DENSE_RANK;
 
