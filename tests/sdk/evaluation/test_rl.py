@@ -4,22 +4,29 @@ import csv
 import logging
 test_logger = logging.getLogger("test-logger")
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
+from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
+from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
+from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
 from opendp.smartnoise.evaluation.learner._dp_env import DPEnv
 from opendp.smartnoise.evaluation.learner._generate import Grammar
 from opendp.smartnoise.evaluation.learner._computeactions import compute_action
-from opendp.smartnoise.evaluation.learner.util import write_to_csv
  
 
 
 class TestQlearning():
-    def TestQlearning(self, ep: LearnerParams):
-        available_actions = compute_action(ep)
-        querypool = ["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"]
-        env = DPEnv(ep, querypool, available_actions)
+    def __init__(self,  LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams):
+        self.lp = LearnerParams(observation_space=30000, num_episodes=200, num_steps=200)
+        self.pp = PrivacyParams(epsilon=1.0)
+        self.ev = EvaluatorParams(repeat_count=100)
+        self.dd = DatasetParams(dataset_size=500)
+   
+    def qlearning(self, querypool,exportascsv=False): 
+        available_actions = compute_action(self.lp)
+        env = DPEnv(self.lp, self.pp, self.ev, self.dd, querypool, available_actions)
         # Set learning parameters
-        eps = ep.eps
-        lr = ep.lr
-        y = ep.y
+        eps = self.lp.eps
+        lr = self.lp.lr
+        y = self.lp.y
         num_episodes = 1
         num_steps = 2
         #Initialize table with all zeros
@@ -49,6 +56,6 @@ class TestQlearning():
             print('done')
 
 
-Q = TestQlearning()
-ep = LearnerParams()
-Q.TestQlearning(ep)
+Q = TestQlearning(LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams)
+querypool = ["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"]
+Q.qlearning(querypool, exportascsv=True)

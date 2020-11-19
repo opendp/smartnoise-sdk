@@ -5,8 +5,8 @@ test_logger = logging.getLogger("test-logger")
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 from opendp.smartnoise.evaluation.learner._generate import Grammar
-from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors, write_to_csv
-from opendp.smartnoise.evaluation.learner import _bandit
+from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors
+from opendp.smartnoise.evaluation.learner import bandit
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
@@ -18,18 +18,18 @@ from dp_singleton_query import DPSingletonQuery
 
 
 class TestBandit():
-    def __setup__(self):
+    def __init__(self, PrivacyParams, EvaluatorParams, DatasetParams):
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
-        self.pa = DPSingletonQuery() 
+        self.pa = DPSingletonQuery()
 
-    def test_bandit(self):
-        query = "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
+
+    def bandit(self, query):
         df, metadata = create_simulated_dataset(self.dd.dataset_size, "dataset")
         d1_dataset, d2_dataset, d1_metadata, d2_metadata = generate_neighbors(df, metadata)
-        d1 = PandasReader(d1_dataset, d1_metadata)
-        d2 = PandasReader(d2_dataset, d2_metadata)
+        d1 = PandasReader(d1_metadata, d1_dataset)
+        d2 = PandasReader(d2_metadata, d2_dataset)
         eval = DPEvaluator()
         pa = DPSingletonQuery()
         key_metrics = eval.evaluate([d1_metadata, d1], [d2_metadata, d2], pa, query, self.pp, self.ev)
@@ -41,3 +41,8 @@ class TestBandit():
             test_logger.debug("Wasserstein Distance:" + str(metrics.wasserstein_distance))
             test_logger.debug("Jensen Shannon Divergence:" + str(metrics.jensen_shannon_divergence))
         print('done')
+
+
+b = TestBandit(PrivacyParams, EvaluatorParams, DatasetParams)
+query= "SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"
+b.bandit(query)
