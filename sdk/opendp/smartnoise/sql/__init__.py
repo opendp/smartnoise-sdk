@@ -1,5 +1,7 @@
 import warnings
 
+import pandas as pd
+
 from .private_rewriter import Rewriter
 from .private_reader import PrivateReader
 from .parse import QueryParser
