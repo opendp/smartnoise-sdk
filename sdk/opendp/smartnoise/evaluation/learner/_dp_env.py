@@ -152,7 +152,7 @@ class DPEnv(gym.Env):
         elif key_metrics['__key__'].dp_res == True and key_metrics['__key__'].jensen_shannon_divergence == math.inf:
             self._game_ended = True
             dpresult = "DP_BUG"
-            self.reward =1
+            self.reward =20
             message = "jsdistance_is_inf"            
         else:
             res_list = []

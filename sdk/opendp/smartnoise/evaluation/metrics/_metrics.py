@@ -15,3 +15,4 @@ class Metrics:
 		self.outside_bounds = 0
 		self.utility_res = False
 		self.bias_res = False
+		self.error = None

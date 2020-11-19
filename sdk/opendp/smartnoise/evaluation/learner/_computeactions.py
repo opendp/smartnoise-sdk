@@ -1,6 +1,6 @@
 from opendp.smartnoise.evaluation.learner._transformation import *
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise._ast import tokens
+from opendp.smartnoise.ast import tokens
 
 def compute_action(ep: LearnerParams):
     columns = ep.columns

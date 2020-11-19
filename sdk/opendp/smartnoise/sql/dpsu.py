@@ -5,8 +5,8 @@ import operator
 from collections import defaultdict
 
 from opendp.smartnoise.sql.parse import QueryParser
-from opendp.smartnoise._ast.ast import Table
-from ._mechanisms.rand import laplace
+from opendp.smartnoise.ast.ast import Table
+from opendp.smartnoise.mechanisms.rand import laplace
 
 sys_rand = random.SystemRandom()
 

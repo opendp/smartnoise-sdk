@@ -6,7 +6,6 @@
 import numpy as np
 import string
 from itertools import chain
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 import random
 # random.seed(0)
 
@@ -29,9 +28,9 @@ class Token(object):
 
 
 class Grammar(object):
-    def __init__(self, ep: LearnerParams):
+    def __init__(self, numofquery):
         self.grammar = {'null': ['']}
-        self.numofquery = ep.numofquery
+        self.numofquery = numofquery
 
     @staticmethod
     def validate_load(token):

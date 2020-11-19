@@ -22,6 +22,6 @@ __all__ = ["PandasReader",
 def execute_private_query(schema, reader, budget, query):
     schema = reader.metadata if hasattr(reader, "metadata") else schema
     query = reader._sanitize_query(query) if hasattr(reader, "_sanitize_query") else query
-    return PrivateReader(reader, schema, budget).execute(query)
+    return PrivateReader(schema, reader, budget).execute(query)
 
 

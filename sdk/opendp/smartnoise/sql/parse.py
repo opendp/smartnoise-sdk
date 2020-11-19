@@ -5,8 +5,8 @@ from .parser.SqlSmallParser import SqlSmallParser #type: ignore
 from .parser.SqlSmallVisitor import SqlSmallVisitor #type: ignore
 from .parser.SqlSmallErrorListener import SyntaxErrorListener #type: ignore
 
-from opendp.smartnoise._ast.tokens import *
-from opendp.smartnoise._ast.ast import *
+from opendp.smartnoise.ast.tokens import *
+from opendp.smartnoise.ast.ast import *
 
 
 class QueryParser:

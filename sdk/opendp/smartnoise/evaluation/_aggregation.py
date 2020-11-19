@@ -9,7 +9,8 @@ import os
 
 from opendp.smartnoise.sql import PandasReader, PrivateReader
 from opendp.smartnoise.reader.rowset import TypedRowset
-from opendp.smartnoise.sql._mechanisms.gaussian import Gaussian
+from opendp.smartnoise.mechanisms.laplace import Laplace
+from opendp.smartnoise.mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 class Aggregation:
@@ -17,10 +18,11 @@ class Aggregation:
     Implement different aggregation functions that can be passed through
     the verification tests
     """
-    def __init__(self, epsilon=1.0, t=1, repeat_count=10000):
+    def __init__(self, epsilon=1.0, t=1, repeat_count=10000, mechanism="Laplace"):
         self.epsilon = epsilon
         self.t = t
         self.repeat_count = repeat_count
+        self.mechanism = mechanism
 
     def exact_count(self, df, colname):
         """
@@ -77,21 +79,27 @@ class Aggregation:
 
     def dp_mechanism_count(self, df, colname):
         """
-        Returns repeatedly applied noise adding mechanism to count query
+        Returns repeatedly applied noise adding mechanisms
+        like Laplace and Gaussian available in SmartNoise-SDK to count query
         """
         exact_count = df[colname].count()
-        mech = Gaussian(self.epsilon)
+        mech = Laplace(self.epsilon)
+        if(self.mechanism == "Gaussian"):
+            mech = Gaussian(self.epsilon)
         return np.array([mech.release([exact_count]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_sum(self, df, colname):
         """
-        Returns repeatedly applied noise adding mechanisms to sum query.
+        Returns repeatedly applied noise adding mechanisms
+        like Laplace and Gaussian available in SmartNoise-SDK to sum query.
         Sensitivity is set as absolute difference between max and min values
         within the column
         """
         exact_sum = df[colname].sum()
         M = float(abs(max(df[colname]) - min(df[colname])))
-        mech = Gaussian(self.epsilon, 10E-5, M)
+        mech = Laplace(self.epsilon, sensitivity = M)
+        if(self.mechanism == "Gaussian"):
+            mech = Gaussian(self.epsilon)
         return np.array([mech.release([exact_sum]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_mean(self, df, colname):
@@ -117,12 +125,12 @@ class Aggregation:
         Run the query using the private reader and input query
         Get query response back
         """
-        reader = PandasReader(df, metadata)
+        reader = PandasReader(metadata, df)
         actual = 0.0
         # VAR not supported in Pandas Reader. So not needed to fetch actual on every aggregation
         if(get_exact):
             actual = reader.execute_typed(query).rows()[1:][0][0]
-        private_reader = PrivateReader(reader, metadata, self.epsilon)
+        private_reader = PrivateReader(metadata, reader, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
 
         srs_orig = private_reader.reader.execute_ast_typed(query_ast)
@@ -146,13 +154,13 @@ class Aggregation:
         Get query response back for multiple dimensions and aggregations
         """
         # Getting exact result
-        reader = PandasReader(df, metadata)
+        reader = PandasReader(metadata, df)
         exact = reader.execute_typed(query).rows()[1:]
         exact_res = []
         for row in exact:
             exact_res.append(row)
 
-        private_reader = PrivateReader(reader, metadata, self.epsilon)
+        private_reader = PrivateReader(metadata, reader, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
 
         # Distinguishing dimension and measure columns
