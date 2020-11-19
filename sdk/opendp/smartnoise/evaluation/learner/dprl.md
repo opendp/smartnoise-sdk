@@ -7,7 +7,7 @@
 | True           | 100548 |
 
 #### One may easily infer from the result that user with pid=1 is married. We seek to optimize the query search step using bandit and Q-learning approach. The goal is to help user to catch DP bugs(if any) for a DP test they built. 
-### In the bandit approach, a number of queries will be generally according to a set of grammer rules, and will be tested in batch. A report will be generated for user to scan through the dp test results on large batch of auto generated queries.Exampler code:
+#### In the bandit approach, a number of queries will be generally according to a set of grammer rules, and will be tested in batch. A report will be generated for user to scan through the dp test results on large batch of auto generated queries.Exampler code:
     b = Bandit(PrivacyParams, EvaluatorParams, DatasetParams)
     querypool = generate_query(100)
     b.bandit(querypool, exportascsv=True)
