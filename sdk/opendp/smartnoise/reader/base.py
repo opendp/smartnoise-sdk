@@ -35,10 +35,8 @@ class Reader:
                     types[idx] = "boolean"
                 else:
                     types[idx] = "string"
-        try:
-            return TypedRowset(rows, types)
-        except Exception as e:
-            return ["error_executetyped", str(type(e))+str(e)]
+
+        return TypedRowset(rows, types)
 
     def execute_ast(self, query):
         if isinstance(query, str):

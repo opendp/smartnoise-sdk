@@ -14,7 +14,6 @@ class TypedRowset:
     def __init__(self, rows, types):
         """
             Initialize rowset
-
             :param rows: A list of tuples representing rows, with the first tuple being the
                 column names, and the rest being the rows of the rowset.
             :param types: A list of types for the columns
