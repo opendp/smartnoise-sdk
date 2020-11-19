@@ -77,9 +77,6 @@ class Sql:
     """
         base type for all Sql AST nodes
     """
-    def __init__(self):
-        self.parent = None 
-
     def __str__(self):
         return " ".join([str(c) for c in self.children() if c is not None])
 
