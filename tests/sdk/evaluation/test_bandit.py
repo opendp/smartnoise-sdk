@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-import pandas as pd 
+import pandas as pd
 test_logger = logging.getLogger("test-logger")
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
@@ -18,7 +18,7 @@ from dp_singleton_query import DPSingletonQuery
 
 
 class TestBandit():
-    def __init__(self):
+    def setup(self):
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)

@@ -13,7 +13,7 @@ from opendp.smartnoise.evaluation.learner._computeactions import compute_action
 
 
 class TestQlearning():
-    def __init__(self):
+    def setup(self):
         self.lp = LearnerParams(observation_space=30000, num_episodes=200, num_steps=200)
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
