@@ -243,8 +243,6 @@ class DPEvaluator(Evaluator):
                 return key_metrics
             fD_actual = d1actual.res[key]
             d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
-            if d1hist is None:
-                print(1)     
             dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
                 self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
 
