@@ -36,10 +36,7 @@ class DPEvaluator(Evaluator):
             numerator = 2 * iqr if iqr > 0 else maxval - minval
             denominator = n ** (1. / 3)
             binwidth = numerator / denominator # Freedman–Diaconis' choice
-            try:
-                ep.numbins = int(math.ceil((maxval - minval) / binwidth)) if maxval > minval else 20
-            except Exception as e: 
-                return None, ("Error_inf_in_fD1, " + str(type(e)) + ", " + str(e)), None
+            ep.numbins = int(math.ceil((maxval - minval) / binwidth)) if maxval > minval else 20
             binlist = np.linspace(minval, maxval, ep.numbins)
         else:
             # Choose bin size of unity
@@ -181,15 +178,6 @@ class DPEvaluator(Evaluator):
         tset, pval = stats.ttest_1samp(diff, 0.0)
         return (pval >= sig_level)
 
-    def bias_test(self, fD1, fD_actual, sig_level):
-        """
-        1 sample t-test to check if difference in actual and noisy responses 
-        is not statistically significant
-        """
-        diff = fD1 - fD_actual
-        tset, pval = stats.ttest_1samp(diff, 0.0)
-        return (pval >= sig_level)
-
     """
     Implement the Evaluator interface that takes in two neighboring datasets
     D1 and D2 and a privacy algorithm. Then runs the algorithm on the
@@ -215,15 +203,16 @@ class DPEvaluator(Evaluator):
 		"""
         pa.prepare(algorithm, pp, ep)
         key_metrics = {}
-        try:
-            d1report = pa.release(d1)
+        try: # whether the query is applicable to a DP test
+            d1report = pa.release(d1) #e.g. ValueError: Attempting to select a column not in a GROUP BY clause: dataset.dataset.UserId
+                                      #e.g. '(sqlite3.OperationalError) a GROUP BY clause is required before HAVING\n[SQL: SELECT * FROM df_for_diffpriv1234 WHERE ( Usage != UserId AND UserId > "B" AND Usage <= Role AND Usage < "fUpNFG" ) HAVING UserId = 87 OR UserId <= Role]\n(Background on this error at: http://sqlalche.me/e/e3q8)'
         except Exception as e: 
             metrics = Metrics()
             key_metrics['__key__'] = metrics
             metrics.dp_res = None
             metrics.error = str(type(e)) + ", " + str(e)
             return key_metrics
-        if isinstance(d1report.res['__key__'], str) and d1report.res['__key__'].startswith("noisy_values_empty"):
+        if isinstance(d1report.res['__key__'], str) and (d1report.res['__key__'] == "noisy_values_empty"):
             metrics = Metrics()
             key_metrics['__key__'] = metrics
             metrics.dp_res = None
@@ -246,9 +235,7 @@ class DPEvaluator(Evaluator):
         for key in d1report.res.keys():
             metrics = Metrics()
             fD1, fD2 = np.array(d1report.res[key]), np.array(d2report.res[key])
-            try: 
-                fD1 = np.asarray(fD1, dtype='float64')
-            except Exception as e: 
+            if not (fD1.dtype == np.int or fD1.dtype == np.float):
                 metrics = Metrics()
                 key_metrics['__key__'] = metrics
                 metrics.dp_res = None                
@@ -257,9 +244,7 @@ class DPEvaluator(Evaluator):
             fD_actual = d1actual.res[key]
             d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
             if d1hist is None:
-                metrics.dp_res = None                
-                metrics.error = d2hist  
-                key_metrics[key] = metrics         
+                print(1)     
             dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
                 self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
 
