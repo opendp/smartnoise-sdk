@@ -71,7 +71,7 @@ def write_to_csv(filename, data, flag):
         if flag=='qlearning':
             writer = csv.DictWriter(csvfile, fieldnames = ['original_query', 'chosen_action', 'new_query', 'episode', 'dpresult', 'reward', 'message', 'd1', 'd2'], extrasaction='ignore')
         elif flag == 'bandit':
-            writer = csv.DictWriter(csvfile, fieldnames = ['query', 'dpresult', 'js_distance', 'error'])
+            writer = csv.DictWriter(csvfile, fieldnames = ['query', 'dpresult', 'jensen_shannon_divergence', 'error'])
         writer.writeheader()
         for i in data:
             writer.writerow(i)
