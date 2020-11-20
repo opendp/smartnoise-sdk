@@ -17,7 +17,7 @@ class QLearning():
     Use Q-learning to conduct reinforcement learning based query search in evaluator
     """
     def __init__(self,  LearnerParams, PrivacyParams, EvaluatorParams, DatasetParams):
-        self.lp = LearnerParams(observation_space=30000, num_episodes=200, num_steps=200)
+        self.lp = LearnerParams
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
@@ -61,6 +61,7 @@ class QLearning():
                 env.render()
                 if d == True:
                     break
-            write_to_csv('Q-learning.csv', env.output, flag='qlearning')        
-
-
+        if exportascsv:
+            write_to_csv('Q-learning.csv', env.output, flag='qlearning')
+        else:
+            return env.output      

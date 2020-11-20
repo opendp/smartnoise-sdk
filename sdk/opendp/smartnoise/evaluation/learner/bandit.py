@@ -34,8 +34,7 @@ class Bandit():
             if key_metrics['__key__'].dp_res is None:
                 dp_res = key_metrics['__key__'].dp_res
                 error =  key_metrics['__key__'].error
-                print(querypool[i], dp_res,error)
-                output.append({"query":querypool[i], "dpresult": dp_res, "js_distance":None, "error": error})   
+                output.append({"query":querypool[i], "dpresult": dp_res, "jensen_shannon_divergence":None, "error": error})   
             else:
                 res_list = []
                 for key, metrics in key_metrics.items():
@@ -44,8 +43,7 @@ class Bandit():
                     res_list.append([dp_res, js_res])
                 dp_res = np.all(np.array([res[0] for res in res_list]))
                 js_res = (np.array([res[1] for res in res_list])).max()
-                print(querypool[i],dp_res, js_res)
-                output.append({"query":querypool[i], "dpresult": dp_res,"js_distance": js_res, "error":None})   
+                output.append({"query":querypool[i], "dpresult": dp_res,"jensen_shannon_divergence": js_res, "error":None})   
         if exportascsv:
             write_to_csv('Bandit.csv', output, flag='bandit')
         else:
