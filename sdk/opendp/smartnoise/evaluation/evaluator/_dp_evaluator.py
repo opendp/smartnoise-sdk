@@ -212,7 +212,7 @@ class DPEvaluator(Evaluator):
             metrics.dp_res = None
             metrics.error = str(type(e)) + ", " + str(e)
             return key_metrics
-        if isinstance(d1report.res['__key__'], str) and (d1report.res['__key__'] == "noisy_values_empty"):
+        if '__key__' in d1report.res and isinstance(d1report.res['__key__'], str) and (d1report.res['__key__'] == "noisy_values_empty"):
             metrics = Metrics()
             key_metrics['__key__'] = metrics
             metrics.dp_res = None
@@ -220,13 +220,13 @@ class DPEvaluator(Evaluator):
             return key_metrics
         d2report = pa.release(d2)
         d1actual = pa.actual_release(d1)  
-        if isinstance(d1actual.res['__key__'], str) and d1actual.res['__key__'].startswith("exact_value_error"):
+        if '__key__' in d1report.res and isinstance(d1actual.res['__key__'], str) and d1actual.res['__key__'].startswith("exact_value_error"):
             metrics = Metrics()
             key_metrics['__key__'] = metrics
             metrics.dp_res = None
             metrics.error = d1actual.res['__key__']
             return key_metrics
-        if d1actual.res['__key__'] is None:
+        if '__key__' in d1report.res and d1actual.res['__key__'] is None:
             metrics = Metrics()
             key_metrics['__key__'] = metrics
             metrics.dp_res = None
