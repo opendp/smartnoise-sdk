@@ -7,10 +7,6 @@ from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
-from opendp.smartnoise.evaluation.learner._dp_env import DPEnv
-from opendp.smartnoise.evaluation.learner._generate import Grammar
-from opendp.smartnoise.evaluation.learner._computeactions import compute_action
-from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors
 from opendp.smartnoise.evaluation.learner.Qlearning import QLearning
 from opendp.smartnoise.evaluation.learner.util import generate_query
 
@@ -21,5 +17,5 @@ class TestQlearning():
         querypool = generate_query(2)
         b.qlearning(["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"] + querypool)
         output = b.qlearning(querypool)
-        assert((output[0]['dpresult'] == 'DP_PASS') | (output[0]['dpresult'] == 'ActionResultedSameQuery') | (output[0]['dpresult'] == 'DP_BUG'))
+        assert((output[0]['dpresult'] == 'DP_PASS') | (output[0]['dpresult'] == 'ActionResultedSameQuery') | (output[0]['dpresult'] == 'DP_BUG') | (output[0]['dpresult'] == 'ActionnotValid_ASTnotAvailable'))
 
