@@ -86,7 +86,7 @@ class TestOtherTypes:
     def test_queries(self):
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING income > 100000"
         res = [len(self.reader.execute(query)) for i in range(5)]
-        assert np.mean(res) < 85 # actual is 14, but noise is huge
+        assert np.mean(res) < 105 and np.mean(res) > 10 # actual is 14, but noise is huge
 
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING sex = 1"
         res = self.reader.execute(query)
