@@ -2,6 +2,7 @@ import os
 import subprocess
 import copy
 import pytest
+import numpy as np
 
 import pandas as pd
 from pandasql import sqldf
@@ -84,8 +85,8 @@ class TestOtherTypes:
 
     def test_queries(self):
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING income > 100000"
-        res = self.reader.execute(query)
-        assert len(res) < 85 # actual is 14, but noise is huge
+        res = [len(self.reader.execute(query)) for i in range(5)]
+        assert np.mean(res) < 105 and np.mean(res) > 10 # actual is 14, but noise is huge
 
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING sex = 1"
         res = self.reader.execute(query)
