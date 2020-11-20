@@ -19,7 +19,7 @@ class TestQlearning():
         self.ev = EvaluatorParams(repeat_count=100)
         self.dd = DatasetParams(dataset_size=500)
 
-    def qlearning(self, querypool,exportascsv=False): 
+    def qlearning(self, querypool): 
         available_actions = compute_action(self.lp)
         env = DPEnv(self.lp, self.pp, self.ev, self.dd, querypool, available_actions)
         # Set learning parameters
@@ -55,4 +55,4 @@ class TestQlearning():
 
     def test_qlearning(self):
         querypool = ["SELECT COUNT(UserId) AS UserCount FROM dataset.dataset"]
-        self.qlearning(querypool, exportascsv=True)
+        self.qlearning(querypool)
