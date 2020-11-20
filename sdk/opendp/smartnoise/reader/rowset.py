@@ -65,7 +65,8 @@ class TypedRowset:
         divider = ["-" * width for width in widths]
         rows = [header, divider]
         for idx in range(self.n_rows):
-            row = [" " + self.format_width(self.m_cols[colname][idx], width - 1) for colname, width in zip(self.colnames, widths)]
+            row = [" " + self.format_width(self.m_cols[colname][idx], width - 1)
+                   for colname, width in zip(self.colnames, widths)]
             rows.append(row)
         return "\n".join([" " + "|".join(r) for r in rows])
 
@@ -87,7 +88,9 @@ class TypedRowset:
             if self.n_rows == 0:
                 self.n_rows = len(value)
             if len(value) != self.n_rows:
-                raise ValueError("Trying to add column with {0} rows to rowset with {1} rows".format(len(value), self.n_rows))
+                raise ValueError("Trying to add column with "
+                                 "{0} rows to rowset with {1} rows".format(
+                                     len(value), self.n_rows))
             cn = key
             t = self.types[cn]
             if t == "string":
@@ -124,7 +127,9 @@ class TypedRowset:
         return filtered_rs
 
     def rows(self, header=True):
-        return ([self.colnames] if header else []) + [tuple(self.m_cols[name][idx] for name in self.colnames) for idx in range(self.n_rows)]
+        column_names = ([self.colnames] if header else [])
+        return column_names + [tuple(self.m_cols[name][idx] for name in self.colnames)
+                               for idx in range(self.n_rows)]
 
     def get_width(self, colname):
         t = self.types[colname]
@@ -137,7 +142,7 @@ class TypedRowset:
         elif t == "int":
             return int(max([4] + [np.floor(np.log10(abs(n))) + 1 for n in self.m_cols[colname] if n != 0]))
         elif t == "float":
-            return int(max([4] + [np.floor(np.log10(abs(n))) + 5 for n in self.m_cols[colname] if n != 0] ))
+            return int(max([4] + [np.floor(np.log10(abs(n))) + 5 for n in self.m_cols[colname] if n != 0]))
         else:
             raise ValueError("Unknown type: " + t)
 
@@ -166,7 +171,8 @@ class TypedRowset:
             if self.types[self.idxcol[idx]] in ["int", "float"]:
                 lbound = np.multiply(sval, (1.0 - ratio))
                 ubound = np.multiply(sval, (1.0 + ratio))
-                if not all([l < o and u > o for l, u, o in zip(lbound, ubound, oval)]):
+                if not all([lower < ov and upper > ov
+                            for lower, upper, ov in zip(lbound, ubound, oval)]):
                     return False
             else:
                 if not all([s == o for s, o in zip(sval, oval)]):
