@@ -1,7 +1,6 @@
 import pandas as pd
 import math
 import random
-import operator
 from collections import defaultdict
 
 from opendp.smartnoise.sql.parse import QueryParser
@@ -9,6 +8,7 @@ from opendp.smartnoise._ast.ast import Table
 from ._mechanisms.rand import laplace
 
 sys_rand = random.SystemRandom()
+
 
 def preprocess_df_from_query(schema, df, query_string):
     """
@@ -28,6 +28,7 @@ def preprocess_df_from_query(schema, df, query_string):
     preprocessed_df["group_cols"] = tuple(df[group_cols].values.tolist())
 
     return preprocessed_df
+
 
 def policy_laplace(df, eps, delta, max_contrib):
     """
@@ -72,7 +73,7 @@ def policy_laplace(df, eps, delta, max_contrib):
         sorted_items = [k for k, v in sorted(cost_dict.items(), key=lambda item: item[1])]
 
         for idx, curr_item in enumerate(sorted_items):
-            cost = cost_dict[curr_item] * k # cost of increasing weights of remaining k items by cost_dict[curr_item]
+            cost = cost_dict[curr_item] * k  # cost of increasing weights of remaining k items by cost_dict[curr_item]
             if cost <= budget:
                 # update weights of remaining k items with cost_dict[curr_item]
                 for j in range(idx, k):
@@ -97,6 +98,7 @@ def policy_laplace(df, eps, delta, max_contrib):
 
     df = df[df["group_cols"].isin(items)]
     return df
+
 
 def run_dpsu(schema, input_df, query, eps, delta=math.exp(-10), max_contrib=5):
     preprocessed_df = preprocess_df_from_query(schema, input_df, query)
