@@ -350,6 +350,9 @@ class PrivateReader(Reader):
             out_rows = [out_col_names] + list(out)
             return out_rows
 
+    def _execute_ast_df(self, query, cache_exact=False):
+        return self._to_df(self._execute_ast(query, cache_exact))
+
 
 class PrivateReaderOptions:
     """Options that control privacy behavior"""

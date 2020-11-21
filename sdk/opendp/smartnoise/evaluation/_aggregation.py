@@ -8,7 +8,6 @@ import sys
 import os
 
 from opendp.smartnoise.sql import PandasReader, PrivateReader
-from opendp.smartnoise.reader.rowset import TypedRowset
 from opendp.smartnoise.sql._mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
@@ -121,23 +120,20 @@ class Aggregation:
         actual = 0.0
         # VAR not supported in Pandas Reader. So not needed to fetch actual on every aggregation
         if(get_exact):
-            actual = reader.execute_typed(query).rows()[1:][0][0]
+            actual = reader.execute(query)[1:][0][0]
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
-
-        srs_orig = private_reader.reader.execute_ast_typed(query_ast)
 
         noisy_values = []
         low_bounds = []
         high_bounds = []
         for idx in range(self.repeat_count):
-            srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
             res = private_reader._execute_ast(query_ast, True)
             # Disabled because confidence interval not available in report
             #interval = res.report[res.colnames[0]].intervals[confidence]
             #low_bounds.append(interval[0].low)
             #high_bounds.append(interval[0].high)
-            noisy_values.append(res.rows()[1:][0][0])
+            noisy_values.append(res[1:][0][0])
         return np.array(noisy_values), actual, low_bounds, high_bounds
 
     def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
@@ -147,45 +143,40 @@ class Aggregation:
         """
         # Getting exact result
         reader = PandasReader(df, metadata)
-        exact = reader.execute_typed(query).rows()[1:]
-        exact_res = []
-        for row in exact:
-            exact_res.append(row)
+        exact_res = reader.execute(query)[1:]
 
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
 
         # Distinguishing dimension and measure columns
-        srs_orig = private_reader.reader.execute_ast_typed(query_ast)
-        srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
 
         sample_res = private_reader._execute_ast(query_ast, True)
-        headers = sample_res.colnames
+        headers = sample_res[0]
 
         dim_cols = []
         num_cols = []
 
-        for col in headers:
-            if(sample_res.types[col] == "string"):
+        out_syms = query_ast.all_symbols()
+        out_types = [s[1].type() for s in out_syms]
+        out_col_names = [s[0] for s in out_syms]
+
+        for col, ctype in zip(out_col_names, out_types):
+            if(ctype == "string"):
                 dim_cols.append(col)
             else:
                 num_cols.append(col)
 
-        # Repeated query and store results along with intervals
+        # Repeated query and store results
         res = []
         for idx in range(self.repeat_count):
             dim_rows = []
             num_rows = []
-            srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
-            singleres = private_reader._execute_ast(query_ast, True)
-            values = singleres[col]
+            singleres = private_reader._execute_ast_df(query_ast, True)
+            #values = singleres[col]
             for col in dim_cols:
-                dim_rows.append(singleres[col])
+                dim_rows.append(singleres[col].tolist())
             for col in num_cols:
-                values = singleres[col]
-                #low = singleres.report[col].intervals[confidence].low
-                #high = singleres.report[col].intervals[confidence].high
-                #num_rows.append(list(zip(values, low, high)))
+                values = singleres[col].tolist()
                 num_rows.append(list(zip(values)))
 
             res.extend(list(zip(*dim_rows, *num_rows)))

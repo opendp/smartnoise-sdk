@@ -4,8 +4,9 @@ import pandas as pd
 class Reader:
     ENGINE = None
 
-    def __init__(self):
-        pass
+    @property
+    def engine(self):
+        return self.ENGINE
 
     def execute(self, query):
         raise NotImplementedError("Execute must be implemented on the inherited class")

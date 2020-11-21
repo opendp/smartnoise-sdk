@@ -20,7 +20,7 @@ def test_has_engine(cls):
 
 
 def test_reader_has_engine_property():
-    reader = Reader(None)
+    reader = Reader()
     assert reader.engine is None
 
     engine_override = "foo"
@@ -28,5 +28,5 @@ def test_reader_has_engine_property():
     class ReaderInherit(Reader):
         ENGINE = engine_override
 
-    reader_inherit = ReaderInherit(None)
+    reader_inherit = ReaderInherit()
     assert reader_inherit.engine == engine_override
