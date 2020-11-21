@@ -1,4 +1,4 @@
-from .sql_base import SqlReader, NameCompare
+from .base import SqlReader, NameCompare
 from .engine import Engine
 
 from opendp.smartnoise._ast.tokens import Literal
@@ -18,9 +18,11 @@ class SparkReader(SqlReader):
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
 
-        df = self.api.sql(query)
-        return df
+        return self.api.sql(query)
 
+    def _to_df(rows):
+        return rows
+        
     def execute_typed(self, query):
         return self.execute(query)
 

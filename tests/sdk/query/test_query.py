@@ -10,7 +10,6 @@ import math
 from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.sql import PrivateReader, PandasReader
 from opendp.smartnoise.sql.parse import QueryParser
-from opendp.smartnoise.reader.rowset import TypedRowset
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -34,7 +33,7 @@ class TestQuery:
     def test_empty_result_typed(self):
         reader = PandasReader(df, schema)
         rs = reader.execute("SELECT age as a FROM PUMS.PUMS WHERE age > 100")
-        trs = TypedRowset(rs, ['int'])
+        trs = reader._to_df(rs)
         assert(len(trs) == 0)
     def test_group_by_exact_order(self):
         reader = PandasReader(df, schema)
@@ -64,26 +63,26 @@ class TestQuery:
     def test_group_by_noisy_typed_order(self):
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 4.0)
-        rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
+        rs = private_reader.execute_df("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
         assert(rs['c'][0] < rs['c'][1])
     def test_group_by_noisy_typed_order_desc(self):
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 4.0)
-        rs = private_reader.execute_typed("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
+        rs = private_reader.execute_df("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs['c'][0] > rs['c'][1])
     def test_no_tau(self):
         # should never drop rows
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 4.0)
         for i in range(10):
-            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
+            rs = private_reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
             assert(len(rs['c']) == 1)
     def test_no_tau_noisy(self):
         # should never drop rows
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 0.01)
         for i in range(10):
-            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
+            rs = private_reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
             assert(len(rs['c']) == 1)
     def test_yes_tau(self):
         # should usually drop some rows
@@ -91,19 +90,19 @@ class TestQuery:
         private_reader = PrivateReader(reader, schema, 1.0, 1/10000)
         lengths = []
         for i in range(10):
-            rs = private_reader.execute_typed("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 80 GROUP BY educ")
+            rs = private_reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 80 GROUP BY educ")
             lengths.append(len(rs['c']))
         l = lengths[0]
         assert(any([l != ll for ll in lengths]))
     def test_count_no_rows_exact_typed(self):
         reader = PandasReader(df, schema)
         query = QueryParser(schema).queries("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100")[0]
-        trs = reader.execute_ast_typed(query)
+        trs = reader._execute_ast_df(query)
         assert(trs['c'][0] == 0)
     def test_sum_no_rows_exact_typed(self):
         reader = PandasReader(df, schema)
         query = QueryParser(schema).queries("SELECT SUM(age) as c FROM PUMS.PUMS WHERE age > 100")[0]
-        trs = reader.execute_ast_typed(query)
+        trs = reader._execute_ast_df(query)
         assert(trs['c'][0] == None)
     def test_empty_result_count_typed_notau_prepost(self):
         reader = PandasReader(df, schema)
@@ -112,16 +111,16 @@ class TestQuery:
         private_reader._execute_ast(query, True)
         for i in range(3):
             trs = private_reader._execute_ast(query, True)
-            assert(len(trs) == 1)
+            assert(len(trs) == 2)
     def test_sum_noisy(self):
         reader = PandasReader(df, schema)
         query = QueryParser(schema).queries("SELECT SUM(age) as age_total FROM PUMS.PUMS")[0]
-        trs = reader.execute_ast_typed(query)
+        trs = reader._execute_ast_df(query)
         assert(trs['age_total'][0] > 1000)
     def test_sum_noisy_postprocess(self):
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 1.0)
-        trs = private_reader.execute_typed("SELECT POWER(SUM(age), 2) as age_total FROM PUMS.PUMS")
+        trs = private_reader.execute_df("SELECT POWER(SUM(age), 2) as age_total FROM PUMS.PUMS")
         assert(trs['age_total'][0] > 1000 ** 2)
     def test_execute_with_dpsu(self):
         schema_dpsu = copy.copy(schema)
@@ -159,7 +158,7 @@ class TestQuery:
                     schema_c["PUMS.PUMS"].max_ids = d
                     private_reader = PrivateReader(reader, schema_c, eps, delta)
                     assert(private_reader._options.max_contrib == d)
-                    r = private_reader.execute_ast(q)
+                    r = private_reader._execute_ast(q)
                     assert(math.isclose(private_reader.tau, gaus_rho, rel_tol=0.03, abs_tol=2))
     def test_legacy_params_private_reader(self):
         reader = PandasReader(df, schema)

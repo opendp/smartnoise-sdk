@@ -1,4 +1,4 @@
-from .sql_base import SqlReader, NameCompare
+from .base import SqlReader, NameCompare
 from .engine import Engine
 import copy
 import warnings

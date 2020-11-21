@@ -1,6 +1,6 @@
 import os
 
-from .sql_base import SqlReader, NameCompare
+from .base import SqlReader, NameCompare
 from .engine import Engine
 
 from opendp.smartnoise._ast.ast import Relation
