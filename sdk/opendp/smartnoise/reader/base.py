@@ -22,6 +22,6 @@ class Reader:
 
     def execute_df(self, query):
         if not isinstance(query, str):
-            raise ValueError("Please pass a string to this function.  You can use execute_ast to execute ASTs")
+            raise ValueError("Please pass a string to this function.")
 
         return self._to_df(self.execute(query))
