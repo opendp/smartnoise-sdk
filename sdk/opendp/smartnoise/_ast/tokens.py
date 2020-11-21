@@ -77,12 +77,14 @@ class Sql:
     """
         base type for all Sql AST nodes
     """
-
     def __str__(self):
         return " ".join([str(c) for c in self.children() if c is not None])
 
     def __eq__(self, other):
-        return all([s == o for s, o in zip(self.children(), other.children())])
+        if other is None:
+            return False
+        else:
+            return all([s == o for s, o in zip(self.children(), other.children())])
 
     def symbol_name(self):
         return str(hex(hash(self) % (2**16)))

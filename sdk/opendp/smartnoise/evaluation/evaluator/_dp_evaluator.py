@@ -18,6 +18,8 @@ class DPEvaluator(Evaluator):
         Generate histograms given the vectors of repeated aggregation results
         applied on neighboring datasets
         """
+        fD1 = np.asarray(fD1, dtype='float64')
+        fD2 = np.asarray(fD2, dtype='float64')
         d = np.concatenate((fD1, fD2), axis=None)
         n = len(fD1)
         binlist = []
@@ -153,19 +155,19 @@ class DPEvaluator(Evaluator):
         """
         Wasserstein Distance between responses of repeated algorithm on neighboring datasets
         """
-        return stats.wasserstein_distance(fD1, fD2)
+        return stats.wasserstein_distance(fD1.astype(np.float), fD2.astype(np.float))
 
     def jensen_shannon_divergence(self, fD1, fD2):
         """
         Jensen Shannon Divergence between responses of repeated algorithm on neighboring datasets
         """
-        return spatial.distance.jensenshannon(fD1, fD2)
+        return spatial.distance.jensenshannon(fD1.astype(np.float), fD2.astype(np.float))
 
     def kl_divergence(self, fD1, fD2):
         """
         KL Divergence between responses of repeated algorithm on neighboring datasets
         """
-        return stats.entropy(fD1, fD2)
+        return stats.entropy(fD1.astype(np.float), fD2.astype(np.float))
 
     def bias_test(self, fD1, fD_actual, sig_level):
         """
@@ -200,17 +202,47 @@ class DPEvaluator(Evaluator):
 		Returns a metrics object
 		"""
         pa.prepare(algorithm, pp, ep)
-        d1report = pa.release(d1)
-        d2report = pa.release(d2)
-        d1actual = pa.actual_release(d1)
         key_metrics = {}
-
+        try: # whether the query is applicable to a DP test
+            d1report = pa.release(d1) #e.g. ValueError: Attempting to select a column not in a GROUP BY clause: dataset.dataset.UserId
+                                      #e.g. '(sqlite3.OperationalError) a GROUP BY clause is required before HAVING\n[SQL: SELECT * FROM df_for_diffpriv1234 WHERE ( Usage != UserId AND UserId > "B" AND Usage <= Role AND Usage < "fUpNFG" ) HAVING UserId = 87 OR UserId <= Role]\n(Background on this error at: http://sqlalche.me/e/e3q8)'
+        except Exception as e: 
+            metrics = Metrics()
+            key_metrics['__key__'] = metrics
+            metrics.dp_res = None
+            metrics.error = str(type(e)) + ", " + str(e)
+            return key_metrics
+        if '__key__' in d1report.res and isinstance(d1report.res['__key__'], str) and (d1report.res['__key__'] == "noisy_values_empty"):
+            metrics = Metrics()
+            key_metrics['__key__'] = metrics
+            metrics.dp_res = None
+            metrics.error = d1report.res['__key__']
+            return key_metrics
+        d2report = pa.release(d2)
+        d1actual = pa.actual_release(d1)  
+        if '__key__' in d1report.res and isinstance(d1actual.res['__key__'], str) and d1actual.res['__key__'].startswith("exact_value_error"):
+            metrics = Metrics()
+            key_metrics['__key__'] = metrics
+            metrics.dp_res = None
+            metrics.error = d1actual.res['__key__']
+            return key_metrics
+        if '__key__' in d1report.res and d1actual.res['__key__'] is None:
+            metrics = Metrics()
+            key_metrics['__key__'] = metrics
+            metrics.dp_res = None
+            metrics.error = "exact_value_is_none"
+            return key_metrics
         for key in d1report.res.keys():
             metrics = Metrics()
             fD1, fD2 = np.array(d1report.res[key]), np.array(d2report.res[key])
+            if not (fD1.dtype == np.int or fD1.dtype == np.float):
+                metrics = Metrics()
+                key_metrics['__key__'] = metrics
+                metrics.dp_res = None                
+                metrics.error = "not_a_numeric_object"
+                return key_metrics
             fD_actual = d1actual.res[key]
-
-            d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)
+            d1hist, d2hist, bin_edges = self._generate_histogram_neighbors(fD1, fD2, ep)   
             dp_res, d1histupperbound, d2histupperbound, d1lower, d2lower = \
                 self._dp_test(d1hist, d2hist, bin_edges, fD1.size, fD2.size, ep, pp)
 
@@ -220,8 +252,8 @@ class DPEvaluator(Evaluator):
             metrics.jensen_shannon_divergence = self.jensen_shannon_divergence(fD1, fD2)
             metrics.kl_divergence = self.kl_divergence(fD1, fD2)
             metrics.mse = np.mean((fD1 - fD_actual)**2)
-            metrics.msd = (np.sum(fD1 - fD_actual) / fD1.size)
-            metrics.std = np.std(fD1)
+            metrics.msd = (np.sum(fD1.astype(np.float) - fD_actual) / fD1.size)
+            metrics.std = np.std(fD1.astype(np.float))
             metrics.bias_res = self.bias_test(fD1, fD_actual, ep.sig_level)
 
             # Add key and metrics to final result
