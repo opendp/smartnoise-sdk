@@ -13,7 +13,6 @@ from opendp.smartnoise.reader import Reader
 
 from ._mechanisms.gaussian import Gaussian
 from opendp.smartnoise.report import Interval, Intervals, Result
-from opendp.smartnoise.reader.rowset import TypedRowset
 
 module_logger = logging.getLogger(__name__)
 
@@ -151,23 +150,12 @@ class PrivateReader(Reader):
          represents a row, and each item in the tuple is typed.  The first row should
          contain column names.
         """
-        trs = self.execute_typed(query_string)
-        return trs.rows()
-
-    def execute_typed(self, query_string):
-        """Executes a query and returns a differentially private typed recordset.
-
-        This is the typed version of execute.
-
-        :param query_string: A query in SQL syntax
-        :return: A typed recordset, where columns can be referenced by name.
-        """
         query = self.parse_query_string(query_string)
-        return self.execute_ast_typed(query)
+        return self._execute_ast(query)
 
     def _execute_ast(self, query, cache_exact=False):
         if isinstance(query, str):
-            raise ValueError("Please pass AST to _execute.")
+            raise ValueError("Please pass AST to _execute_ast.")
 
         subquery, query = self.rewrite_ast(query)
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
@@ -217,13 +205,13 @@ class PrivateReader(Reader):
                     raise ValueError("Cannot run different query against cached result.  "
                                      "Make a new PrivateReader or else clear the cache with cache = False")
             else:
-                db_rs = self._get_reader(subquery).execute_ast(subquery)
+                db_rs = self._get_reader(subquery)._execute_ast(subquery)
                 self._cached_exact = list(db_rs)
                 self._cached_ast = subquery
         else:
             self.cached_exact = None
             self.cached_ast = None
-            db_rs = self._get_reader(subquery).execute_ast(subquery)
+            db_rs = self._get_reader(subquery)._execute_ast(subquery)
 
         clamp_counts = self._options.clamp_counts
 
@@ -359,29 +347,11 @@ class PrivateReader(Reader):
             # Bare RDD
             return out
         else:
-            return TypedRowset([out_col_names] + list(out), out_types)
+            out_rows = [out_col_names] + list(out)
+            return out_rows
 
-    def execute_ast(self, query):
-        """Executes an AST representing a SQL query
-
-        :param query: A SQL query in AST form
-        :return: A recordset formatted as tuples for rows, with first row having column names
-        """
-        if isinstance(query, str):
-            raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-        trs = self.execute_ast_typed(query)
-        return trs.rows()
-
-    def execute_ast_typed(self, query):
-        """Executes an AST representing a SQL query, returning typed recordset
-
-        :param query: A SQL query in AST form
-        :return: A typed recordset
-        """
-        if isinstance(query, str):
-            raise ValueError("Please pass ASTs to execute_typed.  To execute strings, use execute.")
-
-        return self._execute_ast(query, False)
+    def _execute_ast_df(self, query, cache_exact=False):
+        return self._to_df(self._execute_ast(query, cache_exact))
 
 
 class PrivateReaderOptions:

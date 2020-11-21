@@ -11,7 +11,6 @@ import math
 from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.sql import PrivateReader, PandasReader
 from opendp.smartnoise.sql.parse import QueryParser
-from opendp.smartnoise.reader.rowset import TypedRowset
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 

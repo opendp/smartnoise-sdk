@@ -45,12 +45,12 @@ class TestDPSU:
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 3.0)
         private_reader.options.max_contrib = 10
-        result = private_reader.execute_typed(query)
+        result = private_reader.execute_df(query)
 
         private_reader_korolova = PrivateReader(reader, schema, 3.0)
         private_reader_korolova.options.dpsu = False
         private_reader_korolova.options.max_contrib = 10
-        korolova_result = private_reader_korolova.execute_typed(query)
+        korolova_result = private_reader_korolova.execute_df(query)
 
         assert len(result['n']) > len(korolova_result['n'])
         assert len(final_df) < len(df)

@@ -1,39 +1,15 @@
 from opendp.smartnoise.reader.base import Reader
-from opendp.smartnoise.reader.rowset import TypedRowset
 
 
 class SqlReader(Reader):
     def __init__(self, name_compare=None, serializer=None):
-        super().__init__(NameCompare() if name_compare is None else name_compare)
+        self.compare = NameCompare() if name_compare is None else name_compare
         self.serializer = serializer
 
     def execute(self, query):
         raise NotImplementedError("Execute must be implemented on the inherited class")
 
-    def execute_typed(self, query):
-        if not isinstance(query, str):
-            raise ValueError("Please pass a string to this function.  You can use execute_ast to execute ASTs")
-
-        rows = self.execute(query)
-        if len(rows) < 1:
-            return None
-        types = ["unknown" for i in range(len(rows[0]))]
-        if len(rows) > 1:
-            row = rows[1]
-            for idx in range(len(row)):
-                val = row[idx]
-                if isinstance(val, int):
-                    types[idx] = "int"
-                elif isinstance(val, float):
-                    types[idx] = "float"
-                elif isinstance(val, bool):
-                    types[idx] = "boolean"
-                else:
-                    types[idx] = "string"
-
-        return TypedRowset(rows, types)
-
-    def execute_ast(self, query):
+    def _execute_ast(self, query):
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_ast.  To execute strings, use execute.")
         if hasattr(self, 'serializer') and self.serializer is not None:
@@ -42,12 +18,8 @@ class SqlReader(Reader):
             query_string = str(query)
         return self.execute(query_string)
 
-    def execute_ast_typed(self, query):
-        syms = query.all_symbols()
-        types = [s[1].type() for s in syms]
-
-        rows = self.execute_ast(query)
-        return TypedRowset(rows, types)
+    def _execute_ast_df(self, query):
+        return self._to_df(self._execute_ast(query))
 
 """
     Implements engine-specific identifier matching rules

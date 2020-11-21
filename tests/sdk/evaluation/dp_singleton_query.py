@@ -2,7 +2,6 @@ from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
 from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
 from opendp.smartnoise.evaluation.report._report import Report
 from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.smartnoise.reader.rowset import TypedRowset
 from opendp.smartnoise.sql import PrivateReader
 
 class DPSingletonQuery(PrivacyAlgorithm):
@@ -30,12 +29,11 @@ class DPSingletonQuery(PrivacyAlgorithm):
         """
         private_reader = PrivateReader(dataset[1], dataset[0], self.privacy_params.epsilon)
         query_ast = private_reader.parse_query_string(self.algorithm)
-        srs_orig = private_reader.reader.execute_ast_typed(query_ast)
+        srs_orig = private_reader.reader._execute_ast_df(query_ast)
         noisy_values = []
         for idx in range(self.eval_params.repeat_count):
-            srs = TypedRowset(srs_orig.rows(), list(srs_orig.types.values()))
             res = private_reader._execute_ast(query_ast, True)
-            noisy_values.append(res.rows()[1:][0][0])
+            noisy_values.append(res[1:][0][0])
         return Report({"__key__" : noisy_values})
 
     def actual_release(self, dataset):
@@ -44,5 +42,5 @@ class DPSingletonQuery(PrivacyAlgorithm):
         Exact response is only returned once
         """
         reader = dataset[1]
-        exact = reader.execute_typed(self.algorithm).rows()[1:][0][0]
+        exact = reader.execute(self.algorithm)[1:][0][0]
         return Report({"__key__" : exact})

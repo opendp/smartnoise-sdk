@@ -1,6 +1,6 @@
 import importlib
 import yaml
-from opendp.smartnoise.sql.reader.sql_base import NameCompare
+from opendp.smartnoise.sql.reader.base import NameCompare
 
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
 

@@ -5,7 +5,7 @@ from opendp.smartnoise._ast.tokens import Literal
 from opendp.smartnoise._ast.expression import Expression
 from opendp.smartnoise._ast.expressions.numeric import BareFunction
 from opendp.smartnoise._ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
-from .sql_base import SqlReader, NameCompare
+from .base import SqlReader, NameCompare
 from .engine import Engine
 
 
