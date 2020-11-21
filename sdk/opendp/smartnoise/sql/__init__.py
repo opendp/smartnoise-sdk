@@ -6,7 +6,7 @@ from .private_rewriter import Rewriter
 from .private_reader import PrivateReader
 from .parse import QueryParser
 
-from .reader.sql_base import SqlReader
+from .reader.base import SqlReader
 from .reader.pandas import PandasReader
 from .reader.presto import PrestoReader
 from .reader.postgres import PostgresReader
