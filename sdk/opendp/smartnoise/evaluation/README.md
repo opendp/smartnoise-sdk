@@ -29,7 +29,13 @@ As part of the evaluation suite, we compute a set of metrics corresponding to th
 This [unit test](https://github.com/opendifferentialprivacy/smartnoise-sdk/blob/060ead584360f6e8c16db12d9e7c9eb8e59e687f/tests/sdk/evaluation/test_interface.py#L47) is a good example of how to specify a PrivacyAlgorithm interface for the DP implementation that needs to be tested and pass it through the evaluator to fetch evaluation metrics listed above as one metrics object. 
 
 #### Privacy Algorithm Interface Requirements
-Privacy Algorithm needs to support `prepare` and `release` functions. `prepare` acts similar to a constructor. `release` returns a list of key-value pairs. If it is a SQL query with multiple row response, key is a hash or concatenation of dimension column values. If it is a single row response, then one should specifiy a dummy key `__key__`. Value is a list of noisy responses based on the `repeat_count` evaluator paramater specified as input to the `release` function. The evaluator needs to be passed in neighboring datasets `d1` and `d2` which differ by 1 user's record (either by deleting a row or updating it) for it to apply the Privacy test and check if it passes. 
+Privacy Algorithm needs to support `prepare`, `release` and 'actual_release` functions. 
+
+* `prepare` acts similar to a constructor taking in the privacy algorithm object and evaluation parameters as input and initializing them
+* `release` applies the private algorithm on the input dataset repeatedly based on the `repeat_count` in evaluation params. It returns a dictionary of key-value pairs. If it is a SQL query with multiple row response, key is a hash or concatenation of dimension column values. If it is a single row response, then one should specifiy a dummy key `__key__`. Value is a list of DP noisy numerical responses based on the `repeat_count` evaluator paramater specified as input to the `release` function. The evaluator needs to be passed in neighboring datasets `d1` and `d2` which differ by 1 user's record (either by deleting a row or updating it) for it to apply the Privacy test and check if it passes. 
+* `actual_release` works very similar to the `release` function but instead of a list of noisy responses, it returns the actual response of non-private algorithm corresponding to the DP algorithm being tested. 
+
+A sample PrivacyAlgorithm interface is implemented [here](https://github.com/opendifferentialprivacy/smartnoise-sdk/blob/master/tests/sdk/evaluation/dp_algorithm.py).
 
 #### Input
 ```python
