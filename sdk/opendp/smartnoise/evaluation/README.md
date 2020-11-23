@@ -7,7 +7,7 @@ Evaluation is one of core components in the development and use of differentiall
 * **Bias**: DP algorithms on repeated runs should have a mean signed deviation close to zero and not have a statistically significant deviation greater or lower than zero. 
 
 ## DP Evaluation
-As part of the evaluation suite, we provide a large set of metrics corresponding to these promises via a single call to `evaluate` function. The interface based design of this suite allows for evaluation of state-of-the-art DP implementations like DP-SQL queries with GROUP BY, JOINs, RANK operators and testing of τ-thresholding. 
+As part of the evaluation suite, we compute a set of metrics corresponding to these promises via a single call to `evaluate` function. The interface based design of this suite allows for evaluation of state-of-the-art DP implementations like DP-SQL queries with GROUP BY, JOINs, RANK operators and testing of τ-thresholding. 
 
  | Metric  | Promise Type | Description |
  |---------|--------------|---------------------|
