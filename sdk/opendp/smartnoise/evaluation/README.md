@@ -17,7 +17,7 @@ As part of the evaluation suite, we compute a set of metrics corresponding to th
  |  `wasserstein_distance` | Privacy | Same as above (statistical measure for distance between probability distributions) |
  |  `mse` | Accuracy | Mean squared error between repeated DP responses vs actual response |
  |  `std` | Accuracy | Standard deviation between repeated DP responses vs actual response |
- |  `msd` | Bias | Mean Signed Deviation between repeated DP responses vs actual response |
+ |  `msd` | Bias | Mean signed Deviation between repeated DP responses vs actual response |
  |  `bias_res` | Bias | 1 sample t-test to check if difference in actual and noisy responses is not statistically significant. Returns True or False |
 
  There are more metrics planned to be added with availability of error bounds in DP responses like `within_bounds` and `outside_bounds` for testing utility promise.  
