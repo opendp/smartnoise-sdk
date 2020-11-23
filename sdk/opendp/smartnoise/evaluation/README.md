@@ -9,12 +9,20 @@ Evaluation is one of core components in the development and use of differentiall
 ## DP Evaluation
 As part of the evaluation suite, we provide a large set of metrics corresponding to these promises via a single call to `evaluate` function. The interface based design of this suite allows for evaluation of state-of-the-art DP implementations like DP-SQL queries with GROUP BY, JOINs, RANK operators and testing of τ-thresholding. 
 
-### DP Metrics
+### Metrics available
 
- | Metric  | Type        | Description                                                    |
- |---------|-------------|----------------------------------------------------------------|
- |  `dp_res` | Privacy     | (ε, δ)-DP bounded histogram test on neighboring datasets D1 and D2. Returns True or False         |
- |  `wasserstein_distance` | Accuracy | Track Wasserstein distance applying DP algorithm on neighboring datasets D1 and D2 |
+ | Metric  | Promise Type | Description |
+ |---------|--------------|---------------------|
+ |  `dp_res` | Privacy | (ε, δ)-DP bounded histogram test on neighboring datasets D1 and D2. Returns True or False         |
+ |  `jensen_shannon_divergence` | Privacy | Track JS Divergence applying DP algorithm on neighboring datasets D1 and D2 |
+ |  `kl_divergence` | Privacy | Same as above |
+ |  `wasserstein_distance` | Privacy | Same as above (statistical measure for distance between probability distributions) |
+ |  `mse` | Accuracy | Mean squared error between repeated DP responses vs actual response |
+ |  `std` | Accuracy | Standard deviation between repeated DP responses vs actual response |
+ |  `msd` | Bias | Mean Signed Deviation between repeated DP responses vs actual response |
+ |  `bias_res` | Bias | 1 sample t-test to check if difference in actual and noisy responses is not statistically significant. Returns True or False |
+
+ There are more metrics planned to be added with availability of error bounds in DP responses like `within_bounds` and `outside_bounds` for testing utility promise.  
 
 ## DP Benchmarking
 While building DP algorithms, researchers need to benchmark DP evaluation metrics against a set of input parameters like a range of epsilon values or various dataset sizes. Our benchmarking capabilities via a single `benchmark` call built on top of evaluation suite enable this scenario. This is also helpful for visualizing the properties of any new DP algorithm to end user base for gaining confidence. 
