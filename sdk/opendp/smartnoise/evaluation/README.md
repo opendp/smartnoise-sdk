@@ -7,7 +7,14 @@ Evaluation is one of core components in the development and use of differentiall
 * **Bias**: DP algorithms on repeated runs should have a mean signed deviation close to zero and not have a statistically significant deviation greater or lower than zero. 
 
 ## DP Evaluation
-As part of the evaluation suite, we provide a large set of metrics corresponding to these promises via a single call to `evaluate` function. This suite allows for evaluation for state of the art complex algorithms involving GROUP BY queries, JOINs, RANK operators and τ-thresholding. 
+As part of the evaluation suite, we provide a large set of metrics corresponding to these promises via a single call to `evaluate` function. The interface based design of this suite allows for evaluation of state-of-the-art DP implementations like DP-SQL queries with GROUP BY, JOINs, RANK operators and testing of τ-thresholding. 
+
+### DP Metrics
+
+ | Metric  | Type        | Description                                                    |
+ |---------|-------------|----------------------------------------------------------------|
+ |  `dp_res` | Privacy     | (ε, δ)-DP bounded histogram test on neighboring datasets D1 and D2. Returns True or False         |
+ |  `wasserstein_distance` | Accuracy | Track Wasserstein distance applying DP algorithm on neighboring datasets D1 and D2 |
 
 ## DP Benchmarking
 While building DP algorithms, researchers need to benchmark DP evaluation metrics against a set of input parameters like a range of epsilon values or various dataset sizes. Our benchmarking capabilities via a single `benchmark` call built on top of evaluation suite enable this scenario. This is also helpful for visualizing the properties of any new DP algorithm to end user base for gaining confidence. 
