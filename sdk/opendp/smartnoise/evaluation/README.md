@@ -9,7 +9,7 @@ Evaluation is one of core components in the development and use of differentiall
 ## DP Evaluation
 As part of the evaluation suite, we compute a set of metrics corresponding to these promises via a single call to `evaluate` function. The interface based design of this suite allows for evaluation of state-of-the-art DP implementations like DP-SQL queries with GROUP BY, JOINs, RANK operators and testing of τ-thresholding. 
 
- | Metric  | Promise Type | Description |
+ | Metric  | Promise | Description |
  |---------|--------------|---------------------|
  |  `dp_res` | Privacy | (ε, δ)-DP bounded histogram test on neighboring datasets D1 and D2. Returns True or False         |
  |  `jensen_shannon_divergence` | Privacy | Track JS Divergence applying DP algorithm on neighboring datasets D1 and D2 |
