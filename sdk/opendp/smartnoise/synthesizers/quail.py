@@ -41,7 +41,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         self.pd_cols = None
         self.pd_index = None
         
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(), verbose=False):
         """
         Takes a dataset and fits the synthesizer/learning model to it, using the epsilon split
         specified in the init.
@@ -76,21 +76,24 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         self.class_report = classification_report(np.ravel(y_test), predictions, labels=np.unique(predictions))
         self.target_accuracy = accuracy_score(np.ravel(y_test), predictions)
         
-        # print(self.class_report)
-        # print(self.target_accuracy)
+        if verbose:
+            print("Internal model report: ")
+            print(self.class_report)
+            print(self.target_accuracy)
 
         # We use the features in our synthesis.
         self.private_synth = self.dp_synthesizer(epsilon = (self.epsilon * (1 - self.eps_split)), **self.synth_args)
         self.private_synth.fit(data=private_features, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
 
-        # if hasattr(self.private_model, 'coef_'):
-        #     print(self.private_model.coef_)
-        
-        # if hasattr(self.private_model, 'intercept_'):
-        #     print(self.private_model.intercept_)
+        if verbose:
+            if hasattr(self.private_model, 'coef_'):
+                print(self.private_model.coef_)
+            
+            if hasattr(self.private_model, 'intercept_'):
+                print(self.private_model.intercept_)
 
-        # if hasattr(self.private_model, 'classes_'):
-        #     print(self.private_model.classes_)
+            if hasattr(self.private_model, 'classes_'):
+                print(self.private_model.classes_)
 
     def sample(self, samples):
         """
