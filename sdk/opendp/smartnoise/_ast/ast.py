@@ -400,6 +400,8 @@ class TableColumn(SqlExpr):
         if self.valtype in ["int", "float"]:
             if self.minval is not None and self.maxval is not None:
                 return max(abs(self.maxval), abs(self.minval))
+            else:
+                return np.inf #unbounded
         elif self.valtype == "boolean":
             return 1
         else:
