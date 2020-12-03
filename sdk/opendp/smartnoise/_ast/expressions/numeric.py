@@ -81,7 +81,7 @@ class ArithmeticExpression(SqlExpr):
                 return None
         if ls is not None and rs is not None:
             if self.op == "+":
-                return max(ls, rs)
+                return ls + rs
             elif self.op == "*":
                 return ls * rs
             else:
