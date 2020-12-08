@@ -81,8 +81,7 @@ iris = Table("dbo", "iris", [
 schema = CollectionMetadata([iris], "csv")
 
 reader = PandasReader(sklearn_df, schema)
-rowset = execute_private_query(reader, schema, 0.3, 'SELECT AVG("petal width (cm)") FROM dbo.iris')
-df = pd.DataFrame(rowset[1:], columns=rowset[0])
+df = execute_private_query(reader, schema, 0.3, 'SELECT AVG("petal width (cm)") AS petal FROM dbo.iris')
 with pd.option_context('display.max_rows', None, 'display.max_columns', 3): print(df)
 ```
 ## SmartNoise Samples
