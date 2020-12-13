@@ -369,7 +369,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # We want to count the number of objects in an	
         # arbitrary slice of our collection	
         # We use np.s_[arbitrary slice] as our queries	
-        e = data.T[a_slice]	
+        e = data.T[tuple(a_slice)]	
         	
         if isinstance(e, np.ndarray):	
             return np.sum(e)	
@@ -389,7 +389,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :rtype: np.ndarray	
         """	
         view = data.copy()	
-        view.T[a_slice] = 1.0	
+        view.T[tuple(a_slice)] = 1.0	
         return view	
     	
     def _reorder(self, splits):	
