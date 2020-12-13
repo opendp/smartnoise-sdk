@@ -17,6 +17,12 @@ class PandasReader(SqlReader):
             metadata = tmp
         self.df = df
         self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
+        import sqlite3
+        ver = [int(part) for part in sqlite3.sqlite_version.split(".")]
+        if len(ver) < 3:
+            # all historical versions of SQLite have 3 parts
+            if ver[0] < 3 or (ver[0] == 3 and ver[1] < 2) or (ver[0] == 3 and ver[1] == 2 and ver[2] < 6):
+                warnings.warn("This python environment has outdated sqlite version {0}.  PandasReader will fail on queries that use private_key.  Please upgrade to a newer Python environment (with sqlite >= 3.2.6), or ensure that you only use row_privacy.".format(sqlite3.sqlite_version), Warning)
 
     def _sanitize_column_name(self, column_name):
         x = re.search(r".*[a-zA-Z0-9()_]", column_name)
