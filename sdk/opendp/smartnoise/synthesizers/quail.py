@@ -21,13 +21,11 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
     https://arxiv.org/abs/2011.05537
     """
     
-    def __init__(self, epsilon, dp_synthesizer, synth_args, dp_classifier, class_args, target, test_size=0.2, seed=42, eps_split=0.9):
+    def __init__(self, epsilon, dp_synthesizer, dp_classifier, target, test_size=0.2, seed=42, eps_split=0.9):
         self.epsilon = epsilon
         self.eps_split = eps_split
         self.dp_synthesizer = dp_synthesizer
-        self.synth_args = synth_args
         self.dp_classifier = dp_classifier
-        self.class_args = class_args
         self.target = target
         self.test_size = test_size
         self.seed = seed
@@ -70,7 +68,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         # Here we train a differentially private model on the real
         # data. We report on the accuracy for now to give a sense of
         # the upper bound on performance in the sampling step.
-        self.private_model = self.dp_classifier(epsilon=(self.epsilon * self.eps_split), **self.class_args)
+        self.private_model = self.dp_classifier(epsilon=(self.epsilon * self.eps_split))
         self.private_model.fit(x_train, y_train.values.ravel())
         predictions = self.private_model.predict(x_test)
         self.class_report = classification_report(np.ravel(y_test), predictions, labels=np.unique(predictions))
@@ -82,7 +80,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
             print(self.target_accuracy)
 
         # We use the features in our synthesis.
-        self.private_synth = self.dp_synthesizer(epsilon = (self.epsilon * (1 - self.eps_split)), **self.synth_args)
+        self.private_synth = self.dp_synthesizer(epsilon = (self.epsilon * (1 - self.eps_split)))
         self.private_synth.fit(data=private_features, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
 
         if verbose:
