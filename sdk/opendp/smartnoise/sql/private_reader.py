@@ -181,6 +181,9 @@ class PrivateReader(Reader):
             if is_group_key[idx]:
                 sens[idx] = None
 
+        if any([s is np.inf for s in sens]):
+            raise ValueError("Query is attempting to query an unbounded column that isn't part of the grouping key")
+
         kc_pos = None
         kcc_pos = []
         for idx in range(len(syms)):

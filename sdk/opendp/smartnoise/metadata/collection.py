@@ -1,5 +1,6 @@
 import importlib
 import yaml
+import io
 from opendp.smartnoise.sql.reader.base import NameCompare
 
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
@@ -36,9 +37,9 @@ class CollectionMetadata:
         return self.tables()
 
     @staticmethod
-    def from_file(filename):
+    def from_file(file):
         """Load the metadata about this collection from a YAML file"""
-        ys = CollectionYamlLoader(filename)
+        ys = CollectionYamlLoader(file)
         return ys.read_file()
 
     @staticmethod
@@ -47,9 +48,9 @@ class CollectionMetadata:
         ys = CollectionYamlLoader("dummy")
         return ys._create_metadata_object(schema_dict)
 
-    def to_file(self, filename, collection_name):
+    def to_file(self, file, collection_name):
         """Save collection metadata to a YAML file"""
-        ys = CollectionYamlLoader(filename)
+        ys = CollectionYamlLoader(file)
         ys.write_file(self, collection_name)
 
 """
@@ -177,16 +178,23 @@ class Unknown:
 
 
 class CollectionYamlLoader:
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, file):
+        self.file = file
 
     def read_file(self):
-        with open(self.filename, 'r') as stream:
+        if isinstance(self.file, io.IOBase):
             try:
-                c_s = yaml.safe_load(stream)
+                c_s = yaml.safe_load(self.file)
             except yaml.YAMLError as exc:
                 raise
-        return self._create_metadata_object(c_s)
+            return self._create_metadata_object(c_s)
+        else:
+            with open(self.file, 'r') as stream:
+                try:
+                    c_s = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    raise
+            return self._create_metadata_object(c_s)
 
     def _create_metadata_object(self, c_s):
         keys = list(c_s.keys())
@@ -322,5 +330,7 @@ class CollectionYamlLoader:
         db = {}
         db[collection_name] = schemas
         db["engine"] = collection_metadata.engine
-        with open(self.filename, 'w') as outfile:
+        if isinstance(self.file, io.IOBase):
+            raise ValueError("Cannot save metadata to a file stream.  Please use file path")
+        with open(self.file, 'w') as outfile:
             yaml.dump(db, outfile)
