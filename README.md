@@ -26,7 +26,7 @@ Detailed documentation, as well as information about plugging in to other databa
 
 The reference execution service provides a REST endpoint that can serve requests against shared data sources.  It is designed to allow pluggable composition of many heterogeneous differential privacy modules.  Heterogeneous requests against the same data source will compose privacy budget.  We include SQL dialect, differentially-private graph (core), and a Logistic Regression module from IBM's diffprivlib.
 
-More information, including information about creating and integrating your own privacy modules, can be found [here](https://github.com/opendifferentialprivacy/smartnoise-system/tree/master/service).
+More information, including information about creating and integrating your own privacy modules, can be found [here](https://github.com/opendifferentialprivacy/smartnoise-sdk/tree/master/service).
 
 ## Evaluator
 
@@ -42,7 +42,7 @@ The system's SmartNoise Core library can be installed from PyPi:
 Documentation for SDK functionality: [here](https://opendifferentialprivacy.github.io/smartnoise-samples/docs/api/system/)
 
 ### Experimental
-Service API specification: [here](https://github.com/opendifferentialprivacy/smartnoise-system/blob/master/service/openapi/swagger.yml)
+Service API specification: [here](https://github.com/opendifferentialprivacy/smartnoise-sdk/blob/master/service/openapi/swagger.yml)
 
 ## Getting started
 ### venv setup
@@ -89,14 +89,14 @@ Samples of DP SQL functionality: [here](https://github.com/opendifferentialpriva
 
 ## Communication
 
-- Please use [GitHub issues](https://github.com/opendifferentialprivacy/smartnoise-system/issues) for bug reports, feature requests, install issues, and ideas.
+- Please use [GitHub issues](https://github.com/opendifferentialprivacy/smartnoise-sdk/issues) for bug reports, feature requests, install issues, and ideas.
 - [Gitter](https://gitter.im/opendifferentialprivacy/SmartNoise) is available for general chat and online discussions.
 - For other requests, please contact us at [smartnoise@opendp.io](mailto:smartnoise@opendp.io).
-  - _Note: We encourage you to use [GitHub issues](https://github.com/opendifferentialprivacy/smartnoise-system/issues), especially for bugs._
+  - _Note: We encourage you to use [GitHub issues](https://github.com/opendifferentialprivacy/smartnoise-sdk/issues), especially for bugs._
 
 ## Releases and Contributing
 
-Please let us know if you encounter a bug by [creating an issue](https://github.com/opendifferentialprivacy/smartnoise-system/issues).
+Please let us know if you encounter a bug by [creating an issue](https://github.com/opendifferentialprivacy/smartnoise-sdk/issues).
 
 We appreciate all contributions. We welcome pull requests with bug-fixes without prior discussion.
 
