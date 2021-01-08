@@ -12,10 +12,10 @@ try:
     from opendp.smartnoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
     from opendp.smartnoise.synthesizers.pytorch.nn import DPGAN, DPCTGAN, PATECTGAN
 
-except:
+except Exception as e:
     import logging
     test_logger = logging.getLogger(__name__)
-    test_logger.warning("Requires torch and torchdp")
+    test_logger.warning("Requires torch and torchdp. Failed with Exception {}".format(e))
 
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
