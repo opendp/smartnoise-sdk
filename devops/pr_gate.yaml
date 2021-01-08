@@ -47,14 +47,14 @@ steps:
   - bash: |
       source activate wnoise
       pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
-      python -m pytest tests/sdk -m "not torch"  --junitxml=./TEST-TEST.xml
+      python -m pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
     displayName: "Run sdk tests"
   - bash: |
       source activate wnoise
       python service/application.py > logs &
       sleep 30
       pip freeze > $(System.DefaultWorkingDirectory)/pip_freeze.txt \ &&
-      python -m pytest tests/service -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
+      python -m pytest tests/service -s -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
     displayName: "Run service tests"
 
   - task: PublishTestResults@2
