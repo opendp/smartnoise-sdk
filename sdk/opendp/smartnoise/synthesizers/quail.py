@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pickle
 
-from opendp.whitenoise.synthesizers.base import SDGYMBaseSynthesizer
+from opendp.smartnoise.synthesizers.base import SDGYMBaseSynthesizer
 
 class QUAILSynthesizer(SDGYMBaseSynthesizer):
     """
