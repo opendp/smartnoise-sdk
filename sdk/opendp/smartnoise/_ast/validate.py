@@ -1,5 +1,6 @@
 from .ast import *
 
+
 class Validate(object):
     """
         Checks a batch AST for any violations of our query requirements
@@ -35,11 +36,16 @@ class QueryConstraints:
         # will throw if more or less than one key
         self.keycol = self.key_col(self.query)
 
-        checks = [func for func in dir(QueryConstraints) if callable(getattr(QueryConstraints, func)) and func.startswith("check_")]
+        checks = [
+            func
+            for func in dir(QueryConstraints)
+            if callable(getattr(QueryConstraints, func)) and func.startswith("check_")
+        ]
         rets = [getattr(self, check)() for check in checks]
-            
+
     def check_aggregate(self):
         q = self.query
+
         def simplify(exp):
             while type(exp) is NestedExpression:
                 exp = exp.expression
@@ -58,8 +64,12 @@ class QueryConstraints:
         is_agg = lambda n: type(n) == AggFunction and n.is_aggregate
         aggs = [expr for expr in select_expressions if is_agg(expr)]
         non_aggs = [expr for expr in select_expressions if not is_agg(expr)]
-        
-        grouping_expressions = [simplify(exp.expression) for exp in q.agg.groupingExpressions] if q.agg is not None else []
+
+        grouping_expressions = (
+            [simplify(exp.expression) for exp in q.agg.groupingExpressions]
+            if q.agg is not None
+            else []
+        )
         group_col_names = [gc.name for gc in q.agg.groupedColumns()] if q.agg is not None else []
 
         for nac in non_aggs:
@@ -67,7 +77,9 @@ class QueryConstraints:
                 raise ValueError("Select column not a supported type: " + str(nac))
             if type(nac) is TableColumn:
                 if nac.colname not in group_col_names:
-                    raise ValueError("Attempting to select a column not in a GROUP BY clause: " + str(nac))
+                    raise ValueError(
+                        "Attempting to select a column not in a GROUP BY clause: " + str(nac)
+                    )
 
         for ac in aggs:
             if not isinstance(ac.expression, (TableColumn, AllColumns)):
@@ -76,7 +88,6 @@ class QueryConstraints:
         for ge in grouping_expressions:
             if not isinstance(ge, Column):
                 raise ValueError("We don't support grouping by expressions: " + str(ge))
-        
 
     def check_groupkey(self):
         agg = self.query.agg
@@ -84,7 +95,9 @@ class QueryConstraints:
         keycol = self.keycol.lower() if self.keycol is not None else None
         gbk = [g for g in gc if g.name.lower() == keycol]
         if (len(gbk) > 0) and (len(gbk) == len(gc)):
-            raise ValueError("GROUP BY must include more than key columns: " + ", ".join([str(g) for g in gc]))
+            raise ValueError(
+                "GROUP BY must include more than key columns: " + ", ".join([str(g) for g in gc])
+            )
 
     def check_select_relations(self):
         rel_nodes = self.query.select.find_nodes(SqlRel)
@@ -102,9 +115,14 @@ class QueryConstraints:
     def walk_relations(self, r):
         if type(r) is AliasedSubquery:
             raise ValueError("Support for subqueries is currently disabled")
-        if type(r) is Query or type(r) is Table or type(r) is AliasedRelation or type(r) is AliasedSubquery:
+        if (
+            type(r) is Query
+            or type(r) is Table
+            or type(r) is AliasedRelation
+            or type(r) is AliasedSubquery
+        ):
             syms = r.all_symbols(AllColumns())
-            tcs = [s for name, s in syms if type(s) is TableColumn ]
+            tcs = [s for name, s in syms if type(s) is TableColumn]
             if not any([tc.is_key for tc in tcs]):
                 if not any([tc.row_privacy for tc in tcs]):
                     raise ValueError("Source relation must include a private key column: " + str(r))
@@ -123,6 +141,7 @@ class QueryConstraints:
     """
         Return the key column, given a from clause
     """
+
     def key_col(self, query):
         rsyms = query.source.relations[0].all_symbols(AllColumns())
         tcsyms = [r for name, r in rsyms if type(r) is TableColumn]

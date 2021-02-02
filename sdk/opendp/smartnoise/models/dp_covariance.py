@@ -3,7 +3,7 @@ import numpy as np
 import math
 
 
-class DPcovariance():
+class DPcovariance:
 
     # Implementation is based off of https://github.com/privacytoolsproject/PSI-Library
 
@@ -34,7 +34,7 @@ class DPcovariance():
             self.imputeRng = impute_rng
 
         if self.intercept:
-            self.columns = ['intercept'] + self.columns
+            self.columns = ["intercept"] + self.columns
         else:
             self.columns = self.columns
 
@@ -204,8 +204,8 @@ def cov_method_lin_reg(release, num_rows, x_names, y_name, intercept=False):
             return round(elem, 5)
 
         # Round both values to account for floating point error, put in Series
-        estimates = pd.Series(map(round_5, coef), index=new_x_names, name='Estimate')
-        std_error = pd.Series(map(round_5, se), index=new_x_names, name='Std. Error')
+        estimates = pd.Series(map(round_5, coef), index=new_x_names, name="Estimate")
+        std_error = pd.Series(map(round_5, se), index=new_x_names, name="Std. Error")
 
         return pd.DataFrame([estimates, std_error]).transpose()
 
@@ -220,7 +220,7 @@ def check_accuracy_vals(accuracy_vals, expected_length):
     return accuracy_vals
 
 
-def laplace_get_epsilon(sens, accuracy, alpha=.05):
+def laplace_get_epsilon(sens, accuracy, alpha=0.05):
     return np.log(1 / alpha) * (sens / accuracy)
 
 
@@ -230,7 +230,7 @@ def check_accuracy(accuracy):
     return accuracy
 
 
-def laplace_get_accuracy(sens, epsilon, alpha=.05):
+def laplace_get_accuracy(sens, epsilon, alpha=0.05):
     return np.log(1 / alpha) * (sens / epsilon)
 
 
@@ -363,7 +363,9 @@ def amsweep(g, m):
     if np.array_equal(m, np.full(np.shape(m), False, dtype=bool)):
         return g
     else:
-        p = np.shape(g)[0]  # number of rows of g (np.shape gives a tuple as (rows, cols), so we index [0])
+        p = np.shape(g)[
+            0
+        ]  # number of rows of g (np.shape gives a tuple as (rows, cols), so we index [0])
         rowsm = sum(m)  # sum of logical vector "m" (m must be a (n,) shape np array)
 
         # if all values of m are True (thus making the sum equal to the length),
@@ -395,13 +397,19 @@ def amsweep(g, m):
             h22 = g22 - np.matmul(np.matmul(g21, h11a), g12)
 
             # combine sections of h
-            hwo = np.concatenate((np.concatenate((h11, h12), axis=1), np.concatenate((h21, h22), axis=1)), axis=0)
-            hwo = np.asarray(hwo)  # convert back to array (from matrix) to avoid weird indexing behavior
+            hwo = np.concatenate(
+                (np.concatenate((h11, h12), axis=1), np.concatenate((h21, h22), axis=1)), axis=0
+            )
+            hwo = np.asarray(
+                hwo
+            )  # convert back to array (from matrix) to avoid weird indexing behavior
             xordering = np.concatenate((k, kcompl), axis=0)  # concatenate k and kcompl
             h = np.zeros((p, p))  # make a pxp array of zeros
 
             for i in range(p):  # traverse each element as defined by xordering
                 for j in range(p):
-                    h[xordering[i]][xordering[j]] = hwo[i][j]  # and replace it with the normal i, j element from hwo
+                    h[xordering[i]][xordering[j]] = hwo[i][
+                        j
+                    ]  # and replace it with the normal i, j element from hwo
 
         return h

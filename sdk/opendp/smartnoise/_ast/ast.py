@@ -8,13 +8,16 @@ from .expression import *
     Lexer and parser token names borrowed from SparkSQL Grammar.
 """
 
+
 class Batch(Sql):
     """A batch of queries"""
-    def __init__(self, queries : List['Query']) -> None:
+
+    def __init__(self, queries: List["Query"]) -> None:
         self.queries = queries
 
     def children(self):
         return self.queries
+
 
 class Query(SqlRel):
     """A single query"""
@@ -84,20 +87,23 @@ class Query(SqlRel):
         if not self.has_symbols():
             raise ValueError("Attempted to get symbol from query with no symbols loaded.")
         if type(expression) is not Column:
-            raise ValueError("Can only request output columns from a query: " + str(type(expression)) )
+            raise ValueError(
+                "Can only request output columns from a query: " + str(type(expression))
+            )
         return self[expression.name]
 
     def numeric_symbols(self):
         return [s for s in self.all_symbols() if s[1].type() in ["int", "float"]]
 
     def keycount_symbols(self):
-        return [s for s in self.all_symbols() if s[1].is_key_count ]
+        return [s for s in self.all_symbols() if s[1].is_key_count]
 
     def children(self) -> List[Any]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
 
     def evaluate(self, bindings):
         return [(ne.name, ne.expression.evaluate(bindings)) for ne in self.select.namedExpressions]
+
 
 class Select(Sql):
     """Result Columns"""
@@ -115,6 +121,7 @@ class Select(Sql):
     def children(self):
         return [Token("SELECT"), self.quantifier, self.namedExpressions]
 
+
 class From(Sql):
     """From"""
 
@@ -124,6 +131,7 @@ class From(Sql):
     def children(self):
         return [Token("FROM"), self.relations]
 
+
 class Where(Sql):
     """Predicates."""
 
@@ -132,6 +140,7 @@ class Where(Sql):
 
     def children(self):
         return [Token("WHERE"), self.condition]
+
 
 class Aggregate(Sql):
     """Group By"""
@@ -145,6 +154,7 @@ class Aggregate(Sql):
     def children(self):
         return [Token("GROUP"), Token("BY"), self.groupingExpressions]
 
+
 class Having(Sql):
     """Having clause"""
 
@@ -153,6 +163,7 @@ class Having(Sql):
 
     def children(self):
         return [Token("HAVING"), self.condition]
+
 
 class Order(Sql):
     """Order By"""
@@ -166,6 +177,7 @@ class Order(Sql):
     def symbol(self, relations):
         return Order(self.sortItems.symbol(relations))
 
+
 class Limit(Sql):
     """Limit"""
 
@@ -173,10 +185,11 @@ class Limit(Sql):
         self.n = n
 
     def children(self):
-        return  [Token("LIMIT"), Literal(self.n, str(self.n))]
+        return [Token("LIMIT"), Literal(self.n, str(self.n))]
 
     def symbol(self, relations):
         return self
+
 
 class Top(Sql):
     """Top"""
@@ -185,14 +198,16 @@ class Top(Sql):
         self.n = n
 
     def children(self):
-        return  [Token("TOP"), Literal(self.n, str(self.n))]
+        return [Token("TOP"), Literal(self.n, str(self.n))]
 
     def symbol(self, relations):
         return self
 
+
 """
     RELATIONS
 """
+
 
 class Relation(SqlRel):
     """A relation such as table, join, or subquery"""
@@ -207,24 +222,37 @@ class Relation(SqlRel):
             r.load_symbols(metadata)
         # check the join keys
         if len(self.joins) > 0:
-            primary_symbols = [name.lower() for name, symbol in self.primary.all_symbols(AllColumns())]
+            primary_symbols = [
+                name.lower() for name, symbol in self.primary.all_symbols(AllColumns())
+            ]
             for j in self.joins:
                 join_symbols = [name.lower() for name, symbol in j.right.all_symbols(AllColumns())]
                 if type(j.criteria) is UsingJoinCriteria:
                     for i in j.criteria.identifiers:
                         if not i.name.lower() in primary_symbols:
-                            raise ValueError("Join clause uses a join column that doesn't exist in the primary relation: " + str(i))
+                            raise ValueError(
+                                "Join clause uses a join column that doesn't exist in the primary relation: "
+                                + str(i)
+                            )
                         if not i.name.lower() in join_symbols:
-                            raise ValueError("Join clause uses a join column that doesn't exist in the joined relation: " + str(i))
+                            raise ValueError(
+                                "Join clause uses a join column that doesn't exist in the joined relation: "
+                                + str(i)
+                            )
 
     def symbol(self, expression):
         if type(expression) is not Column:
-            raise ValueError("Tables can only have column symbols: " + str(type(expression)) )
+            raise ValueError("Tables can only have column symbols: " + str(type(expression)))
         alias, colname = self.split_alias(expression.name)
         alias = alias if alias != "" else None
         syms_a = self.all_symbols(AllColumns(alias))
-        syms_b = [s for s in syms_a if s is not None ]
-        syms_c = [symbol for name, symbol in syms_b if (type(symbol) is TableColumn and symbol.compare.identifier_match(colname, name)) or name.lower() == colname.lower() ]
+        syms_b = [s for s in syms_a if s is not None]
+        syms_c = [
+            symbol
+            for name, symbol in syms_b
+            if (type(symbol) is TableColumn and symbol.compare.identifier_match(colname, name))
+            or name.lower() == colname.lower()
+        ]
         if len(syms_c) == 1:
             return syms_c[0]
         elif len(syms_c) > 1:
@@ -236,8 +264,12 @@ class Relation(SqlRel):
         if expression is None:
             expression = AllColumns()
         if type(expression) is not AllColumns:
-            raise ValueError("Can only request all columns with * : " + str(type(expression)) )
-        syms = self.primary.all_symbols(expression) if self.primary.alias_match(str(expression)) else []
+            raise ValueError("Can only request all columns with * : " + str(type(expression)))
+        syms = (
+            self.primary.all_symbols(expression)
+            if self.primary.alias_match(str(expression))
+            else []
+        )
         for j in self.joins:
             if not j.alias_match(str(expression)):
                 continue
@@ -246,13 +278,18 @@ class Relation(SqlRel):
             # if alias.* specified, don't drop join column
             if type(j.criteria) is UsingJoinCriteria and alias == "":
                 drop_cols = [str(i).lower() for i in j.criteria.identifiers]
-            syms = syms + [(name, symbol) for name, symbol in j.all_symbols(expression) if name.lower() not in drop_cols]
+            syms = syms + [
+                (name, symbol)
+                for name, symbol in j.all_symbols(expression)
+                if name.lower() not in drop_cols
+            ]
         if len(syms) == 0:
             raise ValueError("Symbol could not be found in any relations: " + str(expression))
         return syms
 
     def children(self):
         return [self.primary] + self.joins
+
 
 class Table(SqlRel):
     """A fully qualified table name with optional alias"""
@@ -265,9 +302,14 @@ class Table(SqlRel):
 
     def symbol(self, expression):
         if type(expression) is not Column:
-            raise ValueError("Tables can only have column symbols: " + str(type(expression)) )
+            raise ValueError("Tables can only have column symbols: " + str(type(expression)))
         if not self.alias_match(expression.name):
-            raise ValueError("Attempt to look up symbol with different alias.  Use alias_match() first." + expression.name + " -- " + str(self.name))
+            raise ValueError(
+                "Attempt to look up symbol with different alias.  Use alias_match() first."
+                + expression.name
+                + " -- "
+                + str(self.name)
+            )
         alias, name = self.split_alias(expression.name)
         if self.m_symbols is None:
             raise ValueError("Please load symbols with metadata first: " + str(self))
@@ -286,26 +328,33 @@ class Table(SqlRel):
             if table is None:
                 raise ValueError("No metadata available for " + str(self.name))
             tc = table.m_columns
-            self.m_symbols = [(name, TableColumn(
-                tablename=self.name,
-                colname=name,
-                valtype=tc[name].typename(),
-                is_key=tc[name].is_key,
-                minval=tc[name].minval if tc[name].typename() in ["int", "float"] else None,
-                maxval=tc[name].maxval if tc[name].typename() in ["int", "float"] else None,
-                max_ids=table.max_ids,
-                sample_max_ids=table.sample_max_ids,
-                row_privacy=table.row_privacy,
-                compare=metadata.compare)
-                ) for name in tc.keys()]
+            self.m_symbols = [
+                (
+                    name,
+                    TableColumn(
+                        tablename=self.name,
+                        colname=name,
+                        valtype=tc[name].typename(),
+                        is_key=tc[name].is_key,
+                        minval=tc[name].minval if tc[name].typename() in ["int", "float"] else None,
+                        maxval=tc[name].maxval if tc[name].typename() in ["int", "float"] else None,
+                        max_ids=table.max_ids,
+                        sample_max_ids=table.sample_max_ids,
+                        row_privacy=table.row_privacy,
+                        compare=metadata.compare,
+                    ),
+                )
+                for name in tc.keys()
+            ]
 
     def escaped(self):
         # is any part of this identifier escaped?
         parts = str(self).split(".")
-        return any([p.startswith('"') or p.startswith('[') for p in parts])
+        return any([p.startswith('"') or p.startswith("[") for p in parts])
 
     def children(self):
         return [self.name] + ([Token("AS"), self.alias] if self.alias is not None else [])
+
 
 class AliasedSubquery(SqlRel):
     """A subquery with optional alias"""
@@ -326,7 +375,10 @@ class AliasedSubquery(SqlRel):
         return self.query.all_symbols(AllColumns())
 
     def children(self):
-        return [Token("("), self.query, Token(")")] + ([Token("AS"), self.alias] if self.alias is not None else [])
+        return [Token("("), self.query, Token(")")] + (
+            [Token("AS"), self.alias] if self.alias is not None else []
+        )
+
 
 class AliasedRelation(SqlRel):
     """A subrelation (table, join, or subquery) with optional alias"""
@@ -347,7 +399,10 @@ class AliasedRelation(SqlRel):
         return self.relation.all_symbols(AllColumns())
 
     def children(self):
-        return [Token("("), self.relation, Token(")")] + ([Token("AS"), self.alias] if self.alias is not None else [])
+        return [Token("("), self.relation, Token(")")] + (
+            [Token("AS"), self.alias] if self.alias is not None else []
+        )
+
 
 class Join(SqlRel):
     """A join expression attached to a primary relation"""
@@ -362,6 +417,7 @@ class Join(SqlRel):
 
     def all_symbols(self, expression):
         return self.right.all_symbols(expression)
+
     def children(self):
         return [self.joinType, Token("JOIN"), self.right, self.criteria]
 
@@ -371,7 +427,20 @@ class Join(SqlRel):
 #
 class TableColumn(SqlExpr):
     """ A column attached to a fully qualified table """
-    def __init__(self, tablename, colname, valtype="unknown", is_key=False, minval=None, maxval=None, max_ids=1, sample_max_ids=True, row_privacy=False, compare=None):
+
+    def __init__(
+        self,
+        tablename,
+        colname,
+        valtype="unknown",
+        is_key=False,
+        minval=None,
+        maxval=None,
+        max_ids=1,
+        sample_max_ids=True,
+        row_privacy=False,
+        compare=None,
+    ):
         self.tablename = tablename
         self.colname = colname
         self.valtype = valtype
@@ -401,7 +470,7 @@ class TableColumn(SqlExpr):
             if self.minval is not None and self.maxval is not None:
                 return max(abs(self.maxval), abs(self.minval))
             else:
-                return np.inf #unbounded
+                return np.inf  # unbounded
         elif self.valtype == "boolean":
             return 1
         else:
@@ -416,6 +485,7 @@ class TableColumn(SqlExpr):
     @property
     def is_key_count(self):
         return self.is_key
+
     @property
     def is_count(self):
         return False

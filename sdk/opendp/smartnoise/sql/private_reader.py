@@ -18,11 +18,21 @@ module_logger = logging.getLogger(__name__)
 
 import itertools
 
+
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results
     """
-    def __init__(self, reader, metadata, epsilon_per_column=1.0, delta=10E-16,
-                 interval_widths=None, options=None, epsilon=None):
+
+    def __init__(
+        self,
+        reader,
+        metadata,
+        epsilon_per_column=1.0,
+        delta=10e-16,
+        interval_widths=None,
+        options=None,
+        epsilon=None,
+    ):
         """Create a new private reader.
 
             :param metadata: The CollectionMetadata object with information about all tables referenced in this query
@@ -36,7 +46,10 @@ class PrivateReader(Reader):
         """
         # check for old calling convention
         if isinstance(metadata, Reader):
-            warnings.warn("[reader] API has changed to pass (reader, metadata).  Please update code to pass reader first and metadata second.  This will be a breaking change in future versions.", Warning)
+            warnings.warn(
+                "[reader] API has changed to pass (reader, metadata).  Please update code to pass reader first and metadata second.  This will be a breaking change in future versions.",
+                Warning,
+            )
             tmp = reader
             reader = metadata
             metadata = tmp
@@ -50,14 +63,18 @@ class PrivateReader(Reader):
         if "metadata.collection.CollectionMetadata" in str(type(metadata)):
             self.metadata = metadata
         else:
-            raise ValueError("Parameter metadata must be of type CollectionMetadata. Got {0}", str(type(metadata)))
+            raise ValueError(
+                "Parameter metadata must be of type CollectionMetadata. Got {0}",
+                str(type(metadata)),
+            )
 
-        
         self.rewriter = Rewriter(metadata)
         self.epsilon_per_column = epsilon_per_column
         if epsilon is not None:
-            message = ("epsilon named parameter was replaced with "
-                       "epsilon_per_column to be more descriptive.")
+            message = (
+                "epsilon named parameter was replaced with "
+                "epsilon_per_column to be more descriptive."
+            )
             if epsilon != epsilon_per_column:
                 raise Exception(message)
             else:
@@ -74,8 +91,10 @@ class PrivateReader(Reader):
 
     @property
     def epsilon(self):
-        module_logger.warning("Epsilon property will be replaced with "
-                              "the more descriptive epsilon_per_column property.")
+        module_logger.warning(
+            "Epsilon property will be replaced with "
+            "the more descriptive epsilon_per_column property."
+        )
         return self.epsilon_per_column
 
     @property
@@ -131,7 +150,11 @@ class PrivateReader(Reader):
         return subquery.numeric_symbols()
 
     def _get_reader(self, query_ast):
-        if query_ast.agg is not None and self._options.use_dpsu and isinstance(self.reader, PandasReader):
+        if (
+            query_ast.agg is not None
+            and self._options.use_dpsu
+            and isinstance(self.reader, PandasReader)
+        ):
             query = str(query_ast)
             dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
             return PandasReader(dpsu_df, self.metadata)
@@ -159,8 +182,16 @@ class PrivateReader(Reader):
 
         subquery, query = self.rewrite_ast(query)
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
-        thresh_scale = math.sqrt(max_contrib) * ((math.sqrt(math.log(1/self.delta)) + math.sqrt(math.log(1/self.delta) + self.epsilon_per_column)) / (math.sqrt(2) * self.epsilon_per_column))
-        self.tau = 1 + thresh_scale * math.sqrt(2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.delta)))
+        thresh_scale = math.sqrt(max_contrib) * (
+            (
+                math.sqrt(math.log(1 / self.delta))
+                + math.sqrt(math.log(1 / self.delta) + self.epsilon_per_column)
+            )
+            / (math.sqrt(2) * self.epsilon_per_column)
+        )
+        self.tau = 1 + thresh_scale * math.sqrt(
+            2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.delta))
+        )
 
         syms = subquery.all_symbols()
         source_col_names = [s[0] for s in syms]
@@ -173,7 +204,10 @@ class PrivateReader(Reader):
 
         # set sensitivity to None if the column is a grouping key
         if subquery.agg is not None:
-            group_keys = [ge.expression.name if hasattr(ge.expression, 'name') else None for ge in subquery.agg.groupingExpressions]
+            group_keys = [
+                ge.expression.name if hasattr(ge.expression, "name") else None
+                for ge in subquery.agg.groupingExpressions
+            ]
         else:
             group_keys = []
         is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
@@ -182,13 +216,15 @@ class PrivateReader(Reader):
                 sens[idx] = None
 
         if any([s is np.inf for s in sens]):
-            raise ValueError("Query is attempting to query an unbounded column that isn't part of the grouping key")
+            raise ValueError(
+                "Query is attempting to query an unbounded column that isn't part of the grouping key"
+            )
 
         kc_pos = None
         kcc_pos = []
         for idx in range(len(syms)):
             sname, sym = syms[idx]
-            if sname == 'keycount':
+            if sname == "keycount":
                 kc_pos = idx
             elif sym.is_key_count:
                 kcc_pos.append(idx)
@@ -196,7 +232,10 @@ class PrivateReader(Reader):
             kc_pos = kcc_pos.pop()
 
         # make a list of mechanisms in column order
-        mechs = [Gaussian(self.epsilon_per_column, self.delta, s, max_contrib) if s is not None else None for s in sens]
+        mechs = [
+            Gaussian(self.epsilon_per_column, self.delta, s, max_contrib) if s is not None else None
+            for s in sens
+        ]
 
         # execute the subquery against the backend and load in tuples
         if cache_exact:
@@ -205,8 +244,10 @@ class PrivateReader(Reader):
                 if subquery == self._cached_ast:
                     db_rs = self._cached_exact
                 else:
-                    raise ValueError("Cannot run different query against cached result.  "
-                                     "Make a new PrivateReader or else clear the cache with cache = False")
+                    raise ValueError(
+                        "Cannot run different query against cached result.  "
+                        "Make a new PrivateReader or else clear the cache with cache = False"
+                    )
             else:
                 db_rs = self._get_reader(subquery)._execute_ast(subquery)
                 self._cached_exact = list(db_rs)
@@ -226,7 +267,10 @@ class PrivateReader(Reader):
                 if sens[idx] is not None and row[idx] is None:
                     row[idx] = 0.0
             # call all mechanisms to add noise
-            out_row = [noise.release([v]).values[0] if noise is not None else v for noise, v in zip(mechs, row)]
+            out_row = [
+                noise.release([v]).values[0] if noise is not None else v
+                for noise, v in zip(mechs, row)
+            ]
             # ensure all key counts are the same
             for idx in kcc_pos:
                 out_row[idx] = out_row[kc_pos]
@@ -237,17 +281,17 @@ class PrivateReader(Reader):
                         out_row[idx] = 0
             return out_row
 
-        if hasattr(db_rs, 'rdd'):
+        if hasattr(db_rs, "rdd"):
             # it's a dataframe
             out = db_rs.rdd.map(process_row)
-        elif hasattr(db_rs, 'map'):
+        elif hasattr(db_rs, "map"):
             # it's an RDD
             out = db_rs.map(process_row)
         else:
             out = map(process_row, db_rs[1:])
 
         if subquery.agg is not None and self._options.censor_dims:
-            if hasattr(out, 'filter'):
+            if hasattr(out, "filter"):
                 # it's an RDD
                 tau = self.tau
                 out = out.filter(lambda row: row[kc_pos] > tau)
@@ -260,39 +304,39 @@ class PrivateReader(Reader):
         out_col_names = [s[0] for s in out_syms]
 
         def convert(val, type):
-            if type == 'string' or type == 'unknown':
-                return str(val).replace('"', '').replace("'", '')
-            elif type == 'int':
-                return int(float(str(val).replace('"', '').replace("'", '')))
-            elif type == 'float':
-                return float(str(val).replace('"', '').replace("'", ''))
-            elif type == 'boolean':
+            if type == "string" or type == "unknown":
+                return str(val).replace('"', "").replace("'", "")
+            elif type == "int":
+                return int(float(str(val).replace('"', "").replace("'", "")))
+            elif type == "float":
+                return float(str(val).replace('"', "").replace("'", ""))
+            elif type == "boolean":
                 if isinstance(val, int):
                     return val != 0
                 else:
-                    return bool(str(val).replace('"', '').replace("'", ''))
+                    return bool(str(val).replace('"', "").replace("'", ""))
             else:
                 raise ValueError("Can't convert type " + type)
 
         def process_out_row(row):
-            bindings = dict((name.lower(), val ) for name, val in zip(source_col_names, row))
+            bindings = dict((name.lower(), val) for name, val in zip(source_col_names, row))
             row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
             return [convert(val, type) for val, type in zip(row, out_types)]
 
-        if hasattr(out, 'map'):
+        if hasattr(out, "map"):
             # it's an RDD
             out = out.map(process_out_row)
         else:
             out = map(process_out_row, out)
 
         def filter_aggregate(row, condition):
-            bindings = dict((name.lower(), val ) for name, val in zip(out_col_names, row))
+            bindings = dict((name.lower(), val) for name, val in zip(out_col_names, row))
             keep = condition.evaluate(bindings)
             return keep
 
         if query.having is not None:
             condition = query.having.condition
-            if hasattr(out, 'filter'):
+            if hasattr(out, "filter"):
                 # it's an RDD
                 out = out.filter(lambda row: filter_aggregate(row, condition))
             else:
@@ -306,7 +350,11 @@ class PrivateReader(Reader):
                     raise ValueError("We only know how to sort by column names right now")
                 colname = si.expression.name.lower()
                 if colname not in out_col_names:
-                    raise ValueError("Can't sort by {0}, because it's not in output columns: {1}".format(colname, out_col_names))
+                    raise ValueError(
+                        "Can't sort by {0}, because it's not in output columns: {1}".format(
+                            colname, out_col_names
+                        )
+                    )
                 colidx = out_col_names.index(colname)
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
@@ -317,9 +365,18 @@ class PrivateReader(Reader):
                 sort_fields.append(sf)
 
             def sort_func(row):
-                return tuple([row[idx] if not desc else not row[idx] if out_types[idx] == "boolean" else -row[idx] for desc, idx in sort_fields])
+                return tuple(
+                    [
+                        row[idx]
+                        if not desc
+                        else not row[idx]
+                        if out_types[idx] == "boolean"
+                        else -row[idx]
+                        for desc, idx in sort_fields
+                    ]
+                )
 
-            if hasattr(out, 'sortBy'):
+            if hasattr(out, "sortBy"):
                 out = out.sortBy(sort_func)
             else:
                 out = sorted(out, key=sort_func)
@@ -333,20 +390,20 @@ class PrivateReader(Reader):
             elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
                 limit_rows = query.select.quantifier.n
             if limit_rows is not None:
-                if hasattr(db_rs, 'rdd'):
+                if hasattr(db_rs, "rdd"):
                     # it's a dataframe
                     out = db_rs.limit(limit_rows)
-                elif hasattr(db_rs, 'map'):
+                elif hasattr(db_rs, "map"):
                     # it's an RDD
                     out = db_rs.limit(limit_rows)
                 else:
                     out = itertools.islice(out, limit_rows)
 
         # output it
-        if hasattr(out, 'toDF'):
+        if hasattr(out, "toDF"):
             # Pipeline RDD
             return out.toDF(out_col_names)
-        elif hasattr(out, 'map'):
+        elif hasattr(out, "map"):
             # Bare RDD
             return out
         else:
@@ -360,14 +417,16 @@ class PrivateReader(Reader):
 class PrivateReaderOptions:
     """Options that control privacy behavior"""
 
-    def __init__(self,
-                 censor_dims=True,
-                 clamp_counts=True,
-                 reservoir_sample=True,
-                 clamp_columns=True,
-                 row_privacy=False,
-                 max_contrib=None,
-                 use_dpsu=True):
+    def __init__(
+        self,
+        censor_dims=True,
+        clamp_counts=True,
+        reservoir_sample=True,
+        clamp_columns=True,
+        row_privacy=False,
+        max_contrib=None,
+        use_dpsu=True,
+    ):
         """Initialize with options.
 
         :param censor_dims: boolean, set to False if you know that small dimensions cannot expose privacy

@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.base import (BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin)
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
 from sklearn.linear_model.base import LinearModel
 from sklearn.utils import check_array, check_X_y
 from .dp_covariance import DPcovariance
@@ -58,9 +58,9 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     def _set_coef_and_intercept(self, df):
         df_copy = df
         if self.fit_intercept:
-            self.intercept_ = df_copy['intercept', 'Estimate']
-            df_copy = df_copy.drop(['intercept'])
-        self.coef_ = df_copy['Estimate'].values
+            self.intercept_ = df_copy["intercept", "Estimate"]
+            df_copy = df_copy.drop(["intercept"])
+        self.coef_ = df_copy["Estimate"].values
 
     def fit(self, X, y, bounds, budget):
         """
@@ -86,6 +86,7 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         cols = list(X.columns.values) + list(y.columns.values)
 
         results = DPcovariance(n, cols, bounds, budget).get_linear_regression(
-            data, X.columns.values, y.columns.values, self.fit_intercept)
+            data, X.columns.values, y.columns.values, self.fit_intercept
+        )
         self._set_coef_and_intercept(results)
         return self

@@ -46,7 +46,10 @@ def policy_laplace(df, eps, delta, max_contrib):
     """
     alpha = 3.0
     lambd = 1 / eps
-    rho = [1/i + lambd * math.log(1 / (2 * (1 - (1 - delta)**(1 / i)))) for i in range(1, max_contrib+1)]
+    rho = [
+        1 / i + lambd * math.log(1 / (2 * (1 - (1 - delta) ** (1 / i))))
+        for i in range(1, max_contrib + 1)
+    ]
     rho = max(rho)
     gamma = rho + alpha * lambd
 
@@ -73,7 +76,9 @@ def policy_laplace(df, eps, delta, max_contrib):
         sorted_items = [k for k, v in sorted(cost_dict.items(), key=lambda item: item[1])]
 
         for idx, curr_item in enumerate(sorted_items):
-            cost = cost_dict[curr_item] * k  # cost of increasing weights of remaining k items by cost_dict[curr_item]
+            cost = (
+                cost_dict[curr_item] * k
+            )  # cost of increasing weights of remaining k items by cost_dict[curr_item]
             if cost <= budget:
                 # update weights of remaining k items with cost_dict[curr_item]
                 for j in range(idx, k):

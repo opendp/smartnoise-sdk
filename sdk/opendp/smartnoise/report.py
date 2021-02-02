@@ -1,17 +1,17 @@
 import collections.abc
 import numpy as np
+
 """
 Represents the metadata for a differentially private release.
 
-Specification at https://docs.google.com/document/d/1PTAG2xImB5B3m4crc9t3MQLyRUp3GieD-u8tJlNCDzY/edit#heading=h.ga5nyepy7ehj
-
 Note that SQL results may return multiple rows, with columns representing a vector of
-values that share a common mechanism, statistic, source, epsilon, delta, interval_widths, and accuracy,
-while having multiple values per column, and multiple intervals per value.
+values that share a common mechanism, statistic, source, epsilon, delta, interval_widths,
+and accuracy, while having multiple values per column, and multiple intervals per value.
 
 For single row queries with default single confidence interval, there will be only one value
 per column and one interval per value, but callers should be prepared for multiple values.
 """
+
 
 class IntervalRange:
     """A low and high for a single value interval.  Used for row-based access."""
@@ -39,7 +39,9 @@ class IntervalRange:
         return self.low > other.high
 
     def intersects(self, other):
-        return (self.low >= other.low and self.low <= other.high) or (self.high >= other.low and self.high <= other.high)
+        return (self.low >= other.low and self.low <= other.high) or (
+            self.high >= other.low and self.high <= other.high
+        )
 
     def __iter__(self):
         return iter([self.low, self.high])
@@ -49,12 +51,14 @@ class Interval:
     """A vector of CIs for a single column and confidence."""
 
     def __init__(self, confidence, accuracy, low=None, high=None):
-        """Collection of confidence intervals for a given width
+        """Collection of confidence intervals for a given width and accuracy target.
 
-        :param float confidence: the confidence interval width for the CIs in the list.  Between 0.0 and 1.0 inclusive.
-        :param float accuracy: the plus/minus accuracy for values generated here. May be None, if not known or not symmetrical
-        :param float[] low: the lower bound for each CI in the list
-        :param float[] high: the lower bound for each CI in the list
+        :param confidence: float confidence: the confidence interval width for the CIs in the list.
+                           Between 0.0 and 1.0 inclusive.
+        :param accuracy: float accuracy: the plus/minus accuracy for values generated here.
+                         May be None, if not known or not symmetrical.
+        :param low: The lower bound, list of floats, for each CI in the list.
+        :param high: The lower bound, list of floats, for each CI in the list.
         """
         self.low = low
         self.high = high
@@ -65,7 +69,12 @@ class Interval:
         self.accuracy = accuracy
 
     def __str__(self):
-        cis = ", ".join(["[{0}-{1}]".format(round(low, 2), round(high, 2)) for low, high in zip(self.low, self.high)])
+        cis = ", ".join(
+            [
+                "[{0}-{1}]".format(round(low, 2), round(high, 2))
+                for low, high in zip(self.low, self.high)
+            ]
+        )
         return "confidence: {0}\naccuracy: {1}\n".format(self.confidence, self.accuracy) + cis
 
     def __len__(self):
@@ -88,13 +97,16 @@ class Interval:
 
     def intersects(self, other):
         return all([s.intersects(o) for s, o in zip(self, other)])
+
     def __iter__(self):
         return iter([IntervalRange(low, high) for low, high in zip(self.low, self.high)])
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return IntervalRange(self.low[key], self.high[key])
         else:
             raise ValueError("Invalid index to interval: " + key)
+
     def __setitem__(self, key, value):
         if isinstance(key, int):
             if isinstance(value, tuple) or isinstance(value, IntervalRange):
@@ -105,7 +117,9 @@ class Interval:
                         low = value * 1.0 - self.accuracy
                         high = value * 1.0 + self.accuracy
                     else:
-                        raise ValueError("Can only auto-convert value to interval if accuracy is set")
+                        raise ValueError(
+                            "Can only auto-convert value to interval if accuracy is set"
+                        )
                 else:
                     raise ValueError("Can only set interval value with a tuple or numeric value")
             self.low[key] = low
@@ -134,9 +148,13 @@ class Interval:
                     self.low.append(low)
                     self.high.append(high)
                 else:
-                    raise ValueError("Cannot automatically convert values to intervals if accuracy not symmetrical")
+                    raise ValueError(
+                        "Cannot automatically convert values to intervals if accuracy not symmetrical"
+                    )
             else:
-                raise ValueError("Can only append intervals as tuples, or automatically convert values.")        
+                raise ValueError(
+                    "Can only append intervals as tuples, or automatically convert values."
+                )
 
     def extend(self, values):
         if isinstance(values, (collections.abc.Sequence, np.ndarray)) and not type(values) is str:
@@ -180,7 +198,9 @@ class Intervals:
             self._intervals[i.confidence] = i
 
     def __str__(self):
-        return "Intervals: \n" + "\n".join(str(self._intervals[confidence]) for confidence in self._intervals.keys() )
+        return "Intervals: \n" + "\n".join(
+            str(self._intervals[confidence]) for confidence in self._intervals.keys()
+        )
 
     def __iter__(self):
         return iter([self._intervals[k] for k in self._intervals.keys()])
@@ -202,14 +222,18 @@ class Intervals:
             for k in self._intervals.keys():
                 self._intervals[k].append(value)
         else:
-            raise ValueError("Interval collection only supports appending intervals by auto-converting values")
+            raise ValueError(
+                "Interval collection only supports appending intervals by auto-converting values"
+            )
 
     def extend(self, values):
         if isinstance(values, (collections.abc.Sequence, np.ndarray)) and type(values) is not str:
             for k in self._intervals.keys():
                 self._intervals[k].extend(values)
         else:
-            raise ValueError("Interval collection only supports extending intervals by auto-converting values")
+            raise ValueError(
+                "Interval collection only supports extending intervals by auto-converting values"
+            )
 
     def clear(self):
         for k in self._intervals.keys():
@@ -232,13 +256,27 @@ class Intervals:
     def accuracy(self):
         return [self._intervals[k].accuracy for k in self._intervals.keys()]
 
+
 class Result:
     """A differentially private result, representing a single value or column of related values.
 
     Allows access to values and confidence intervals in column-vector format.  Helper
     methods for adding and deleting rows that span values and confidence intervals."""
 
-    def __init__(self, mechanism, statistic, source, values, epsilon, delta, sensitivity, scale, max_contrib, intervals, name=None):
+    def __init__(
+        self,
+        mechanism,
+        statistic,
+        source,
+        values,
+        epsilon,
+        delta,
+        sensitivity,
+        scale,
+        max_contrib,
+        intervals,
+        name=None,
+    ):
         """A result within a report.
 
         :param string mechanism: The label for the mechanism being used (e.g. 'laplace', 'gaussian')
@@ -273,7 +311,17 @@ class Result:
         self.name = name if name is not None else source
 
     def __str__(self):
-        return "mechanism: {0}\nstatistic: {1}\nsource: {2}\nvalues: {3}\nepsilon: {4}\ndelta: {5}\nsensitivity: {6}\nmax_contrib: {7}\nintervals: {8}".format(self.mechanism, self.statistic, self.source, self.values, self.epsilon, self.delta, self.sensitivity, self.max_contrib, self._intervals)
+        return "mechanism: {0}\nstatistic: {1}\nsource: {2}\nvalues: {3}\nepsilon: {4}\ndelta: {5}\nsensitivity: {6}\nmax_contrib: {7}\nintervals: {8}".format(
+            self.mechanism,
+            self.statistic,
+            self.source,
+            self.values,
+            self.epsilon,
+            self.delta,
+            self.sensitivity,
+            self.max_contrib,
+            self._intervals,
+        )
 
     def __delitem__(self, idx):
         del self.values[idx]
