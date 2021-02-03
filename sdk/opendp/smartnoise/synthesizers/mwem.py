@@ -162,8 +162,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             hist = h[0]
             dimensions = h[1]
             split = h[3]
-            q_values = self.q_values[i]
-            a_values = self._initialize_a_values(hist, dimensions)
+            q_value = self.q_values[i]
+            a_value = self._initialize_a_values(hist, dimensions)
             measurements = {}
             # NOTE: Here we perform a privacy check,
             # because if the histogram dimensions are
@@ -189,22 +189,22 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             for i in range(self.iterations):
                 # print("Iteration: " + str(i))
                 qi = self._exponential_mechanism(
-                    hist, a_values, q_values, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
+                    hist, a_value, q_value, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
                 )
                 # Make sure we get a different query to measure:
                 while qi in measurements:
                     qi = self._exponential_mechanism(
-                        hist, a_values, q_values, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
+                        hist, a_value, q_value, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
                     )
                 # NOTE: Add laplace noise here with budget
-                evals = self._evaluate(q_values[qi], hist)
+                evals = self._evaluate(q_value[qi], hist)
                 lap = self._laplace(
                     (2 * self.iterations * len(self.histograms)) / (self.epsilon * len(dimensions))
                 )
                 measurements[qi] = evals + lap
                 # Improve approximation with Multiplicative Weights
                 a_values = self._multiplicative_weights(
-                    a_values, q_values, measurements, hist, self.mult_weights_iterations
+                    a_value, q_value, measurements, hist, self.mult_weights_iterations
                 )
             a_values.append((a_values, hist, split))
         return a_values
