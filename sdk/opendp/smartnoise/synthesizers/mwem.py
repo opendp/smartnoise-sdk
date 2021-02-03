@@ -55,7 +55,6 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.pd_index = None
 
         # Query trackers
-        self.q_count = 0
         self.q_values = None
         self.max_retries_exp_mechanism = 50
 
