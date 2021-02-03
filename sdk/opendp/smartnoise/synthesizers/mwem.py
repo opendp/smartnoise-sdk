@@ -202,7 +202,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 )
                 measurements[qi] = evals + lap
                 # Improve approximation with Multiplicative Weights
-                a_values = self._multiplicative_weights(
+                a_value = self._multiplicative_weights(
                     a_value, q_value, measurements, hist, self.mult_weights_iterations
                 )
             a_values.append((a_values, hist, split))
