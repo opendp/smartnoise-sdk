@@ -152,16 +152,17 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for self.iterations using the exponential mechanism and
         multiplicative weights. Draws from the initialized query store
         for measurements.
-        :return: A, self.histogram - A is the synthetic data histogram, self.histogram is original histo
+        :return: synth_hist, self.histogram - synth_hist is the synthetic data histogram,
+                 self.histogram is original histo
         :rtype: np.ndarray, np.ndarray
         """
-        As = []
+        a_values = []
         for i, h in enumerate(self.histograms):
             hist = h[0]
             dimensions = h[1]
             split = h[3]
-            Q = self.q_values[i]
-            A = self._initialize_A(hist, dimensions)
+            queries = self.q_values[i]
+            synth_hist = self._initialize_a(hist, dimensions)
             measurements = {}
             # NOTE: Here we perform a privacy check,
             # because if the histogram dimensions are
@@ -178,38 +179,36 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 warnings.warn(
                     "Flattened dimensionality of synthetic histogram is less than"
                     + " the number of iterations. This is a privacy risk."
-                    + " Consider increasing your split_factor (especially if it is 1), or decreasing the number of iterations. "
-                    + "Dim: "
-                    + str(flat_dim)
-                    + " Split: "
-                    + str(split),
+                    + " Consider increasing your split_factor (especially if it is 1), "
+                    + "or decreasing the number of iterations. "
+                    + "Dim: " + str(flat_dim) + " Split: " + str(split),
                     Warning,
                 )
 
             for i in range(self.iterations):
                 # print("Iteration: " + str(i))
                 qi = self._exponential_mechanism(
-                    hist, A, Q, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
+                    hist, synth_hist, queries, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
                 )
                 # Make sure we get a different query to measure:
                 while qi in measurements:
                     qi = self._exponential_mechanism(
-                        hist, A, Q, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
+                        hist, synth_hist, queries, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
                     )
                 # NOTE: Add laplace noise here with budget
-                evals = self._evaluate(Q[qi], hist)
+                evals = self._evaluate(queries[qi], hist)
                 lap = self._laplace(
                     (2 * self.iterations * len(self.histograms)) / (self.epsilon * len(dimensions))
                 )
                 measurements[qi] = evals + lap
                 # Improve approximation with Multiplicative Weights
-                A = self._multiplicative_weights(
-                    A, Q, measurements, hist, self.mult_weights_iterations
+                synth_hist = self._multiplicative_weights(
+                    synth_hist, queries, measurements, hist, self.mult_weights_iterations
                 )
-            As.append((A, hist, split))
-        return As
+            a_values.append((synth_hist, hist, split))
+        return a_values
 
-    def _initialize_A(self, histogram, dimensions):
+    def _initialize_a(self, histogram, dimensions):
         """
         Initializes a uniform distribution histogram from
         the given histogram with dimensions
@@ -226,9 +225,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # and detract from it)
         n = np.sum(histogram)
         value = n / np.prod(dimensions)
-        A = np.zeros_like(histogram)
-        A += value
-        return A
+        synth_hist = np.zeros_like(histogram)
+        synth_hist += value
+        return synth_hist
 
     def _histogram_from_data_attributes(self, data, splits=[]):
         """
@@ -286,25 +285,25 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             histograms.append((histogram, dims_sizes, bins, split))
         return histograms
 
-    def _exponential_mechanism(self, hist, A, Q, eps):
+    def _exponential_mechanism(self, hist, synth_hist, queries, eps):
         """
         Refer to paper for in depth description of
         Exponential Mechanism.
         Parametrized with epsilon value epsilon/(2 * iterations)
         :param hist: Basis histogram
         :type hist: np.ndarray
-        :param A: Synthetic histogram
-        :type A: np.ndarray
-        :param Q: Queries to draw from
-        :type Q: list
+        :param synth_hist: Synthetic histogram
+        :type synth_hist: np.ndarray
+        :param queries: Queries to draw from
+        :type queries: list
         :param eps: Budget
         :type eps: float
         :return: # of errors
         :rtype: int
         """
         errors = [
-            abs(self._evaluate(Q[i], hist) - self._evaluate(Q[i], A)) * (eps / 2.0)
-            for i in range(len(Q))
+            abs(self._evaluate(queries[i], hist) - self._evaluate(queries[i], synth_hist)) * (eps / 2.0)
+            for i in range(len(queries))
         ]
         maxi = max(errors)
         errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
@@ -317,40 +316,41 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 return i
         return len(errors) - 1
 
-    def _multiplicative_weights(self, A, Q, m, hist, iterate):
+    def _multiplicative_weights(self, synth_hist, queries, m, hist, iterate):
         """
         Multiplicative weights update algorithm,
         used to boost the synthetic data accuracy given measurements m.
         Run for iterate times
 
-        :param A: Synthetic histogram
-        :type A: np.ndarray
-        :param Q: Queries to draw from
-        :type Q: list
+        :param synth_hist: Synthetic histogram
+        :type synth_hist: np.ndarray
+        :param queries: Queries to draw from
+        :type queries: list
         :param m: Measurements taken from real data for each qi query
         :type m: dict
         :param hist: Basis histogram
         :type hist: np.ndarray
         :param iterate: Number of iterations to run mult weights
         :type iterate: iterate
-        :return: A
+        :return: synth_hist
         :rtype: np.ndarray
         """
-        sum_A = np.sum(A)
+        sum_a = np.sum(synth_hist)
         for _ in range(iterate):
             for qi in m:
-                error = m[qi] - self._evaluate(Q[qi], A)
+                error = m[qi] - self._evaluate(queries[qi], synth_hist)
                 # Perform the weights update
-                query_update = self._binary_replace_in_place_slice(np.zeros_like(A.copy()), Q[qi])
+                query_update = self._binary_replace_in_place_slice(
+                                   np.zeros_like(synth_hist.copy()), queries[qi])
 
                 # Apply the update
-                A_multiplier = np.exp(query_update * error / (2.0 * sum_A))
-                A_multiplier[A_multiplier == 0.0] = 1.0
-                A = A * A_multiplier
+                a_multiplier = np.exp(query_update * error / (2.0 * sum_a))
+                a_multiplier[a_multiplier == 0.0] = 1.0
+                synth_hist = synth_hist * a_multiplier
                 # Normalize again
-                count_A = np.sum(A)
-                A = A * (sum_A / count_A)
-        return A
+                count_a = np.sum(synth_hist)
+                synth_hist = synth_hist * (sum_a / count_a)
+        return synth_hist
 
     def _compose_arbitrary_slices(self, num_s, dimensions):
         """
@@ -386,7 +386,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             # Compose slices
             sl = []
             for ind in inds:
-                sl.append(np.s_[ind[0] : ind[1]])
+                sl.append(np.s_[ind[0]: ind[1]])
             slices_list.append(sl)
         return slices_list
 
@@ -474,7 +474,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         s1 = even_inds.tolist()
         if indices[fits:] != np.array([]):
             s1.append(indices[fits:])
-        s2 = [np.array(l) for l in s1]
+        s2 = [np.array(l_val) for l_val in s1]
         return np.array(s2)
 
     def _laplace(self, sigma):
