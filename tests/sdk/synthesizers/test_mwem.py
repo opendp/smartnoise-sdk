@@ -48,8 +48,8 @@ class TestMWEM:
         synthetic = synth.sample(sample_size)
         assert synthetic.shape == nf.shape
 
-    def test_initialize_A(self):
-        h = synth._initialize_A(test_histogram,(3,3,3))
+    def test_initialize_a(self):
+        h = synth._initialize_a_values(test_histogram,(3,3,3))
         assert int(np.sum(h)) == int(np.sum(test_histogram))
 
     def test_histogram_from_data_attributes(self):
