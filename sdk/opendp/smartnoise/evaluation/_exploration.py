@@ -5,6 +5,7 @@ import copy
 from statsmodels.tools import sequences
 from opendp.smartnoise.metadata.collection import *
 
+
 class Exploration:
     """
     This file contains methods to set and scan a search space of datasets
@@ -15,7 +16,10 @@ class Exploration:
     Then we shall use halton sequence to generate a set of such 3 row databases
     randomly in a 3-D log-space
     """
-    def __init__(self, dataset_size=3, csv_path=r'../service/datasets/evaluation'):  # TODO changed default to "."
+
+    def __init__(
+        self, dataset_size=3, csv_path=r"../service/datasets/evaluation"
+    ):  # TODO changed default to "."
         """
         Instantiates the Exploration class to define dimensions and
         boundaries of halton sequence space.
@@ -30,23 +34,27 @@ class Exploration:
         self.numerical_col_type = "int"
         self.N = dataset_size
         # if we are exploring 3 dimensions, corners shall be [-1000, -1000, -1000] to [1000, 1000, 1000]
-        self.corners = np.array([[-1*(10**self.N)]*self.N, [10**self.N]*self.N])
+        self.corners = np.array([[-1 * (10 ** self.N)] * self.N, [10 ** self.N] * self.N])
         self.visited = []
         self.neighbor_pair = {}
 
-    def create_small_dataset(self, sample, file_name = "small"):
+    def create_small_dataset(self, sample, file_name="small"):
         """
         Create a dataset with one numerical column on which we shall evaluate DP queries
         """
-        userids = list(range(1, self.dataset_size+1))
+        userids = list(range(1, self.dataset_size + 1))
         userids = ["A" + str(user) for user in userids]
         usage = list(sample)
-        df = pd.DataFrame(list(zip(userids, usage)), columns=['UserId', self.numerical_col_name])
-        metadata = Table(file_name, file_name,  \
-        [\
-            String("UserId", self.dataset_size, True),\
-            Int(self.numerical_col_name, min(usage), max(usage))
-        ], self.dataset_size)
+        df = pd.DataFrame(list(zip(userids, usage)), columns=["UserId", self.numerical_col_name])
+        metadata = Table(
+            file_name,
+            file_name,
+            [
+                String("UserId", self.dataset_size, True),
+                Int(self.numerical_col_name, min(usage), max(usage)),
+            ],
+            self.dataset_size,
+        )
         return df, metadata
 
     def generate_halton_samples(self, bounds, dims, n_sample=10):
@@ -64,7 +72,7 @@ class Exploration:
         Convention of file names ->
         <d1/d2>_<list of row indexes in d1>_<row index removed to create d2>
         """
-        if(len(d1) == 0):
+        if len(d1) == 0:
             return
         else:
             indexes = list(d1.index.values)
@@ -72,7 +80,7 @@ class Exploration:
             d1_idx_range = "".join(s)
             for drop_idx in indexes:
                 filename = d1_idx_range + "_" + str(drop_idx)
-                if(filename not in self.visited):
+                if filename not in self.visited:
                     d2 = d1.drop(drop_idx)
                     min_val = min(d1[self.numerical_col_name])
                     max_val = max(d1[self.numerical_col_name])
@@ -80,14 +88,25 @@ class Exploration:
                     min_val = min_val if max_val > min_val else 0
                     max_val = max_val if max_val > min_val else abs(max_val)
 
-                    d1_table = Table("d1_" + filename, "d1_" + filename,  \
-                    [\
-                        String("UserId", len(d1), True),\
-                        Int(self.numerical_col_name, min_val, max_val)
-                    ], len(d1))
+                    d1_table = Table(
+                        "d1_" + filename,
+                        "d1_" + filename,
+                        [
+                            String("UserId", len(d1), True),
+                            Int(self.numerical_col_name, min_val, max_val),
+                        ],
+                        len(d1),
+                    )
                     d2_table = copy.copy(d1_table)
-                    d2_table.schema, d2_table.name, d2_table.rowcount = "d2_" + filename, "d2_" + filename, d1_table.rowcount - 1
-                    d1_metadata, d2_metadata = CollectionMetadata([d1_table], "csv"), CollectionMetadata([d2_table], "csv")
+                    d2_table.schema, d2_table.name, d2_table.rowcount = (
+                        "d2_" + filename,
+                        "d2_" + filename,
+                        d1_table.rowcount - 1,
+                    )
+                    d1_metadata, d2_metadata = (
+                        CollectionMetadata([d1_table], "csv"),
+                        CollectionMetadata([d2_table], "csv"),
+                    )
 
                     self.neighbor_pair[filename] = [d1, d2, d1_metadata, d2_metadata]
                     self.visited.append(filename)
@@ -98,7 +117,7 @@ class Exploration:
         """
         Test method to generate halton samples and then generate powerset for each sample
         """
-        samples = self.generate_halton_samples(bounds = self.corners, dims = self.N)
+        samples = self.generate_halton_samples(bounds=self.corners, dims=self.N)
         for sample in samples:
             df, metadata = self.create_small_dataset(sample)
             self.generate_powerset(df)

@@ -1,16 +1,16 @@
-from antlr4 import * #type: ignore
 
-from .parser.SqlSmallLexer import SqlSmallLexer #type: ignore
-from .parser.SqlSmallParser import SqlSmallParser #type: ignore
-from .parser.SqlSmallVisitor import SqlSmallVisitor #type: ignore
-from .parser.SqlSmallErrorListener import SyntaxErrorListener #type: ignore
+from .parser.SqlSmallLexer import SqlSmallLexer  # type: ignore
+from .parser.SqlSmallParser import SqlSmallParser  # type: ignore
+from .parser.SqlSmallVisitor import SqlSmallVisitor  # type: ignore
+from .parser.SqlSmallErrorListener import SyntaxErrorListener  # type: ignore
 
+from antlr4 import *  # type: ignore
 from opendp.smartnoise._ast.tokens import *
 from opendp.smartnoise._ast.ast import *
 
 
 class QueryParser:
-    def __init__(self, metadata = None):
+    def __init__(self, metadata=None):
         self.metadata = metadata
 
     def start_parser(self, stream):
@@ -22,7 +22,7 @@ class QueryParser:
         parser._listeners = [SyntaxErrorListener(), DiagnosticErrorListener()]
         return parser
 
-    def queries(self, query_string, metadata = None):
+    def queries(self, query_string, metadata=None):
         if metadata is None and self.metadata is not None:
             metadata = self.metadata
         istream = InputStream(query_string)
@@ -34,7 +34,7 @@ class QueryParser:
                 q.load_symbols(metadata)
         return queries
 
-    def query(self, query_string, metadata = None):
+    def query(self, query_string, metadata=None):
         queries = self.queries(query_string, metadata)
         if len(queries) > 1:
             raise ValueError("Attempt to parse query resulted in a batch with more than one")
@@ -44,7 +44,9 @@ class QueryParser:
         return q
 
     def parse_only(self, query_string):
-        if (query_string.strip().upper().startswith("SELECT") or query_string.strip().startswith("--")):
+        if query_string.strip().upper().startswith("SELECT") or query_string.strip().startswith(
+            "--"
+        ):
             istream = InputStream(query_string)
         else:
             istream = FileStream(query_string)
@@ -71,6 +73,7 @@ class BatchVisitor(SqlSmallVisitor):
         queries = [q for q in [qv.visit(c) for c in ctx.children] if q is not None]
         return Batch(queries)
 
+
 class QueryVisitor(SqlSmallVisitor):
     def visitQuery(self, ctx):
 
@@ -91,11 +94,12 @@ class QueryVisitor(SqlSmallVisitor):
         order = OrderVisitor().visit(oc) if oc is not None else None
 
         limit = None
-        if hasattr(ctx, 'limitClause'):
+        if hasattr(ctx, "limitClause"):
             lc = ctx.limitClause()
             limit = LimitVisitor().visit(lc) if lc is not None else None
 
         return Query(select, source, where, agg, having, order, limit)
+
 
 class SelectVisitor(SqlSmallVisitor):
     def visitSelectClause(self, ctx):
@@ -111,11 +115,13 @@ class SelectVisitor(SqlSmallVisitor):
 
         return Select(quantifier, [ne for ne in namedExpressions if ne is not None])
 
+
 class FromVisitor(SqlSmallVisitor):
     def visitFromClause(self, ctx):
         rv = RelationVisitor()
         relations = [rv.visit(rel) for rel in ctx.relation()]
         return From(relations)
+
 
 class AggregateVisitor(SqlSmallVisitor):
     def visitAggregationClause(self, ctx):
@@ -124,10 +130,12 @@ class AggregateVisitor(SqlSmallVisitor):
         cols = [GroupingExpression(ev.visit(g)) for g in groups]
         return Aggregate(cols)
 
+
 class WhereVisitor(SqlSmallVisitor):
     def visitWhereClause(self, ctx):
         bev = BooleanExpressionVisitor()
         return Where(bev.visit(ctx.booleanExpression()))
+
 
 class HavingVisitor(SqlSmallVisitor):
     def visitHavingClause(self, ctx):
@@ -144,10 +152,12 @@ class NamedExpressionVisitor(SqlSmallVisitor):
         name = Identifier(ctx.name.getText()) if ctx.name is not None else None
         return NamedExpression(name, expression)
 
+
 class OrderVisitor(SqlSmallVisitor):
     def visitOrderClause(self, ctx):
         sortItems = [self.visit(si) for si in ctx.sortItem()]
         return Order(sortItems)
+
     def visitSortItem(self, ctx):
         ev = ExpressionVisitor()
         expr = ev.visit(ctx.expression())
@@ -159,11 +169,14 @@ class OrderVisitor(SqlSmallVisitor):
             o = None
         return SortItem(expr, o)
 
+
 class LimitVisitor(SqlSmallVisitor):
     def visitLimitClause(self, ctx):
         return Limit(int(ctx.n.getText()))
+
     def visitTopClause(self, ctx):
         return Top(int(ctx.n.getText()))
+
 
 class RelationVisitor(SqlSmallVisitor):
     def visitRelation(self, ctx):
@@ -200,35 +213,48 @@ class RelationVisitor(SqlSmallVisitor):
             criteria = None
         return Join(joinType, right, criteria)
 
+
 class ExpressionVisitor(SqlSmallVisitor):
     def visitColumnName(self, ctx):
         return Column(ctx.name.getText())
+
     def visitCaseExpr(self, ctx):
         return CaseExpressionVisitor().visit(ctx)
+
     def visitAllExpr(self, ctx):
         ident = ctx.allExpression().identifier()
         return AllColumns(ident.getText() if ident is not None else None)
+
     def visitMultiply(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op('*'), self.visit(ctx.right))
+        return ArithmeticExpression(self.visit(ctx.left), Op("*"), self.visit(ctx.right))
+
     def visitDivide(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op('/'), self.visit(ctx.right))
+        return ArithmeticExpression(self.visit(ctx.left), Op("/"), self.visit(ctx.right))
+
     def visitModulo(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op('%'), self.visit(ctx.right))
+        return ArithmeticExpression(self.visit(ctx.left), Op("%"), self.visit(ctx.right))
+
     def visitAdd(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op('+'), self.visit(ctx.right))
+        return ArithmeticExpression(self.visit(ctx.left), Op("+"), self.visit(ctx.right))
+
     def visitSubtract(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op('-'), self.visit(ctx.right))
+        return ArithmeticExpression(self.visit(ctx.left), Op("-"), self.visit(ctx.right))
 
     def visitDecimalLiteral(self, ctx):
         return Literal(float(allText(ctx)))
+
     def visitIntegerLiteral(self, ctx):
         return Literal(int(allText(ctx)))
+
     def visitStringLiteral(self, ctx):
         return Literal(str(allText(ctx)))
+
     def visitTrueLiteral(self, ctx):
         return Literal(True)
+
     def visitFalseLiteral(self, ctx):
         return Literal(False)
+
     def visitNullLiteral(self, ctx):
         return Literal(None)
 
@@ -261,7 +287,7 @@ class ExpressionVisitor(SqlSmallVisitor):
 
     def visitMathFunc(self, ctx):
         fname = FuncName(ctx.function.getText().upper())
-        return MathFunction(fname,  self.visit(ctx.expression()))
+        return MathFunction(fname, self.visit(ctx.expression()))
 
     def visitChooseFunc(self, ctx):
         expression = ExpressionVisitor().visit(ctx.index)
@@ -269,7 +295,9 @@ class ExpressionVisitor(SqlSmallVisitor):
         return ChooseFunction(expression, choices)
 
     def visitPowerFunction(self, ctx):
-        return PowerFunction(ExpressionVisitor().visit(ctx.expression()), ExpressionVisitor().visit(ctx.number()))
+        return PowerFunction(
+            ExpressionVisitor().visit(ctx.expression()), ExpressionVisitor().visit(ctx.number())
+        )
 
     def visitBareFunction(self, ctx):
         return BareFunction(FuncName(ctx.function.getText().upper()))
@@ -280,16 +308,21 @@ class ExpressionVisitor(SqlSmallVisitor):
         return RankingFunction(fname, over)
 
     def visitOverClause(self, ctx):
-        partition = ExpressionVisitor().visit(ctx.expression()) if ctx.expression() is not None else None
+        partition = (
+            ExpressionVisitor().visit(ctx.expression()) if ctx.expression() is not None else None
+        )
         oc = ctx.orderClause()
         order = OrderVisitor().visit(oc) if oc is not None else None
         return OverClause(partition, order)
+
 
 class CaseExpressionVisitor(SqlSmallVisitor):
     def visitCaseBaseExpr(self, ctx):
         wxp = ctx.whenBaseExpression()
         whenExpressions = [self.visit(we) for we in wxp] if wxp is not None else None
-        expression = ExpressionVisitor().visit(ctx.baseCaseExpr) if ctx.baseCaseExpr is not None else None
+        expression = (
+            ExpressionVisitor().visit(ctx.baseCaseExpr) if ctx.baseCaseExpr is not None else None
+        )
         else_expr = ExpressionVisitor().visit(ctx.elseExpr) if ctx.elseExpr is not None else None
         return CaseExpression(expression, whenExpressions, else_expr)
 
@@ -301,14 +334,25 @@ class CaseExpressionVisitor(SqlSmallVisitor):
         return CaseExpression(expression, whenExpressions, else_expr)
 
     def visitWhenExpression(self, ctx):
-        expression = BooleanExpressionVisitor().visit(ctx.baseBoolExpr) if ctx.baseBoolExpr is not None else None
-        thenExpression = ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
-        return WhenExpression(expression , thenExpression)
+        expression = (
+            BooleanExpressionVisitor().visit(ctx.baseBoolExpr)
+            if ctx.baseBoolExpr is not None
+            else None
+        )
+        thenExpression = (
+            ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
+        )
+        return WhenExpression(expression, thenExpression)
 
     def visitWhenBaseExpression(self, ctx):
-        expression = ExpressionVisitor().visit(ctx.baseWhenExpr) if ctx.baseWhenExpr is not None else None
-        thenExpression = ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
-        return WhenExpression(expression , thenExpression)
+        expression = (
+            ExpressionVisitor().visit(ctx.baseWhenExpr) if ctx.baseWhenExpr is not None else None
+        )
+        thenExpression = (
+            ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
+        )
+        return WhenExpression(expression, thenExpression)
+
 
 class BooleanExpressionVisitor(SqlSmallVisitor):
     def visitLogicalNot(self, ctx):
@@ -319,10 +363,10 @@ class BooleanExpressionVisitor(SqlSmallVisitor):
         return BooleanCompare(ev.visit(ctx.left), Op(ctx.op.getText()), ev.visit(ctx.right))
 
     def visitConjunction(self, ctx):
-        return BooleanCompare(self.visit(ctx.left), Op('AND'), self.visit(ctx.right))
+        return BooleanCompare(self.visit(ctx.left), Op("AND"), self.visit(ctx.right))
 
     def visitDisjunction(self, ctx):
-        return BooleanCompare(self.visit(ctx.left), Op('OR'), self.visit(ctx.right))
+        return BooleanCompare(self.visit(ctx.left), Op("OR"), self.visit(ctx.right))
 
     def visitNestedBoolean(self, ctx):
         return NestedBoolean(self.visit(ctx.booleanExpression()))
@@ -333,12 +377,12 @@ class BooleanExpressionVisitor(SqlSmallVisitor):
         return PredicatedExpression(expression, predicate)
 
     def visitInCondition(self, ctx):
-        is_not = (ctx.NOT() is not None)
+        is_not = ctx.NOT() is not None
         expressions = Seq([ExpressionVisitor().visit(e) for e in ctx.expression()])
         return InCondition(expressions, is_not)
 
     def visitIsCondition(self, ctx):
-        is_not = (ctx.NOT() is not None)
+        is_not = ctx.NOT() is not None
         if ctx.TRUE() is not None:
             value = Literal(True)
         elif ctx.FALSE() is not None:
@@ -350,7 +394,7 @@ class BooleanExpressionVisitor(SqlSmallVisitor):
         return IsCondition(value, is_not)
 
     def visitBetweenCondition(self, ctx):
-        is_not = (ctx.NOT() is not None)
+        is_not = ctx.NOT() is not None
         lower = ExpressionVisitor().visit(ctx.lower)
         upper = ExpressionVisitor().visit(ctx.upper)
         return BetweenCondition(lower, upper, is_not)

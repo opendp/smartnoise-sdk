@@ -5,8 +5,10 @@ from opendp.smartnoise.sql.reader.base import NameCompare
 
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
 
+
 class CollectionMetadata:
     """Information about a collection of tabular data sources"""
+
     def __init__(self, tables, engine, compare=None):
         """Instantiate a metadata object with information about tabular data sources
 
@@ -19,20 +21,25 @@ class CollectionMetadata:
         self.compare = NameCompare.get_name_compare(engine) if compare is None else compare
 
     def __getitem__(self, tablename):
-        schema_name = ''
-        parts = tablename.split('.')
+        schema_name = ""
+        parts = tablename.split(".")
         if len(parts) == 2:
             schema_name, tablename = parts
         for tname in self.m_tables.keys():
             table = self.m_tables[tname]
-            if self.compare.schema_match(schema_name, table.schema) and self.compare.identifier_match(tablename, table.name):
+            if self.compare.schema_match(
+                schema_name, table.schema
+            ) and self.compare.identifier_match(tablename, table.name):
                 table.compare = self.compare
                 return table
         return None
+
     def __str__(self):
         return "\n\n".join([str(self.m_tables[table]) for table in self.m_tables.keys()])
+
     def tables(self):
         return [self.m_tables[tname] for tname in self.m_tables.keys()]
+
     def __iter__(self):
         return self.tables()
 
@@ -53,12 +60,30 @@ class CollectionMetadata:
         ys = CollectionYamlLoader(file)
         ys.write_file(self, collection_name)
 
+
 """
     Common attributes for a table or a view
 """
+
+
 class Table:
     """Information about a single tabular data source"""
-    def __init__(self, schema, name, columns, rowcount=0, rows_exact=None, row_privacy=False, max_ids=1, sample_max_ids=True, clamp_counts=False, clamp_columns=True, use_dpsu=False, censor_dims=True):
+
+    def __init__(
+        self,
+        schema,
+        name,
+        columns,
+        rowcount=0,
+        rows_exact=None,
+        row_privacy=False,
+        max_ids=1,
+        sample_max_ids=True,
+        clamp_counts=False,
+        clamp_columns=True,
+        use_dpsu=False,
+        censor_dims=True,
+    ):
         """Instantiate information about a tabular data source.
 
         :param schema: The schema is the SQL-92 schema used for disambiguating table names.  See
@@ -82,6 +107,7 @@ class Table:
 
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
+
     def __getitem__(self, colname):
         for cname in self.m_columns.keys():
             col = self.m_columns[cname]
@@ -91,88 +117,129 @@ class Table:
             if self.compare.identifier_match(colname, col.name):
                 return col
         return None
+
     def __str__(self):
-        return str(self.schema) + "." + str(self.name) + " [" + str(self.rowcount) + " rows]\n\t" + "\n\t".join([str(self.m_columns[col]) for col in self.m_columns.keys()])
+        return (
+            str(self.schema)
+            + "."
+            + str(self.name)
+            + " ["
+            + str(self.rowcount)
+            + " rows]\n\t"
+            + "\n\t".join([str(self.m_columns[col]) for col in self.m_columns.keys()])
+        )
+
     def key_cols(self):
-        return [self.m_columns[name] for name in self.m_columns.keys() if self.m_columns[name].is_key == True]
+        return [
+            self.m_columns[name]
+            for name in self.m_columns.keys()
+            if self.m_columns[name].is_key == True
+        ]
+
     def columns(self):
         return [self.m_columns[name] for name in self.m_columns.keys()]
+
     def __iter__(self):
         return self.columns()
+
     def table_name(self):
         return (self.schema + "." if len(self.schema.strip()) > 0 else "") + self.name
 
+
 class String:
     """A column with string data"""
-    def __init__(self, name, card, is_key = False, bounded = False):
+
+    def __init__(self, name, card, is_key=False, bounded=False):
         self.name = name
         self.card = card
         self.is_key = is_key
         self.bounded = bounded
+
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (card: " + str(self.card) + ")"
+
     def typename(self):
         return "string"
 
+
 class Boolean:
     """A column with True/False data"""
-    def __init__(self, name, is_key = False, bounded = False):
+
+    def __init__(self, name, is_key=False, bounded=False):
         self.name = name
         self.is_key = is_key
         self.bounded = bounded
+
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (boolean)"
+
     def typename(self):
         return "boolean"
 
+
 class DateTime:
     """A date/time column"""
-    def __init__(self, name, is_key = False, bounded = False):
+
+    def __init__(self, name, is_key=False, bounded=False):
         self.name = name
         self.is_key = is_key
         self.bounded = bounded
+
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (datetime)"
+
     def typename(self):
         return "datetime"
 
+
 class Int:
     """A column with integer data"""
-    def __init__(self, name, minval = None, maxval = None, is_key = False, bounded = False):
+
+    def __init__(self, name, minval=None, maxval=None, is_key=False, bounded=False):
         self.name = name
         self.minval = minval
         self.maxval = maxval
         self.is_key = is_key
         self.unbounded = minval is None or maxval is None
         self.bounded = bounded
+
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval)
         return ("*" if self.is_key else "") + str(self.name) + " [int] (" + bounds + ")"
+
     def typename(self):
         return "int"
 
+
 class Float:
     """A floating point column"""
-    def __init__(self, name, minval = None, maxval = None, is_key = False, bounded = False):
+
+    def __init__(self, name, minval=None, maxval=None, is_key=False, bounded=False):
         self.name = name
         self.minval = minval
         self.maxval = maxval
         self.is_key = is_key
         self.unbounded = minval is None or maxval is None
         self.bounded = bounded
+
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval)
         return ("*" if self.is_key else "") + str(self.name) + " [float] (" + bounds + ")"
+
     def typename(self):
         return "float"
 
+
 class Unknown:
     """Column is unknown type.  Will be ignored.  May not be used in queries."""
+
     def __init__(self, name):
         self.name = name
         self.is_key = False
+
     def __str__(self):
         return str(self.name) + " (unknown)"
+
     def typename(self):
         return "unknown"
 
@@ -189,7 +256,7 @@ class CollectionYamlLoader:
                 raise
             return self._create_metadata_object(c_s)
         else:
-            with open(self.file, 'r') as stream:
+            with open(self.file, "r") as stream:
                 try:
                     c_s = yaml.safe_load(stream)
                 except yaml.YAMLError as exc:
@@ -208,10 +275,10 @@ class CollectionYamlLoader:
         elif len(keys) > 2:
             raise ValueError("Please include only one collection per config file: " + str(keys))
         else:  # we have two keys; one should be engine
-            if 'engine' not in keys:
+            if "engine" not in keys:
                 raise ValueError("Please include only one collection per config file: " + str(keys))
-            engine = c_s['engine']
-            collection = [k for k in keys if k != 'engine'][0]
+            engine = c_s["engine"]
+            collection = [k for k in keys if k != "engine"][0]
 
         db = c_s[collection]
 
@@ -237,11 +304,39 @@ class CollectionYamlLoader:
         censor_dims = bool(t["censor_dims"]) if "censor_dims" in t else True
 
         columns = []
-        colnames = [cn for cn in t.keys() if cn not in ["rows", "rows_exact", "row_privacy", "max_ids", "sample_max_ids", "clamp_counts", "clamp_columns", "use_dpsu", "censor_dims"]]
+        colnames = [
+            cn
+            for cn in t.keys()
+            if cn
+            not in [
+                "rows",
+                "rows_exact",
+                "row_privacy",
+                "max_ids",
+                "sample_max_ids",
+                "clamp_counts",
+                "clamp_columns",
+                "use_dpsu",
+                "censor_dims",
+            ]
+        ]
         for column in colnames:
             columns.append(self.load_column(column, t[column]))
 
-        return Table(schema, table, columns, rowcount, rows_exact, row_privacy, max_ids, sample_max_ids, clamp_counts, clamp_columns, use_dpsu, censor_dims)
+        return Table(
+            schema,
+            table,
+            columns,
+            rowcount,
+            rows_exact,
+            row_privacy,
+            max_ids,
+            sample_max_ids,
+            clamp_counts,
+            clamp_columns,
+            use_dpsu,
+            censor_dims,
+        )
 
     def load_column(self, column, c):
         is_key = False if "private_id" not in c else bool(c["private_id"])
@@ -276,7 +371,9 @@ class CollectionYamlLoader:
                 schemas[schema_name] = {}
             schema = schemas[schema_name]
             if table_name in schema:
-                raise ValueError("Attempt to insert table with same name twice: " + schema_name + table_name)
+                raise ValueError(
+                    "Attempt to insert table with same name twice: " + schema_name + table_name
+                )
             schema[table_name] = {}
             table = schema[table_name]
             table["rows"] = t.rowcount
@@ -300,7 +397,9 @@ class CollectionYamlLoader:
             for c in t.columns():
                 cname = c.name
                 if cname in table:
-                    raise ValueError("Duplicate column name {0} in table {1}".format(cname, table_name))
+                    raise ValueError(
+                        "Duplicate column name {0} in table {1}".format(cname, table_name)
+                    )
                 table[cname] = {}
                 column = table[cname]
                 if hasattr(c, "bounded") and c.bounded == True:
@@ -332,5 +431,5 @@ class CollectionYamlLoader:
         db["engine"] = collection_metadata.engine
         if isinstance(self.file, io.IOBase):
             raise ValueError("Cannot save metadata to a file stream.  Please use file path")
-        with open(self.file, 'w') as outfile:
+        with open(self.file, "w") as outfile:
             yaml.dump(db, outfile)

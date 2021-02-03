@@ -14,11 +14,13 @@ class PrestoReader(SqlReader):
         A dumb pipe that gets a rowset back from a database using
         a SQL string, and converts types to some useful subset
     """
+
     ENGINE = Engine.PRESTO
 
     def __init__(self, host, database, user, password=None, port=None):
         super().__init__(PrestoNameCompare())
         import prestodb
+
         self.api = prestodb.dbapi
 
         self.host = host
@@ -27,8 +29,8 @@ class PrestoReader(SqlReader):
         self.port = int(port)
 
         if password is None:
-            if 'PRESTO_PASSWORD' in os.environ:
-                password = os.environ['PRESTO_PASSWORD']
+            if "PRESTO_PASSWORD" in os.environ:
+                password = os.environ["PRESTO_PASSWORD"]
         self.password = password
 
         self.update_connection_string()
@@ -43,13 +45,13 @@ class PrestoReader(SqlReader):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
         cnxn = self.api.connect(
             host=self.host,
-            http_scheme='https' if self.port == 443 else 'http',
+            http_scheme="https" if self.port == 443 else "http",
             user=self.user,
             port=self.port,
-            catalog=self.database
+            catalog=self.database,
         )
         cursor = cnxn.cursor()
-        cursor.execute(str(query).replace(';',''))
+        cursor.execute(str(query).replace(";", ""))
         rows = cursor.fetchall()
         if cursor.description is None:
             return []

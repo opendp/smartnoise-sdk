@@ -11,11 +11,13 @@ from opendp.smartnoise.sql import PandasReader, PrivateReader
 from opendp.smartnoise.sql._mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
+
 class Aggregation:
     """
     Implement different aggregation functions that can be passed through
     the verification tests
     """
+
     def __init__(self, epsilon=1.0, t=1, repeat_count=10000):
         self.epsilon = epsilon
         self.t = t
@@ -33,15 +35,18 @@ class Aggregation:
         Example of non-DP noise repeatedly applied while
         counting records in a dataset
         """
-        return df[colname].count() + np.random.random_sample((self.repeat_count,))*10
+        return df[colname].count() + np.random.random_sample((self.repeat_count,)) * 10
 
     def dp_count(self, df, colname):
         """
         Returns repeatedly applied differentially private noisy responses while
         counting rows of a column in a dataset
         """
-        delta = 1/(len(df) * math.sqrt(len(df)))
-        sigmacnt = math.sqrt(self.t)*((math.sqrt(math.log(1/delta)) + math.sqrt(math.log((1/delta)) + self.epsilon)) / (math.sqrt(2)*self.epsilon))
+        delta = 1 / (len(df) * math.sqrt(len(df)))
+        sigmacnt = math.sqrt(self.t) * (
+            (math.sqrt(math.log(1 / delta)) + math.sqrt(math.log((1 / delta)) + self.epsilon))
+            / (math.sqrt(2) * self.epsilon)
+        )
         dp_noise = np.random.normal(0, sigmacnt, self.repeat_count)
         return df[colname].count() + dp_noise
 
@@ -50,9 +55,16 @@ class Aggregation:
         Returns repeatedly applied differentially private noisy response to
         summing rows of a numerical column in a dataset
         """
-        delta = 1/(len(df) * math.sqrt(len(df)))
+        delta = 1 / (len(df) * math.sqrt(len(df)))
         M = abs(max(df[colname]) - min(df[colname]))
-        sigmasum = math.sqrt(self.t)*M*((math.sqrt(math.log(1/delta)) + math.sqrt(math.log((1/delta)) + self.epsilon)) / (math.sqrt(2)*self.epsilon))
+        sigmasum = (
+            math.sqrt(self.t)
+            * M
+            * (
+                (math.sqrt(math.log(1 / delta)) + math.sqrt(math.log((1 / delta)) + self.epsilon))
+                / (math.sqrt(2) * self.epsilon)
+            )
+        )
         dp_noise = np.random.normal(0, sigmasum, self.repeat_count)
         return df[colname].sum() + dp_noise
 
@@ -90,7 +102,7 @@ class Aggregation:
         """
         exact_sum = df[colname].sum()
         M = float(abs(max(df[colname]) - min(df[colname])))
-        mech = Gaussian(self.epsilon, 10E-5, M)
+        mech = Gaussian(self.epsilon, 10e-5, M)
         return np.array([mech.release([exact_sum]).values[0] for i in range(self.repeat_count)])
 
     def dp_mechanism_mean(self, df, colname):
@@ -119,7 +131,7 @@ class Aggregation:
         reader = PandasReader(df, metadata)
         actual = 0.0
         # VAR not supported in Pandas Reader. So not needed to fetch actual on every aggregation
-        if(get_exact):
+        if get_exact:
             actual = reader.execute(query)[1:][0][0]
         private_reader = PrivateReader(reader, metadata, self.epsilon)
         query_ast = private_reader.parse_query_string(query)
@@ -130,13 +142,13 @@ class Aggregation:
         for idx in range(self.repeat_count):
             res = private_reader._execute_ast(query_ast, True)
             # Disabled because confidence interval not available in report
-            #interval = res.report[res.colnames[0]].intervals[confidence]
-            #low_bounds.append(interval[0].low)
-            #high_bounds.append(interval[0].high)
+            # interval = res.report[res.colnames[0]].intervals[confidence]
+            # low_bounds.append(interval[0].low)
+            # high_bounds.append(interval[0].high)
             noisy_values.append(res[1:][0][0])
         return np.array(noisy_values), actual, low_bounds, high_bounds
 
-    def run_agg_query_df(self, df, metadata, query, confidence, file_name = "d1"):
+    def run_agg_query_df(self, df, metadata, query, confidence, file_name="d1"):
         """
         Run the query using the private reader and input query
         Get query response back for multiple dimensions and aggregations
@@ -161,7 +173,7 @@ class Aggregation:
         out_col_names = [s[0] for s in out_syms]
 
         for col, ctype in zip(out_col_names, out_types):
-            if(ctype == "string"):
+            if ctype == "string":
                 dim_cols.append(col)
             else:
                 num_cols.append(col)
@@ -172,7 +184,7 @@ class Aggregation:
             dim_rows = []
             num_rows = []
             singleres = private_reader._execute_ast_df(query_ast, True)
-            #values = singleres[col]
+            # values = singleres[col]
             for col in dim_cols:
                 dim_rows.append(singleres[col].tolist())
             for col in num_cols:
@@ -185,11 +197,11 @@ class Aggregation:
         noisy_df = pd.DataFrame(res, columns=headers)
 
         # Add a dummy dimension column for cases where no dimensions available for merging D1 and D2
-        if(len(dim_cols) == 0):
+        if len(dim_cols) == 0:
             dim_cols.append("__dim__")
 
-        if(dim_cols[0] == "__dim__"):
-            exact_df[dim_cols[0]] = ["key"]*len(exact_df)
-            noisy_df[dim_cols[0]] = ["key"]*len(noisy_df)
+        if dim_cols[0] == "__dim__":
+            exact_df[dim_cols[0]] = ["key"] * len(exact_df)
+            noisy_df[dim_cols[0]] = ["key"] * len(noisy_df)
 
         return noisy_df, exact_df, dim_cols, num_cols

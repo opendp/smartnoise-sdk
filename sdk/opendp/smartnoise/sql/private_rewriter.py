@@ -4,10 +4,29 @@ import string
 from .parse import QueryParser
 
 from opendp.smartnoise._ast.validate import Validate
-from opendp.smartnoise._ast.ast import (Select, From, Query, AliasedRelation, Where, Aggregate, Order,
-                                        Literal, Column, TableColumn, AllColumns,
-                                        NamedExpression, NestedExpression, Expression, Seq,
-                                        AggFunction, MathFunction, ArithmeticExpression, BooleanCompare, GroupingExpression)
+from opendp.smartnoise._ast.ast import (
+    Select,
+    From,
+    Query,
+    AliasedRelation,
+    Where,
+    Aggregate,
+    Order,
+    Literal,
+    Column,
+    TableColumn,
+    AllColumns,
+    NamedExpression,
+    NestedExpression,
+    Expression,
+    Seq,
+    AggFunction,
+    MathFunction,
+    ArithmeticExpression,
+    BooleanCompare,
+    GroupingExpression,
+)
+
 
 class Rewriter:
     """
@@ -46,9 +65,11 @@ class Rewriter:
         expr = exp.expression
         quant = exp.quantifier
 
-        avg_of_square = self.calculate_avg(AggFunction("AVG", quant, ArithmeticExpression(expr, '*', expr)), scope)
+        avg_of_square = self.calculate_avg(
+            AggFunction("AVG", quant, ArithmeticExpression(expr, "*", expr)), scope
+        )
         avg = self.calculate_avg(AggFunction("AVG", quant, expr), scope)
-        avg_squared = ArithmeticExpression(avg, '*', avg)
+        avg_squared = ArithmeticExpression(avg, "*", avg)
 
         new_exp = ArithmeticExpression(avg_of_square, "-", avg_squared)
         return new_exp
@@ -57,7 +78,7 @@ class Rewriter:
         """
             Calculate the standard deviation from the variance
         """
-        expr = AggFunction('STD', exp.quantifier, exp.expression)
+        expr = AggFunction("STD", exp.quantifier, exp.expression)
         var_expr = self.calculate_variance(expr, scope)
 
         new_exp = MathFunction("SQRT", var_expr)
@@ -102,9 +123,9 @@ class Rewriter:
                 new_exp = self.push_sum_or_count(agg_exp, scope)
             elif agg_func == "AVG":
                 new_exp = self.calculate_avg(agg_exp, scope)
-            elif agg_func in ["VAR","VARIANCE"]:
+            elif agg_func in ["VAR", "VARIANCE"]:
                 new_exp = self.calculate_variance(agg_exp, scope)
-            elif agg_func in ["STD","STDDEV"]:
+            elif agg_func in ["STD", "STDDEV"]:
                 new_exp = self.calculate_stddev(agg_exp, scope)
             else:
                 raise ValueError("We don't know how to rewrite aggregate function: " + str(agg_exp))
@@ -112,7 +133,6 @@ class Rewriter:
             agg_exp.quantifier = None
             agg_exp.expression = new_exp
         return NamedExpression(name, exp)
-
 
     def query(self, query):
         query = QueryParser(self.metadata).query(str(query))
@@ -124,10 +144,17 @@ class Rewriter:
             for ge in query.agg.groupingExpressions:
                 child_scope.push_name(ge.expression)
 
-        select = Seq([self.rewrite_outer_named_expression(ne, child_scope) for ne in query.select.namedExpressions])
+        select = Seq(
+            [
+                self.rewrite_outer_named_expression(ne, child_scope)
+                for ne in query.select.namedExpressions
+            ]
+        )
         select = Select(query.select.quantifier, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, None, None, None)
+        subquery = Query(
+            child_scope.select(), query.source, query.where, query.agg, None, None, None
+        )
         subquery = self.exact_aggregates(subquery)
         subquery = [AliasedRelation(subquery, "exact_aggregates")]
 
@@ -139,7 +166,7 @@ class Rewriter:
         child_scope = Scope()
 
         if self.options.row_privacy:
-            keycount_expr = AggFunction("COUNT", None,  AllColumns())
+            keycount_expr = AggFunction("COUNT", None, AllColumns())
         else:
             key_col = self.key_col(query)
             keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
@@ -153,12 +180,20 @@ class Rewriter:
         select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
 
-        subquery = Query(child_scope.select(), query.source, query.where, query.agg, None, None, None)
+        subquery = Query(
+            child_scope.select(), query.source, query.where, query.agg, None, None, None
+        )
         if self.options.reservoir_sample and not self.options.row_privacy:
             subquery = self.per_key_random(subquery)
             subquery = [AliasedRelation(subquery, "per_key_random")]
 
-            filtered = Where(BooleanCompare(Column("per_key_random.row_num"), "<=", Literal(str(self.options.max_contrib), self.options.max_contrib)))
+            filtered = Where(
+                BooleanCompare(
+                    Column("per_key_random.row_num"),
+                    "<=",
+                    Literal(str(self.options.max_contrib), self.options.max_contrib),
+                )
+            )
             return Query(select, From(subquery), filtered, query.agg, None, None, None)
         else:
             subquery = self.per_key_clamped(subquery)
@@ -168,18 +203,35 @@ class Rewriter:
     def per_key_random(self, query):
         key_col = self.key_col(query)
 
-        select = Seq([NamedExpression(None, AllColumns()), NamedExpression("row_num", Expression("ROW_NUMBER() OVER (PARTITION BY {0} ORDER BY random())".format(key_col)))])
+        select = Seq(
+            [
+                NamedExpression(None, AllColumns()),
+                NamedExpression(
+                    "row_num",
+                    Expression(
+                        "ROW_NUMBER() OVER (PARTITION BY {0} ORDER BY random())".format(key_col)
+                    ),
+                ),
+            ]
+        )
         select = Select(None, select)
 
         subquery = self.per_key_clamped(query)
-        subquery = [AliasedRelation(subquery, "clamped" if self.options.clamp_columns else "not_clamped")]
+        subquery = [
+            AliasedRelation(subquery, "clamped" if self.options.clamp_columns else "not_clamped")
+        ]
 
         return Query(select, From(subquery), None, None, None, None, None)
 
     def per_key_clamped(self, query):
         child_scope = Scope()
         relations = query.source.relations
-        select = Seq([self.clamp_expression(ne, relations, child_scope, self.options.clamp_columns) for ne in query.select.namedExpressions])
+        select = Seq(
+            [
+                self.clamp_expression(ne, relations, child_scope, self.options.clamp_columns)
+                for ne in query.select.namedExpressions
+            ]
+        )
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
         return subquery
@@ -205,7 +257,9 @@ class Rewriter:
                     cexpr = Column(colname)
                     ce_name = scope.push_name(cexpr, str(colname))
                 else:
-                    clamped_string = "CASE WHEN {0} < {1} THEN {1} WHEN {0} > {2} THEN {2} ELSE {0} END".format(str(colname), minval, maxval)
+                    clamped_string = "CASE WHEN {0} < {1} THEN {1} WHEN {0} > {2} THEN {2} ELSE {0} END".format(
+                        str(colname), minval, maxval
+                    )
                     cexpr = Expression(clamped_string)
                     ce_name = scope.push_name(cexpr, str(colname))
             else:
@@ -236,7 +290,6 @@ class Rewriter:
                 return kp[len(kp) - 1]
 
 
-
 class Scope:
     """
         A name scope for a select query
@@ -246,7 +299,10 @@ class Scope:
         self.expressions = {}
 
     def select(self, quantifier=None):
-        return Select(quantifier, [NamedExpression(name, self.expressions[name]) for name in self.expressions.keys()])
+        return Select(
+            quantifier,
+            [NamedExpression(name, self.expressions[name]) for name in self.expressions.keys()],
+        )
 
     def push_name(self, expression, proposed=None):
         """
@@ -284,10 +340,11 @@ class Scope:
 
         # Expression hasn't been used, but name is taken. Generate random.
         while not proposed in self.expressions:
-            proposed = ''.join(random.choice(string.ascii_letters) for i in range(7))
+            proposed = "".join(random.choice(string.ascii_letters) for i in range(7))
 
         self.expressions[proposed] = expression
         return proposed
+
 
 class RewriterOptions:
     """Options that modify rewriter behavior"""

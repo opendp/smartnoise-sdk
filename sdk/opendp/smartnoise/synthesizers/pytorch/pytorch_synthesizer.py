@@ -4,6 +4,7 @@ import pandas as pd
 from opendp.smartnoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
 from opendp.smartnoise.synthesizers.base import SDGYMBaseSynthesizer
 
+
 class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
     def __init__(self, gan, preprocessor=None, epsilon=None):
         self.preprocessor = preprocessor
@@ -31,9 +32,19 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
         if self.preprocessor:
             self.preprocessor.fit(data, categorical_columns, ordinal_columns)
             preprocessed_data = self.preprocessor.transform(data)
-            self.gan.train(preprocessed_data, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, update_epsilon=self.epsilon)
+            self.gan.train(
+                preprocessed_data,
+                categorical_columns=categorical_columns,
+                ordinal_columns=ordinal_columns,
+                update_epsilon=self.epsilon,
+            )
         else:
-            self.gan.train(data, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, update_epsilon=self.epsilon)
+            self.gan.train(
+                data,
+                categorical_columns=categorical_columns,
+                ordinal_columns=ordinal_columns,
+                update_epsilon=self.epsilon,
+            )
 
     def sample(self, n):
         synth_data = self.gan.generate(n)
@@ -45,7 +56,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
                 synth_data = self.preprocessor.inverse_transform(synth_data)
 
         if isinstance(synth_data, np.ndarray):
-            synth_data = pd.DataFrame(synth_data,columns=self.data_columns)
+            synth_data = pd.DataFrame(synth_data, columns=self.data_columns)
         elif isinstance(synth_data, pd.DataFrame):
             # TODO: Add validity check
             synth_data.columns = self.data_columns

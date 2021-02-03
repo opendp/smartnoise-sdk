@@ -1,9 +1,14 @@
 import os
 import numpy as np
-import pandas as pd 
+import pandas as pd
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors, generate_query, write_to_csv
+from opendp.smartnoise.evaluation.learner.util import (
+    create_simulated_dataset,
+    generate_neighbors,
+    generate_query,
+    write_to_csv,
+)
 
 from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
 from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
@@ -14,7 +19,7 @@ from opendp.smartnoise.sql import PandasReader
 from dp_singleton_query import DPSingletonQuery
 
 
-class Bandit():
+class Bandit:
     def __init__(self):
         self.pp = PrivacyParams(epsilon=1.0)
         self.ev = EvaluatorParams(repeat_count=100)
@@ -30,11 +35,20 @@ class Bandit():
             d2 = PandasReader(d2_metadata, d2_dataset)
             eval = DPEvaluator()
             pa = DPSingletonQuery()
-            key_metrics = eval.evaluate([d1_metadata, d1], [d2_metadata, d2], pa, querypool[i], self.pp, self.ev)
-            if key_metrics['__key__'].dp_res is None:
-                dp_res = key_metrics['__key__'].dp_res
-                error =  key_metrics['__key__'].error
-                output.append({"query":querypool[i], "dpresult": dp_res, "jensen_shannon_divergence":None, "error": error})
+            key_metrics = eval.evaluate(
+                [d1_metadata, d1], [d2_metadata, d2], pa, querypool[i], self.pp, self.ev
+            )
+            if key_metrics["__key__"].dp_res is None:
+                dp_res = key_metrics["__key__"].dp_res
+                error = key_metrics["__key__"].error
+                output.append(
+                    {
+                        "query": querypool[i],
+                        "dpresult": dp_res,
+                        "jensen_shannon_divergence": None,
+                        "error": error,
+                    }
+                )
             else:
                 res_list = []
                 for key, metrics in key_metrics.items():
@@ -43,8 +57,15 @@ class Bandit():
                     res_list.append([dp_res, js_res])
                 dp_res = np.all(np.array([res[0] for res in res_list]))
                 js_res = (np.array([res[1] for res in res_list])).max()
-                output.append({"query":querypool[i], "dpresult": dp_res,"jensen_shannon_divergence": js_res, "error":None})
+                output.append(
+                    {
+                        "query": querypool[i],
+                        "dpresult": dp_res,
+                        "jensen_shannon_divergence": js_res,
+                        "error": None,
+                    }
+                )
         if export_as_csv:
-            write_to_csv('Bandit.csv', output, flag='bandit')
+            write_to_csv("Bandit.csv", output, flag="bandit")
         else:
             return output

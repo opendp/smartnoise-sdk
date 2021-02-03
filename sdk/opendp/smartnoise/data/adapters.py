@@ -12,35 +12,47 @@ class DatasetAdapterLoader(object):
     @staticmethod
     def load_df(dataset_document):
         if dataset_document.dataset_type in DatasetAdapterLoader._adapters:
-            return DatasetAdapterLoader._adapters[dataset_document.dataset_type].load_df(dataset_document)
+            return DatasetAdapterLoader._adapters[dataset_document.dataset_type].load_df(
+                dataset_document
+            )
         else:
             # TODO: formalize exceptions
-            raise Exception("UnsupportedDatasetDocumentType {} was found"
-                            ", supported types include {}.".format(
-                                dataset_document.dataset_type,
-                                DatasetAdapterLoader._adapters.keys()))
+            raise Exception(
+                "UnsupportedDatasetDocumentType {} was found"
+                ", supported types include {}.".format(
+                    dataset_document.dataset_type, DatasetAdapterLoader._adapters.keys()
+                )
+            )
 
     @staticmethod
     def load_metadata(dataset_document):
         if dataset_document.dataset_type in DatasetAdapterLoader._adapters:
-            return DatasetAdapterLoader._adapters[dataset_document.dataset_type].load_metadata(dataset_document)
+            return DatasetAdapterLoader._adapters[dataset_document.dataset_type].load_metadata(
+                dataset_document
+            )
         else:
             # TODO: formalize exceptions
-            raise Exception("UnsupportedDatasetDocumentType {} was found"
-                            ", supported types include {}.".format(
-                                dataset_document.dataset_type,
-                                DatasetAdapterLoader._adapters.keys()))
+            raise Exception(
+                "UnsupportedDatasetDocumentType {} was found"
+                ", supported types include {}.".format(
+                    dataset_document.dataset_type, DatasetAdapterLoader._adapters.keys()
+                )
+            )
 
     @staticmethod
     def load_reader(dataset_document):
         if dataset_document.dataset_type in DatasetAdapterLoader._adapters:
-            return DatasetAdapterLoader._adapters[dataset_document.dataset_type].load_reader(dataset_document)
+            return DatasetAdapterLoader._adapters[dataset_document.dataset_type].load_reader(
+                dataset_document
+            )
         else:
             # TODO: formalize exceptions
-            raise Exception("UnsupportedDatasetDocumentType {} was found"
-                            ", supported types include {}.".format(
-                                dataset_document.dataset_type,
-                                DatasetAdapterLoader._adapters.keys()))
+            raise Exception(
+                "UnsupportedDatasetDocumentType {} was found"
+                ", supported types include {}.".format(
+                    dataset_document.dataset_type, DatasetAdapterLoader._adapters.keys()
+                )
+            )
 
 
 def register_adapter(adapter):
@@ -49,8 +61,9 @@ def register_adapter(adapter):
     elif adapter.KEY not in DatasetAdapterLoader._adapters:
         DatasetAdapterLoader._adapters[adapter.KEY] = adapter
     else:
-        raise Exception("Dataset type {} has already been "
-                        "used to register an adapter.".format(adapter.KEY))
+        raise Exception(
+            "Dataset type {} has already been " "used to register an adapter.".format(adapter.KEY)
+        )
 
 
 def load_dataset(dataset_document):
@@ -83,7 +96,5 @@ for entrypoint in pkg_resources.iter_entry_points("opendp_smartnoise_adapter"):
         extension_class = entrypoint.load()
         register_adapter(extension_class)
     except Exception as e:  # pragma: no cover
-            msg = "Failure while loading {} with exception {}.".format(
-                entrypoint, e
-            )
-            module_logger.warning(msg)
+        msg = "Failure while loading {} with exception {}.".format(entrypoint, e)
+        module_logger.warning(msg)
