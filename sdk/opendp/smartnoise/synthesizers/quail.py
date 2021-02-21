@@ -1,4 +1,5 @@
 import logging
+import warning
 
 from functools import wraps
 
@@ -24,27 +25,27 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
     More information here:
     Differentially Private Synthetic Data: Applied Evaluations and Enhancements
     https://arxiv.org/abs/2011.05537
-    
+
     Parameters
     ----------
     epsilon : float
         Total epsilon used across the DP Synthesizer and DP Classifier
-        
+
     dp_synthesizer : function (epsilon) -> SDGYMBaseSynthesizer
         A function that returns an instance of a DP Synthesizer for a specified epsilon value
-        
+
     dp_classifier : function (epsilon) -> classifier
         A function that returns an instance of a DP Classifier for a specified epsilon value
-        
+
     target : str
         The column name of the target column
-        
+
     test_size : float
         Percent of the data that should be used for the test set
-        
+
     seed : int
         Seed for controlling randomness for testing
-        
+
     eps_split : float
         Percent of epsilon used for the classifier. 1 - eps_split is used for the Synthesizer.
     """
@@ -80,7 +81,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         """
         if verbose is not None:
             warning.warnings("verbose is deprecated. Use logging.setLevel instead")
-            
+
         from sklearn.model_selection import train_test_split
         from sklearn.metrics import classification_report
         from sklearn.metrics import accuracy_score
@@ -114,7 +115,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         log_level = logger.level
         if verbose:
             log_level = logging.INFO
-            
+
         logging.log(log_level, "Internal model report: ")
         logging.log(log_level, self.class_report)
         logging.log(log_level, self.target_accuracy)
