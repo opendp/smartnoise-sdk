@@ -4,13 +4,17 @@ from opendp.smartnoise.evaluation.report._report import Report
 from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
 from opendp.smartnoise.sql import PrivateReader
 
+
 class DPSingletonQuery(PrivacyAlgorithm):
     """
     Sample implementation of PrivacyAlgorithm Interface
     that allows for the library to be stochastically tested by
     evaluator.
     """
-    def prepare(self, algorithm : object, privacy_params: PrivacyParams, eval_params: EvaluatorParams):
+
+    def prepare(
+        self, algorithm: object, privacy_params: PrivacyParams, eval_params: EvaluatorParams
+    ):
         """
         Load the algorithm (in this case SQL aggregation query) to be used for acting on the dataset
         Initialize the privacy params that need to be used by the function
@@ -34,10 +38,10 @@ class DPSingletonQuery(PrivacyAlgorithm):
         for idx in range(self.eval_params.repeat_count):
             res = private_reader._execute_ast(query_ast, True)
             if not res[1:]:
-                return Report({"__key__" : "noisy_values_empty"})
+                return Report({"__key__": "noisy_values_empty"})
             else:
                 noisy_values.append(res[1:][0][0])
-        return Report({"__key__" : noisy_values})
+        return Report({"__key__": noisy_values})
 
     def actual_release(self, dataset):
         """
@@ -46,7 +50,9 @@ class DPSingletonQuery(PrivacyAlgorithm):
         """
         reader = dataset[1]
         try:
-            exact = reader.execute(self.algorithm)[1:][0][0] #ValueError: Trying to load unknown type unknown
-        except Exception as e: 
-            return Report({"__key__" : "exact_value_error, " + str(type(e))+ ", " + str(e)})
-        return Report({"__key__" : exact})
+            exact = reader.execute(self.algorithm)[1:][0][
+                0
+            ]  # ValueError: Trying to load unknown type unknown
+        except Exception as e:
+            return Report({"__key__": "exact_value_error, " + str(type(e)) + ", " + str(e)})
+        return Report({"__key__": exact})

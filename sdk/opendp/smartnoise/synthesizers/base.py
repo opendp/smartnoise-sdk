@@ -1,4 +1,4 @@
-class SDGYMBaseSynthesizer():
+class SDGYMBaseSynthesizer:
     """
     Base for SmartNoise Synthesizers, based off of SDGymBaseSynthesizer
     (to allow for benchmarking)
@@ -6,7 +6,7 @@ class SDGYMBaseSynthesizer():
 
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
         """
-        Fits some data to synthetic data model.
+        Fits the synthetic data approach on the provided data.
         """
         pass
 

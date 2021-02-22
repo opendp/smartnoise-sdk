@@ -1,11 +1,15 @@
 import math
 import numpy as np
 
+
 class AdditiveNoiseMechanism:
     """
     Adds noise to an exact aggregated quantity.
     """
-    def __init__(self, eps, delta=0.0, sensitivity=1.0, max_contrib=1, interval_widths = [0.95], n_rows=None):
+
+    def __init__(
+        self, eps, delta=0.0, sensitivity=1.0, max_contrib=1, interval_widths=[0.95], n_rows=None
+    ):
         """
         Initialize an addititive noise mechanism.
 
@@ -24,7 +28,6 @@ class AdditiveNoiseMechanism:
         self.interval_widths = interval_widths
         if n_rows is not None:
             self.delta = 1 / (math.sqrt(n_rows) * n_rows)
-
 
     def release(self, vals, accuracy=False, bootstrap=False):
         """
@@ -48,5 +51,3 @@ class AdditiveNoiseMechanism:
                 edge = (1.0 - a) / 2.0
                 _bounds.append(np.percentile(r, [edge * 100, 100 - edge * 100]))
             return _bounds
-
-

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.mixture import BayesianGaussianMixture
+
 
 def get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
     meta = []
@@ -11,33 +11,21 @@ def get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
 
         if categorical_columns and col_name in categorical_columns:
             bins = column.value_counts().index.tolist()
-            meta.append({
-                "name": col_name,
-                "type": "categorical",
-                "size": len(bins),
-                "bins": bins
-            })
+            meta.append({"name": col_name, "type": "categorical", "size": len(bins), "bins": bins})
         elif ordinal_columns and col_name in ordinal_columns:
             value_count = list(dict(column.value_counts()).items())
             value_count = sorted(value_count, key=lambda x: -x[1])
             bins = list(map(lambda x: x[0], value_count))
-            meta.append({
-                "name": col_name,
-                "type": "ordinal",
-                "size": len(bins),
-                "bins": bins
-            })
+            meta.append({"name": col_name, "type": "ordinal", "size": len(bins), "bins": bins})
         else:
-            meta.append({
-                "name": col_name,
-                "type": "continuous",
-                "min": column.min(),
-                "max": column.max(),
-            })
+            meta.append(
+                {"name": col_name, "type": "continuous", "min": column.min(), "max": column.max()}
+            )
 
     return meta
 
-class GeneralTransformer():
+
+class GeneralTransformer:
     def __init__(self, n_clusters=10, eps=0.005):
         """n_cluster is the upper bound of modes."""
         self.meta = None
@@ -52,24 +40,15 @@ class GeneralTransformer():
         self.output_dim = 0
         self.components = []
         for id_, info in enumerate(self.meta):
-            if info['type'] == "continuous":
-                gm = BayesianGaussianMixture(
-                    self.n_clusters,
-                    weight_concentration_prior_type='dirichlet_process',
-                    weight_concentration_prior=0.001,
-                    n_init=1)
-                gm.fit(data.iloc[:, id_].values.reshape([-1, 1]))
-                model.append(gm)
-                comp = gm.weights_ > self.eps
-                self.components.append(comp)
-
-                self.output_info += [(1, 'tanh'), (np.sum(comp), 'softmax')]
-                self.output_dim += 1 + np.sum(comp)
+            if info["type"] == "continuous":
+                raise Exception("Use of BayesianGaussianMixture for continuous variables is "
+                                "being evaluated to avoid privacy leaks. "
+                                "Until resolved, 'continuous' columns are not supported with the GeneralTransformer.")
             else:
                 model.append(None)
                 self.components.append(None)
-                self.output_info += [(info['size'], 'softmax')]
-                self.output_dim += info['size']
+                self.output_info += [(info["size"], "softmax")]
+                self.output_dim += info["size"]
 
         self.model = model
 
@@ -77,7 +56,7 @@ class GeneralTransformer():
         values = []
         for id_, info in enumerate(self.meta):
             current = data.iloc[:, id_]
-            if info['type'] == "continuous":
+            if info["type"] == "continuous":
                 current = current.values.reshape([-1, 1])
 
                 means = self.model[id_].means_.reshape((1, self.n_clusters))
@@ -90,7 +69,7 @@ class GeneralTransformer():
                 features = features[:, self.components[id_]]
                 probs = probs[:, self.components[id_]]
 
-                opt_sel = np.zeros(len(data), dtype='int')
+                opt_sel = np.zeros(len(data), dtype="int")
                 for i in range(len(data)):
                     pp = probs[i] + 1e-6
                     pp = pp / sum(pp)
@@ -98,14 +77,14 @@ class GeneralTransformer():
 
                 idx = np.arange((len(features)))
                 features = features[idx, opt_sel].reshape([-1, 1])
-                features = np.clip(features, -.99, .99)
+                features = np.clip(features, -0.99, 0.99)
 
                 probs_onehot = np.zeros_like(probs)
                 probs_onehot[np.arange(len(probs)), opt_sel] = 1
                 values += [features, probs_onehot]
             else:
-                col_t = np.zeros([len(data), info['size']])
-                idx = list(map(info['bins'].index, current))
+                col_t = np.zeros([len(data), info["size"]])
+                idx = list(map(info["bins"].index, current))
                 col_t[np.arange(len(data)), idx] = 1
                 values.append(col_t)
 
@@ -116,7 +95,7 @@ class GeneralTransformer():
 
         st = 0
         for id_, info in enumerate(self.meta):
-            if info['type'] == "continuous":
+            if info["type"] == "continuous":
                 u = data[:, st]
                 v = data[:, st + 1:st + 1 + np.sum(self.components[id_])]
 
@@ -138,9 +117,9 @@ class GeneralTransformer():
                 data_t[:, id_] = tmp
 
             else:
-                current = data[:, st:st + info['size']]
-                st += info['size']
+                current = data[:, st:st + info["size"]]
+                st += info["size"]
                 idx = np.nanargmax(current, axis=1)
-                data_t[:, id_] = list(map(info['bins'].__getitem__, idx))
+                data_t[:, id_] = list(map(info["bins"].__getitem__, idx))
 
         return data_t

@@ -4,6 +4,7 @@ import copy
 import warnings
 import re
 
+
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
@@ -11,24 +12,40 @@ class PandasReader(SqlReader):
         super().__init__()
         # using string here, because we don't want to import .metadata due to circular reference
         if "metadata.collection.CollectionMetadata" in str(type(df)):
-            warnings.warn("[df] API has changed to pass (df, metadata).  Please update code to pass df first and metadata second.  This will be a breaking change in future versions.", Warning)
+            warnings.warn(
+                "[df] API has changed to pass (df, metadata).  Please update code to pass df first and metadata second.  This will be a breaking change in future versions.",
+                Warning,
+            )
             tmp = df
             df = metadata
             metadata = tmp
         self.df = df
         self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
         import sqlite3
+
         ver = [int(part) for part in sqlite3.sqlite_version.split(".")]
         if len(ver) < 3:
             # all historical versions of SQLite have 3 parts
-            if ver[0] < 3 or (ver[0] == 3 and ver[1] < 2) or (ver[0] == 3 and ver[1] == 2 and ver[2] < 6):
-                warnings.warn("This python environment has outdated sqlite version {0}.  PandasReader will fail on queries that use private_key.  Please upgrade to a newer Python environment (with sqlite >= 3.2.6), or ensure that you only use row_privacy.".format(sqlite3.sqlite_version), Warning)
+            if (
+                ver[0] < 3
+                or (ver[0] == 3 and ver[1] < 2)
+                or (ver[0] == 3 and ver[1] == 2 and ver[2] < 6)
+            ):
+                warnings.warn(
+                    "This python environment has outdated sqlite version {0}.  PandasReader will fail on queries that use private_key.  Please upgrade to a newer Python environment (with sqlite >= 3.2.6), or ensure that you only use row_privacy.".format(
+                        sqlite3.sqlite_version
+                    ),
+                    Warning,
+                )
 
     def _sanitize_column_name(self, column_name):
         x = re.search(r".*[a-zA-Z0-9()_]", column_name)
         if x is None:
-            raise Exception("Unsupported column name {}. Column names must be alphanumeric or _, (, ).".format(
-                column_name))
+            raise Exception(
+                "Unsupported column name {}. Column names must be alphanumeric or _, (, ).".format(
+                    column_name
+                )
+            )
         column_name = column_name.replace(" ", "_").replace("(", "_0_").replace(")", "_1_")
         return column_name
 
@@ -36,16 +53,24 @@ class PandasReader(SqlReader):
         metadata = copy.deepcopy(metadata)
         table_names = list(metadata.m_tables.keys())
         if len(table_names) > 1:
-            raise Exception("Only one table is supported for PandasReader. {} found.".format(len(table_names)))
+            raise Exception(
+                "Only one table is supported for PandasReader. {} found.".format(len(table_names))
+            )
         table_name = table_names[0]
         original_column_names = list(metadata.m_tables[table_name].m_columns)
 
         has_key = False
         for column_name in original_column_names:
             sanitized_column_name = self._sanitize_column_name(column_name)
-            metadata.m_tables[table_name].m_columns[sanitized_column_name] = metadata.m_tables[table_name].m_columns[column_name]
-            metadata.m_tables[table_name].m_columns[sanitized_column_name].name = sanitized_column_name
-            has_key = has_key or metadata.m_tables[table_name].m_columns[sanitized_column_name].is_key
+            metadata.m_tables[table_name].m_columns[sanitized_column_name] = metadata.m_tables[
+                table_name
+            ].m_columns[column_name]
+            metadata.m_tables[table_name].m_columns[
+                sanitized_column_name
+            ].name = sanitized_column_name
+            has_key = (
+                has_key or metadata.m_tables[table_name].m_columns[sanitized_column_name].is_key
+            )
             self.df[sanitized_column_name] = self.df[column_name]
             if column_name != sanitized_column_name:
                 del metadata.m_tables[table_name].m_columns[column_name]
@@ -55,10 +80,10 @@ class PandasReader(SqlReader):
             self.df[key] = range(len(self.df))
 
             from opendp.smartnoise.metadata.collection import Int
-            metadata.m_tables[table_name].m_columns[key] = Int(key,
-            minval=0,
-            maxval=len(self.df),
-            is_key=True)
+
+            metadata.m_tables[table_name].m_columns[key] = Int(
+                key, minval=0, maxval=len(self.df), is_key=True
+            )
         return metadata, original_column_names
 
     def _sanitize_query(self, query):
@@ -84,14 +109,18 @@ class PandasReader(SqlReader):
         """
         query = self._sanitize_query(query)
         from pandasql import sqldf
+
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
         table_names = list(self.metadata.m_tables.keys())
         if len(table_names) > 1:
-            raise Exception("PandasReader only supports one table, {} found.".format(len(table_names)))
+            raise Exception(
+                "PandasReader only supports one table, {} found.".format(len(table_names))
+            )
 
         df_name = "df_for_diffpriv1234"
         table_name = table_names[0]
+
         def clean_query(query):
             for column in self.metadata.m_tables[table_name].m_columns:
                 if " " in column or "(" in column or ")" in column:
@@ -111,4 +140,6 @@ class PandasReader(SqlReader):
 
         df_for_diffpriv1234 = self.df
         q_result = sqldf(clean_query(query), locals())
-        return [tuple([col for col in q_result.columns])] + [val[1:] for val in q_result.itertuples()]
+        return [tuple([col for col in q_result.columns])] + [
+            val[1:] for val in q_result.itertuples()
+        ]

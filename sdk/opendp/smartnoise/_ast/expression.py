@@ -4,6 +4,7 @@ from .expressions.numeric import *
 from .expressions.logical import *
 from .expressions.sql import *
 
+
 class Expression(SqlExpr):
     """A bare expression with no name"""
 
@@ -21,6 +22,7 @@ class Expression(SqlExpr):
 
     def symbol(self, relations):
         raise ValueError("Cannot load symbol on bare expression: " + str(self))
+
 
 class NestedExpression(SqlExpr):
     """A nested expression with no name"""
@@ -51,10 +53,13 @@ class NestedExpression(SqlExpr):
     def is_count(self):
         return self.expression.is_count
 
+
 class NamedExpression(SqlExpr):
     """An expression with optional name"""
 
-    def __init__(self, name : str, expression : Union['Expression', 'Column', 'ArithmeticExpression']) -> None:
+    def __init__(
+        self, name: str, expression: Union["Expression", "Column", "ArithmeticExpression"]
+    ) -> None:
         self.name = name
         self.expression = expression
 
@@ -88,4 +93,3 @@ class NamedExpression(SqlExpr):
     @property
     def is_count(self):
         return self.expression.is_count
-    

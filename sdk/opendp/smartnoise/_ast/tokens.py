@@ -1,6 +1,7 @@
 from typing import List, Any, Dict, Union
 import itertools
 
+
 class Token(str):
     def __init__(self, text):
         self.text = text
@@ -18,6 +19,7 @@ class Token(str):
 
     def __hash__(self):
         return hash(self.text)
+
 
 class Op(str):
     def __init__(self, text):
@@ -37,6 +39,7 @@ class Op(str):
     def __hash__(self):
         return hash(self.text)
 
+
 class Identifier(str):
     def __init__(self, text):
         self.text = text
@@ -54,6 +57,7 @@ class Identifier(str):
 
     def __hash__(self):
         return hash(self.text)
+
 
 class FuncName(str):
     def __init__(self, text):
@@ -73,10 +77,12 @@ class FuncName(str):
     def __hash__(self):
         return hash(self.text)
 
+
 class Sql:
     """
         base type for all Sql AST nodes
     """
+
     def __str__(self):
         return " ".join([str(c) for c in self.children() if c is not None])
 
@@ -87,7 +93,7 @@ class Sql:
             return all([s == o for s, o in zip(self.children(), other.children())])
 
     def symbol_name(self):
-        return str(hex(hash(self) % (2**16)))
+        return str(hex(hash(self) % (2 ** 16)))
 
     def __hash__(self):
         return hash(tuple(self.children()))
@@ -163,7 +169,7 @@ class SqlRel(Sql):
         self.m_sym_dict = None
 
     def has_symbols(self):
-        if hasattr(self, 'm_symbols'):
+        if hasattr(self, "m_symbols"):
             return self.m_symbols is not None
         return any([r.has_symbols() for r in self.relations()])
 
@@ -172,7 +178,7 @@ class SqlRel(Sql):
         alias, name = self.split_alias(name)
         if alias.strip() == "":
             return True
-        if hasattr(self, 'alias'):
+        if hasattr(self, "alias"):
             if self.alias is None:
                 return False
             else:
@@ -209,12 +215,16 @@ class SqlRel(Sql):
 
     def all_symbols(self, expression=None):
         if not self.has_symbols():
-            raise ValueError("Cannot load symbols from a table with no metadata.  Check has_symbols, or use load_symbols with metadata first. " + str(self))
+            raise ValueError(
+                "Cannot load symbols from a table with no metadata.  Check has_symbols, or use load_symbols with metadata first. "
+                + str(self)
+            )
         else:
             return self.m_symbols
 
     def relations(self):
         return [r for r in self.children() if isinstance(r, SqlRel)]
+
 
 class SqlExpr(Sql):
     """
@@ -237,7 +247,12 @@ class SqlExpr(Sql):
         # force inherited class to override if Column children exist
         child_col = self.find_node(Column)
         if child_col is not None:
-            raise ValueError("Symbol not implemented on: " + str(self) + " even though has Sql Column child " + str(child_col))
+            raise ValueError(
+                "Symbol not implemented on: "
+                + str(self)
+                + " even though has Sql Column child "
+                + str(child_col)
+            )
         return self
 
     @property
@@ -256,7 +271,7 @@ class Literal(SqlExpr):
         if text is None:
             self.value = value
             if value is None:
-                self.text = 'NULL'
+                self.text = "NULL"
             else:
                 self.text = str(value)
         else:
@@ -294,6 +309,7 @@ class Literal(SqlExpr):
     def evaluate(self, bindings):
         return self.value
 
+
 class Column(SqlExpr):
     """A fully qualified column name"""
 
@@ -312,7 +328,7 @@ class Column(SqlExpr):
     def escaped(self):
         # is any part of this identifier escaped?
         parts = self.name.split(".")
-        return any([p.startswith('"') or p.startswith('[') for p in parts])
+        return any([p.startswith('"') or p.startswith("[") for p in parts])
 
     def symbol_name(self):
         return self.name
@@ -328,13 +344,15 @@ class Column(SqlExpr):
 
     def evaluate(self, bindings):
         # may need to handle escaping here
-        if str(self).lower().replace('"','') in bindings:
-            return bindings[str(self).lower().replace('"','')]
+        if str(self).lower().replace('"', "") in bindings:
+            return bindings[str(self).lower().replace('"', "")]
         else:
             return None
 
+
 def flatten(iter):
     return list(itertools.chain.from_iterable(iter))
+
 
 def unique(iter):
     return list(set(iter))
