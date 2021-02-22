@@ -63,6 +63,7 @@ class Discriminator(Module):
 
         return dragan_penalty
 
+
 class PATECTGAN(CTGANSynthesizer):
     def __init__(
         self,
