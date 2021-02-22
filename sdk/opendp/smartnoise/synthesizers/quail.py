@@ -1,17 +1,23 @@
+import logging
+import warning
+
+from functools import wraps
+
 import numpy as np
 import pandas as pd
 
 from opendp.smartnoise.synthesizers.base import SDGYMBaseSynthesizer
 
+logger = logging.getLogger(__name__)
+
 
 class QUAILSynthesizer(SDGYMBaseSynthesizer):
-    """
-    Quailified Architecture to Improve Labeling.
+    """Quailified Architecture to Improve Labeling.
 
     Divide epsilon in a known classification task
     between a differentially private synthesizer and
     classifier. Train DP classifier on real, fit DP synthesizer
-    to features (excluding the target label)
+    to features (excluding the target label),
     and use synthetic data from the DP synthesizer with
     the DP classifier to create artificial labels. Produces
     complete synthetic data.
@@ -19,10 +25,33 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
     More information here:
     Differentially Private Synthetic Data: Applied Evaluations and Enhancements
     https://arxiv.org/abs/2011.05537
+
+    Parameters
+    ----------
+    epsilon : float
+        Total epsilon used across the DP Synthesizer and DP Classifier
+
+    dp_synthesizer : function (epsilon) -> SDGYMBaseSynthesizer
+        A function that returns an instance of a DP Synthesizer for a specified epsilon value
+
+    dp_classifier : function (epsilon) -> classifier
+        A function that returns an instance of a DP Classifier for a specified epsilon value
+
+    target : str
+        The column name of the target column
+
+    test_size : float
+        Percent of the data that should be used for the test set
+
+    seed : int
+        Seed for controlling randomness for testing
+
+    eps_split : float
+        Percent of epsilon used for the classifier. 1 - eps_split is used for the Synthesizer.
     """
 
     def __init__(
-        self, epsilon, dp_synthesizer, dp_classifier, target, test_size=0.2, seed=42, eps_split=0.9
+        self, epsilon, dp_synthesizer, dp_classifier, target, test_size=0.2, seed=None, eps_split=0.9
     ):
         self.epsilon = epsilon
         self.eps_split = eps_split
@@ -41,7 +70,8 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         self.pd_cols = None
         self.pd_index = None
 
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(), verbose=False):
+    @wraps(SDGYMBaseSynthesizer.fit)
+    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(), verbose=None):
         """
         Takes a dataset and fits the synthesizer/learning model to it, using the epsilon split
         specified in the init.
@@ -49,6 +79,9 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         :param data: Data
         :type data: pd.DataFrame or np.array
         """
+        if verbose is not None:
+            warning.warnings("verbose is deprecated. Use logging.setLevel instead")
+
         from sklearn.model_selection import train_test_split
         from sklearn.metrics import classification_report
         from sklearn.metrics import accuracy_score
@@ -79,11 +112,13 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
             np.ravel(y_test), predictions, labels=np.unique(predictions)
         )
         self.target_accuracy = accuracy_score(np.ravel(y_test), predictions)
-
+        log_level = logger.level
         if verbose:
-            print("Internal model report: ")
-            print(self.class_report)
-            print(self.target_accuracy)
+            log_level = logging.INFO
+
+        logging.log(log_level, "Internal model report: ")
+        logging.log(log_level, self.class_report)
+        logging.log(log_level, self.target_accuracy)
 
         # We use the features in our synthesis.
         self.private_synth = self.dp_synthesizer(epsilon=(self.epsilon * (1 - self.eps_split)))
@@ -93,16 +128,16 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
             ordinal_columns=ordinal_columns,
         )
 
-        if verbose:
-            if hasattr(self.private_model, "coef_"):
-                print(self.private_model.coef_)
+        if hasattr(self.private_model, "coef_"):
+            logging.log(log_level, self.private_model.coef_)
 
-            if hasattr(self.private_model, "intercept_"):
-                print(self.private_model.intercept_)
+        if hasattr(self.private_model, "intercept_"):
+            logging.log(log_level, self.private_model.intercept_)
 
-            if hasattr(self.private_model, "classes_"):
-                print(self.private_model.classes_)
+        if hasattr(self.private_model, "classes_"):
+            logging.log(log_level, self.private_model.classes_)
 
+    @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, samples):
         """
         Sample from the synthesizer model.
