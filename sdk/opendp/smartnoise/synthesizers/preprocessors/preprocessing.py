@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from sklearn.mixture import BayesianGaussianMixture
 
 
 def get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
@@ -45,19 +44,6 @@ class GeneralTransformer:
                 raise Exception("Use of BayesianGaussianMixture for continuous variables is "
                                 "being evaluated to avoid privacy leaks. "
                                 "Until resolved, 'continuous' columns are not supported with the GeneralTransformer.")
-                gm = BayesianGaussianMixture(
-                    self.n_clusters,
-                    weight_concentration_prior_type="dirichlet_process",
-                    weight_concentration_prior=0.001,
-                    n_init=1,
-                )
-                gm.fit(data.iloc[:, id_].values.reshape([-1, 1]))
-                model.append(gm)
-                comp = gm.weights_ > self.eps
-                self.components.append(comp)
-
-                self.output_info += [(1, "tanh"), (np.sum(comp), "softmax")]
-                self.output_dim += 1 + np.sum(comp)
             else:
                 model.append(None)
                 self.components.append(None)
