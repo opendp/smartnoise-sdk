@@ -42,7 +42,8 @@ class GeneralTransformer:
         self.components = []
         for id_, info in enumerate(self.meta):
             if info["type"] == "continuous":
-                raise Exception("Use of BayesianGaussianMixture for continuous variables is being evaluated to avoid privacy leaks. "
+                raise Exception("Use of BayesianGaussianMixture for continuous variables is "
+                                "being evaluated to avoid privacy leaks. "
                                 "Until resolved, 'continuous' columns are not supported with the GeneralTransformer.")
                 gm = BayesianGaussianMixture(
                     self.n_clusters,
