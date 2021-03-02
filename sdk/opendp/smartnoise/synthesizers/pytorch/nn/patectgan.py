@@ -19,26 +19,6 @@ from .privacy_utils import weights_init, pate, moments_acc
 
 
 class Discriminator(Module):
-    def dragan_penalty(self, real_data, device="cpu", c=10, lambda_=10):
-        alpha = torch.rand(real_data.shape[0], 1, device=device).expand(real_data.shape)
-        delta = torch.normal(
-            mean=0.0, std=c, size=real_data.shape, device=device
-        )  # 0.5 * real_data.std() * torch.rand(real_data.shape)
-        x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + delta), requires_grad=True)
-
-        pred_hat = self(x_hat.float())
-
-        gradients = torch.autograd.grad(
-            outputs=pred_hat,
-            inputs=x_hat,
-            grad_outputs=torch.ones(pred_hat.size(), device=device),
-            create_graph=True,
-            retain_graph=True,
-            only_inputs=True,
-        )[0]
-        dragan_penalty = lambda_ * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
-
-        return dragan_penalty
 
     def __init__(self, input_dim, dis_dims, loss, pack):
         super(Discriminator, self).__init__()
@@ -61,6 +41,27 @@ class Discriminator(Module):
     def forward(self, input):
         assert input.size()[0] % self.pack == 0
         return self.seq(input.view(-1, self.packdim))
+
+    def dragan_penalty(self, real_data, device="cpu", c=10, lambda_=10):
+        alpha = torch.rand(real_data.shape[0], 1, device=device).expand(real_data.shape)
+        delta = torch.normal(
+            mean=0.0, std=c, size=real_data.shape, device=device
+        )  # 0.5 * real_data.std() * torch.rand(real_data.shape)
+        x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + delta), requires_grad=True)
+
+        pred_hat = self(x_hat.float())
+
+        gradients = torch.autograd.grad(
+            outputs=pred_hat,
+            inputs=x_hat,
+            grad_outputs=torch.ones(pred_hat.size(), device=device),
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True,
+        )[0]
+        dragan_penalty = lambda_ * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+
+        return dragan_penalty
 
 
 class PATECTGAN(CTGANSynthesizer):
