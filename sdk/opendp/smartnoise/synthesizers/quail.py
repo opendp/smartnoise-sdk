@@ -1,5 +1,5 @@
 import logging
-import warning
+import warnings
 
 from functools import wraps
 
@@ -80,7 +80,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         :type data: pd.DataFrame or np.array
         """
         if verbose is not None:
-            warning.warnings("verbose is deprecated. Use logging.setLevel instead")
+            warnings.warn("verbose is deprecated. Use logging.setLevel instead")
 
         from sklearn.model_selection import train_test_split
         from sklearn.metrics import classification_report
