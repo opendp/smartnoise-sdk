@@ -1,3 +1,5 @@
+from functools import wraps
+
 import numpy as np
 import pandas as pd
 
@@ -7,6 +9,20 @@ from opendp.smartnoise.synthesizers.base import SDGYMBaseSynthesizer
 
 class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
     def __init__(self, gan, preprocessor=None, epsilon=None):
+        """Wrapper class to unify pytorch GAN architectures with the SDGYM API.
+
+        Parameters
+        ----------
+        gan : torch.nn.Module
+            A pytorch defined GAN
+
+        preprocessor : GeneralTransformer
+            A preprocessor to .transform the input data and
+            .inverse_transform the output of the GAN.
+
+        epsilon : float
+            Total epsilon used for the DP Synthesizer
+        """
         self.preprocessor = preprocessor
         self.gan = gan
 
@@ -18,6 +34,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
 
         self.data_columns = None
 
+    @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
         if isinstance(data, pd.DataFrame):
             self.data_columns = data.columns
@@ -46,6 +63,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
                 update_epsilon=self.epsilon,
             )
 
+    @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, n):
         synth_data = self.gan.generate(n)
 
