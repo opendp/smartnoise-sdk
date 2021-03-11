@@ -27,7 +27,7 @@ class PrivateReader(Reader):
         self,
         reader,
         metadata,
-        epsilon_per_column=1.0,
+        epsilon_per_column,
         delta=10e-16,
         interval_widths=None,
         options=None,
