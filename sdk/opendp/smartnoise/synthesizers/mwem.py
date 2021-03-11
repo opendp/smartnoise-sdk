@@ -2,6 +2,8 @@ import math
 import random
 import warnings
 
+from functools import wraps
+
 import numpy as np
 import pandas as pd
 
@@ -22,12 +24,14 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
     Linear queries used for sampling in this implementation are
     random contiguous slices of the n-dimensional numpy array.
+
+    Creates a synthetic histogram distribution, based on the original data.
     """
 
     def __init__(
         self,
+        epsilon,
         q_count=400,
-        epsilon=3.0,
         iterations=30,
         mult_weights_iterations=20,
         splits=[],
@@ -35,8 +39,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         max_bin_count=500,
         custom_bin_count={},
     ):
-        self.q_count = q_count
         self.epsilon = epsilon
+        self.q_count = q_count
         self.iterations = iterations
         self.mult_weights_iterations = mult_weights_iterations
         self.synthetic_data = None
@@ -58,9 +62,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.q_values = None
         self.max_retries_exp_mechanism = 50
 
+    @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
         """
-        Creates a synthetic histogram distribution, based on the original data.
         Follows sdgym schema to be compatible with their benchmark system.
         :param data: Dataset to use as basis for synthetic data
         :type data: np.ndarray
@@ -94,6 +98,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
 
+    @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, samples):
         """
         Creates samples from the histogram data.
@@ -152,8 +157,11 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for self.iterations using the exponential mechanism and
         multiplicative weights. Draws from the initialized query store
         for measurements.
-        :return: synth_hist, self.histogram - synth_hist is the synthetic data histogram,
-                 self.histogram is original histo
+
+        Returns
+        -------
+            np.ndarray, np.ndarray
+                synthetic histogram, actual histogram
         :rtype: np.ndarray, np.ndarray
         """
         a_values = []
