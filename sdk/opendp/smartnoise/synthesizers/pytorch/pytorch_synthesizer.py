@@ -8,7 +8,7 @@ from opendp.smartnoise.synthesizers.base import SDGYMBaseSynthesizer
 
 
 class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
-    def __init__(self, epsilon, gan, preprocessor=None, epsilon=None):
+    def __init__(self, epsilon, gan, preprocessor=None):
         """Wrapper class to unify pytorch GAN architectures with the SDGYM API.
 
         Parameters
@@ -27,41 +27,30 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
         self.gan = gan
         self.preprocessor = preprocessor
 
+        self._data_columns = None
 
-        self.categorical_columns = None
-        self.ordinal_columns = None
-        self.dtypes = None
-
-        self.data_columns = None
+    def _get_training_data(self, data, categorical_columns, ordinal_columns):
+        if not self.preprocessor:
+            return data
+        else:
+            self.preprocessor.fit(data, categorical_columns, ordinal_columns)
+            return self.preprocessor.transform(data)
 
     @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
         if isinstance(data, pd.DataFrame):
-            self.data_columns = data.columns
+            self._data_columns = data.columns
 
-        self.categorical_columns = categorical_columns
-        self.ordinal_columns = ordinal_columns
         self.dtypes = data.dtypes
 
-        if not self.epsilon:
-            self.epsilon = 1.0
+        training_data = self._get_training_data(data, categorical_columns, ordinal_columns)
 
-        if self.preprocessor:
-            self.preprocessor.fit(data, categorical_columns, ordinal_columns)
-            preprocessed_data = self.preprocessor.transform(data)
-            self.gan.train(
-                preprocessed_data,
-                categorical_columns=categorical_columns,
-                ordinal_columns=ordinal_columns,
-                update_epsilon=self.epsilon,
-            )
-        else:
-            self.gan.train(
-                data,
-                categorical_columns=categorical_columns,
-                ordinal_columns=ordinal_columns,
-                update_epsilon=self.epsilon,
-            )
+        self.gan.train(
+            training_data,
+            categorical_columns=categorical_columns,
+            ordinal_columns=ordinal_columns,
+            update_epsilon=self.epsilon,
+        )
 
     @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, n):
@@ -74,10 +63,10 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
                 synth_data = self.preprocessor.inverse_transform(synth_data)
 
         if isinstance(synth_data, np.ndarray):
-            synth_data = pd.DataFrame(synth_data, columns=self.data_columns)
+            synth_data = pd.DataFrame(synth_data, columns=self._data_columns)
         elif isinstance(synth_data, pd.DataFrame):
             # TODO: Add validity check
-            synth_data.columns = self.data_columns
+            synth_data.columns = self._data_columns
         else:
             raise ValueError("Generated data is neither numpy array nor dataframe!")
 
