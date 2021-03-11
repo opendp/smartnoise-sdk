@@ -8,8 +8,8 @@ import pandas as pd
 from opendp.smartnoise.metadata import CollectionMetadata
 
 try:
-    from opendp.smartnoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-    from opendp.smartnoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.smartnoise.synthesizers.preprocessors import GeneralTransformer
+    from opendp.smartnoise.synthesizers.pytorch import PytorchDPSynthesizer
     from opendp.smartnoise.synthesizers.pytorch.nn import DPGAN, DPCTGAN, PATECTGAN
 
 except Exception as e:

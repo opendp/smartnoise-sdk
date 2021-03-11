@@ -9,6 +9,7 @@ import pandas as pd
 
 from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.synthesizers.mwem import MWEMSynthesizer
+from opendp.smartnoise.synthesizers import MWEMSynthesizer as ShortMWEMSynthesizer
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -39,6 +40,9 @@ test_histogram = [[[1., 0., 0.],
 test_histogram_dims = (3,3,3)
 
 class TestMWEM:
+    def test_short_import_works(self):
+        assert MWEMSynthesizer == ShortMWEMSynthesizer
+
     def test_fit(self):
         synth.fit(nf)
         assert synth.histograms
