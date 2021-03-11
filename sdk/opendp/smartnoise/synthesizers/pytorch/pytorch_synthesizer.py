@@ -8,25 +8,25 @@ from opendp.smartnoise.synthesizers.base import SDGYMBaseSynthesizer
 
 
 class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
-    def __init__(self, gan, preprocessor=None, epsilon=None):
+    def __init__(self, epsilon, gan, preprocessor=None, epsilon=None):
         """Wrapper class to unify pytorch GAN architectures with the SDGYM API.
 
         Parameters
         ----------
+        epsilon : float
+            Total epsilon used for the DP Synthesizer
+
         gan : torch.nn.Module
             A pytorch defined GAN
 
         preprocessor : GeneralTransformer
             A preprocessor to .transform the input data and
             .inverse_transform the output of the GAN.
-
-        epsilon : float
-            Total epsilon used for the DP Synthesizer
         """
-        self.preprocessor = preprocessor
-        self.gan = gan
-
         self.epsilon = epsilon
+        self.gan = gan
+        self.preprocessor = preprocessor
+
 
         self.categorical_columns = None
         self.ordinal_columns = None

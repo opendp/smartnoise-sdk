@@ -21,9 +21,9 @@ df = pd.read_csv(csv_path, index_col=0)
 df = df.drop(["income"], axis=1)
 nf = df.to_numpy().astype(int)
 
-synth = MWEMSynthesizer(split_factor=3)
+synth = MWEMSynthesizer(3., split_factor=3)
 
-faux_synth = MWEMSynthesizer(split_factor=1)
+faux_synth = MWEMSynthesizer(3., split_factor=1)
 
 test_data = np.array([[1,1,1],[2,2,2],[3,3,3]])
 

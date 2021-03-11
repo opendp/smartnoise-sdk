@@ -32,11 +32,11 @@ df = pd.read_csv(csv_path)
 class TestQUAIL:
     def setup(self):
         def QuailClassifier(epsilon):
-            return DPLR(epsilon=epsilon)
+            return DPLR(epsilon)
 
         def QuailSynth(epsilon):
             return PytorchDPSynthesizer(preprocessor=None,
-                            gan=PATECTGAN(loss='cross_entropy', batch_size=50, pack=1, sigma=5.0))
+                            gan=PATECTGAN(epsilon, loss='cross_entropy', batch_size=50, pack=1, sigma=5.0))
 
         self.quail = QUAILSynthesizer(3.0, QuailSynth, QuailClassifier, 'married')
 

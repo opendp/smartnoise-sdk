@@ -28,7 +28,8 @@ df = pd.read_csv(csv_path)
 @pytest.mark.torch
 class TestDPGAN:
     def setup(self):
-        self.pategan = PytorchDPSynthesizer(PATEGAN(), GeneralTransformer())
+        epsilon = 1.0
+        self.pategan = PytorchDPSynthesizer(PATEGAN(epsilon), GeneralTransformer())
 
     def test_fit(self):
         self.pategan.fit(df)

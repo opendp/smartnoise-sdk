@@ -29,7 +29,7 @@ df = pd.read_csv(csv_path)
 @pytest.mark.torch
 class TestPytorchDPSynthesizer_DPGAN:
     def setup(self):
-        self.dpgan = PytorchDPSynthesizer(DPGAN(), GeneralTransformer())
+        self.dpgan = PytorchDPSynthesizer(DPGAN(1.0), GeneralTransformer())
 
     def test_fit(self):
         self.dpgan.fit(df)
@@ -43,7 +43,7 @@ class TestPytorchDPSynthesizer_DPGAN:
 
 class TestPytorchDPSynthesizer_DPCTGAN:
     def setup(self):
-        self.dpctgan = PytorchDPSynthesizer(DPCTGAN(), None)
+        self.dpctgan = PytorchDPSynthesizer(DPCTGAN(1.0), None)
 
     def test_fit(self):
         self.dpctgan.fit(df, categorical_columns=['sex','educ','race','married'])
@@ -57,7 +57,7 @@ class TestPytorchDPSynthesizer_DPCTGAN:
 
 class TestPytorchDPSynthesizer_PATECTGAN:
     def setup(self):
-        self.patectgan = PytorchDPSynthesizer(PATECTGAN(), None)
+        self.patectgan = PytorchDPSynthesizer(PATECTGAN(1.0), None)
 
     def test_fit(self):
         self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
@@ -71,7 +71,7 @@ class TestPytorchDPSynthesizer_PATECTGAN:
 
 class TestPytorchDPSynthesizer_PATECTDRAGAN:
     def setup(self):
-        self.patectgan = PytorchDPSynthesizer(PATECTGAN(regularization='dragan'), None)
+        self.patectgan = PytorchDPSynthesizer(PATECTGAN(1.0, regularization='dragan'), None)
 
     def test_fit(self):
         self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
@@ -85,7 +85,7 @@ class TestPytorchDPSynthesizer_PATECTDRAGAN:
 
 class TestPytorchDPSynthesizer_WPATECTDRAGAN:
     def setup(self):
-        self.patectgan = PytorchDPSynthesizer(PATECTGAN(loss='wasserstein', regularization='dragan'), None)
+        self.patectgan = PytorchDPSynthesizer(PATECTGAN(1.0, loss='wasserstein', regularization='dragan'), None)
 
     def test_fit(self):
         self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
