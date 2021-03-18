@@ -1,13 +1,13 @@
 [**Please note that we recently renamed this toolkit.**](https://projects.iq.harvard.edu/opendp/blog/building-inclusive-community)
 
-<a href="https://opendifferentialprivacy.github.io"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
+<a href="https://smartnoise.org"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
 ## SmartNoise System: Tools for Differential Privacy
 See also the accompanying [SmartNoise Core repository](https://github.com/opendp/smartnoise-core) and [SmartNoise Samples repository](https://github.com/opendp/smartnoise-samples) for this system. </br>
 
 
 ##
 
-The tools SmartNoise SDK allows researchers and analysts to: 
+The tools SmartNoise SDK allows researchers and analysts to:
 
 * Use SQL dialect to create differentially private results over tabular data stores
 * Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy budget
@@ -39,7 +39,7 @@ The system's SmartNoise Core library can be installed from PyPi:
 > pip install opendp-smartnoise
 
 ## Documentation
-Documentation for SDK functionality: [here](https://opendifferentialprivacy.github.io/smartnoise-samples/docs/api/system/)
+Documentation for SDK functionality: [here](https://opendp.github.io/smartnoise-samples/docs/api/system/)
 
 ### Experimental
 Service API specification: [here](https://github.com/opendp/smartnoise-sdk/blob/master/service/openapi/swagger.yml)

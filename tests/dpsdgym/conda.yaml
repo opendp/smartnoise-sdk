@@ -17,4 +17,4 @@ dependencies:
     - torch
     - opacus
     - ctgan
-    - git+https://github.com/opendifferentialprivacy/smartnoise-system#subdirectory=sdk
+    - git+https://github.com/opendp/smartnoise-sdk#subdirectory=sdk
