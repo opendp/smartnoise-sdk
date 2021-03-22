@@ -11,8 +11,8 @@ environment, ideally isolated with conda or venv. Below we have a conda based ex
 
     create a conda environment: conda create -n smartnoise python
     conda activate smartnoise
-    git clone https://github.com/opendifferentialprivacy/smartnoise-system.git
-    cd smartnoise-system
+    git clone https://github.com/opendp/smartnoise-sdk.git
+    cd smartnoise-sdk
     conda install -c anaconda sqlite
     python -m pip install -e sdk/
     python -m pip install -r tests/requirements.txt
