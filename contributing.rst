@@ -91,19 +91,24 @@ Fix any regressions before creating a pull request.  Make sure that GitHub has t
 
     git push
 
-To create the pull request, use your Web browser to navigate to the "pull requests" tab on github.com.  Assign the pull request to someone on the development team for code review.
+To create the pull request, use your Web browser to navigate to the "pull requests" tab on github.com.  
 
-Once the pull request is submitted, some automated integration tests will run to check for regressions.  These tests can take several minutes to complete, and results will be shown in the "Automation" tab.
+.. image:: images/doc/Recent_pushes.png
+
+.. image:: images/doc/PR_from_repo.png
+
+Assign the pull request to someone on the development team for code review.  Once the pull request is submitted, some automated integration tests will run to check for regressions.  These tests can take several minutes to complete, and results will be shown in the "Automation" tab.
 
 If there are comments or questions during code review, they will be shown in-line on the PR review page.  Code changes updates to the PR can be added automatically by changing the code in your local branch and runnning `git push` to move commits into the open pull request.  Pushing new commits into the pull request will trigger the integration tests to run again.
 
-Once the PR has been approved, an approver will merge it into main.  After the code is merged to main, you can delete the feature branch.
+When the PR has been approved, an approver will merge it into main.  After the code is merged to main, you can delete the feature branch.
 
 Contributing from a fork:
 =========================
 
 If you are submitting a one-time patch or feature, you can submit a pull request from your own fork.  Create and test your patch as above.  When it's time to submit the pull request, navigate your Web browser to the GitHub page for your fork, and go to the "pull requests" tab.  You will have the option to create a new pull request, and GitHub should automatically select base: opendp/smartnoise-sdk/main for the destination, and your fork and branch as the source. 
 
+.. image:: images/doc/PR_from_fork.png
 
 Service setup and test validation:
 ============================
