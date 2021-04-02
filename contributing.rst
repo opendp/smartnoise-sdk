@@ -63,6 +63,58 @@ a .yaml of the same name as the test dataset, schema.yaml files are needed for m
     meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "reddit.yaml"))
     csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "reddit.csv"))
 
+Contributing a Patch or Feature
+===============================
+
+If you will be making regular contributions, or need to participate in code reviews of other people's contributions, your GitHub ID should be added to the "Contributors" group.  Regular contributors submit patches or features via a feature branch:
+
+.. code-block:: bash
+    git checkout main
+    git pull
+    git checkout -b branchname
+    git push -u origin branchname
+
+Branches should be scoped tightly to work that can be delivered and reviewed in a manageable amount of time.  Feature branches should align with only one pull request, and should be deleted after the PR is approved and merged.  Larger or more open-ended work items should be broken into more scoped pull requests, with one feature branch per pull request.  Naming should be moderately descriptive (e.g. `bugfix_double_spend`) but can be short.
+
+From your new feature branch, make all of your changes.  You can check in changes and use `git push` to periodically synchronize local changes with the feature branch in GitHub.
+
+If other patches or feature branches have been merged to main while you are working, your branch may be out of sync with main.  This is usually not a risk with small patches, but is more likely as development takes longer.
+
+You will need to make sure your branch includes latest changes to main before submitting the pull request.  To do this, you commit any uncommited changes, switch to main and pull, then switch back to your branch and merge.
+
+.. code-block:: bash
+    git commit -m "saving changes before merge"
+    git push # optional
+    git checkout main
+    git pull
+    git branch branchname # switch back to your branch
+    git merge
+
+If there are no changes that conflict with your branch, the merge will automatically succeed, and you can check it in, push, and move on to the pull request.  If there are merge conflicts, you will need to review and resolve the conflicts first.  Visual Studio Code has nice support for reviewing merge conflicts.
+
+When the patch or feature is ready to submit, run the unit tests to make sure there are no regressions:
+
+.. code-block:: bash
+    pytest tests/sdk
+
+Fix any regressions before creating a pull request.  Make sure that GitHub has the latest copy of your local changes:
+
+.. code-block:: bash
+    git push
+
+To create the pull request, use your Web browser to navigate to the "pull requests" tab on github.com.  Assign the pull request to someone on the development team for code review.
+
+Once the pull request is submitted, some automated integration tests will run to check for regressions.  These tests can take several minutes to complete, and results will be shown in the "Automation" tab.
+
+If there are comments or questions during code review, they will be shown in-line on the PR review page.  Code changes updates to the PR can be added automatically by changing the code in your local branch and runnning `git push` to move commits into the open pull request.  Pushing new commits into the pull request will trigger the integration tests to run again.
+
+Once the PR has been approved, an approver will merge it into main.  After the code is merged to main, you can delete the feature branch.
+
+Contributing from a fork:
+=========================
+
+If you are submitting a one-time patch or feature, you can submit a pull request from your own fork.  Create and test your patch as above.  When it's time to submit the pull request, navigate your Web browser to the GitHub page for your fork, and go to the "pull requests" tab.  You will have the option to create a new pull request, and GitHub should automatically select base: opendp/smartnoise-sdk/main for the destination, and your fork and branch as the source. 
+
 
 Service setup and test validation:
 ============================
