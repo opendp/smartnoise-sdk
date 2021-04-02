@@ -54,6 +54,7 @@ Contributing a Patch or Feature
 If you will be making regular contributions, or need to participate in code reviews of other people's contributions, your GitHub ID should be added to the "Contributors" group.  Regular contributors submit patches or features via a feature branch:
 
 .. code-block:: bash
+
     git checkout main
     git pull
     git checkout -b branchname
@@ -68,6 +69,7 @@ If other patches or feature branches have been merged to main while you are work
 You will need to make sure your branch includes latest changes to main before submitting the pull request.  To do this, you commit any uncommited changes, switch to main and pull, then switch back to your branch and merge.
 
 .. code-block:: bash
+
     git commit -m "saving changes before merge"
     git push # optional
     git checkout main
@@ -80,11 +82,13 @@ If there are no changes that conflict with your branch, the merge will automatic
 When the patch or feature is ready to submit, run the unit tests to make sure there are no regressions:
 
 .. code-block:: bash
+
     pytest tests/sdk
 
 Fix any regressions before creating a pull request.  Make sure that GitHub has the latest copy of your local changes:
 
 .. code-block:: bash
+
     git push
 
 To create the pull request, use your Web browser to navigate to the "pull requests" tab on github.com.  Assign the pull request to someone on the development team for code review.
