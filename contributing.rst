@@ -17,6 +17,21 @@ environment, ideally isolated with conda or venv. Below we have a conda based ex
     python -m pip install -e sdk/
     python -m pip install -r tests/requirements.txt
 
+To run the unit tests, we will need to copy the wheel files from smartnoise.core into your cloned repository.  This is because we installed the cloned repository in --editable mode, so all files for the smartnoise namespace (including smartnoise.core) will be searched from our cloned repository.  First, find the wheel location where smartnoise.core has been installed:
+
+.. code-block:: bash
+
+    pip show opendp-smartnoise-core
+
+This will show a path, for example Location: /Users/youraccount/miniconda3/lib/python3.7/site-packages
+
+Use this path to copy the files from opendp/smartnoise/core:
+
+.. code-block:: bash
+
+    mkdir sdk/opendp/smartnoise/core
+    cp -R /Users/youraccount/miniconda3/lib/python3.7/site-packages/opendp/smartnoise/core sdk/opendp/smartnoise/core
+
 Verifying your SDK installation is running:
 
 .. code-block:: bash
