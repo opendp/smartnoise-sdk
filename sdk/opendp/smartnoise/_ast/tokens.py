@@ -129,6 +129,58 @@ class Sql:
         childnodes = [c.find_nodes(type_name, not_child_of) for c in sqlnodes]
         return nodes + flatten(childnodes)
 
+    def visualize(self, color_types={}, n_trunc=None):
+        """
+        Construct the AST graph of the object
+
+        Args:
+            color_type (optional): A dictionnary which contains the type and
+                the color of the nodes.
+                If no color is provided, the displayed node will be black.
+                Example: {str: 'red', Query: 'green'}
+            n_trunc: for visibility, truncate the expressions.
+                By default, there is no truncation.
+
+        Returns:
+            graphviz Digraph representation of 'parsed_query'.
+
+        """
+        def _label_node(expr, n_trunc):
+            str_expr = str(expr)
+            if n_trunc and len(str_expr) > n_trunc:
+                str_expr = str_expr[:n_trunc] + '...'
+            return f"{type(expr).__name__}: {str_expr}"
+
+        def _color_node(expr, color_types):
+            expr_type = type(expr)
+            if expr_type in color_types.keys():
+                return color_types[expr_type]
+            return 'black'
+
+        def _visit_nodes(node, path_to_node):
+            if not isinstance(node, Sql):
+                return
+            for child_node in node.children():
+                if child_node is not None:
+                    path_to_child_node = f"{path_to_node}.{str(child_node)}"
+                    graph.node(
+                        path_to_child_node,
+                        _label_node(child_node, n_trunc),
+                        color=_color_node(child_node, color_types),
+                    )
+                    graph.edge(path_to_node, path_to_child_node)
+                    _visit_nodes(child_node, path_to_child_node)
+
+        from graphviz import Digraph
+        graph = Digraph()
+        graph.node(
+            str(self),
+            _label_node(self, n_trunc),
+            color=_color_node(self, color_types),
+        )
+        _visit_nodes(self, str(self))
+        return graph
+
 
 class Seq(Sql):
     def __init__(self, seq):
