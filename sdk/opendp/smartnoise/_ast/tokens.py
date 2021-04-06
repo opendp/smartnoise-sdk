@@ -162,7 +162,7 @@ class Sql:
                 return
             for child_node in node.children():
                 if child_node is not None:
-                    path_to_child_node = f"{path_to_node}.{str(child_node)}"
+                    path_to_child_node = f"{path_to_node}.{type(child_node).__name__}_{str(child_node)}"
                     graph.node(
                         path_to_child_node,
                         _label_node(child_node, n_trunc),
