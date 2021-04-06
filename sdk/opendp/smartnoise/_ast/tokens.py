@@ -142,7 +142,7 @@ class Sql:
                 By default, there is no truncation.
 
         Returns:
-            graphviz Digraph representation of 'parsed_query'.
+            graphviz Digraph
 
         """
         def _label_node(expr, n_trunc):
