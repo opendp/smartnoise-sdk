@@ -8,7 +8,6 @@ from opendp.smartnoise._ast.ast import (
     Select,
     From,
     Query,
-    AliasedRelation,
     Where,
     Aggregate,
     Order,
@@ -25,6 +24,18 @@ from opendp.smartnoise._ast.ast import (
     ArithmeticExpression,
     BooleanCompare,
     GroupingExpression,
+    FuncName,
+    Op,
+    Identifier,
+    Token,
+    CaseExpression,
+    RankingFunction,
+    OverClause,
+    BareFunction,
+    NestedExpression,
+    AliasedSubquery,
+    Relation,
+    SortItem,
 )
 
 
@@ -52,10 +63,10 @@ class Rewriter:
         expr = exp.expression
         quant = exp.quantifier
 
-        sum_expr = self.push_sum_or_count(AggFunction("SUM", quant, expr), scope)
-        count_expr = self.push_sum_or_count(AggFunction("COUNT", quant, expr), scope)
+        sum_expr = self.push_sum_or_count(AggFunction(FuncName("SUM"), quant, expr), scope)
+        count_expr = self.push_sum_or_count(AggFunction(FuncName("COUNT"), quant, expr), scope)
 
-        new_exp = NestedExpression(ArithmeticExpression(sum_expr, "/", count_expr))
+        new_exp = NestedExpression(ArithmeticExpression(sum_expr, Op("/"), count_expr))
         return new_exp
 
     def calculate_variance(self, exp, scope):
@@ -66,22 +77,22 @@ class Rewriter:
         quant = exp.quantifier
 
         avg_of_square = self.calculate_avg(
-            AggFunction("AVG", quant, ArithmeticExpression(expr, "*", expr)), scope
+            AggFunction(FuncName("AVG"), quant, ArithmeticExpression(expr, Op("*"), expr)), scope
         )
-        avg = self.calculate_avg(AggFunction("AVG", quant, expr), scope)
-        avg_squared = ArithmeticExpression(avg, "*", avg)
+        avg = self.calculate_avg(AggFunction(FuncName("AVG"), quant, expr), scope)
+        avg_squared = ArithmeticExpression(avg, Op("*"), avg)
 
-        new_exp = ArithmeticExpression(avg_of_square, "-", avg_squared)
+        new_exp = ArithmeticExpression(avg_of_square, Op("-"), avg_squared)
         return new_exp
 
     def calculate_stddev(self, exp, scope):
         """
             Calculate the standard deviation from the variance
         """
-        expr = AggFunction("STD", exp.quantifier, exp.expression)
+        expr = AggFunction(FuncName("STD"), exp.quantifier, exp.expression)
         var_expr = self.calculate_variance(expr, scope)
 
-        new_exp = MathFunction("SQRT", var_expr)
+        new_exp = MathFunction(FuncName("SQRT"), var_expr)
         return new_exp
 
     def push_sum_or_count(self, exp, scope):
@@ -132,6 +143,9 @@ class Rewriter:
             agg_exp.name = ""
             agg_exp.quantifier = None
             agg_exp.expression = new_exp
+        if type(exp) is AggFunction:
+            # TODO: outer expressions
+            exp = NestedExpression(new_exp)
         return NamedExpression(name, exp)
 
     def query(self, query):
@@ -150,32 +164,32 @@ class Rewriter:
                 for ne in query.select.namedExpressions
             ]
         )
+
         select = Select(query.select.quantifier, select)
 
         subquery = Query(
             child_scope.select(), query.source, query.where, query.agg, None, None, None
         )
         subquery = self.exact_aggregates(subquery)
-        subquery = [AliasedRelation(subquery, "exact_aggregates")]
-
+        subquery = [Relation(AliasedSubquery(subquery, Identifier("exact_aggregates")), None)]
         q = Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit)
 
-        return QueryParser(self.metadata).query(str(q))
+        return q#QueryParser(self.metadata).query(str(q))
 
     def exact_aggregates(self, query):
         child_scope = Scope()
 
         if self.options.row_privacy:
-            keycount_expr = AggFunction("COUNT", None, AllColumns())
+            keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
         else:
             key_col = self.key_col(query)
-            keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
+            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
             child_scope.push_name(keycount_expr.expression)
 
         for ne in query.select.namedExpressions:
             child_scope.push_name(ne.expression)
 
-        keycount = NamedExpression("keycount", keycount_expr)
+        keycount = NamedExpression(Identifier("keycount"), keycount_expr)
 
         select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
         select = Select(None, select)
@@ -185,19 +199,19 @@ class Rewriter:
         )
         if self.options.reservoir_sample and not self.options.row_privacy:
             subquery = self.per_key_random(subquery)
-            subquery = [AliasedRelation(subquery, "per_key_random")]
+            subquery = [Relation(AliasedSubquery(subquery, Identifier("per_key_random")), None)]
 
             filtered = Where(
                 BooleanCompare(
                     Column("per_key_random.row_num"),
-                    "<=",
+                    Op("<="),
                     Literal(str(self.options.max_contrib), self.options.max_contrib),
                 )
             )
             return Query(select, From(subquery), filtered, query.agg, None, None, None)
         else:
             subquery = self.per_key_clamped(subquery)
-            subquery = [AliasedRelation(subquery, "per_key_all")]
+            subquery = [Relation(AliasedSubquery(subquery, Identifier("per_key_all")), None)]
             return Query(select, From(subquery), None, query.agg, None, None, None)
 
     def per_key_random(self, query):
@@ -207,9 +221,14 @@ class Rewriter:
             [
                 NamedExpression(None, AllColumns()),
                 NamedExpression(
-                    "row_num",
-                    Expression(
-                        "ROW_NUMBER() OVER (PARTITION BY {0} ORDER BY random())".format(key_col)
+                    Identifier("row_num"),
+                    RankingFunction(FuncName("ROW_NUMBER"),
+                                    OverClause(
+                                        Column(key_col),
+                                        Order([
+                                            SortItem(BareFunction(FuncName("RANDOM")), None)
+                                            ])
+                                    ),
                     ),
                 ),
             ]
@@ -218,7 +237,7 @@ class Rewriter:
 
         subquery = self.per_key_clamped(query)
         subquery = [
-            AliasedRelation(subquery, "clamped" if self.options.clamp_columns else "not_clamped")
+            Relation(AliasedSubquery(subquery, Identifier("clamped" if self.options.clamp_columns else "not_clamped")), None)
         ]
 
         return Query(select, From(subquery), None, None, None, None, None)
@@ -257,10 +276,13 @@ class Rewriter:
                     cexpr = Column(colname)
                     ce_name = scope.push_name(cexpr, str(colname))
                 else:
-                    clamped_string = "CASE WHEN {0} < {1} THEN {1} WHEN {0} > {2} THEN {2} ELSE {0} END".format(
-                        str(colname), minval, maxval
-                    )
-                    cexpr = Expression(clamped_string)
+                    when_min = WhenExpression(
+                        BooleanCompare(column, Op("<"), Literal(minval)), Literal(minval)
+                        )
+                    when_max = WhenExpression(
+                        BooleanCompare(column, Op(">"), Literal(maxval)), Literal(maxval)
+                        )
+                    cexpr = CaseExpression(None, [when_min, when_max], Column(colname))
                     ce_name = scope.push_name(cexpr, str(colname))
             else:
                 cexpr = Column(colname)
@@ -301,7 +323,7 @@ class Scope:
     def select(self, quantifier=None):
         return Select(
             quantifier,
-            [NamedExpression(name, self.expressions[name]) for name in self.expressions.keys()],
+            [NamedExpression(Identifier(str(name)), self.expressions[name]) for name in self.expressions.keys()],
         )
 
     def push_name(self, expression, proposed=None):
