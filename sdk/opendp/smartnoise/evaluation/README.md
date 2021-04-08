@@ -1,13 +1,13 @@
 ## Introduction
 
-Evaluation is one of core components in the development and use of differentially private algorithms. Any privacy algorithm claiming to be differentially private (mechanism, SQL query) can tested against various properties they promise - 
+Evaluation is one of core components in the development and use of differentially private algorithms. Any privacy algorithm claiming to be differentially private (mechanism, SQL query) can tested against various properties they promise -
 * **Privacy**: DP algorithms claim to adhere to the fundamental promise of bounding privacy loss as per the (ε, δ)-DP condition
 * **Accuracy**: DP algorithms should add the minimal amount of noise needed to actual responses for bounding privacy loss
 * **Utility**: The error / confidence bounds for the responses from DP algorithms should be small for the results to have utility
-* **Bias**: DP algorithms on repeated runs should have a mean signed deviation close to zero and not have a statistically significant deviation greater or lower than zero. 
+* **Bias**: DP algorithms on repeated runs should have a mean signed deviation close to zero and not have a statistically significant deviation greater or lower than zero.
 
 ## DP Evaluator
-As part of the evaluation suite, we compute a set of metrics corresponding to these promises via a single call to `evaluate` function. The interface based design of this suite allows for evaluation of state-of-the-art DP implementations like DP-SQL queries with GROUP BY, JOINs, RANK operators and testing of τ-thresholding. 
+As part of the evaluation suite, we compute a set of metrics corresponding to these promises via a single call to `evaluate` function. The interface based design of this suite allows for evaluation of state-of-the-art DP implementations like DP-SQL queries with GROUP BY, JOINs, RANK operators and testing of τ-thresholding.
 
 ### Metrics Available
 
@@ -26,16 +26,16 @@ As part of the evaluation suite, we compute a set of metrics corresponding to th
 
 ### Example Code
 
-This [unit test](https://github.com/opendifferentialprivacy/smartnoise-sdk/blob/060ead584360f6e8c16db12d9e7c9eb8e59e687f/tests/sdk/evaluation/test_interface.py#L47) is a good example of how to specify a PrivacyAlgorithm interface for the DP implementation that needs to be tested and pass it through the evaluator to fetch evaluation metrics listed above as one metrics object. 
+This [unit test](https://github.com/opendp/smartnoise-sdk/blob/060ead584360f6e8c16db12d9e7c9eb8e59e687f/tests/sdk/evaluation/test_interface.py#L47) is a good example of how to specify a PrivacyAlgorithm interface for the DP implementation that needs to be tested and pass it through the evaluator to fetch evaluation metrics listed above as one metrics object.
 
 #### Privacy Algorithm Interface Requirements
-Privacy Algorithm needs to support `prepare`, `release` and `actual_release` functions. 
+Privacy Algorithm needs to support `prepare`, `release` and `actual_release` functions.
 
 * `prepare` acts similar to a constructor taking in the privacy algorithm object and evaluation parameters as input and initializing them
-* `release` applies the private algorithm on the input dataset repeatedly based on the `repeat_count` in evaluation params. It returns a dictionary of key-value pairs. If it is a SQL query with multiple row response, key is a hash or concatenation of dimension column values. If it is a single row response, then one should specifiy a dummy key `__key__`. Value is a list of DP noisy numerical responses based on the `repeat_count` evaluator paramater specified as input to the `release` function. The evaluator needs to be passed in neighboring datasets `d1` and `d2` which differ by 1 user's record (either by deleting a row or updating it) for it to apply the Privacy test and check if it passes. 
-* `actual_release` works very similar to the `release` function but instead of a list of noisy responses, it returns the actual response of non-private algorithm corresponding to the DP algorithm being tested. 
+* `release` applies the private algorithm on the input dataset repeatedly based on the `repeat_count` in evaluation params. It returns a dictionary of key-value pairs. If it is a SQL query with multiple row response, key is a hash or concatenation of dimension column values. If it is a single row response, then one should specifiy a dummy key `__key__`. Value is a list of DP noisy numerical responses based on the `repeat_count` evaluator paramater specified as input to the `release` function. The evaluator needs to be passed in neighboring datasets `d1` and `d2` which differ by 1 user's record (either by deleting a row or updating it) for it to apply the Privacy test and check if it passes.
+* `actual_release` works very similar to the `release` function but instead of a list of noisy responses, it returns the actual response of non-private algorithm corresponding to the DP algorithm being tested.
 
-A sample PrivacyAlgorithm interface is implemented [here](https://github.com/opendifferentialprivacy/smartnoise-sdk/blob/master/tests/sdk/evaluation/dp_algorithm.py).
+A sample PrivacyAlgorithm interface is implemented [here](https://github.com/opendp/smartnoise-sdk/blob/master/tests/sdk/evaluation/dp_algorithm.py).
 
 #### Input
 ```python
@@ -83,10 +83,10 @@ for key, metrics in key_metrics.items():
 ```
 
 ## DP Benchmarking
-While building DP algorithms, researchers need to benchmark DP evaluation metrics against a set of input parameters like a range of epsilon values or various dataset sizes. Our benchmarking capabilities via a single `benchmark` call built on top of evaluation suite enable this scenario. This is also helpful for visualizing the properties of any new DP algorithm to end user base for gaining confidence. 
+While building DP algorithms, researchers need to benchmark DP evaluation metrics against a set of input parameters like a range of epsilon values or various dataset sizes. Our benchmarking capabilities via a single `benchmark` call built on top of evaluation suite enable this scenario. This is also helpful for visualizing the properties of any new DP algorithm to end user base for gaining confidence.
 
 ### Example Code
-This [unit test](https://github.com/opendifferentialprivacy/smartnoise-sdk/blob/060ead584360f6e8c16db12d9e7c9eb8e59e687f/tests/sdk/evaluation/test_interface.py#L86) is a good example of how to setup benchmarking of an implementation claiming to be differentially private and interface-able via the PrivacyAlgorithm interface exposed by the researcher or end user. Benchmarking calls the evaluate function underneath iterating through every epsilon value, dataset size and privacy algorithm that needs to be benchmarked. 
+This [unit test](https://github.com/opendp/smartnoise-sdk/blob/060ead584360f6e8c16db12d9e7c9eb8e59e687f/tests/sdk/evaluation/test_interface.py#L86) is a good example of how to setup benchmarking of an implementation claiming to be differentially private and interface-able via the PrivacyAlgorithm interface exposed by the researcher or end user. Benchmarking calls the evaluate function underneath iterating through every epsilon value, dataset size and privacy algorithm that needs to be benchmarked.
 
 #### Input
 ```python
@@ -141,8 +141,7 @@ for bm in benchmark_metrics_list:
         assert(metrics.dp_res == True)
 ```
 
-This [Jupyter notebook](https://github.com/opendifferentialprivacy/smartnoise-sdk/blob/ankitsri/eval_readme/tests/sdk/evaluation/DPBenchmarkingFramework.ipynb) demonstrates how one can use the benchmarking output for various kind of visualizations comparing DP algoritms for the same purpose. 
+This [Jupyter notebook](https://github.com/opendp/smartnoise-sdk/blob/main/tests/sdk/evaluation/DPBenchmarkingFramework.ipynb) demonstrates how one can use the benchmarking output for various kind of visualizations comparing DP algorithms for the same purpose.
 
 ## RL based DP-SQL fuzzing
-One of the most commonly used scenarios that are apt for adoption of differential privacy is data aggregation, reporting and data analytics. To enable this, SmartNoise SDK provides a DP-SQL implementation. This enables a large set of aggregation operators available for both end users to leverage and potential adversaries to exploit. In order to test this functionality, manual testing or random testing is not sufficient as the search space of queries possible to write is virtually infinite. We need a smart way to test DP-SQL which is self-optimizing towards the objective of finding bugs. We used contextual bandits and reinforcement learning to achieve this for automatically creating smart queries that have high likelihood to fail the fundamental privacy promise. 
-
+One of the most commonly used scenarios that are apt for adoption of differential privacy is data aggregation, reporting and data analytics. To enable this, SmartNoise SDK provides a DP-SQL implementation. This enables a large set of aggregation operators available for both end users to leverage and potential adversaries to exploit. In order to test this functionality, manual testing or random testing is not sufficient as the search space of queries possible to write is virtually infinite. We need a smart way to test DP-SQL which is self-optimizing towards the objective of finding bugs. We used contextual bandits and reinforcement learning to achieve this for automatically creating smart queries that have high likelihood to fail the fundamental privacy promise.
