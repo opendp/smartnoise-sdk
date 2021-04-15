@@ -89,8 +89,8 @@ You will need to make sure your branch includes latest changes to main before su
     git push # optional
     git checkout main
     git pull
-    git branch branchname # switch back to your branch
-    git merge
+    git checkout branchname # switch back to your branch
+    git merge main
 
 If there are no changes that conflict with your branch, the merge will automatically succeed, and you can check it in, push, and move on to the pull request.  If there are merge conflicts, you will need to review and resolve the conflicts first.  Visual Studio Code has nice support for reviewing merge conflicts.
 
