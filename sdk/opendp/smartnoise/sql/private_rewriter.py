@@ -180,9 +180,7 @@ class Rewriter:
         )
         subquery = self.exact_aggregates(subquery)
         subquery = [Relation(AliasedSubquery(subquery, Identifier("exact_aggregates")), None)]
-        q = Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit)
-        q.load_symbols(self.metadata)
-        return q
+        return Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit, metadata=self.metadata)
 
     def exact_aggregates(self, query):
         child_scope = Scope()
