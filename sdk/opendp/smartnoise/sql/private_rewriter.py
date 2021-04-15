@@ -16,7 +16,6 @@ from opendp.smartnoise._ast.ast import (
     AllColumns,
     NamedExpression,
     NestedExpression,
-    Seq,
     AggFunction,
     MathFunction,
     ArithmeticExpression,
@@ -166,12 +165,10 @@ class Rewriter:
             for ge in query.agg.groupingExpressions:
                 child_scope.push_name(ge.expression)
 
-        select = Seq(
-            [
+        select = [
                 self.rewrite_outer_named_expression(ne, child_scope)
                 for ne in query.select.namedExpressions
             ]
-        )
 
         select = Select(query.select.quantifier, select)
 
@@ -197,7 +194,7 @@ class Rewriter:
 
         keycount = NamedExpression(Identifier("keycount"), keycount_expr)
 
-        select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
+        select = [keycount] + [ne for ne in query.select.namedExpressions]
         select = Select(None, select)
 
         subquery = Query(
@@ -223,8 +220,7 @@ class Rewriter:
     def per_key_random(self, query):
         key_col = self.key_col(query)
 
-        select = Seq(
-            [
+        select = [
                 NamedExpression(None, AllColumns()),
                 NamedExpression(
                     Identifier("row_num"),
@@ -238,7 +234,6 @@ class Rewriter:
                     ),
                 ),
             ]
-        )
         select = Select(None, select)
 
         subquery = self.per_key_clamped(query)
@@ -251,12 +246,10 @@ class Rewriter:
     def per_key_clamped(self, query):
         child_scope = Scope()
         relations = query.source.relations
-        select = Seq(
-            [
+        select = [
                 self.clamp_expression(ne, relations, child_scope, self.options.clamp_columns)
                 for ne in query.select.namedExpressions
             ]
-        )
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
         return subquery
