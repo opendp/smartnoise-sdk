@@ -1,9 +1,10 @@
+from typing import Optional, List, Any
 from .tokens import *
 from .expression import *
-
+from .typing_ast import ListExprsType#, booleanExpressionType
 
 """
-    AST for parsed Python Query Batch.  Allows validation, normalization, 
+    AST for parsed Python Query Batch.  Allows validation, normalization,
     rewriting, and serialization.  Grammar is a strict subset of SQL-92.
     Lexer and parser token names borrowed from SparkSQL Grammar.
 """
@@ -22,7 +23,16 @@ class Batch(Sql):
 class Query(SqlRel):
     """A single query"""
 
-    def __init__(self, select, source, where, agg, having, order, limit) -> None:
+    def __init__(
+        self,
+        select: 'Select',
+        source: 'From',
+        where: Optional['Where'],
+        agg: Optional['Aggregate'],
+        having: Optional['Having'],
+        order: Optional['Order'],
+        limit: Optional['Limit'],
+        ) -> None:
         self.select = select
         self.source = source
         self.where = where
@@ -108,8 +118,9 @@ class Query(SqlRel):
 class Select(Sql):
     """Result Columns"""
 
-    def __init__(self, quantifier, namedExpressions):
+    def __init__(self, quantifier: Token, namedExpressions: Seq[List[NamedExpression]]):
         self.quantifier = quantifier
+        #print(type(namedExpressions))
         self.namedExpressions = Seq(namedExpressions)
 
     def functions(self):
@@ -125,7 +136,8 @@ class Select(Sql):
 class From(Sql):
     """From"""
 
-    def __init__(self, relations):
+    def __init__(self, relations: List['Relation']):
+        print(type(relations))
         self.relations = Seq(relations)
 
     def children(self):
@@ -145,7 +157,7 @@ class Where(Sql):
 class Aggregate(Sql):
     """Group By"""
 
-    def __init__(self, groupingExpressions):
+    def __init__(self, groupingExpressions: List[GroupingExpression]):
         self.groupingExpressions = Seq(groupingExpressions)
 
     def groupedColumns(self):

@@ -1,6 +1,7 @@
-from typing import List, Any, Dict, Union
 import itertools
+from typing import Generic, Union, List
 
+from .typing_ast import ListExprsType
 
 class Token(str):
     def __init__(self, text):
@@ -182,8 +183,8 @@ class Sql:
         return graph
 
 
-class Seq(Sql):
-    def __init__(self, seq):
+class Seq(Sql, Generic[ListExprsType]):
+    def __init__(self, seq: ListExprsType):
         self.seq = seq
 
     def __str__(self):
