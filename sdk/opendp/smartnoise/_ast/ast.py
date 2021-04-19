@@ -1,7 +1,7 @@
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
+from .types_ast import BooleanExpressionType #type: ignore
 from .tokens import *
 from .expression import *
-from .typing_ast import ListExprsType#, booleanExpressionType
 
 """
     AST for parsed Python Query Batch.  Allows validation, normalization,
@@ -9,14 +9,13 @@ from .typing_ast import ListExprsType#, booleanExpressionType
     Lexer and parser token names borrowed from SparkSQL Grammar.
 """
 
-
 class Batch(Sql):
     """A batch of queries"""
 
     def __init__(self, queries: List["Query"]) -> None:
         self.queries = queries
 
-    def children(self):
+    def children(self) -> List["Query"]:
         return self.queries
 
 
@@ -53,7 +52,7 @@ class Query(SqlRel):
         self.m_sym_dict = None
         self.m_symbols = None
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata): #type: ignore
         symbols = []
         relations = self.source.relations
         for r in relations:
@@ -102,34 +101,33 @@ class Query(SqlRel):
             )
         return self[expression.name]
 
-    def numeric_symbols(self):
+    def numeric_symbols(self) -> List[Identifier]:
         return [s for s in self.all_symbols() if s[1].type() in ["int", "float"]]
 
-    def keycount_symbols(self):
+    def keycount_symbols(self) -> List[Identifier]:
         return [s for s in self.all_symbols() if s[1].is_key_count]
 
-    def children(self) -> List[Any]:
+    def children(self) -> List[Union['Select', 'From', 'Where', 'Aggregate', 'Having', 'Order', 'Limit', None]]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
 
-    def evaluate(self, bindings):
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Optional[Union[int, float, bool, str]]:
         return [(ne.name, ne.expression.evaluate(bindings)) for ne in self.select.namedExpressions]
 
 
 class Select(Sql):
     """Result Columns"""
 
-    def __init__(self, quantifier: Token, namedExpressions: Seq[List[NamedExpression]]):
+    def __init__(self, quantifier: Token, namedExpressions: List[NamedExpression]):
         self.quantifier = quantifier
-        #print(type(namedExpressions))
         self.namedExpressions = Seq(namedExpressions)
 
-    def functions(self):
+    def functions(self) -> List[NamedExpression]:
         return [c for c in self.namedExpressions if type(c.expression) is AggFunction]
 
-    def aggregates(self):
-        return [f for f in self.functions() if f.is_aggregate()]
+    def aggregates(self) -> List[NamedExpression]:
+        return [f for f in self.functions() if f.expression.is_aggregate()]
 
-    def children(self):
+    def children(self) -> List[Union[Token, Seq]]:
         return [Token("SELECT"), self.quantifier, self.namedExpressions]
 
 
@@ -137,20 +135,19 @@ class From(Sql):
     """From"""
 
     def __init__(self, relations: List['Relation']):
-        print(type(relations))
         self.relations = Seq(relations)
 
-    def children(self):
+    def children(self) -> List[Union[Token, Seq]]:
         return [Token("FROM"), self.relations]
 
 
 class Where(Sql):
     """Predicates."""
 
-    def __init__(self, condition):
+    def __init__(self, condition: BooleanExpressionType):
         self.condition = condition
 
-    def children(self):
+    def children(self) -> List[Union[Token, BooleanExpressionType]]:
         return [Token("WHERE"), self.condition]
 
 
@@ -160,30 +157,30 @@ class Aggregate(Sql):
     def __init__(self, groupingExpressions: List[GroupingExpression]):
         self.groupingExpressions = Seq(groupingExpressions)
 
-    def groupedColumns(self):
+    def groupedColumns(self) -> List[GroupingExpression]:
         return [ge.expression for ge in self.groupingExpressions if type(ge.expression) == Column]
 
-    def children(self):
+    def children(self) -> List[Union[Token, Seq]]:
         return [Token("GROUP"), Token("BY"), self.groupingExpressions]
 
 
 class Having(Sql):
     """Having clause"""
 
-    def __init__(self, condition):
+    def __init__(self, condition: BooleanExpressionType):
         self.condition = condition
 
-    def children(self):
+    def children(self) -> List[Union[Token, BooleanExpressionType]]:
         return [Token("HAVING"), self.condition]
 
 
 class Order(Sql):
     """Order By"""
 
-    def __init__(self, sortItems):
+    def __init__(self, sortItems: List[SortItem]):
         self.sortItems = Seq(sortItems)
 
-    def children(self):
+    def children(self) -> List[Union[Token, Seq]]:
         return [Token("ORDER"), Token("BY"), self.sortItems]
 
     def symbol(self, relations):
@@ -193,10 +190,10 @@ class Order(Sql):
 class Limit(Sql):
     """Limit"""
 
-    def __init__(self, n):
+    def __init__(self, n: int):
         self.n = n
 
-    def children(self):
+    def children(self) -> List[Union[Token, Literal]]:
         return [Token("LIMIT"), Literal(self.n, str(self.n))]
 
     def symbol(self, relations):
@@ -206,10 +203,10 @@ class Limit(Sql):
 class Top(Sql):
     """Top"""
 
-    def __init__(self, n):
+    def __init__(self, n: int):
         self.n = n
 
-    def children(self):
+    def children(self) -> List[Union[Token, Literal]]:
         return [Token("TOP"), Literal(self.n, str(self.n))]
 
     def symbol(self, relations):
@@ -220,15 +217,14 @@ class Top(Sql):
     RELATIONS
 """
 
-
 class Relation(SqlRel):
     """A relation such as table, join, or subquery"""
 
-    def __init__(self, primary, joins):
+    def __init__(self, primary: Union['Table', 'AliasedSubquery', 'AliasedRelation'], joins : List['Join']):
         self.primary = primary
         self.joins = joins if joins is not None else []
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata): # type: ignore
         relations = [self.primary] + [j for j in self.joins]
         for r in relations:
             r.load_symbols(metadata)
@@ -299,14 +295,14 @@ class Relation(SqlRel):
             raise ValueError("Symbol could not be found in any relations: " + str(expression))
         return syms
 
-    def children(self):
+    def children(self) -> List[SqlRel]:
         return [self.primary] + self.joins
 
 
 class Table(SqlRel):
     """A fully qualified table name with optional alias"""
 
-    def __init__(self, name, alias):
+    def __init__(self, name: Identifier, alias: Optional[Identifier]):
         self.name = name
         self.alias = alias
         self.m_symbols = None
@@ -331,7 +327,7 @@ class Table(SqlRel):
             else:
                 return None
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata): # type: ignore
         self.m_sym_dict = None
         if metadata is None:
             return
@@ -359,19 +355,19 @@ class Table(SqlRel):
                 for name in tc.keys()
             ]
 
-    def escaped(self):
+    def escaped(self) -> bool:
         # is any part of this identifier escaped?
         parts = str(self).split(".")
         return any([p.startswith('"') or p.startswith("[") for p in parts])
 
-    def children(self):
+    def children(self) -> List[Union[Identifier, Token]]:
         return [self.name] + ([Token("AS"), self.alias] if self.alias is not None else [])
 
 
 class AliasedSubquery(SqlRel):
     """A subquery with optional alias"""
 
-    def __init__(self, query, alias):
+    def __init__(self, query: Query, alias: Optional[Identifier]):
         self.query = query
         self.alias = alias
 
@@ -386,7 +382,7 @@ class AliasedSubquery(SqlRel):
             raise ValueError("Requesting all coluns with mismatched alias")
         return self.query.all_symbols(AllColumns())
 
-    def children(self):
+    def children(self) -> List[Union[Token, Query, Identifier]]:
         return [Token("("), self.query, Token(")")] + (
             [Token("AS"), self.alias] if self.alias is not None else []
         )
@@ -395,7 +391,7 @@ class AliasedSubquery(SqlRel):
 class AliasedRelation(SqlRel):
     """A subrelation (table, join, or subquery) with optional alias"""
 
-    def __init__(self, relation, alias):
+    def __init__(self, relation: Relation, alias: Optional[Identifier]):
         self.relation = relation
         self.alias = alias
 
@@ -410,7 +406,7 @@ class AliasedRelation(SqlRel):
             raise ValueError("Requesting all coluns with mismatched alias")
         return self.relation.all_symbols(AllColumns())
 
-    def children(self):
+    def children(self) -> List[Union[Token, Relation, Identifier]]:
         return [Token("("), self.relation, Token(")")] + (
             [Token("AS"), self.alias] if self.alias is not None else []
         )
@@ -419,7 +415,12 @@ class AliasedRelation(SqlRel):
 class Join(SqlRel):
     """A join expression attached to a primary relation"""
 
-    def __init__(self, joinType, right, criteria):
+    def __init__(
+        self,
+        joinType: Token,
+        right: Union['Table', 'AliasedSubquery', 'AliasedRelation'],
+        criteria: Optional[Union[BooleanJoinCriteria, UsingJoinCriteria]],
+        ):
         self.joinType = joinType
         self.right = right
         self.criteria = criteria
@@ -430,7 +431,7 @@ class Join(SqlRel):
     def all_symbols(self, expression):
         return self.right.all_symbols(expression)
 
-    def children(self):
+    def children(self) -> List[Union[Token, 'Table', 'AliasedSubquery', 'AliasedRelation', 'BooleanJoinCriteria', 'UsingJoinCriteria', None]]:
         return [self.joinType, Token("JOIN"), self.right, self.criteria]
 
 
@@ -442,15 +443,15 @@ class TableColumn(SqlExpr):
 
     def __init__(
         self,
-        tablename,
-        colname,
-        valtype="unknown",
-        is_key=False,
-        minval=None,
-        maxval=None,
-        max_ids=1,
-        sample_max_ids=True,
-        row_privacy=False,
+        tablename: Identifier,
+        colname: str,
+        valtype: str="unknown",
+        is_key: bool=False,
+        minval: Optional[Union[int, float]]=None,
+        maxval: Optional[Union[int, float]]=None,
+        max_ids: int=1,
+        sample_max_ids: bool=True,
+        row_privacy: bool=False,
         compare=None,
     ):
         self.tablename = tablename
@@ -465,19 +466,19 @@ class TableColumn(SqlExpr):
         self.unbounded = minval is None or maxval is None
         self.compare = compare
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.tablename + "." + self.colname
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.tablename == other.tablename and self.colname == other.colname
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.tablename, self.colname))
 
-    def type(self):
+    def type(self) -> str:
         return self.valtype
 
-    def sensitivity(self):
+    def sensitivity(self) -> Optional[Union[int, float]]:
         if self.valtype in ["int", "float"]:
             if self.minval is not None and self.maxval is not None:
                 return max(abs(self.maxval), abs(self.minval))
@@ -488,16 +489,16 @@ class TableColumn(SqlExpr):
         else:
             return None
 
-    def evaluate(self, bindings):
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Optional[Union[int, float, bool, str]]:
         if str(self).lower() in bindings:
             return bindings[str(self).lower()]
         else:
             return None
 
     @property
-    def is_key_count(self):
+    def is_key_count(self) -> bool:
         return self.is_key
 
     @property
-    def is_count(self):
+    def is_count(self) -> bool:
         return False

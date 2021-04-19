@@ -1,3 +1,5 @@
+from typing import Dict, Callable, Any, Union
+from opendp.smartnoise._ast.types_ast import ExpressionType #type: ignore
 from opendp.smartnoise._ast.tokens import *
 import numpy as np
 import operator
@@ -10,7 +12,7 @@ ops = {
     "%": operator.mod,
 }
 
-funcs = {
+funcs = { #Dict[str, Callable[[Any], Any]]
     "abs": np.abs,
     "ceiling": np.ceil,
     "floor": np.floor,
@@ -29,16 +31,16 @@ funcs = {
     "degrees": np.degrees,
 }
 
-bare_funcs = {
+bare_funcs: Dict[str, Callable[[], Any]] = {
     "pi": lambda: np.pi,
     "rand": lambda: np.random.uniform(),
     "random": lambda: np.random.uniform(),
     "newid": lambda: "-".join(
         [
             "".join([hex(np.random.randint(0, 65535)) for v in range(2)]),
-            [hex(np.random.randint(0, 65535))],
-            [hex(np.random.randint(0, 65535))],
-            [hex(np.random.randint(0, 65535))],
+            str([hex(np.random.randint(0, 65535))]),
+            str([hex(np.random.randint(0, 65535))]),
+            str([hex(np.random.randint(0, 65535))]),
             "".join([hex(np.random.randint(0, 65535)) for v in range(3)]),
         ]
     ),
@@ -48,7 +50,7 @@ bare_funcs = {
 class ArithmeticExpression(SqlExpr):
     """A simple arithmetic expression with left and right side and operator"""
 
-    def __init__(self, left, op, right):
+    def __init__(self, left: ExpressionType, op: Op, right: ExpressionType):
         self.left = left
         self.right = right
         self.op = op
@@ -107,7 +109,7 @@ class ArithmeticExpression(SqlExpr):
 
 
 class MathFunction(SqlExpr):
-    def __init__(self, name, expression):
+    def __init__(self, name: FuncName, expression: ExpressionType):
         self.name = name
         self.expression = expression
 
@@ -141,7 +143,7 @@ class MathFunction(SqlExpr):
 
 
 class PowerFunction(SqlExpr):
-    def __init__(self, expression, power):
+    def __init__(self, expression: ExpressionType, power: Union[int, float]):
         self.expression = expression
         self.power = power
 
@@ -160,7 +162,7 @@ class PowerFunction(SqlExpr):
 
 
 class BareFunction(SqlExpr):
-    def __init__(self, name):
+    def __init__(self, name: FuncName):
         self.name = name
 
     def children(self):
@@ -172,7 +174,7 @@ class BareFunction(SqlExpr):
 
 
 class RoundFunction(SqlExpr):
-    def __init__(self, expression, decimals):
+    def __init__(self, expression: ExpressionType, decimals: int):
         self.expression = expression
         self.decimals = decimals
 

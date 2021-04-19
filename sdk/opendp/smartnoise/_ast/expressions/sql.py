@@ -1,4 +1,6 @@
 from opendp.smartnoise._ast.tokens import *
+from opendp.smartnoise._ast.types_ast import ExpressionType, BooleanExpressionType #type: ignore
+from typing import Optional
 
 """
     SQL-specific expressions
@@ -8,7 +10,7 @@ from opendp.smartnoise._ast.tokens import *
 class AllColumns(SqlExpr):
     """A SELECT with * or Table.*"""
 
-    def __init__(self, table=None):
+    def __init__(self, table: Optional[Literal]=None):
         self.table = table
 
     def __str__(self):
@@ -35,7 +37,7 @@ class AllColumns(SqlExpr):
 class AggFunction(SqlExpr):
     """A function such as SUM, COUNT, AVG"""
 
-    def __init__(self, name, quantifier, expression):
+    def __init__(self, name: FuncName, quantifier: Token, expression: ExpressionType):
         self.name = name
         self.quantifier = quantifier
         self.expression = expression
@@ -122,7 +124,7 @@ class AggFunction(SqlExpr):
 
 
 class RankingFunction(SqlExpr):
-    def __init__(self, name, over):
+    def __init__(self, name: FuncName, over: 'OverClause'):
         self.name = name
         self.over = over
 
@@ -134,7 +136,7 @@ class RankingFunction(SqlExpr):
 
 
 class OverClause(SqlExpr):
-    def __init__(self, partition, order):
+    def __init__(self, partition: ExpressionType, order: 'Order'):
         self.partition = partition
         self.order = order
 
@@ -154,7 +156,7 @@ class OverClause(SqlExpr):
 class GroupingExpression(SqlExpr):
     """An expression used in Group By"""
 
-    def __init__(self, expression):
+    def __init__(self, expression: ExpressionType):
         self.expression = expression
 
     def type(self):
@@ -170,7 +172,7 @@ class GroupingExpression(SqlExpr):
 class SortItem(SqlExpr):
     """Used to sort a query's output"""
 
-    def __init__(self, expression, order):
+    def __init__(self, expression: ExpressionType, order: 'Order'):
         self.expression = expression
         self.order = order
 
@@ -190,7 +192,7 @@ class SortItem(SqlExpr):
 class BooleanJoinCriteria(SqlExpr):
     """Join criteria using boolean expression"""
 
-    def __init__(self, expression):
+    def __init__(self, expression: BooleanExpressionType):
         self.expression = expression
 
     def children(self):
@@ -203,7 +205,7 @@ class BooleanJoinCriteria(SqlExpr):
 class UsingJoinCriteria(SqlExpr):
     """Join criteria with USING syntax"""
 
-    def __init__(self, identifiers):
+    def __init__(self, identifiers: List[Identifier]):
         self.identifiers = Seq(identifiers)
 
     def children(self):

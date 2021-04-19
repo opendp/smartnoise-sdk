@@ -1,9 +1,11 @@
+from typing import Dict, Callable, Any, Optional
+from opendp.smartnoise._ast.types_ast import ExpressionType, BooleanExpressionType #type: ignore
 from opendp.smartnoise._ast.tokens import *
 import operator
 import numpy as np
 from datetime import datetime, date
 
-ops = {
+ops: Dict[str, Callable[[Any, Any], Any]] = {
     ">": operator.gt,
     "<": operator.lt,
     ">=": operator.ge,
@@ -19,7 +21,7 @@ ops = {
 class BooleanCompare(SqlExpr):
     """ AND, OR, <=, >=, etc """
 
-    def __init__(self, left, op, right):
+    def __init__(self, left: ExpressionType, op: Op, right: ExpressionType):
         self.left = left
         self.right = right
         self.op = op
@@ -27,13 +29,13 @@ class BooleanCompare(SqlExpr):
     def symbol(self, relations):
         return BooleanCompare(self.left.symbol(relations), self.op, self.right.symbol(relations))
 
-    def type(self):
+    def type(self) -> str:
         return "boolean"
 
-    def sensitivity(self):
+    def sensitivity(self) -> Optional[Union[int, float]]:
         return 1
 
-    def children(self):
+    def children(self) -> List[Union[ExpressionType, Op]]:
         return [self.left, self.op, self.right]
 
     def coerce_string(self, val, typed_val):
@@ -55,7 +57,7 @@ class BooleanCompare(SqlExpr):
         else:
             return val
 
-    def evaluate(self, bindings):
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
         l = self.left.evaluate(bindings)
         r = self.right.evaluate(bindings)
         if type(l) != type(r):
@@ -78,72 +80,72 @@ class BooleanCompare(SqlExpr):
 class ColumnBoolean(SqlExpr):
     """A qualified column name that was parsed in a context that requires boolean"""
 
-    def __init__(self, expression):
+    def __init__(self, expression: Column):
         self.expression = expression
 
     def symbol(self, relations):
         return ColumnBoolean(self.expression.symbol(relations))
 
-    def type(self):
-        return bool
+    def type(self) -> str:
+        return 'boolean'
 
-    def sensitivity(self):
+    def sensitivity(self) -> Optional[Union[int, float]]:
         return 1
 
-    def children(self):
+    def children(self) -> List[Sql]:
         return [self.expression]
 
-    def evaluate(self, bindings):
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
         return parse_bool(self.expression.evaluate(bindings))
 
 
 class NestedBoolean(SqlExpr):
     """A nested expression with no name"""
 
-    def __init__(self, expression):
+    def __init__(self, expression: BooleanExpressionType):
         self.expression = expression
 
     def symbol(self, relations):
         return NestedBoolean(self.expression.symbol(relations))
 
-    def type(self):
+    def type(self) -> str:
         return self.expression.type()
 
-    def sensitivity(self):
+    def sensitivity(self) -> Optional[Union[int, float]]:
         return self.expression.sensitivity()
 
-    def children(self):
+    def children(self) -> List[Union[Token, BooleanExpressionType]]:
         return [Token("("), self.expression, Token(")")]
 
-    def evaluate(self, bindings):
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
         return parse_bool(self.expression.evaluate(bindings))
 
 
 class LogicalNot(SqlExpr):
     """Negation of a boolean expression"""
 
-    def __init__(self, expression):
+    def __init__(self, expression: BooleanExpressionType):
         self.expression = expression
 
     def symbol(self, relations):
         return LogicalNot(self.expression.symbol(relations))
 
-    def type(self):
+    def type(self) -> str:
         return "boolean"
 
-    def sensitivity(self):
+    def sensitivity(self) -> Optional[Union[int, float]]:
         return 1
 
     def children(self):
         return [Token("NOT"), self.expression]
 
-    def evaluate(self, bindings):
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
         val = self.expression.evaluate(bindings)
         return not parse_bool(val)
 
 
 class PredicatedExpression(SqlExpr):
-    def __init__(self, expression, predicate):
+    def __init__(self, expression: ExpressionType, predicate: Union['BetweenCondition', 'InCondition', 'IsCondition']):
         self.expression = expression
         self.predicate = predicate
 
@@ -157,7 +159,7 @@ class PredicatedExpression(SqlExpr):
 
 
 class InCondition(SqlExpr):
-    def __init__(self, expressions, is_not=False):
+    def __init__(self, expressions: Seq, is_not: bool=False): #TODO: Seq[List[ExpressionType]]
         self.expressions = expressions
         self.is_not = is_not
 
@@ -168,7 +170,7 @@ class InCondition(SqlExpr):
 
 
 class BetweenCondition(SqlExpr):
-    def __init__(self, lower, upper, is_not=False):
+    def __init__(self, lower: ExpressionType, upper: ExpressionType, is_not: bool=False):
         self.lower = lower
         self.upper = upper
         self.is_not = is_not
@@ -179,7 +181,7 @@ class BetweenCondition(SqlExpr):
 
 
 class IsCondition(SqlExpr):
-    def __init__(self, value, is_not=False):
+    def __init__(self, value: Literal, is_not: bool=False):
         self.value = value
         self.is_not = is_not
 
@@ -191,7 +193,12 @@ class IsCondition(SqlExpr):
 class CaseExpression(SqlExpr):
     """A case expression"""
 
-    def __init__(self, expression, when_exprs, else_expr):
+    def __init__(
+        self,
+        expression: Optional[ExpressionType],
+        when_exprs: List['WhenExpression'],
+        else_expr: Optional[ExpressionType],
+        ):
         self.expression = expression
         self.when_exprs = when_exprs
         self.else_expr = else_expr
@@ -215,7 +222,7 @@ class CaseExpression(SqlExpr):
         else:
             return "unknown"
 
-    def sensitivity(self):
+    def sensitivity(self) -> Optional[Union[int, float]]:
         t = [self.else_expr.sensitivity()] if self.else_expr is not None else []
         t = t + [we.sensitivity() for we in self.when_exprs]
         t = [s for s in t if s is not None]
@@ -232,13 +239,13 @@ class CaseExpression(SqlExpr):
             + [Token("END")]
         )
 
-    def evaluate(self, bindings):
-        else_exp = self.else_expr.evaluate(bindings)
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
+        else_exp = self.else_expr.evaluate(bindings) #type: ignore #need to be change in the case of self.else_expr = None
         res = np.repeat(else_exp, len(bindings[list(bindings.keys())[0]]))
         if self.expression is not None:
             # simple search
             for we in self.when_exprs:
-                match = BooleanCompare(self.expression, "=", we.expression).evaluate(bindings)
+                match = BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings)
                 res[match] = we.then.evaluate(bindings)
         else:
             # regular search
@@ -251,23 +258,27 @@ class CaseExpression(SqlExpr):
 class WhenExpression(SqlExpr):
     """A when expression in a case expression"""
 
-    def __init__(self, expression, then):
+    def __init__(
+        self,
+        expression: Union[ExpressionType, BooleanExpressionType], #Follows the grammar rules, but not the parse.py rules
+        then: ExpressionType,#Follows the grammar rules, but not the parse.py rules
+        ):
         self.expression = expression
         self.then = then
 
     def symbol(self, relations):
         return WhenExpression(self.expression.symbol(relations), self.then.symbol(relations))
 
-    def type(self):
+    def type(self) -> str:
         return self.then.type()
 
-    def sensitivity(self):
+    def sensitivity(self) -> Optional[Union[int, float]]:
         return self.then.sensitivity()
 
     def children(self):
         return [Token("WHEN"), self.expression, Token("THEN"), self.then]
 
-    def evaluate(self, bindings):
+    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
         if self.expression.evaluate(bindings):
             return self.then.evaluate(bindings)
         else:
@@ -275,7 +286,7 @@ class WhenExpression(SqlExpr):
 
 
 class ChooseFunction(SqlExpr):
-    def __init__(self, expression, choices):
+    def __init__(self, expression: ExpressionType, choices: Seq): #TODO: Seq[ExpressionType]
         self.expression = expression
         self.choices = choices
 
@@ -302,10 +313,10 @@ class IIFFunction(SqlExpr):
         ]
 
 
-def parse_bool(v):
+def parse_bool(v: Any) -> Union[bool, int, float, str, None]:
     if isinstance(v, bool):
         return v
-    elif isinstance(v, (int, float, np.int)):
+    elif isinstance(v, (int, float, np.int)): #type: ignore
         if float(v) == 0.0:
             return False
         elif float(v) == 1.0:
