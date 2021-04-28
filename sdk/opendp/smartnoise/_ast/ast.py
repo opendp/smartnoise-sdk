@@ -22,7 +22,7 @@ class Batch(Sql):
 class Query(SqlRel):
     """A single query"""
 
-    def __init__(self, select, source, where, agg, having, order, limit) -> None:
+    def __init__(self, select, source, where, agg, having, order, limit, metadata=None) -> None:
         self.select = select
         self.source = source
         self.where = where
@@ -42,6 +42,9 @@ class Query(SqlRel):
 
         self.m_sym_dict = None
         self.m_symbols = None
+
+        if metadata:
+            self.load_symbols(metadata)
 
     def load_symbols(self, metadata):
         symbols = []

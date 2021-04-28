@@ -319,38 +319,26 @@ class ExpressionVisitor(SqlSmallVisitor):
 class CaseExpressionVisitor(SqlSmallVisitor):
     def visitCaseBaseExpr(self, ctx):
         wxp = ctx.whenBaseExpression()
-        whenExpressions = [self.visit(we) for we in wxp] if wxp is not None else None
-        expression = (
-            ExpressionVisitor().visit(ctx.baseCaseExpr) if ctx.baseCaseExpr is not None else None
-        )
+        whenExpressions = [self.visit(we) for we in wxp]
+        expression = ExpressionVisitor().visit(ctx.baseCaseExpr)
         else_expr = ExpressionVisitor().visit(ctx.elseExpr) if ctx.elseExpr is not None else None
         return CaseExpression(expression, whenExpressions, else_expr)
 
     def visitCaseWhenExpr(self, ctx):
         wxp = ctx.whenExpression()
-        whenExpressions = [self.visit(we) for we in wxp] if wxp is not None else None
+        whenExpressions = [self.visit(we) for we in wxp]
         expression = None
         else_expr = ExpressionVisitor().visit(ctx.elseExpr) if ctx.elseExpr is not None else None
         return CaseExpression(expression, whenExpressions, else_expr)
 
     def visitWhenExpression(self, ctx):
-        expression = (
-            BooleanExpressionVisitor().visit(ctx.baseBoolExpr)
-            if ctx.baseBoolExpr is not None
-            else None
-        )
-        thenExpression = (
-            ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
-        )
+        expression = BooleanExpressionVisitor().visit(ctx.baseBoolExpr)
+        thenExpression = ExpressionVisitor().visit(ctx.thenExpr)
         return WhenExpression(expression, thenExpression)
 
     def visitWhenBaseExpression(self, ctx):
-        expression = (
-            ExpressionVisitor().visit(ctx.baseWhenExpr) if ctx.baseWhenExpr is not None else None
-        )
-        thenExpression = (
-            ExpressionVisitor().visit(ctx.thenExpr) if ctx.thenExpr is not None else None
-        )
+        expression = ExpressionVisitor().visit(ctx.baseWhenExpr)
+        thenExpression = ExpressionVisitor().visit(ctx.thenExpr)
         return WhenExpression(expression, thenExpression)
 
 
