@@ -56,7 +56,6 @@ class Query(SqlRel):
         for ne in self.select.namedExpressions:
             if type(ne.expression) is not AllColumns:
                 name = ne.column_name()
-                print(ne)
                 m_symbol = ne.expression.symbol(relations)
                 symbols.append((name, m_symbol))
                 ne.m_symbol = m_symbol
