@@ -3,7 +3,7 @@ from .expression import *
 
 
 """
-    AST for parsed Python Query Batch.  Allows validation, normalization, 
+    AST for parsed Python Query Batch.  Allows validation, normalization,
     rewriting, and serialization.  Grammar is a strict subset of SQL-92.
     Lexer and parser token names borrowed from SparkSQL Grammar.
 """
@@ -53,6 +53,7 @@ class Query(SqlRel):
         for ne in self.select.namedExpressions:
             if type(ne.expression) is not AllColumns:
                 name = ne.column_name()
+                print(ne)
                 m_symbol = ne.expression.symbol(relations)
                 symbols.append((name, m_symbol))
                 ne.m_symbol = m_symbol
