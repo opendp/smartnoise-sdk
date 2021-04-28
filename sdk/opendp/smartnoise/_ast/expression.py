@@ -89,9 +89,9 @@ class NamedExpression(SqlExpr):
             parts = self.expression.name.split(".")
             return parts[0] if len(parts) == 1 else parts[1]
         elif type(self.expression) is AllColumns:
-            return Identifier("???")
+            return "???"
         else:
-            return Identifier("???")
+            return "???"
 
     def type(self):
         return self.expression.type()
