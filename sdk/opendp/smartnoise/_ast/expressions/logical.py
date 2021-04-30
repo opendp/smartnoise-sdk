@@ -38,7 +38,7 @@ class BooleanCompare(SqlExpr):
     def children(self) -> List[Union[ExpressionType, Op]]:
         return [self.left, self.op, self.right]
 
-    def coerce_string(self, val, typed_val):
+    def coerce_string(self, val: str, typed_val: Any) -> Any:
         # SQL-92 rules for casting types in comparison
         if isinstance(typed_val, bool):
             return parse_bool(val)
@@ -57,7 +57,10 @@ class BooleanCompare(SqlExpr):
         else:
             return val
 
-    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
+    def evaluate(
+        self,
+        bindings: Dict[str, Union[int, float, bool, str]]
+        ) -> bool:
         l = self.left.evaluate(bindings)
         r = self.right.evaluate(bindings)
         if type(l) != type(r):
@@ -74,7 +77,7 @@ class BooleanCompare(SqlExpr):
                 )
             )
 
-        return parse_bool(res)
+        return res
 
 
 class ColumnBoolean(SqlExpr):
@@ -95,7 +98,10 @@ class ColumnBoolean(SqlExpr):
     def children(self) -> List[Sql]:
         return [self.expression]
 
-    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
+    def evaluate(
+        self,
+        bindings: Dict[str, Union[int, float, bool, str]]
+        ) -> Union[int, float, bool, str]:
         return parse_bool(self.expression.evaluate(bindings))
 
 
@@ -117,7 +123,10 @@ class NestedBoolean(SqlExpr):
     def children(self) -> List[Union[Token, BooleanExpressionType]]:
         return [Token("("), self.expression, Token(")")]
 
-    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
+    def evaluate(
+        self,
+        bindings: Dict[str, Union[int, float, bool, str]]
+        ) -> Union[int, float, bool, str]:
         return parse_bool(self.expression.evaluate(bindings))
 
 
@@ -139,13 +148,20 @@ class LogicalNot(SqlExpr):
     def children(self):
         return [Token("NOT"), self.expression]
 
-    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
+    def evaluate(
+        self,
+        bindings: Dict[str, Union[int, float, bool, str]]
+        ) -> Union[int, float, bool, str]:
         val = self.expression.evaluate(bindings)
         return not parse_bool(val)
 
 
 class PredicatedExpression(SqlExpr):
-    def __init__(self, expression: ExpressionType, predicate: Union['BetweenCondition', 'InCondition', 'IsCondition']):
+    def __init__(
+        self,
+        expression: ExpressionType,
+        predicate: Union['BetweenCondition', 'InCondition', 'IsCondition']
+        ):
         self.expression = expression
         self.predicate = predicate
 
@@ -210,7 +226,7 @@ class CaseExpression(SqlExpr):
             self.else_expr.symbol(relations) if self.else_expr is not None else None,
         )
 
-    def type(self):
+    def type(self) -> str:
         t = [self.else_expr.type()] if self.else_expr is not None else []
         t = t + [we.type() for we in self.when_exprs]
         if len(unique(t)) == 1:
@@ -260,8 +276,8 @@ class WhenExpression(SqlExpr):
 
     def __init__(
         self,
-        expression: Union[ExpressionType, BooleanExpressionType], #Follows the grammar rules, but not the parse.py rules
-        then: ExpressionType,#Follows the grammar rules, but not the parse.py rules
+        expression: Union[ExpressionType, BooleanExpressionType],
+        then: ExpressionType,
         ):
         self.expression = expression
         self.then = then
@@ -313,10 +329,12 @@ class IIFFunction(SqlExpr):
         ]
 
 
-def parse_bool(v: Any) -> Union[bool, int, float, str, None]:
+def parse_bool(
+    v: Union[bool, int, float, str]
+    ) -> Union[bool, int, float, str]:
     if isinstance(v, bool):
         return v
-    elif isinstance(v, (int, float, np.int)): #type: ignore
+    elif isinstance(v, (int, float)):
         if float(v) == 0.0:
             return False
         elif float(v) == 1.0:
@@ -330,3 +348,4 @@ def parse_bool(v: Any) -> Union[bool, int, float, str, None]:
             return False
         else:
             return v
+    raise TypeError()

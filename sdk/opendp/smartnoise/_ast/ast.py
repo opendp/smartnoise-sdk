@@ -1,3 +1,4 @@
+from opendp.smartnoise.metadata import CollectionMetadata
 from typing import Optional, List, Any, Union
 from .types_ast import BooleanExpressionType #type: ignore
 from .tokens import *
@@ -21,7 +22,6 @@ class Batch(Sql):
 
 class Query(SqlRel):
     """A single query"""
-
     def __init__(
         self,
         select: 'Select',
@@ -31,6 +31,7 @@ class Query(SqlRel):
         having: Optional['Having'],
         order: Optional['Order'],
         limit: Optional['Limit'],
+        metadata: Optional[CollectionMetadata]=None
         ) -> None:
         self.select = select
         self.source = source
@@ -52,7 +53,10 @@ class Query(SqlRel):
         self.m_sym_dict = None
         self.m_symbols = None
 
-    def load_symbols(self, metadata): #type: ignore
+        if metadata:
+            self.load_symbols(metadata)
+
+    def load_symbols(self, metadata):
         symbols = []
         relations = self.source.relations
         for r in relations:

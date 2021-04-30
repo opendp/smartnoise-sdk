@@ -8,9 +8,7 @@ from opendp.smartnoise._ast.ast import (
     Select,
     From,
     Query,
-    AliasedRelation,
     Where,
-    Aggregate,
     Order,
     Literal,
     Column,
@@ -18,13 +16,23 @@ from opendp.smartnoise._ast.ast import (
     AllColumns,
     NamedExpression,
     NestedExpression,
-    Expression,
-    Seq,
     AggFunction,
     MathFunction,
     ArithmeticExpression,
     BooleanCompare,
-    GroupingExpression,
+    FuncName,
+    Op,
+    Identifier,
+    Token,
+    CaseExpression,
+    RankingFunction,
+    OverClause,
+    BareFunction,
+    AliasedSubquery,
+    Relation,
+    SortItem,
+    WhenExpression,
+    Sql,
 )
 
 
@@ -52,10 +60,10 @@ class Rewriter:
         expr = exp.expression
         quant = exp.quantifier
 
-        sum_expr = self.push_sum_or_count(AggFunction("SUM", quant, expr), scope)
-        count_expr = self.push_sum_or_count(AggFunction("COUNT", quant, expr), scope)
+        sum_expr = self.push_sum_or_count(AggFunction(FuncName("SUM"), quant, expr), scope)
+        count_expr = self.push_sum_or_count(AggFunction(FuncName("COUNT"), quant, expr), scope)
 
-        new_exp = NestedExpression(ArithmeticExpression(sum_expr, "/", count_expr))
+        new_exp = NestedExpression(ArithmeticExpression(sum_expr, Op("/"), count_expr))
         return new_exp
 
     def calculate_variance(self, exp, scope):
@@ -66,22 +74,22 @@ class Rewriter:
         quant = exp.quantifier
 
         avg_of_square = self.calculate_avg(
-            AggFunction("AVG", quant, ArithmeticExpression(expr, "*", expr)), scope
+            AggFunction(FuncName("AVG"), quant, ArithmeticExpression(expr, Op("*"), expr)), scope
         )
-        avg = self.calculate_avg(AggFunction("AVG", quant, expr), scope)
-        avg_squared = ArithmeticExpression(avg, "*", avg)
+        avg = self.calculate_avg(AggFunction(FuncName("AVG"), quant, expr), scope)
+        avg_squared = ArithmeticExpression(avg, Op("*"), avg)
 
-        new_exp = ArithmeticExpression(avg_of_square, "-", avg_squared)
+        new_exp = ArithmeticExpression(avg_of_square, Op("-"), avg_squared)
         return new_exp
 
     def calculate_stddev(self, exp, scope):
         """
             Calculate the standard deviation from the variance
         """
-        expr = AggFunction("STD", exp.quantifier, exp.expression)
+        expr = AggFunction(FuncName("STD"), exp.quantifier, exp.expression)
         var_expr = self.calculate_variance(expr, scope)
 
-        new_exp = MathFunction("SQRT", var_expr)
+        new_exp = MathFunction(FuncName("SQRT"), var_expr)
         return new_exp
 
     def push_sum_or_count(self, exp, scope):
@@ -94,44 +102,57 @@ class Rewriter:
         new_exp = Column(new_name)
         return new_exp
 
-    def rewrite_outer_named_expression(self, ne, scope):
+    def rewrite_agg_expression(self, agg_exp, scope):
         """
             rewrite AVG, VAR, etc. and push all sum or count
-            to child scope, preserving all other portions of
-            expression
+            to child scope
+        """
+        child_agg_exps = agg_exp.find_nodes(AggFunction)
+        if len(child_agg_exps) > 0:
+            raise ValueError("Cannot have nested aggregate functions: " + str(agg_exp))
+
+        agg_func = agg_exp.name
+        if agg_func in ["SUM", "COUNT"]:
+            new_exp = self.push_sum_or_count(agg_exp, scope)
+        elif agg_func == "AVG":
+            new_exp = self.calculate_avg(agg_exp, scope)
+        elif agg_func in ["VAR", "VARIANCE"]:
+            new_exp = self.calculate_variance(agg_exp, scope)
+        elif agg_func in ["STD", "STDDEV"]:
+            new_exp =  self.calculate_stddev(agg_exp, scope)
+        else:
+            raise ValueError("We don't know how to rewrite aggregate function: " + str(agg_exp))
+        return NestedExpression(new_exp)
+
+    def rewrite_outer_named_expression(self, ne, scope):
+        """
+            look for all the agg functions and rewrite them,
+            preserving all other portions of expression
         """
         name = ne.name
         exp = ne.expression
-        if type(exp) is not AggFunction:
-            outer_col_exps = exp.find_nodes(Column, AggFunction)
-        else:
-            outer_col_exps = []
+
         if type(exp) is Column:
-            outer_col_exps += [exp]
-        for outer_col_exp in outer_col_exps:
-            new_name = scope.push_name(Column(outer_col_exp.name))
-            outer_col_exp.name = new_name
-        agg_exps = exp.find_nodes(AggFunction)
-        if type(exp) is AggFunction:
-            agg_exps = agg_exps + [exp]
-        for agg_exp in agg_exps:
-            child_agg_exps = agg_exp.find_nodes(AggFunction)
-            if len(child_agg_exps) > 0:
-                raise ValueError("Cannot have nested aggregate functions: " + str(agg_exp))
-            agg_func = agg_exp.name
-            if agg_func in ["SUM", "COUNT"]:
-                new_exp = self.push_sum_or_count(agg_exp, scope)
-            elif agg_func == "AVG":
-                new_exp = self.calculate_avg(agg_exp, scope)
-            elif agg_func in ["VAR", "VARIANCE"]:
-                new_exp = self.calculate_variance(agg_exp, scope)
-            elif agg_func in ["STD", "STDDEV"]:
-                new_exp = self.calculate_stddev(agg_exp, scope)
-            else:
-                raise ValueError("We don't know how to rewrite aggregate function: " + str(agg_exp))
-            agg_exp.name = ""
-            agg_exp.quantifier = None
-            agg_exp.expression = new_exp
+            new_name = scope.push_name(Column(exp.name))
+            exp.name = new_name
+
+        elif type(exp) is AggFunction:
+            exp = self.rewrite_agg_expression(exp, scope)
+
+        else:
+            for outer_col_exp in exp.find_nodes(Column, AggFunction):
+                new_name = scope.push_name(Column(outer_col_exp.name))
+                outer_col_exp.name = new_name
+
+            def replace_agg_exprs(expr):
+                for child_name, child_expr in expr.__dict__.items():
+                    if isinstance(child_expr, Sql):
+                        replace_agg_exprs(child_expr)
+                    if isinstance(child_expr, AggFunction):
+                        expr.__dict__[child_name] = self.rewrite_agg_expression(child_expr, scope)
+
+            replace_agg_exprs(exp)
+
         return NamedExpression(name, exp)
 
     def query(self, query):
@@ -144,40 +165,36 @@ class Rewriter:
             for ge in query.agg.groupingExpressions:
                 child_scope.push_name(ge.expression)
 
-        select = Seq(
-            [
+        select = [
                 self.rewrite_outer_named_expression(ne, child_scope)
                 for ne in query.select.namedExpressions
             ]
-        )
+
         select = Select(query.select.quantifier, select)
 
         subquery = Query(
             child_scope.select(), query.source, query.where, query.agg, None, None, None
         )
         subquery = self.exact_aggregates(subquery)
-        subquery = [AliasedRelation(subquery, "exact_aggregates")]
-
-        q = Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit)
-
-        return QueryParser(self.metadata).query(str(q))
+        subquery = [Relation(AliasedSubquery(subquery, Identifier("exact_aggregates")), None)]
+        return Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit, metadata=self.metadata)
 
     def exact_aggregates(self, query):
         child_scope = Scope()
 
         if self.options.row_privacy:
-            keycount_expr = AggFunction("COUNT", None, AllColumns())
+            keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
         else:
             key_col = self.key_col(query)
-            keycount_expr = AggFunction("COUNT", "DISTINCT", Column(key_col))
+            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
             child_scope.push_name(keycount_expr.expression)
 
         for ne in query.select.namedExpressions:
             child_scope.push_name(ne.expression)
 
-        keycount = NamedExpression("keycount", keycount_expr)
+        keycount = NamedExpression(Identifier("keycount"), keycount_expr)
 
-        select = Seq([keycount] + [ne for ne in query.select.namedExpressions])
+        select = [keycount] + [ne for ne in query.select.namedExpressions]
         select = Select(None, select)
 
         subquery = Query(
@@ -185,40 +202,43 @@ class Rewriter:
         )
         if self.options.reservoir_sample and not self.options.row_privacy:
             subquery = self.per_key_random(subquery)
-            subquery = [AliasedRelation(subquery, "per_key_random")]
+            subquery = [Relation(AliasedSubquery(subquery, Identifier("per_key_random")), None)]
 
             filtered = Where(
                 BooleanCompare(
                     Column("per_key_random.row_num"),
-                    "<=",
+                    Op("<="),
                     Literal(str(self.options.max_contrib), self.options.max_contrib),
                 )
             )
             return Query(select, From(subquery), filtered, query.agg, None, None, None)
         else:
             subquery = self.per_key_clamped(subquery)
-            subquery = [AliasedRelation(subquery, "per_key_all")]
+            subquery = [Relation(AliasedSubquery(subquery, Identifier("per_key_all")), None)]
             return Query(select, From(subquery), None, query.agg, None, None, None)
 
     def per_key_random(self, query):
         key_col = self.key_col(query)
 
-        select = Seq(
-            [
+        select = [
                 NamedExpression(None, AllColumns()),
                 NamedExpression(
-                    "row_num",
-                    Expression(
-                        "ROW_NUMBER() OVER (PARTITION BY {0} ORDER BY random())".format(key_col)
+                    Identifier("row_num"),
+                    RankingFunction(FuncName("ROW_NUMBER"),
+                                    OverClause(
+                                        Column(key_col),
+                                        Order([
+                                            SortItem(BareFunction(FuncName("RANDOM")), None)
+                                            ])
+                                    ),
                     ),
                 ),
             ]
-        )
         select = Select(None, select)
 
         subquery = self.per_key_clamped(query)
         subquery = [
-            AliasedRelation(subquery, "clamped" if self.options.clamp_columns else "not_clamped")
+            Relation(AliasedSubquery(subquery, Identifier("clamped" if self.options.clamp_columns else "not_clamped")), None)
         ]
 
         return Query(select, From(subquery), None, None, None, None, None)
@@ -226,12 +246,10 @@ class Rewriter:
     def per_key_clamped(self, query):
         child_scope = Scope()
         relations = query.source.relations
-        select = Seq(
-            [
+        select = [
                 self.clamp_expression(ne, relations, child_scope, self.options.clamp_columns)
                 for ne in query.select.namedExpressions
             ]
-        )
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
         return subquery
@@ -257,10 +275,13 @@ class Rewriter:
                     cexpr = Column(colname)
                     ce_name = scope.push_name(cexpr, str(colname))
                 else:
-                    clamped_string = "CASE WHEN {0} < {1} THEN {1} WHEN {0} > {2} THEN {2} ELSE {0} END".format(
-                        str(colname), minval, maxval
-                    )
-                    cexpr = Expression(clamped_string)
+                    when_min = WhenExpression(
+                        BooleanCompare(col, Op("<"), Literal(minval)), Literal(minval)
+                        )
+                    when_max = WhenExpression(
+                        BooleanCompare(col, Op(">"), Literal(maxval)), Literal(maxval)
+                        )
+                    cexpr = CaseExpression(None, [when_min, when_max], col)
                     ce_name = scope.push_name(cexpr, str(colname))
             else:
                 cexpr = Column(colname)
@@ -301,7 +322,7 @@ class Scope:
     def select(self, quantifier=None):
         return Select(
             quantifier,
-            [NamedExpression(name, self.expressions[name]) for name in self.expressions.keys()],
+            [NamedExpression(Identifier(str(name)), self.expressions[name]) for name in self.expressions.keys()],
         )
 
     def push_name(self, expression, proposed=None):
