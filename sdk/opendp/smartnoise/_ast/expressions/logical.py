@@ -294,7 +294,10 @@ class WhenExpression(SqlExpr):
     def children(self):
         return [Token("WHEN"), self.expression, Token("THEN"), self.then]
 
-    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
+    def evaluate(
+        self,
+        bindings: Dict[str, Union[int, float, bool, str]]
+        ) -> Union[int, float, bool, str, None]:
         if self.expression.evaluate(bindings):
             return self.then.evaluate(bindings)
         else:

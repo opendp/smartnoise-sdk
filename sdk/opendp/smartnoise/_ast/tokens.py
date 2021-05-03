@@ -1,6 +1,7 @@
 import itertools
 from typing import Generic, Union, List, Any, Optional, Dict, Iterator, Tuple
 
+
 class Token(str):
     def __init__(self, text: str):
         self.text = text
@@ -13,7 +14,9 @@ class Token(str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
 
-    def children(self) -> List[None]:
+    def children(
+        self,
+        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
         return [None]
 
     def __hash__(self) -> int:
@@ -32,7 +35,9 @@ class Op(str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
 
-    def children(self) -> List[None]:
+    def children(
+        self,
+        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
         return [None]
 
     def __hash__(self) -> int:
@@ -51,7 +56,9 @@ class Identifier(str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
 
-    def children(self) -> List[None]:
+    def children(
+        self,
+        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
         return [None]
 
     def __hash__(self) -> int:
@@ -70,7 +77,9 @@ class FuncName(str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
 
-    def children(self) -> List[None]:
+    def children(
+        self,
+        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
         return [None]
 
     def __hash__(self) -> int:
@@ -97,7 +106,9 @@ class Sql:
     def __hash__(self) -> int:
         return hash(tuple(self.children()))
 
-    def children(self): # type: ignore
+    def children(
+        self,
+        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
         return []
 
     def find_node(self, type_name: Any) -> Union[None, Token, Op, Identifier, FuncName, 'Sql']:
@@ -203,7 +214,9 @@ class Seq(Sql):
     def __iter__(self) -> Iterator[Sql]:
         return iter(self.seq)
 
-    def children(self) -> List[Sql]:
+    def children(
+        self,
+        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
         return self.seq
 
     def symbol(self, relations): # type: ignore
@@ -291,7 +304,9 @@ class SqlExpr(Sql):
     def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Optional[Union[int, float, bool, str]]:
         raise ValueError("We don't know how to evaluate " + str(self))
 
-    def children(self):# -> List[Union[Token, Op, Identifier, FuncName, Sql, None]]:
+    def children(
+        self,
+        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
         return [None]
 
     def symbol(self, relations):
