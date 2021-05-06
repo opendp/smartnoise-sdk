@@ -26,8 +26,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
 
         From the paper:
-        "[MWEM is] a broadly applicable, simple, and easy-to-implement algorithm, capable of
-        substantially improving the performance of linear queries on many realistic datasets...
+        "[MWEM is] a broadly applicable, simple, and easy-to-implement 
+        algorithm, capable of substantially improving the performance of 
+        linear queries on many realistic datasets...
         (circa 2012)...MWEM matches the best known and nearly
         optimal theoretical accuracy guarantees for differentially private
         data analysis with linear queries."
@@ -36,28 +37,39 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         random contiguous slices of the n-dimensional numpy array.
 
         :param q_count: Number of random queries in the pool to generate. 
-            Must be more than # of iterations, recommended ~10-15x iterations, defaults to 400
+            Must be more than # of iterations, recommended ~10-15x iterations, 
+            defaults to 400
         :type q_count: int, optional
         :param epsilon: Privacy epsilon for DP, defaults to 3.0
         :type epsilon: float, optional
         :param iterations: Number of iterations of MWEM, defaults to 30
         :type iterations: int, optional
-        :param mult_weights_iterations: Number of iterations of MW, per iteration of MWEM, defaults to 20
+        :param mult_weights_iterations: Number of iterations of MW, per 
+            iteration of MWEM, defaults to 20
         :type mult_weights_iterations: int, optional
-        :param splits: Allows you to specify feature dependence when creating internal histograms. 
-            Columns that are known to be dependent can be kept together. Example: splits=[[0,1],[2,3]] where 
-            columns 0 and 1 are dependent, columns 2 and 3 are dependent, and between groupings there is independence, defaults to []
+        :param splits: Allows you to specify feature dependence when creating 
+            internal histograms. 
+            Columns that are known to be dependent can be kept together. 
+            Example: splits=[[0,1],[2,3]] where 
+            columns 0 and 1 are dependent, columns 2 and 3 are dependent, 
+            and between groupings there is independence, defaults to []
         :type splits: list, optional
-        :param split_factor: If splits not specified, can instead subdivide pseudo-randomly. For example, split_factor=3 
-            will make groupings of features of size 3 for the histograms. Note: this will likely make synthetic data worse.
+        :param split_factor: If splits not specified, can instead subdivide 
+            pseudo-randomly. For example, split_factor=3 
+            will make groupings of features of size 3 for the histograms. 
+            Note: this will likely make synthetic data worse.
             defaults to None
         :type split_factor: int, optional
-        :param max_bin_count: MWEM is not good at continuous features, and is not purpose built for the feature. We can, however,
-            fudge it by turning a continuous feature into a discrete feature with artificial binning. This is the maximum number
-            of bins that MWEM will create. More bins leads to a huge slow down in MWEM due to dimensionality exploding the histogram
+        :param max_bin_count: MWEM is not good at continuous features, and 
+            is not purpose built for the feature. We can, however,
+            fudge it by turning a continuous feature into a discrete feature with 
+            artificial binning. This is the maximum number
+            of bins that MWEM will create. More bins leads to a huge slow down in 
+            MWEM due to dimensionality exploding the histogram
             size. Note, defaults to 500
         :type max_bin_count: int, optional
-        :param custom_bin_count: If you have a specific bin assignment for continuous features (i.e. column 3 -> 20 bins), specify it with 
+        :param custom_bin_count: If you have a specific bin assignment for 
+            continuous features (i.e. column 3 -> 20 bins), specify it with 
             a dict here, defaults to {}
         :type custom_bin_count: dict, optional
         """
@@ -181,7 +193,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         multiplicative weights. Draws from the initialized query store
         for measurements.
 
-        :return: synth_hist, self.histogram - synth_hist is the synthetic data histogram,
+        :return: synth_hist, self.histogram - synth_hist is the 
+            synthetic data histogram,
                  self.histogram is original histo
         :rtype: np.ndarray, np.ndarray
         """

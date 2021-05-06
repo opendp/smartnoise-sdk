@@ -31,17 +31,21 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
 
         :param epsilon: Total epsilon used across the DP Synthesizer and DP Classifier
         :type epsilon: float
-        :param dp_synthesizer: A function that returns an instance of a DP Synthesizer for a specified epsilon value
+        :param dp_synthesizer: A function that returns an instance of a DP Synthesizer 
+            for a specified epsilon value
         :type dp_synthesizer: function (epsilon) -> SDGYMBaseSynthesizer
-        :param dp_classifier: A function that returns an instance of a DP Classifier for a specified epsilon value
+        :param dp_classifier: A function that returns an instance of a DP Classifier 
+            for a specified epsilon value
         :type dp_classifier: function (epsilon) -> classifier
         :param target: The column name of the target column
         :type target: str
-        :param test_size: Percent of the data that should be used for the test set, defaults to 0.2
+        :param test_size: Percent of the data that should be used for the test set, 
+            defaults to 0.2
         :type test_size: float, optional
         :param seed: Seed for controlling randomness for testing, defaults to None
         :type seed: int, optional
-        :param eps_split: Percent of epsilon used for the classifier. 1 - eps_split is used for the Synthesizer., defaults to 0.9
+        :param eps_split: Percent of epsilon used for the classifier. 
+            1 - eps_split is used for the Synthesizer., defaults to 0.9
         :type eps_split: float, optional
         """
         self.epsilon = epsilon
