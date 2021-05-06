@@ -84,9 +84,6 @@ def _custom_create_or_extend_grad_sample(
 
 
 class DPCTGAN(CTGANSynthesizer):
-    """Differential Private Conditional Table GAN Synthesizer
-    This code adds Differential Privacy to CTGANSynthesizer from https://github.com/sdv-dev/CTGAN
-    """
 
     def __init__(
         self,
@@ -106,6 +103,9 @@ class DPCTGAN(CTGANSynthesizer):
         verbose=True,
         loss="cross_entropy",
     ):
+    """Differential Private Conditional Table GAN Synthesizer
+    This code adds Differential Privacy to CTGANSynthesizer from https://github.com/sdv-dev/CTGAN
+    """
 
         # CTGAN model specific parameters
         self.embedding_dim = embedding_dim
