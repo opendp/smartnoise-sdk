@@ -11,7 +11,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
     def __init__(self, epsilon, gan, preprocessor=None):
         """
         Wrapper class to unify pytorch GAN architectures with the SDGYM API.
-        
+
         :param epsilon: Total epsilon used for the DP Synthesizer
         :type epsilon: float
         :param gan: A pytorch defined GAN
