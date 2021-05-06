@@ -10,6 +10,8 @@ def weights_init(m):
 
 
 def pate(data, teachers, lap_scale, device="cpu"):
+    """PATE implementation for GANs.
+    """
     num_teachers = len(teachers)
     labels = torch.Tensor(num_teachers, data.shape[0]).type(torch.int64).to(device)
     for i in range(num_teachers):

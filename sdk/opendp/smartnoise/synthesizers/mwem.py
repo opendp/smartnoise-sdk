@@ -9,20 +9,6 @@ from opendp.smartnoise.synthesizers.base import SDGYMBaseSynthesizer
 
 
 class MWEMSynthesizer(SDGYMBaseSynthesizer):
-    """
-    N-Dimensional numpy implementation of MWEM.
-    (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
-
-    From the paper:
-    "[MWEM is] a broadly applicable, simple, and easy-to-implement algorithm, capable of
-    substantially improving the performance of linear queries on many realistic datasets...
-    (circa 2012)...MWEM matches the best known and nearly
-    optimal theoretical accuracy guarantees for differentially private
-    data analysis with linear queries."
-
-    Linear queries used for sampling in this implementation are
-    random contiguous slices of the n-dimensional numpy array.
-    """
 
     def __init__(
         self,
@@ -35,6 +21,58 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         max_bin_count=500,
         custom_bin_count={},
     ):
+        """
+         N-Dimensional numpy implementation of MWEM.
+        (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
+
+        From the paper:
+        "[MWEM is] a broadly applicable, simple, and easy-to-implement
+        algorithm, capable of substantially improving the performance of
+        linear queries on many realistic datasets...
+        (circa 2012)...MWEM matches the best known and nearly
+        optimal theoretical accuracy guarantees for differentially private
+        data analysis with linear queries."
+
+        Linear queries used for sampling in this implementation are
+        random contiguous slices of the n-dimensional numpy array.
+
+        :param q_count: Number of random queries in the pool to generate.
+            Must be more than # of iterations, recommended ~10-15x iterations,
+            defaults to 400
+        :type q_count: int, optional
+        :param epsilon: Privacy epsilon for DP, defaults to 3.0
+        :type epsilon: float, optional
+        :param iterations: Number of iterations of MWEM, defaults to 30
+        :type iterations: int, optional
+        :param mult_weights_iterations: Number of iterations of MW, per
+            iteration of MWEM, defaults to 20
+        :type mult_weights_iterations: int, optional
+        :param splits: Allows you to specify feature dependence when creating
+            internal histograms.
+            Columns that are known to be dependent can be kept together.
+            Example: splits=[[0,1],[2,3]] where
+            columns 0 and 1 are dependent, columns 2 and 3 are dependent,
+            and between groupings there is independence, defaults to []
+        :type splits: list, optional
+        :param split_factor: If splits not specified, can instead subdivide
+            pseudo-randomly. For example, split_factor=3
+            will make groupings of features of size 3 for the histograms.
+            Note: this will likely make synthetic data worse.
+            defaults to None
+        :type split_factor: int, optional
+        :param max_bin_count: MWEM is not good at continuous features, and
+            is not purpose built for the feature. We can, however,
+            fudge it by turning a continuous feature into a discrete feature with
+            artificial binning. This is the maximum number
+            of bins that MWEM will create. More bins leads to a huge slow down in
+            MWEM due to dimensionality exploding the histogram
+            size. Note, defaults to 500
+        :type max_bin_count: int, optional
+        :param custom_bin_count: If you have a specific bin assignment for
+            continuous features (i.e. column 3 -> 20 bins), specify it with
+            a dict here, defaults to {}
+        :type custom_bin_count: dict, optional
+        """
         self.q_count = q_count
         self.epsilon = epsilon
         self.iterations = iterations
@@ -62,6 +100,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         Creates a synthetic histogram distribution, based on the original data.
         Follows sdgym schema to be compatible with their benchmark system.
+
         :param data: Dataset to use as basis for synthetic data
         :type data: np.ndarray
         :return: synthetic data, real data histograms
@@ -103,6 +142,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         We have essentially created len(splits) DP histograms as
         if they are separate databases, and combine the results into
         a single sample.
+
         :param samples: Number of samples to generate
         :type samples: int
         :return: N samples
@@ -152,7 +192,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for self.iterations using the exponential mechanism and
         multiplicative weights. Draws from the initialized query store
         for measurements.
-        :return: synth_hist, self.histogram - synth_hist is the synthetic data histogram,
+
+        :return: synth_hist, self.histogram - synth_hist is the
+            synthetic data histogram,
                  self.histogram is original histo
         :rtype: np.ndarray, np.ndarray
         """
@@ -212,6 +254,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         Initializes a uniform distribution histogram from
         the given histogram with dimensions
+
         :param histogram: Reference histogram
         :type histogram: np.ndarray
         :param dimensions: Reference dimensions
@@ -232,6 +275,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def _histogram_from_data_attributes(self, data, splits=[]):
         """
         Create a histogram from given data
+
         :param data: Reference histogram
         :type data: np.ndarray
         :return: Histogram over given data, dimensions,
@@ -290,6 +334,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         Refer to paper for in depth description of
         Exponential Mechanism.
         Parametrized with epsilon value epsilon/(2 * iterations)
+
         :param hist: Basis histogram
         :type hist: np.ndarray
         :param synth_hist: Synthetic histogram
@@ -358,6 +403,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         We want to return a list of length num_s, containing
         random slice objects, given the dimensions
         These are our linear queries
+
         :param num_s: Number of queries (slices) to generate
         :type num_s: int
         :param dimensions: Dimensions of histogram to be sliced
@@ -393,6 +439,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def _evaluate(self, a_slice, data):
         """
         Evaluate a count query i.e. an arbitrary slice
+
         :param a_slice: Random slice within bounds of flattened data length
         :type a_slice: np.s_
         :param data: Data to evaluate from (synthetic dset)
@@ -415,6 +462,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         We want to create a binary copy of the data,
         so that we can easily perform our error multiplication
         in MW. Convenience function.
+
         :param data: Data
         :type data: np.ndarray
         :param a_slice: Slice
@@ -442,6 +490,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 [ 7  9 10  6  8 11]]
 
         reorder = [3 0 4 1 2 5]
+
         :param splits: 2d list with splits (column indices)
         :type splits: array of arrays
         :return: 2d list with splits (column indices)
@@ -458,6 +507,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         If user specifies, do the work and figure out how to divide the dimensions
         into even splits to speed up MWEM
         Last split will contain leftovers <= sizeof(factor)
+
         :param n_dim: Total # of dimensions
         :type n_dim: int
         :param factor: Desired size of the splits
@@ -480,6 +530,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def _laplace(self, sigma):
         """
         Laplace mechanism
+
         :param sigma: Laplace scale param sigma
         :type sigma: float
         :return: Random value from laplace distribution [-1,1]
