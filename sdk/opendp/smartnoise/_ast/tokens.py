@@ -93,7 +93,7 @@ class Sql:
             return all([s == o for s, o in zip(self.children(), other.children())])
 
     def symbol_name(self):
-        return str(hex(hash(self) % (2 ** 16)))
+        return f"alias_{hex(hash(self) % (2 ** 16))}"
 
     def __hash__(self):
         return hash(tuple(self.children()))

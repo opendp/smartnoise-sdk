@@ -85,7 +85,7 @@ class ColumnBoolean(SqlExpr):
         return ColumnBoolean(self.expression.symbol(relations))
 
     def type(self):
-        return bool
+        return "boolean"
 
     def sensitivity(self):
         return 1
@@ -238,7 +238,7 @@ class CaseExpression(SqlExpr):
         if self.expression is not None:
             # simple search
             for we in self.when_exprs:
-                match = BooleanCompare(self.expression, "=", we.expression).evaluate(bindings)
+                match = BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings)
                 res[match] = we.then.evaluate(bindings)
         else:
             # regular search
