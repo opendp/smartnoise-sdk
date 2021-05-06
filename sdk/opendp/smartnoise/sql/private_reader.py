@@ -27,7 +27,7 @@ class PrivateReader(Reader):
         self,
         reader,
         metadata,
-        epsilon_per_column=1.0,
+        epsilon_per_column,
         delta=10e-16,
         interval_widths=None,
         options=None,
@@ -156,7 +156,7 @@ class PrivateReader(Reader):
             and isinstance(self.reader, PandasReader)
         ):
             query = str(query_ast)
-            dpsu_df = run_dpsu(self.metadata, self.reader.df, query, eps=1.0)
+            dpsu_df = run_dpsu(self.metadata, self.reader.df, query, epsilon=1.0)
             return PandasReader(dpsu_df, self.metadata)
         else:
             return self.reader

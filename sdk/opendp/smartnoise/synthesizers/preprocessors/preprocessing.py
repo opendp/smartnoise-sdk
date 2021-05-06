@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
+def _get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
     """Generates metadata about the data
 
     :param data: data
@@ -44,7 +44,7 @@ class GeneralTransformer:
         self.eps = eps
 
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
-        self.meta = get_metadata(data, categorical_columns, ordinal_columns)
+        self.meta = _get_metadata(data, categorical_columns, ordinal_columns)
         model = []
 
         self.output_info = []

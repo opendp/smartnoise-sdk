@@ -9,10 +9,10 @@ from opendp.smartnoise.metadata import CollectionMetadata
 from diffprivlib.models import LogisticRegression as DPLR
 
 try:
-    from opendp.smartnoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-    from opendp.smartnoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.smartnoise.synthesizers.preprocessors import GeneralTransformer
+    from opendp.smartnoise.synthesizers.pytorch import PytorchDPSynthesizer
     from opendp.smartnoise.synthesizers.pytorch.nn import PATECTGAN
-    from opendp.smartnoise.synthesizers.quail import QUAILSynthesizer
+    from opendp.smartnoise.synthesizers import QUAILSynthesizer
 
 except:
     import logging
@@ -32,11 +32,11 @@ df = pd.read_csv(csv_path)
 class TestQUAIL:
     def setup(self):
         def QuailClassifier(epsilon):
-            return DPLR(epsilon=epsilon)
+            return DPLR(epsilon)
 
         def QuailSynth(epsilon):
             return PytorchDPSynthesizer(preprocessor=None,
-                            gan=PATECTGAN(loss='cross_entropy', batch_size=50, pack=1, sigma=5.0))
+                            gan=PATECTGAN(epsilon, loss='cross_entropy', batch_size=50, pack=1, sigma=5.0))
 
         self.quail = QUAILSynthesizer(3.0, QuailSynth, QuailClassifier, 'married')
 

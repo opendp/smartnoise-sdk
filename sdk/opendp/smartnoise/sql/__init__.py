@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 
-def execute_private_query(reader, schema, budget, query):
+def execute_private_query(reader, schema, epsilon, query):
     if not isinstance(reader, SqlReader):
         warnings.warn(
             "[reader] API has changed to pass (reader, metadata). Please update code to pass reader first and metadata second. This will be a breaking change in future versions.",
@@ -36,5 +36,5 @@ def execute_private_query(reader, schema, budget, query):
         reader = tmp
     schema = reader.metadata if hasattr(reader, "metadata") else schema
     query = reader._sanitize_query(query) if hasattr(reader, "_sanitize_query") else query
-    rowset = PrivateReader(reader, schema, budget).execute(query)
+    rowset = PrivateReader(reader, schema, epsilon).execute(query)
     return pd.DataFrame(rowset[1:], columns=rowset[0])

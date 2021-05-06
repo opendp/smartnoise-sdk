@@ -2,6 +2,8 @@ import math
 import random
 import warnings
 
+from functools import wraps
+
 import numpy as np
 import pandas as pd
 
@@ -12,8 +14,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
     def __init__(
         self,
+        epsilon,
         q_count=400,
-        epsilon=3.0,
         iterations=30,
         mult_weights_iterations=20,
         splits=[],
@@ -73,8 +75,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             a dict here, defaults to {}
         :type custom_bin_count: dict, optional
         """
-        self.q_count = q_count
         self.epsilon = epsilon
+        self.q_count = q_count
         self.iterations = iterations
         self.mult_weights_iterations = mult_weights_iterations
         self.synthetic_data = None
@@ -96,9 +98,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.q_values = None
         self.max_retries_exp_mechanism = 50
 
+    @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
         """
-        Creates a synthetic histogram distribution, based on the original data.
         Follows sdgym schema to be compatible with their benchmark system.
 
         :param data: Dataset to use as basis for synthetic data
@@ -133,6 +135,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
 
+    @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, samples):
         """
         Creates samples from the histogram data.

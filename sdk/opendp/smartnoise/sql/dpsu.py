@@ -30,12 +30,12 @@ def preprocess_df_from_query(schema, df, query_string):
     return preprocessed_df
 
 
-def policy_laplace(df, eps, delta, max_contrib):
+def policy_laplace(df, epsilon, delta, max_contrib):
     """
     Differentially Private Set Union: https://arxiv.org/abs/2002.09745
 
     Given a database of n users, each with a subset of items,
-    (eps, delta)-differentially private algorithm that outputs the largest possible set of the
+    (epsilon, delta)-differentially private algorithm that outputs the largest possible set of the
     the union of these items.
 
     Parameters
@@ -45,7 +45,7 @@ def policy_laplace(df, eps, delta, max_contrib):
     epsilon/delta: privacy parameters
     """
     alpha = 3.0
-    lambd = 1 / eps
+    lambd = 1 / epsilon
     rho = [
         1 / i + lambd * math.log(1 / (2 * (1 - (1 - delta) ** (1 / i))))
         for i in range(1, max_contrib + 1)
@@ -105,10 +105,10 @@ def policy_laplace(df, eps, delta, max_contrib):
     return df
 
 
-def run_dpsu(schema, input_df, query, eps, delta=math.exp(-10), max_contrib=5):
+def run_dpsu(schema, input_df, query, epsilon, delta=math.exp(-10), max_contrib=5):
     preprocessed_df = preprocess_df_from_query(schema, input_df, query)
 
-    dpsu_df = policy_laplace(preprocessed_df, eps, delta, max_contrib)
+    dpsu_df = policy_laplace(preprocessed_df, epsilon, delta, max_contrib)
 
     output_df = pd.merge(input_df, dpsu_df, on=dpsu_df.columns[0])
     output_df.drop(["group_cols", "hash"], axis=1, inplace=True)
