@@ -103,9 +103,9 @@ class DPCTGAN(CTGANSynthesizer):
         verbose=True,
         loss="cross_entropy",
     ):
-    """Differential Private Conditional Table GAN Synthesizer
-    This code adds Differential Privacy to CTGANSynthesizer from https://github.com/sdv-dev/CTGAN
-    """
+        """Differential Private Conditional Table GAN Synthesizer
+        This code adds Differential Privacy to CTGANSynthesizer from https://github.com/sdv-dev/CTGAN
+        """
 
         # CTGAN model specific parameters
         self.embedding_dim = embedding_dim
