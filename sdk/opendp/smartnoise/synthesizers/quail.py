@@ -12,47 +12,42 @@ logger = logging.getLogger(__name__)
 
 
 class QUAILSynthesizer(SDGYMBaseSynthesizer):
-    """Quailified Architecture to Improve Labeling.
-
-    Divide epsilon in a known classification task
-    between a differentially private synthesizer and
-    classifier. Train DP classifier on real, fit DP synthesizer
-    to features (excluding the target label),
-    and use synthetic data from the DP synthesizer with
-    the DP classifier to create artificial labels. Produces
-    complete synthetic data.
-
-    More information here:
-    Differentially Private Synthetic Data: Applied Evaluations and Enhancements
-    https://arxiv.org/abs/2011.05537
-
-    Parameters
-    ----------
-    epsilon : float
-        Total epsilon used across the DP Synthesizer and DP Classifier
-
-    dp_synthesizer : function (epsilon) -> SDGYMBaseSynthesizer
-        A function that returns an instance of a DP Synthesizer for a specified epsilon value
-
-    dp_classifier : function (epsilon) -> classifier
-        A function that returns an instance of a DP Classifier for a specified epsilon value
-
-    target : str
-        The column name of the target column
-
-    test_size : float
-        Percent of the data that should be used for the test set
-
-    seed : int
-        Seed for controlling randomness for testing
-
-    eps_split : float
-        Percent of epsilon used for the classifier. 1 - eps_split is used for the Synthesizer.
-    """
-
     def __init__(
         self, epsilon, dp_synthesizer, dp_classifier, target, test_size=0.2, seed=None, eps_split=0.9
     ):
+        """
+        Quailified Architecture to Improve Labeling.
+        Divide epsilon in a known classification task
+        between a differentially private synthesizer and
+        classifier. Train DP classifier on real, fit DP synthesizer
+        to features (excluding the target label),
+        and use synthetic data from the DP synthesizer with
+        the DP classifier to create artificial labels. Produces
+        complete synthetic data.
+
+        More information here:
+        Differentially Private Synthetic Data: Applied Evaluations and Enhancements
+        https://arxiv.org/abs/2011.05537
+
+        :param epsilon: Total epsilon used across the DP Synthesizer and DP Classifier
+        :type epsilon: float
+        :param dp_synthesizer: A function that returns an instance of a DP Synthesizer
+            for a specified epsilon value
+        :type dp_synthesizer: function (epsilon) -> SDGYMBaseSynthesizer
+        :param dp_classifier: A function that returns an instance of a DP Classifier
+            for a specified epsilon value
+        :type dp_classifier: function (epsilon) -> classifier
+        :param target: The column name of the target column
+        :type target: str
+        :param test_size: Percent of the data that should be used for the test set,
+            defaults to 0.2
+        :type test_size: float, optional
+        :param seed: Seed for controlling randomness for testing, defaults to None
+        :type seed: int, optional
+        :param eps_split: Percent of epsilon used for the classifier.
+            1 - eps_split is used for the Synthesizer., defaults to 0.9
+        :type eps_split: float, optional
+        """
         self.epsilon = epsilon
         self.eps_split = eps_split
         self.dp_synthesizer = dp_synthesizer

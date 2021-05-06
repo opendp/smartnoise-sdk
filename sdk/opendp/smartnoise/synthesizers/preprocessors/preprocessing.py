@@ -3,6 +3,17 @@ import numpy as np
 
 
 def _get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
+    """Generates metadata about the data
+
+    :param data: data
+    :type data: pd.Dataframe
+    :param categorical_columns: categorical columns for the data, defaults to tuple()
+    :type categorical_columns: list or tuple, optional
+    :param ordinal_columns: ordinal columns for the data, defaults to tuple()
+    :type ordinal_columns: list or tuple, optional
+    :return: meta data list
+    :rtype: list[dict]
+    """
     meta = []
 
     df = pd.DataFrame(data)

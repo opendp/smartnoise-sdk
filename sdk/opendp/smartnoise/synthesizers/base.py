@@ -1,28 +1,17 @@
 class SDGYMBaseSynthesizer:
-    """
-    Base for SmartNoise Synthesizers, based off of SDGymBaseSynthesizer
-    (to allow for benchmarking)
-    """
 
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
         """
         Fit the synthesizer model on the data.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data for fitting the synthesizer model.
-
-        categorical_columns : list[str]
-            List of column names for categorical columns
-
-        ordinal_columns : list[str]
-            List of column names for ordinal columns
-
-        Returns
-        -------
-        pd.DataFrame
-            Dataframe containing the generated data samples.
+        :param data: The data for fitting the synthesizer model.
+        :type data: pd.DataFrame
+        :param categorical_columns: List of column names for categorical columns, defaults to None
+        :type categorical_columns: list[str], optional
+        :param ordinal_columns: List of column names for ordinal columns, defaults to None
+        :type ordinal_columns: list[str], optional
+        :return: Dataframe containing the generated data samples.
+        :rtype: pd.DataFrame
         """
         pass
 
@@ -30,21 +19,14 @@ class SDGYMBaseSynthesizer:
         """
         Sample from the synthesizer model.
 
-        Parameters
-        ----------
-        samples : int
-            The number of samples to create
-
-        categorical_columns : list[str]
-            List of column names for categorical columns
-
-        ordinal_columns : list[str]
-            List of column names for ordinal columns
-
-        Returns
-        -------
-        pd.Dataframe
-            Dataframe containing the generated data samples.
+        :param samples: The number of samples to create
+        :type samples: int
+        :param categorical_columns: List of column names for categorical columns, defaults to None
+        :type categorical_columns: list[str], optional
+        :param ordinal_columns: List of column names for ordinal columns, defaults to None
+        :type ordinal_columns: list[str], optional
+        :return: Dataframe containing the generated data samples.
+        :rtype: pd.DataFrame
         """
         pass
 
@@ -53,21 +35,14 @@ class SDGYMBaseSynthesizer:
         Fit the synthesizer model and then generate a synthetic dataset of the same
         size of the input data.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data for fitting the synthesizer model.
-
-        categorical_columns : list[str]
-            List of column names for categorical columns
-
-        ordinal_columns : list[str]
-            List of column names for ordinal columns
-
-        Returns
-        -------
-        pd.DataFrame
-            Dataframe containing the generated data samples.
+        :param data: The data for fitting the synthesizer model.
+        :type data: pd.DataFrame
+        :param categorical_columns: List of column names for categorical columns, defaults to None
+        :type categorical_columns: list[str], optional
+        :param ordinal_columns: List of column names for ordinal columns, defaults to None
+        :type ordinal_columns: list[str], optional
+        :return: Dataframe containing the generated data samples.
+        :rtype: pd.DataFrame
         """
         self.fit(data, categorical_columns, ordinal_columns)
         return self.sample(data.shape[0])
