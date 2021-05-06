@@ -195,7 +195,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for self.iterations using the exponential mechanism and
         multiplicative weights. Draws from the initialized query store
         for measurements.
-        
+
         :return: synth_hist, self.histogram - synth_hist is the
             synthetic data histogram,
                  self.histogram is original histo
