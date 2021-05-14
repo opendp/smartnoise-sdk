@@ -1,6 +1,8 @@
 from opendp.smartnoise._ast.tokens import *
-from opendp.smartnoise._ast.types_ast import ExpressionType, BooleanExpressionType #type: ignore
-from typing import Optional
+
+from typing import Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from opendp.smartnoise._ast.types_ast import ExpressionType, BooleanExpressionType, TableColumn
 
 """
     SQL-specific expressions
@@ -19,7 +21,7 @@ class AllColumns(SqlExpr):
     def __hash__(self):
         return hash(str(self))
 
-    def all_symbols(self, relations):
+    def all_symbols(self, relations: List[SqlRel]) -> Optional[TableColumn]:
         sym = [r.all_symbols(self) for r in relations if r.alias_match(str(self))]
         if len(sym) == 0:
             raise ValueError("Column cannot be found " + str(self))
@@ -42,7 +44,7 @@ class AggFunction(SqlExpr):
         self.quantifier = quantifier
         self.expression = expression
 
-    def symbol_name(self):
+    def symbol_name(self) -> str:
         prefix = (
             self.name.lower()
             + "_"
@@ -50,7 +52,7 @@ class AggFunction(SqlExpr):
         )
         return self.prepend(prefix, self.expression.symbol_name())
 
-    def prepend(self, prefix, value):
+    def prepend(self, prefix: str, value: str) -> str:
         # handles generation of a new identifier while honoring escaping rules
         if value == "" or not value[0] in ['"', "`", "["]:
             return prefix + value
@@ -61,10 +63,10 @@ class AggFunction(SqlExpr):
         else:
             return prefix + "_x_" + value.replace('"', "").replace(" ", "")
 
-    def is_aggregate(self):
+    def is_aggregate(self) -> bool:
         return self.name in ["SUM", "COUNT", "MIN", "MAX", "AVG", "VAR"]
 
-    def symbol(self, relations):
+    def symbol(self, relations) -> 'AggFunction':
         return AggFunction(self.name, self.quantifier, self.expression.symbol(relations))
 
     def type(self):

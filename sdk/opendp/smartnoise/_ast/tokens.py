@@ -1,6 +1,21 @@
 import itertools
-from typing import Generic, Union, List, Any, Optional, Dict, Iterator, Tuple
+from typing import (
+    Generic,
+    TYPE_CHECKING,
+    Union,
+    List,
+    Any,
+    Optional,
+    Dict,
+    Iterator,
+    Tuple,
+    TYPE_CHECKING,
+)
+if TYPE_CHECKING:
+    from opendp.smartnoise.metadata import CollectionMetadata
 
+
+from opendp.smartnoise.metadata.collection import CollectionMetadata
 
 class Token(str):
     def __init__(self, text: str):
@@ -9,7 +24,7 @@ class Token(str):
     def __str__(self) -> str:
         return self.text
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Optional[Any]) -> bool:
         if isinstance(other, str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
@@ -30,7 +45,7 @@ class Op(str):
     def __str__(self) -> str:
         return self.text
 
-    def __eq__(self, other):
+    def __eq__(self, other: Optional[Any]) -> bool:
         if isinstance(other, str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
@@ -51,7 +66,7 @@ class Identifier(str):
     def __str__(self) -> str:
         return self.text
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Optional[Any]) -> bool:
         if isinstance(other, str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
@@ -72,7 +87,7 @@ class FuncName(str):
     def __str__(self) -> str:
         return self.text
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Optional[Any]) -> bool:
         if isinstance(other, str):
             return self.text == other
         return type(self) == type(other) and self.text == other.text
@@ -94,11 +109,10 @@ class Sql:
     def __str__(self) -> str:
         return " ".join([str(c) for c in self.children() if c is not None])
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Optional[Any]) -> bool:
         if other is None:
             return False
-        else:
-            return all([s == o for s, o in zip(self.children(), other.children())])
+        return all([s == o for s, o in zip(self.children(), other.children())])
 
     def symbol_name(self) -> str:
         return str(hex(hash(self) % (2 ** 16)))
@@ -126,7 +140,9 @@ class Sql:
                     return n
         return None
 
-    def find_nodes(self, type_name: Any, not_child_of: Any=None) -> List[Union[None, Token, Op, Identifier, FuncName, 'Sql']]:
+    def find_nodes(
+        self, type_name: Any, not_child_of: Any=None
+    ) -> List[Union[None, Token, Op, Identifier, FuncName, 'Sql']]:
         """
             Walks the tree and returns all nodes
             that are an instance of the specified type.
@@ -139,7 +155,9 @@ class Sql:
         childnodes = [c.find_nodes(type_name, not_child_of) for c in sqlnodes]
         return nodes + flatten(childnodes)
 
-    def visualize(self, color_types: Dict[Any, 'str']={}, n_trunc: Optional[int]=None) -> 'Digraph': # type: ignore
+    def visualize(
+        self, color_types: Dict[Any, 'str']={}, n_trunc: Optional[int]=None
+        ) -> 'Digraph': # type: ignore
         """
         Construct the AST graph of the object
 
@@ -161,7 +179,7 @@ class Sql:
                 str_expr = str_expr[:n_trunc] + '...'
             return f"{type(expr).__name__}: {str_expr}"
 
-        def _color_node(expr: Any, color_types: Dict[Any, 'str']) -> str:
+        def _color_node(expr: Any, color_types: Dict[Any, str]) -> str:
             expr_type = type(expr)
             if expr_type in color_types.keys():
                 return color_types[expr_type]
@@ -216,10 +234,10 @@ class Seq(Sql):
 
     def children(
         self,
-        ) -> List[Optional[Union['Token', 'Op', 'Identifier', 'FuncName', 'Sql']]]:
+        ) -> List[Optional[Union[Token, Op, Identifier, FuncName, Sql]]]:
         return self.seq
 
-    def symbol(self, relations): # type: ignore
+    def symbol(self, relations) -> List['SqlRel']:
         return Seq([i.symbol(relations) for i in self.seq])
 
 
@@ -245,19 +263,16 @@ class SqlRel(Sql):
         if hasattr(self, "alias"):
             if self.alias is None: # type: ignore
                 return False
-            else:
-                return self.alias.lower() == alias.lower()# type: ignore
-        else:
-            return any([r.alias_match(orig_name) for r in self.relations()])
+            return self.alias.lower() == alias.lower()# type: ignore
+        return any([r.alias_match(orig_name) for r in self.relations()])
 
     def split_alias(self, name: str) -> Tuple[str, str]:
         parts = name.split(".")
         if len(parts) > 2:
             raise ValueError("Identifiers can have only two parts: " + name)
-        elif len(parts) == 2:
+        if len(parts) == 2:
             return (parts[0], parts[1])
-        else:
-            return ("", parts[0])
+        return ("", parts[0])
 
     def __contains__(self, key: Identifier) -> bool:
         if not self.has_symbols():
@@ -273,7 +288,7 @@ class SqlRel(Sql):
             self.m_sym_dict = dict(self.m_symbols)
         return self.m_sym_dict[key]
 
-    def load_symbols(self, metadata): # type: ignore
+    def load_symbols(self, metadata: CollectionMetadata) -> None:
         for r in self.relations():
             r.load_symbols(metadata)
 
@@ -283,8 +298,7 @@ class SqlRel(Sql):
                 "Cannot load symbols from a table with no metadata.  Check has_symbols, or use load_symbols with metadata first. "
                 + str(self)
             )
-        else:
-            return self.m_symbols
+        return self.m_symbols
 
     def relations(self) -> List['SqlRel']:
         return [r for r in self.children() if isinstance(r, SqlRel)]
@@ -301,7 +315,10 @@ class SqlExpr(Sql):
     def sensitivity(self) -> Optional[Union[float, int]]:
         return None
 
-    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Optional[Union[int, float, bool, str]]:
+    def evaluate(
+        self,
+        bindings: Dict[str, Union[int, float, bool, str]]
+        ) -> Optional[Union[int, float, bool, str]]:
         raise ValueError("We don't know how to evaluate " + str(self))
 
     def children(

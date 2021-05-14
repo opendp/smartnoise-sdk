@@ -1,9 +1,12 @@
-from typing import Dict, Callable, Any, Optional
-from opendp.smartnoise._ast.types_ast import ExpressionType, BooleanExpressionType #type: ignore
 from opendp.smartnoise._ast.tokens import *
 import operator
 import numpy as np
 from datetime import datetime, date
+
+from typing import Dict, Callable, Any, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from opendp.smartnoise._ast.types_ast import ExpressionType, BooleanExpressionType
+
 
 ops: Dict[str, Callable[[Any, Any], Any]] = {
     ">": operator.gt,

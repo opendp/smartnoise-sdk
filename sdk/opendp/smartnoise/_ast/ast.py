@@ -1,8 +1,10 @@
-from opendp.smartnoise.metadata import CollectionMetadata
-from typing import Optional, List, Any, Union
-from .types_ast import BooleanExpressionType #type: ignore
-from .tokens import *
+from .tokens import SqlRel
 from .expression import *
+
+from typing import TYPE_CHECKING, Optional, List, Any, Union
+if TYPE_CHECKING:
+    from opendp.smartnoise.metadata import CollectionMetadata
+    from .types_ast import BooleanExpressionType
 
 """
     AST for parsed Python Query Batch.  Allows validation, normalization,
@@ -13,10 +15,10 @@ from .expression import *
 class Batch(Sql):
     """A batch of queries"""
 
-    def __init__(self, queries: List["Query"]) -> None:
+    def __init__(self, queries: List[Query]) -> None:
         self.queries = queries
 
-    def children(self) -> List["Query"]:
+    def children(self) -> List[Query]:
         return self.queries
 
 
@@ -114,7 +116,10 @@ class Query(SqlRel):
     def children(self) -> List[Union['Select', 'From', 'Where', 'Aggregate', 'Having', 'Order', 'Limit', None]]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
 
-    def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Optional[Union[int, float, bool, str]]:
+    def evaluate(
+        self,
+        bindings: Dict[str, Union[int, float, bool, str]]
+        ) -> Optional[Union[int, float, bool, str]]:
         return [(ne.name, ne.expression.evaluate(bindings)) for ne in self.select.namedExpressions]
 
 
@@ -272,7 +277,7 @@ class Relation(SqlRel):
         else:
             raise ValueError("Symbol could not be found in any relations: " + str(expression))
 
-    def all_symbols(self, expression=None):
+    def all_symbols(self, expression:Optional[Sql]=None) -> List[Tuple[str, Sql]]:
         if expression is None:
             expression = AllColumns()
         if type(expression) is not AllColumns:
@@ -312,8 +317,8 @@ class Table(SqlRel):
         self.m_symbols = None
         self.m_sym_dict = None
 
-    def symbol(self, expression):
-        if type(expression) is not Column:
+    def symbol(self, expression: Column):
+        if not isinstance(expression, Column):
             raise ValueError("Tables can only have column symbols: " + str(type(expression)))
         if not self.alias_match(expression.name):
             raise ValueError(
@@ -325,11 +330,9 @@ class Table(SqlRel):
         alias, name = self.split_alias(expression.name)
         if self.m_symbols is None:
             raise ValueError("Please load symbols with metadata first: " + str(self))
-        else:
-            if name in self:
-                return self[name]
-            else:
-                return None
+        if name in self:
+            return self[name]
+        return None
 
     def load_symbols(self, metadata): # type: ignore
         self.m_sym_dict = None
