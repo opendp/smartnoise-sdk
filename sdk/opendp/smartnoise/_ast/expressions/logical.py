@@ -236,12 +236,10 @@ class CaseExpression(SqlExpr):
         if self.expression is not None:
             # simple search
             for we in self.when_exprs:
-                match = BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings)
-                if match:
+                if BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings):
                     return we.then.evaluate(bindings)
         else:
             # regular search
-            print(bindings)
             for we in self.when_exprs:
                 if we.expression.evaluate(bindings):
                     return we.then.evaluate(bindings)
