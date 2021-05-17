@@ -181,6 +181,7 @@ class PrivateReader(Reader):
             raise ValueError("Please pass AST to _execute_ast.")
 
         subquery, query = self.rewrite_ast(query)
+        print(query)
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
         thresh_scale = math.sqrt(max_contrib) * (
             (
