@@ -252,7 +252,6 @@ class Rewriter:
             ]
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
-        print(subquery)
         return subquery
 
     def clamp_expression(self, ne, relations, scope, query, do_clamp=True):
