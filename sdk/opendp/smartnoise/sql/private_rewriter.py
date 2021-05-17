@@ -32,6 +32,7 @@ from opendp.smartnoise._ast.ast import (
     Relation,
     SortItem,
     WhenExpression,
+    Sql,
 )
 
 
