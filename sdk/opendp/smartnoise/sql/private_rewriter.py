@@ -272,7 +272,7 @@ class Rewriter:
             if sym.valtype in ["float", "int"] and not sym.unbounded:
                 minval = sym.minval
                 maxval = sym.maxval
-            if minval is None or sym.is_key:
+            if minval is None or maxval is None or sym.is_key:
                 return None, None
             return minval, maxval
 
