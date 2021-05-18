@@ -391,6 +391,15 @@ class TestCaseExpression:
         assert(c.evaluate(bindings) == 12)
         bindings['x'] = 1
         assert(c.evaluate(bindings) == 0)
+    def test_string_bound(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE x WHEN 5 THEN y WHEN 6 THEN z ELSE q END")
+        bindings = dict([('x', 5), ('y', 'ten'), ('z', 'twelve'), ('q', 'zero')])
+        assert(c.evaluate(bindings) == "ten")
+        bindings['x'] = 6
+        assert(c.evaluate(bindings) == "twelve")
+        bindings['x'] = 1
+        assert(c.evaluate(bindings) == "zero")
     def test_full_case(self):
         qp = QueryParser()
         c = qp.parse_expression("CASE WHEN x <= 5 THEN y WHEN x > 6 THEN 0 ELSE z END")
