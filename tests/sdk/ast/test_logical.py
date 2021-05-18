@@ -1,6 +1,7 @@
 import pytest
 from opendp.smartnoise._ast.expressions.logical import *
 from opendp.smartnoise._ast.tokens import Column, Literal
+from opendp.smartnoise.sql.parse import QueryParser
 from datetime import date
 import numpy as np
 
@@ -370,3 +371,32 @@ class TestLogical:
                     assert not BooleanCompare(Literal(tv), 'and', Literal(fv)).evaluate(None)
                     assert not BooleanCompare(Column(tn), 'and', Literal(fv)).evaluate(bindings)
                     assert not BooleanCompare(Literal(tv), 'and', Column(fn)).evaluate(bindings)
+
+class TestCaseExpression:
+    def test_simple_case(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE x WHEN 5 THEN 'five' WHEN 6 THEN 'six' ELSE 'unknown' END")
+        bindings = dict([('x', 5)])
+        assert(c.evaluate(bindings) == "'five'")
+        bindings = dict([('x', 6)])
+        assert(c.evaluate(bindings) == "'six'")
+        bindings = dict([('x', 7)])
+        assert(c.evaluate(bindings) == "'unknown'")
+    def test_variable_replace(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE x WHEN 5 THEN y WHEN 6 THEN z ELSE 0 END")
+        bindings = dict([('x', 5), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == 10)
+        bindings['x'] = 6
+        assert(c.evaluate(bindings) == 12)
+        bindings['x'] = 1
+        assert(c.evaluate(bindings) == 0)
+    def test_full_case(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE WHEN x <= 5 THEN y WHEN x > 6 THEN 0 ELSE z END")
+        bindings = dict([('x', 5), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == 10)
+        bindings['x'] = 6
+        assert(c.evaluate(bindings) == 12)
+        bindings['x'] = 10
+        assert(c.evaluate(bindings) == 0)
