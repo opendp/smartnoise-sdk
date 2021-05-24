@@ -1,3 +1,5 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 [**Please note that we recently renamed this toolkit.**](https://projects.iq.harvard.edu/opendp/blog/building-inclusive-community)
 
 <a href="https://smartnoise.org"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
