@@ -233,19 +233,21 @@ class CaseExpression(SqlExpr):
         )
 
     def evaluate(self, bindings):
-        else_exp = self.else_expr.evaluate(bindings)
-        res = np.repeat(else_exp, len(bindings[list(bindings.keys())[0]]))
         if self.expression is not None:
             # simple search
             for we in self.when_exprs:
-                match = BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings)
-                res[match] = we.then.evaluate(bindings)
+                if BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings):
+                    return we.then.evaluate(bindings)
         else:
             # regular search
             for we in self.when_exprs:
-                match = we.expression.evaluate(bindings)
-                res[match] = we.then.evaluate(bindings)
-        return res
+                if we.expression.evaluate(bindings):
+                    return we.then.evaluate(bindings)
+        return (
+            self.else_expr.evaluate(bindings)
+            if self.else_expr
+            else None
+            )
 
 
 class WhenExpression(SqlExpr):
