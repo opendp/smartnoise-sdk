@@ -375,13 +375,13 @@ class TestLogical:
 class TestCaseExpression:
     def test_simple_case(self):
         qp = QueryParser()
-        c = qp.parse_expression("CASE x WHEN 5 THEN 'five' WHEN 6 THEN 'six' ELSE 'unknown' END")
+        c = qp.parse_expression("CASE x WHEN 5 THEN 'five' WHEN 6 THEN 'six' ELSE '' END")
         bindings = dict([('x', 5)])
-        assert(c.evaluate(bindings) == "'five'")
+        assert(c.evaluate(bindings) == "five")
         bindings = dict([('x', 6)])
-        assert(c.evaluate(bindings) == "'six'")
+        assert(c.evaluate(bindings) == 'six')
         bindings = dict([('x', 7)])
-        assert(c.evaluate(bindings) == "'unknown'")
+        assert(c.evaluate(bindings) == '')
     def test_variable_replace(self):
         qp = QueryParser()
         c = qp.parse_expression("CASE x WHEN 5 THEN y WHEN 6 THEN z ELSE 0 END")
