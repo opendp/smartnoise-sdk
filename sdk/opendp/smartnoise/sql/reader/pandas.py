@@ -24,7 +24,7 @@ class PandasReader(SqlReader):
         import sqlite3
 
         ver = [int(part) for part in sqlite3.sqlite_version.split(".")]
-        if len(ver) < 3:
+        if len(ver) == 3:
             # all historical versions of SQLite have 3 parts
             if (
                 ver[0] < 3
