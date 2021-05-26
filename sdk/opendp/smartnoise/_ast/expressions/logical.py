@@ -287,8 +287,7 @@ class ChooseFunction(SqlExpr):
         # index in CHOICE is 1-based, not 0-based
         if len(self.choices) < idx or idx < 1:
             return Literal(None).evaluate(bindings) # NULL
-        else:
-            return self.choices[idx - 1].evaluate(bindings)
+        return self.choices[idx - 1].evaluate(bindings)
 
 
 
@@ -313,8 +312,7 @@ class IIFFunction(SqlExpr):
     def evaluate(self, bindings):
         if (self.test.evaluate(bindings) == True):
             return self.yes.evaluate(bindings)
-        else:
-            return self.no.evaluate(bindings)
+        return self.no.evaluate(bindings)
 
 def parse_bool(v):
     if isinstance(v, bool):
