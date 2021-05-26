@@ -1,10 +1,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[**Please note that we recently renamed this toolkit.**](https://projects.iq.harvard.edu/opendp/blog/building-inclusive-community)
-
 <a href="https://smartnoise.org"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
+
 ## SmartNoise System: Tools for Differential Privacy
-See also the accompanying [SmartNoise Core repository](https://github.com/opendp/smartnoise-core) and [SmartNoise Samples repository](https://github.com/opendp/smartnoise-samples) for this system. </br>
+
+
+<br />Please see the accompanying [SmartNoise Documentation](https://docs.opendp.org/en/latest/smartnoise/), [SmartNoise Core repository](https://github.com/opendp/smartnoise-core) and [SmartNoise Samples repository](https://github.com/opendp/smartnoise-samples) for this system. 
 
 
 ##
