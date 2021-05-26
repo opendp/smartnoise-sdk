@@ -409,3 +409,31 @@ class TestCaseExpression:
         assert(c.evaluate(bindings) == 12)
         bindings['x'] = 10
         assert(c.evaluate(bindings) == 0)
+    def test_iif(self):
+        qp = QueryParser()
+        c = qp.parse_expression("IIF(x <= 5, y, 0)")
+        bindings = dict([('x', 5), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == 10)
+        bindings["x"] = 6
+        assert(c.evaluate(bindings) == 0)
+        c = qp.parse_expression("IIF(x <= 5, y, 'string')")
+        assert(c.evaluate(bindings) == "string")
+    def test_choose(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CHOOSE(x, 'a', 'b', 'c')")
+        bindings = dict([('x', 3), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == "c")
+        bindings["x"] = 1
+        assert(c.evaluate(bindings) == 'a')
+        bindings["x"] = 0
+        assert(c.evaluate(bindings) == None)
+        bindings["x"] = 10
+        assert(c.evaluate(bindings) == None)
+        c = qp.parse_expression("CHOOSE(x, 'a', 5, NULL)")
+        bindings = dict([('x', 3), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == None)
+        bindings["x"] = "2"
+        assert(c.evaluate(bindings) == 5)
+        c = qp.parse_expression("CHOOSE(x % 2 + 1, NULL, 5)")
+        bindings["x"] = 13
+        assert(c.evaluate(bindings) == 5)

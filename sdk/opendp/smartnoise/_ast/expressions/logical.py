@@ -280,9 +280,16 @@ class ChooseFunction(SqlExpr):
     def __init__(self, expression, choices):
         self.expression = expression
         self.choices = choices
-
     def children(self):
         return [Token("CHOOSE"), Token("("), self.expression, Token(","), self.choices, Token(")")]
+    def evaluate(self, bindings):
+        idx = int(self.expression.evaluate(bindings))
+        # index in CHOICE is 1-based, not 0-based
+        if len(self.choices) < idx or idx < 1:
+            return Literal(None).evaluate(bindings) # NULL
+        return self.choices[idx - 1].evaluate(bindings)
+
+
 
 
 class IIFFunction(SqlExpr):
@@ -302,7 +309,10 @@ class IIFFunction(SqlExpr):
             self.no,
             Token(")"),
         ]
-
+    def evaluate(self, bindings):
+        if (self.test.evaluate(bindings) == True):
+            return self.yes.evaluate(bindings)
+        return self.no.evaluate(bindings)
 
 def parse_bool(v):
     if isinstance(v, bool):
