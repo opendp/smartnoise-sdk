@@ -197,8 +197,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for measurements.
 
         :return: synth_hist, self.histogram - synth_hist is the
-            synthetic data histogram,
-                 self.histogram is original histo
+            synthetic data histogram, self.histogram is original histo
         :rtype: np.ndarray, np.ndarray
         """
         a_values = []
