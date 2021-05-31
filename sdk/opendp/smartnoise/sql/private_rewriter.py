@@ -160,6 +160,15 @@ class Rewriter:
         Validate().validateQuery(query, self.metadata)
 
         child_scope = Scope()
+
+        if self.options.row_privacy:
+            keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
+        else:
+            key_col = self.key_col(query)
+            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
+        
+        child_scope.push_name(keycount_expr, "keycount")
+
         # we make sure aggregates are in select scope for subqueries
         if query.agg is not None:
             for ge in query.agg.groupingExpressions:
@@ -182,19 +191,10 @@ class Rewriter:
     def exact_aggregates(self, query):
         child_scope = Scope()
 
-        if self.options.row_privacy:
-            keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
-        else:
-            key_col = self.key_col(query)
-            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
-            child_scope.push_name(keycount_expr.expression)
-
         for ne in query.select.namedExpressions:
             child_scope.push_name(ne.expression)
 
-        keycount = NamedExpression(Identifier("keycount"), keycount_expr)
-
-        select = [keycount] + [ne for ne in query.select.namedExpressions]
+        select = [ne for ne in query.select.namedExpressions]
         select = Select(None, select)
 
         subquery = Query(

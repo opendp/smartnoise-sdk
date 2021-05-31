@@ -221,15 +221,10 @@ class PrivateReader(Reader):
             )
 
         kc_pos = None
-        kcc_pos = []
         for idx in range(len(syms)):
             sname, sym = syms[idx]
             if sname == "keycount":
                 kc_pos = idx
-            elif sym.is_key_count:
-                kcc_pos.append(idx)
-        if kc_pos is None and len(kcc_pos) > 0:
-            kc_pos = kcc_pos.pop()
 
         # make a list of mechanisms in column order
         mechs = [
@@ -271,9 +266,6 @@ class PrivateReader(Reader):
                 noise.release([v]).values[0] if noise is not None else v
                 for noise, v in zip(mechs, row)
             ]
-            # ensure all key counts are the same
-            for idx in kcc_pos:
-                out_row[idx] = out_row[kc_pos]
             # clamp counts to be non-negative
             if clamp_counts:
                 for idx in range(len(row)):
@@ -291,6 +283,8 @@ class PrivateReader(Reader):
             out = map(process_row, db_rs[1:])
 
         if subquery.agg is not None and self._options.censor_dims:
+            if kc_pos == None:
+                raise ValueError("Query needs a key count column to censor dimensions")
             if hasattr(out, "filter"):
                 # it's an RDD
                 tau = self.tau
