@@ -254,7 +254,7 @@ class Relation(SqlRel):
             symbol
             for name, symbol in syms_b
             if (type(symbol) is TableColumn and symbol.compare.identifier_match(colname, name))
-            or name.lower() == colname.lower()
+            or name == colname
         ]
         if len(syms_c) == 1:
             return syms_c[0]
