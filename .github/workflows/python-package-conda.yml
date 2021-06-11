@@ -21,7 +21,7 @@ jobs:
     - name: Install opendp-smartnoise
       run: |
         pip install ./sdk
-        pip install -r tests/requirements.txt
+        pip install --use-feature=2020-resolver -r tests/requirements.txt
     - name: Create a wheel
       run: |
         pip install --upgrade setuptools wheel twine
