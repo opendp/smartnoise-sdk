@@ -18,9 +18,10 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
+    - name: Install opendp-smartnoise
       run: |
-        conda env update --file environment.yml --name base
+        pip install ./sdk
+        pip install -r tests/requirements.txt
     - name: Lint with flake8
       run: |
         conda install flake8
@@ -28,10 +29,6 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Install opendp-smartnoise
-      run: |
-        pip install ./sdk
-        pip install -r requirements.txt
     - name: Test with pytest
       run: |
         conda install pytest
