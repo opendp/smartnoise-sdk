@@ -1,6 +1,6 @@
 name: OpenDP SmartNoise Gate
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build-linux:
@@ -35,10 +35,10 @@ jobs:
       run: |
         conda install pytest
         pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
-    - name: Test Service
-      run: |
-        python service/application.py > logs &
-        sleep 30
-        python -m pytest tests/service -s -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
+#    - name: Test Service
+#      run: |
+#        python service/application.py > logs &
+#        sleep 30
+#        python -m pytest tests/service -s -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
 
         
