@@ -24,7 +24,6 @@ jobs:
         pip install -r tests/requirements.txt
     - name: Create a wheel
       run: |
-        source activate wnoise
         pip install --upgrade setuptools wheel twine
         cd ./python
         python setup.py bdist_wheel
@@ -35,8 +34,14 @@ jobs:
         flake8 sdk/opendp/smartnoise/sql/dpsu.py -v
         flake8 sdk/opendp/smartnoise/reader/ -v
         flake8 sdk/opendp/smartnoise/synthesizers/ -v
-    - name: Test with pytest
+    - name: Test SDK
       run: |
         conda install pytest
         pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
+    - name: Test Service
+      run: |
+        python service/application.py > logs &
+        sleep 30
+        python -m pytest tests/service -s -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
+
         
