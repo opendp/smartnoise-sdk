@@ -1,5 +1,5 @@
 import os
-from sdk.opendp.smartnoise._ast.tokens import unique
+from opendp.smartnoise._ast.tokens import unique
 import subprocess
 from opendp.smartnoise._ast.tokens import Column
 import pandas as pd

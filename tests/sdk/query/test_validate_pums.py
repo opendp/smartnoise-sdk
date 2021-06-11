@@ -1,4 +1,4 @@
-from sdk.opendp.smartnoise.sql.reader.postgres import PostgresNameCompare
+from opendp.smartnoise.sql.reader.postgres import PostgresNameCompare
 import pytest
 from opendp.smartnoise._ast.validate import Validate
 from opendp.smartnoise.sql.parse import QueryParser
