@@ -31,7 +31,7 @@ jobs:
     - name: Clone samples
       run: |
         git clone https://github.com/opendp/smartnoise-samples.git
-        gir clone https://github.com/opendp/dp-test-datasets.git
+        git clone https://github.com/opendp/dp-test-datasets.git
     - name: Test Notebooks
       run: |
         conda install pytest
