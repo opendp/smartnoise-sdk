@@ -18,16 +18,12 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        pip install --use-feature=2020-resolver -r tests/requirements.txt
     - name: Install opendp-smartnoise
       run: |
-        pip install ./sdk
-        pip install --use-feature=2020-resolver -r tests/requirements.txt
-    - name: Create a wheel
-      run: |
-        pip install --upgrade setuptools wheel twine
-        cd ./python
-        python setup.py bdist_wheel
-        cd ..
+        pip install --use-feature=2020-resolver ./sdk
     - name: Lint with flake8
       run: |
         conda install flake8
