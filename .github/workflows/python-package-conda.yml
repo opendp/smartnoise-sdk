@@ -1,4 +1,4 @@
-name: Python Package using Conda
+name: OpenDP SmartNoise Gate
 
 on: [push]
 
@@ -22,15 +22,21 @@ jobs:
       run: |
         pip install ./sdk
         pip install -r tests/requirements.txt
+    - name: Create a wheel
+      run: |
+        source activate wnoise
+        pip install --upgrade setuptools wheel twine
+        cd ./python
+        python setup.py bdist_wheel
+        cd ..
     - name: Lint with flake8
       run: |
         conda install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 sdk/opendp/smartnoise/sql/dpsu.py -v
+        flake8 sdk/opendp/smartnoise/reader/ -v
+        flake8 sdk/opendp/smartnoise/synthesizers/ -v
     - name: Test with pytest
       run: |
         conda install pytest
-        pytest tests/sdk
+        pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
         
