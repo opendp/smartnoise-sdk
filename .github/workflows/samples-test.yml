@@ -35,4 +35,5 @@ jobs:
     - name: Test Notebooks
       run: |
         conda install pytest
-        pytest --nbmake smartnoise-samples/data
+        # run notebooks, ignore slow ones
+        pytest --nbmake smartnoise-samples/ --ignore="smartnoise-samples/analysis/data/Data set processing - Mental Health in Tech Survey.ipynb" --ignore=smartnoise-samples/whitepaper-demos/6-deep-learning-medical.ipynb --ignore=smartnoise-samples/whitepaper-demos/2-reidentification-attack.ipynb --ignore=smartnoise-samples/whitepaper-demos/5-ml-synthetic-data.ipynb --ignore=smartnoise-samples/whitepaper-demos/4-ml-dp-classifier.ipynb
