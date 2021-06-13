@@ -27,19 +27,21 @@ else:
         port = conns[engine]["port"]
         user = conns[engine]["user"]
         conn = f"{engine}://{host}:{port}"
-        passwd = keyring.get_password(conn, user)
-        if passwd is not None:
-            dbname = conns[engine]["databases"]["NameTests"]
-            connection = psycopg2.connect(database=dbname, host=host, user=user, port=port, password=passwd)
-            connection_case = psycopg2.connect(database="2NameTests", host=host, user=user, port=port, password=passwd)
+        password = keyring.get_password(conn, user)
+        if password is not None:
+            database = conns[engine]["databases"]["NameTests"]
+            connection = psycopg2.connect(database=database, host=host, user=user, port=port, password=password)
+            connection_case = psycopg2.connect(database="2NameTests", host=host, user=user, port=port, password=password)
 
 
 class TestPostgresIdentifiersNormal:
     def test_reserved(self):
-        reader = SqlReader.from_connection(connection, "postgres")
-        res = reader.execute('SELECT "select" FROM nametests')
+        if connection is not None:
+            reader = SqlReader.from_connection(connection, "postgres")
+            res = reader.execute('SELECT "select" FROM nametests')
 
 class TestPostgresIdentifiersDBCaseSensitive:
     def test_reserved(self):
-        reader = SqlReader.from_connection(connection, "postgres")
-        res = reader.execute('SELECT "select" FROM nametests')
+        if connection_case is not None:
+            reader = SqlReader.from_connection(connection_case, "postgres")
+            res = reader.execute('SELECT "select" FROM nametests')
