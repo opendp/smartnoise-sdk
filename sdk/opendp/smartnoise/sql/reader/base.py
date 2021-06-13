@@ -1,14 +1,35 @@
 from opendp.smartnoise.reader.base import Reader
-
+from opendp.smartnoise.sql.reader.engine import Engine
+import importlib
 
 class SqlReader(Reader):
-    def __init__(self, name_compare=None, serializer=None):
-        self.compare = NameCompare() if name_compare is None else name_compare
-        self.serializer = serializer
+    @classmethod
+    def get_reader_class(cls, engine):
+        prefix = ""
+        for eng in Engine.known_engines:
+            if str(eng).lower() == engine.lower():
+                prefix = str(eng)
+        if prefix == "":
+            return SqlReader()  # should this throw?
+        else:
+            mod_path = f"opendp.smartnoise.sql.reader.{Engine.class_map[prefix]}"
+            module = importlib.import_module(mod_path)
+            class_ = getattr(module, f"{prefix}Reader")
+            return class_
+    @classmethod
+    def from_connection(cls, conn, engine=None, **kwargs):
+        if engine is not None:
+            _reader = cls.get_reader_class(engine)
+            return _reader(conn=conn, **kwargs)
+        else:
+            raise ValueError("Auto-detect from connection is not implemented yet")
+        _serializer
+    def __init__(self, engine=None):
+        self.compare = NameCompare.get_name_compare(engine)
+        self.serializer = Serializer.get_serializer(engine)
 
     def execute(self, query):
         raise NotImplementedError("Execute must be implemented on the inherited class")
-
     def _execute_ast(self, query):
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_ast.  To execute strings, use execute.")
@@ -17,7 +38,6 @@ class SqlReader(Reader):
         else:
             query_string = str(query)
         return self.execute(query_string)
-
     def _execute_ast_df(self, query):
         return self._to_df(self._execute_ast(query))
 
@@ -26,21 +46,20 @@ class SqlReader(Reader):
     Implements engine-specific identifier matching rules
     for escaped identifiers.
 """
-
-
 class NameCompare:
-    _name_compare_classes = {}
-
-    @classmethod
-    def register_name_compare(cls, engine, class_to_add):
-        cls._name_compare_classes[engine] = class_to_add
-
     @classmethod
     def get_name_compare(cls, engine):
-        if engine in cls._name_compare_classes:
-            return cls._name_compare_classes[engine]()
-        else:
+        prefix = ""
+        for eng in Engine.known_engines:
+            if str(eng).lower() == engine.lower():
+                prefix = str(eng)
+        if prefix == "":
             return NameCompare()
+        else:
+            mod_path = f"opendp.smartnoise.sql.reader.{Engine.class_map[prefix]}"
+            module = importlib.import_module(mod_path)
+            class_ = getattr(module, f"{prefix}NameCompare")
+            return class_()
 
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else []
@@ -109,3 +128,21 @@ class NameCompare:
             return False
         else:
             return True
+
+class Serializer:
+    @classmethod
+    def get_serializer(cls, engine):
+        prefix = ""
+        for eng in Engine.known_engines:
+            if str(eng).lower() == engine.lower():
+                prefix = str(eng)
+        if prefix == "":
+            return Serializer()
+        else:
+            mod_path = f"opendp.smartnoise.sql.reader.{Engine.class_map[prefix]}"
+            module = importlib.import_module(mod_path)
+            class_ = getattr(module, f"{prefix}Serializer")
+            return class_()
+
+    def serialize(self, query):
+        return str(query)

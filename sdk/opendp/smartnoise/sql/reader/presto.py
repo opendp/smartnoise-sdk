@@ -1,11 +1,12 @@
 import os
+from sqlite3.dbapi2 import connect
 
 from opendp.smartnoise._ast.ast import Relation
 from opendp.smartnoise._ast.tokens import Literal
 from opendp.smartnoise._ast.expression import Expression
 from opendp.smartnoise._ast.expressions.numeric import BareFunction
 from opendp.smartnoise._ast.expressions.sql import BooleanJoinCriteria, UsingJoinCriteria
-from .base import SqlReader, NameCompare
+from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
 
 
@@ -17,16 +18,20 @@ class PrestoReader(SqlReader):
 
     ENGINE = Engine.PRESTO
 
-    def __init__(self, host, database, user, password=None, port=None):
-        super().__init__(PrestoNameCompare())
+    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None):
+        super().__init__(self.ENGINE)
         import prestodb
 
         self.api = prestodb.dbapi
 
+        if conn is not None:
+            self.conn = conn
+    
         self.host = host
         self.database = database
         self.user = user
-        self.port = int(port)
+        if port is not None:
+            self.port = int(port)
 
         if password is None:
             if "PRESTO_PASSWORD" in os.environ:
@@ -43,13 +48,16 @@ class PrestoReader(SqlReader):
         """
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
-        cnxn = self.api.connect(
-            host=self.host,
-            http_scheme="https" if self.port == 443 else "http",
-            user=self.user,
-            port=self.port,
-            catalog=self.database,
-        )
+        if self.conn is not None:
+            cnxn = self.conn
+        else:
+            cnxn = self.api.connect(
+                host=self.host,
+                http_scheme="https" if self.port == 443 else "http",
+                user=self.user,
+                port=self.port,
+                catalog=self.database,
+            )
         cursor = cnxn.cursor()
         cursor.execute(str(query).replace(";", ""))
         rows = cursor.fetchall()
@@ -78,3 +86,7 @@ class PrestoNameCompare(NameCompare):
 
     def identifier_match(self, query, meta):
         return self.strip_escapes(query).lower() == self.strip_escapes(meta).lower()
+
+class PrestoSerializer(Serializer):
+    def __init__(self):
+        super().__init__()
