@@ -8,7 +8,7 @@ GO
 DELETE FROM nametests
 GO
 BULK INSERT nametests
-    FROM '<full path to this folder>\nametests.csv'
+    FROM '<full path to this folder>\..\..\test_csv\nametests.csv'
     WITH
     (
     FIRSTROW = 2,
@@ -23,7 +23,7 @@ GO
 DELETE FROM [2NameTests]
 GO
 BULK INSERT [2NameTests]
-    FROM '<full path to this folder>\nametests_case.csv'
+    FROM '<full path to this folder>\..\..\test_csv\nametests_case.csv'
     WITH
     (
     FIRSTROW = 2,
@@ -42,7 +42,7 @@ CREATE TABLE nametests (EDUC int, [2Educ"] int, [3395] int, [SELECT] float);
 DELETE FROM nametests
 GO
 BULK INSERT nametests
-    FROM '<full path to this folder>\2NameTests.csv'
+    FROM '<full path to this folder>\..\..\test_csv\2NameTests.csv'
     WITH
     (
     FIRSTROW = 2,

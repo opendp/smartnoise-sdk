@@ -115,15 +115,3 @@ class TestWithoutConn:
         assert(isinstance(reader.serializer, Serializer))
         assert(isinstance(reader.serializer, PrestoSerializer))
 
-
-class TestSomethingElse:
-    def test_postgres(self):
-        pass
-    def test_pandas(self):
-        pass
-    def test_sqlserver(self):
-        pass
-    def test_spark(self):
-        pass
-    def test_presto(self):
-        pass
