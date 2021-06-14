@@ -1,12 +1,8 @@
 from opendp.smartnoise.sql import SqlReader
 
-from keyring.core import get_password
 import yaml
 from os import path
 import keyring
-import getpass
-import readchar
-import sys
 import pyodbc
 
 connection = None # database "NameTests"

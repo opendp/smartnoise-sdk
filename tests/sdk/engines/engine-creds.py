@@ -1,10 +1,3 @@
-from keyring.core import get_password
-import yaml
-from os import path
-import keyring
-import getpass
-import readchar
-import sys
 
 '''
  Console utility to set passwords for database connections used by unit tests.
@@ -14,6 +7,12 @@ import sys
 '''
 
 def main():
+    import yaml
+    from os import path
+    import keyring
+    import getpass
+    import readchar
+    import sys
     list_mode = False
     if "--list" in sys.argv:
         list_mode = True
