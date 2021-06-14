@@ -1,4 +1,4 @@
-name: Test Samples
+name: Run Sample Notebooks
 
 on: [workflow_dispatch]
 
@@ -31,6 +31,7 @@ jobs:
     - name: Clone samples
       run: |
         git clone https://github.com/opendp/smartnoise-samples.git
+        touch smartnoise-samples/devops
         git clone https://github.com/opendp/dp-test-datasets.git
     - name: Test Notebooks
       run: |
