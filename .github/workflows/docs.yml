@@ -31,7 +31,7 @@ jobs:
     - name: Clone documentation repo
       run: |
         git clone https://github.com/opendp/opendp-documentation.git
-    -name: Build documentation
+    - name: Build documentation
       run: |
         cd opendp-documentation
         pip install -r requirements.txt
