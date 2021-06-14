@@ -20,9 +20,6 @@ class PrestoReader(SqlReader):
 
     def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None):
         super().__init__(self.ENGINE)
-        import prestodb
-
-        self.api = prestodb.dbapi
 
         if conn is not None:
             self.conn = conn
@@ -46,6 +43,9 @@ class PrestoReader(SqlReader):
             tuples for rows.  This will NOT fix the query to target the
             specific SQL dialect.  Call execute_typed to fix dialect.
         """
+        import prestodb
+        self.api = prestodb.dbapi
+
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
         if self.conn is not None:

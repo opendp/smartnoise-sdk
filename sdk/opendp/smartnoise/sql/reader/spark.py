@@ -10,7 +10,6 @@ class SparkReader(SqlReader):
 
     def __init__(self, conn):
         super().__init__(self.ENGINE)
-        from pyspark.sql import SparkSession
 
         self.api = conn
         self.database = "Spark Session"
@@ -18,7 +17,6 @@ class SparkReader(SqlReader):
     def execute(self, query):
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
-
         return self.api.sql(query)
 
     def _to_df(rows):
