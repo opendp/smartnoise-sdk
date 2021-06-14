@@ -1,0 +1,38 @@
+name: Test Documentation Build
+
+on: [workflow_dispatch]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        pip install --use-feature=2020-resolver -r tests/requirements.txt
+        pip install --use-feature=2020-resolver psycopg2 pyodbc readchar
+    - name: Install opendp-smartnoise
+      run: |
+        pip install --use-feature=2020-resolver ./sdk
+    - name: Clone documentation repo
+      run: |
+        git clone https://github.com/opendp/opendp-documentation.git
+    -name: Build documentation
+      run: |
+        cd opendp-documentation
+        pip install -r requirements.txt
+        make html
