@@ -24,17 +24,9 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --use-feature=2020-resolver -r tests/requirements.txt
-    - name: psycopg2
-      run: |
         pip install --use-feature=2020-resolver psycopg2
-    - name: readchar
-      run: |
         pip install --use-feature=2020-resolver readchar
-    - name: pyodbc
-      run: |
         pip install --use-feature=2020-resolver pyodbc
-    - name: keyring
-      run: |
         pip install --use-feature=2020-resolver keyring
     - name: Install opendp-smartnoise
       run: |
