@@ -80,7 +80,7 @@ class Query(SqlRel):
         if len(tables) > 0:
             self.max_ids = max(tc.max_ids for tc in tables)
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
-            self.row_privacy = any(tc.row_privacy for tc in tables)
+        self.row_privacy = any(tc.row_privacy for tc in tables)
 
     def symbol(self, expression):
         """
