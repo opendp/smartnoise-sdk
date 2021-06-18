@@ -67,15 +67,16 @@ class Query(SqlRel):
         self.m_symbols = symbols
         self.m_sym_dict = {}
 
-        tables = []
         for name, symbol in self.m_symbols:
-            for table in symbol.find_nodes(TableColumn):
-                tables.append(table)
             if name == "???":
                 continue
             if name in self.m_sym_dict:
                 raise ValueError("SELECT has duplicate column names: " + name)
             self.m_sym_dict[name] = symbol
+
+        tables = []
+        for t in self.find_nodes(Table):
+            tables.append(t.m_symbols[0][1])
 
         if len(tables) > 0:
             self.max_ids = max(tc.max_ids for tc in tables)
