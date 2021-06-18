@@ -1,9 +1,0 @@
-name: synthetic-data-module
-channels:
-  - defaults
-dependencies:
-  - pip:
-    - mlflow
-    - pandasql
-    - pandas
-    - opendp-smartnoise

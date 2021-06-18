@@ -18,7 +18,7 @@ class Exploration:
     """
 
     def __init__(
-        self, dataset_size=3, csv_path=r"../service/datasets/evaluation"
+        self, dataset_size=3, csv_path=r"../datasets/evaluation"
     ):  # TODO changed default to "."
         """
         Instantiates the Exploration class to define dimensions and

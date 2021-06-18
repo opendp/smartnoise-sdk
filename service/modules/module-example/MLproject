@@ -1,9 +1,0 @@
-name: tutorial
-
-conda_env: conda.yaml
-
-entry_points:
-  main:
-    parameters:
-      text: str
-    command: "python hello_world.py {text}"
