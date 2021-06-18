@@ -67,6 +67,7 @@ class Query(SqlRel):
         self.m_symbols = symbols
         self.m_sym_dict = {}
 
+        """
         tables = []
         for name, symbol in self.m_symbols:
             for table in symbol.find_nodes(TableColumn):
@@ -76,11 +77,31 @@ class Query(SqlRel):
             if name in self.m_sym_dict:
                 raise ValueError("SELECT has duplicate column names: " + name)
             self.m_sym_dict[name] = symbol
+        print(tables)
+        for t in tables:
+            print(t.__dict__)
+        tables2 = self.find_nodes(Table)
+
+        print("*", self.m_sym_dict)
+        print()
+        print(tables2)
+        """
+        for name, symbol in self.m_symbols:
+            if name == "???":
+                continue
+            if name in self.m_sym_dict:
+                raise ValueError("SELECT has duplicate column names: " + name)
+            self.m_sym_dict[name] = symbol
+
+        tables = []
+        print(self.find_nodes(Table)[0].__dict__)
+        for t in self.find_nodes(Table):
+            tables.append(t.m_symbols[0][1])
 
         if len(tables) > 0:
             self.max_ids = max(tc.max_ids for tc in tables)
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
-        self.row_privacy = any(tc.row_privacy for tc in tables)
+            self.row_privacy = any(tc.row_privacy for tc in tables)
 
     def symbol(self, expression):
         """
