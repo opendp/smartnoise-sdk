@@ -24,16 +24,14 @@ DATAVERSE_TOKEN_ENV_VAR = "SMARTNOISE_DATAVERSE_TEST_TOKEN"
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 sys.path.append(os.path.join(root_url, "utils"))
 
-from service_utils import run_app  # NOQA
-
-iris_dataset_path = os.path.join(root_url, "service", "datasets", "iris.csv")
+iris_dataset_path = os.path.join(root_url,"datasets", "iris.csv")
 if not os.path.exists(iris_dataset_path):
     sklearn_dataset = sklearn.datasets.load_iris()
     sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)
     sklearn_df.to_csv(iris_dataset_path)
 
 
-iris_schema_path = os.path.join(root_url, "service", "datasets", "iris.yaml")
+iris_schema_path = os.path.join(root_url,"datasets", "iris.yaml")
 if not os.path.exists(iris_schema_path):
     iris = Table("iris", "iris", [
                 Float("sepal length (cm)", 4, 8),
@@ -54,17 +52,17 @@ def _download_file(url, local_file):
         from urllib.request import urlretrieve
     urlretrieve(url, local_file)
 
-pums_1000_dataset_path = os.path.join(root_url, "service", "datasets", "evaluation", "PUMS_1000.csv")
+pums_1000_dataset_path = os.path.join(root_url,"datasets", "evaluation", "PUMS_1000.csv")
 if not os.path.exists(pums_1000_dataset_path):
     pums_url = "https://raw.githubusercontent.com/opendifferentialprivacy/dp-test-datasets/master/data/PUMS_california_demographics_1000/data.csv"
     _download_file(pums_url, pums_1000_dataset_path)
 
-reddit_dataset_path = os.path.join(root_url, "service", "datasets", "reddit.csv")
+reddit_dataset_path = os.path.join(root_url,"datasets", "reddit.csv")
 if not os.path.exists(reddit_dataset_path):
     import re
     reddit_url = "https://github.com/joshua-oss/differentially-private-set-union/raw/master/data/clean_askreddit.csv.zip"
-    reddit_zip_path = os.path.join(root_url, "service", "datasets", "askreddit.csv.zip")
-    datasets = os.path.join(root_url, "service", "datasets")
+    reddit_zip_path = os.path.join(root_url,"datasets", "askreddit.csv.zip")
+    datasets = os.path.join(root_url,"datasets")
     clean_reddit_path = os.path.join(datasets, "clean_askreddit.csv")
     _download_file(reddit_url, reddit_zip_path)
     from zipfile import ZipFile
@@ -85,7 +83,7 @@ if not os.path.exists(reddit_dataset_path):
     ngrams.to_csv(reddit_dataset_path)
 
 
-reddit_schema_path = os.path.join(root_url, "service", "datasets", "reddit.yaml")
+reddit_schema_path = os.path.join(root_url,"datasets", "reddit.yaml")
 if not os.path.exists(reddit_schema_path):
     reddit = Table("reddit", "reddit",  [
                 String("author", card=10000, is_key=True),
@@ -96,9 +94,6 @@ if not os.path.exists(reddit_schema_path):
 
 @pytest.fixture(scope="session")
 def client():
-    url = os.environ.get("SMARTNOISE_SERVICE_URL", "localhost")
-    port = int(os.environ.get("SMARTNOISE_SERVICE_PORT", 5001))
-
     client = _get_client()
     if DATAVERSE_TOKEN_ENV_VAR in os.environ:
         import pdb; pdb.set_trace()

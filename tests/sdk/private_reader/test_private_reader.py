@@ -12,8 +12,8 @@ from opendp.smartnoise.sql import PrivateReader, PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
-meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "reddit.yaml"))
-csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "reddit.csv"))
+meta_path = os.path.join(git_root_dir, os.path.join("datasets", "reddit.yaml"))
+csv_path = os.path.join(git_root_dir, os.path.join("datasets", "reddit.csv"))
 
 
 schema = CollectionMetadata.from_file(meta_path)
@@ -57,8 +57,8 @@ class TestDPSU:
 
 
     def test_calculate_multiplier(self):
-        pums_meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.yaml"))
-        pums_csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.csv"))
+        pums_meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
+        pums_csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
         pums_schema = CollectionMetadata.from_file(pums_meta_path)
         pums_df = pd.read_csv(pums_csv_path)
         pums_reader = PandasReader(pums_df, pums_schema)

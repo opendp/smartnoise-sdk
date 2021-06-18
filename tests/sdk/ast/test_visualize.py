@@ -16,8 +16,8 @@ from opendp.smartnoise._ast.expressions.sql import AggFunction
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
-meta_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.yaml"))
-csv_path = os.path.join(git_root_dir, os.path.join("service", "datasets", "PUMS.csv"))
+meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
+csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
 schema = CollectionMetadata.from_file(meta_path)
 df = pd.read_csv(csv_path)

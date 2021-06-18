@@ -13,7 +13,7 @@ from opendp.smartnoise.evaluation._exploration import Exploration
 from opendp.smartnoise.evaluation._aggregation import Aggregation
 
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
-dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url, "service", "datasets"))
+dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url,"datasets"))
 ag = Aggregation(t=1, repeat_count=1000)
 
 class TestStochastic:

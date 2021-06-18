@@ -46,9 +46,6 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
-service/datasets/d1.csv
-service/datasets/d2.csv
-service/datasets/simulation.csv
 
 # Translations
 *.mo
