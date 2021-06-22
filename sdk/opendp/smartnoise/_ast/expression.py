@@ -94,11 +94,7 @@ class NamedExpression(SqlExpr):
     """An expression with optional name"""
 
     def __init__(
-<<<<<<< HEAD
-        self, name: Identifier, expression: ExpressionType
-=======
         self, name: Identifier, expression: EXPR_TYPE
->>>>>>> main
     ) -> None:
         self.name = name
         self.expression = expression
