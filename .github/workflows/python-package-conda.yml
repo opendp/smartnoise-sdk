@@ -1,0 +1,50 @@
+name: OpenDP SmartNoise Gate
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        pip install --use-feature=2020-resolver -r tests/requirements.txt
+        pip install --use-feature=2020-resolver psycopg2
+        pip install --use-feature=2020-resolver readchar
+        pip install --use-feature=2020-resolver pyodbc
+        pip install --use-feature=2020-resolver keyring
+    - name: Install opendp-smartnoise
+      run: |
+        pip install --use-feature=2020-resolver ./sdk
+    - name: Lint with flake8
+      run: |
+        conda install flake8
+        flake8 sdk/opendp/smartnoise/sql/dpsu.py -v
+        flake8 sdk/opendp/smartnoise/reader/ -v
+        flake8 sdk/opendp/smartnoise/synthesizers/ -v
+    - name: Test SDK
+      run: |
+        conda install pytest
+        pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
+#    - name: Test Service
+#      run: |
+#        python service/application.py > logs &
+#        sleep 30
+#        python -m pytest tests/service -s -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
+
+        

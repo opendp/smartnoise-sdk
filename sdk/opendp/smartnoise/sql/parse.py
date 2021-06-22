@@ -247,7 +247,16 @@ class ExpressionVisitor(SqlSmallVisitor):
         return Literal(int(allText(ctx)))
 
     def visitStringLiteral(self, ctx):
-        return Literal(str(allText(ctx)))
+        text = str(allText(ctx))
+        t_len = len(text)
+        value = text
+        if t_len > 1:
+            l_delim = text[0]
+            r_delim = text[t_len - 1]
+            if r_delim == "'" and l_delim == "'":
+                # this is the expected case for all stringLiteral
+                value = text[1:t_len - 1]
+        return Literal(value, text)
 
     def visitTrueLiteral(self, ctx):
         return Literal(True)

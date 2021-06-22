@@ -92,8 +92,8 @@ class ColumnBoolean(SqlExpr):
     def symbol(self, relations):
         return ColumnBoolean(self.expression.symbol(relations))
 
-    def type(self) -> str:
-        return 'boolean'
+    def type(self):
+        return "boolean"
 
     def sensitivity(self) -> Optional[Union[int, float]]:
         return 1
@@ -259,19 +259,21 @@ class CaseExpression(SqlExpr):
         )
 
     def evaluate(self, bindings: Dict[str, Union[int, float, bool, str]]) -> Union[int, float, bool, str, None]:
-        else_exp = self.else_expr.evaluate(bindings) #type: ignore #need to be change in the case of self.else_expr = None
-        res = np.repeat(else_exp, len(bindings[list(bindings.keys())[0]]))
         if self.expression is not None:
             # simple search
             for we in self.when_exprs:
-                match = BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings)
-                res[match] = we.then.evaluate(bindings)
+                if BooleanCompare(self.expression, Op("="), we.expression).evaluate(bindings):
+                    return we.then.evaluate(bindings)
         else:
             # regular search
             for we in self.when_exprs:
-                match = we.expression.evaluate(bindings)
-                res[match] = we.then.evaluate(bindings)
-        return res
+                if we.expression.evaluate(bindings):
+                    return we.then.evaluate(bindings)
+        return (
+            self.else_expr.evaluate(bindings)
+            if self.else_expr
+            else None
+            )
 
 
 class WhenExpression(SqlExpr):
@@ -311,9 +313,16 @@ class ChooseFunction(SqlExpr):
     def __init__(self, expression: ExpressionType, choices: Seq): #TODO: Seq[ExpressionType]
         self.expression = expression
         self.choices = choices
-
     def children(self):
         return [Token("CHOOSE"), Token("("), self.expression, Token(","), self.choices, Token(")")]
+    def evaluate(self, bindings):
+        idx = int(self.expression.evaluate(bindings))
+        # index in CHOICE is 1-based, not 0-based
+        if len(self.choices) < idx or idx < 1:
+            return Literal(None).evaluate(bindings) # NULL
+        return self.choices[idx - 1].evaluate(bindings)
+
+
 
 
 class IIFFunction(SqlExpr):
@@ -333,7 +342,10 @@ class IIFFunction(SqlExpr):
             self.no,
             Token(")"),
         ]
-
+    def evaluate(self, bindings):
+        if (self.test.evaluate(bindings) == True):
+            return self.yes.evaluate(bindings)
+        return self.no.evaluate(bindings)
 
 def parse_bool(
     v: Union[bool, int, float, str]

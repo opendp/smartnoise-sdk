@@ -22,6 +22,25 @@ ExpressionType = Union[
     RankingFunction,
 ]
 
+EXPR_TYPE = Union[
+    "Expression",
+    "Column",
+    "ArithmeticExpression",
+    "CaseExpression",
+    "AllColumns",
+    "Literal",
+    "RankingFunction",
+    "BareFunction",
+    "RoundFunction",
+    "PowerFunction",
+    "AggFunction",
+    "MathFunction",
+    "IIFFunction",
+    "ChooseFunction",
+    "AliasedSubquery",
+    "NestedExpression",
+]
+
 class Expression(SqlExpr):
     """A bare expression with no name"""
 
@@ -75,7 +94,11 @@ class NamedExpression(SqlExpr):
     """An expression with optional name"""
 
     def __init__(
+<<<<<<< HEAD
         self, name: Identifier, expression: ExpressionType
+=======
+        self, name: Identifier, expression: EXPR_TYPE
+>>>>>>> main
     ) -> None:
         self.name = name
         self.expression = expression

@@ -1,0 +1,40 @@
+name: Run Sample Notebooks
+
+on: [workflow_dispatch]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        pip install --use-feature=2020-resolver -r tests/requirements.txt
+        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark
+    - name: Install opendp-smartnoise
+      run: |
+        pip install --use-feature=2020-resolver ./sdk
+    - name: Clone samples
+      run: |
+        git clone https://github.com/opendp/smartnoise-samples.git
+        touch smartnoise-samples/devops
+        git clone https://github.com/opendp/dp-test-datasets.git
+    - name: Test Notebooks
+      run: |
+        conda install pytest
+        # run notebooks, ignore slow ones
+        pytest --nbmake smartnoise-samples/ --ignore="smartnoise-samples/analysis/data/Data set processing - Mental Health in Tech Survey.ipynb" --ignore=smartnoise-samples/whitepaper-demos/6-deep-learning-medical.ipynb --ignore=smartnoise-samples/whitepaper-demos/2-reidentification-attack.ipynb --ignore=smartnoise-samples/whitepaper-demos/5-ml-synthetic-data.ipynb --ignore=smartnoise-samples/whitepaper-demos/4-ml-dp-classifier.ipynb

@@ -1,3 +1,4 @@
+from opendp.smartnoise.sql.reader.postgres import PostgresNameCompare
 import pytest
 from opendp.smartnoise._ast.validate import Validate
 from opendp.smartnoise.sql.parse import QueryParser
@@ -38,6 +39,7 @@ good_files = [f for f in validate_files if not "_fail" in f]
 bad_files = [f for f in validate_files if "_fail" in f]
 
 metadata = CollectionMetadata.from_file(meta_path)
+metadata.compare = PostgresNameCompare()
 
 
 #

@@ -8,8 +8,8 @@ import pandas as pd
 from opendp.smartnoise.metadata import CollectionMetadata
 
 try:
-    from opendp.smartnoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-    from opendp.smartnoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+    from opendp.smartnoise.synthesizers.preprocessors import GeneralTransformer
+    from opendp.smartnoise.synthesizers.pytorch import PytorchDPSynthesizer
     from opendp.smartnoise.synthesizers.pytorch.nn import PATEGAN
 except:
     import logging
@@ -28,7 +28,8 @@ df = pd.read_csv(csv_path)
 @pytest.mark.torch
 class TestDPGAN:
     def setup(self):
-        self.pategan = PytorchDPSynthesizer(PATEGAN(), GeneralTransformer())
+        epsilon = 1.0
+        self.pategan = PytorchDPSynthesizer(PATEGAN(epsilon), GeneralTransformer())
 
     def test_fit(self):
         self.pategan.fit(df)

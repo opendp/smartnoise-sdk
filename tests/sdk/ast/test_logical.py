@@ -1,6 +1,7 @@
 import pytest
 from opendp.smartnoise._ast.expressions.logical import *
 from opendp.smartnoise._ast.tokens import Column, Literal
+from opendp.smartnoise.sql.parse import QueryParser
 from datetime import date
 import numpy as np
 
@@ -370,3 +371,69 @@ class TestLogical:
                     assert not BooleanCompare(Literal(tv), 'and', Literal(fv)).evaluate(None)
                     assert not BooleanCompare(Column(tn), 'and', Literal(fv)).evaluate(bindings)
                     assert not BooleanCompare(Literal(tv), 'and', Column(fn)).evaluate(bindings)
+
+class TestCaseExpression:
+    def test_simple_case(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE x WHEN 5 THEN 'five' WHEN 6 THEN 'six' ELSE '' END")
+        bindings = dict([('x', 5)])
+        assert(c.evaluate(bindings) == "five")
+        bindings = dict([('x', 6)])
+        assert(c.evaluate(bindings) == 'six')
+        bindings = dict([('x', 7)])
+        assert(c.evaluate(bindings) == '')
+    def test_variable_replace(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE x WHEN 5 THEN y WHEN 6 THEN z ELSE 0 END")
+        bindings = dict([('x', 5), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == 10)
+        bindings['x'] = 6
+        assert(c.evaluate(bindings) == 12)
+        bindings['x'] = 1
+        assert(c.evaluate(bindings) == 0)
+    def test_string_bound(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE x WHEN 5 THEN y WHEN 6 THEN z ELSE q END")
+        bindings = dict([('x', 5), ('y', 'ten'), ('z', 'twelve'), ('q', 'zero')])
+        assert(c.evaluate(bindings) == "ten")
+        bindings['x'] = 6
+        assert(c.evaluate(bindings) == "twelve")
+        bindings['x'] = 1
+        assert(c.evaluate(bindings) == "zero")
+    def test_full_case(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CASE WHEN x <= 5 THEN y WHEN x > 6 THEN 0 ELSE z END")
+        bindings = dict([('x', 5), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == 10)
+        bindings['x'] = 6
+        assert(c.evaluate(bindings) == 12)
+        bindings['x'] = 10
+        assert(c.evaluate(bindings) == 0)
+    def test_iif(self):
+        qp = QueryParser()
+        c = qp.parse_expression("IIF(x <= 5, y, 0)")
+        bindings = dict([('x', 5), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == 10)
+        bindings["x"] = 6
+        assert(c.evaluate(bindings) == 0)
+        c = qp.parse_expression("IIF(x <= 5, y, 'string')")
+        assert(c.evaluate(bindings) == "string")
+    def test_choose(self):
+        qp = QueryParser()
+        c = qp.parse_expression("CHOOSE(x, 'a', 'b', 'c')")
+        bindings = dict([('x', 3), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == "c")
+        bindings["x"] = 1
+        assert(c.evaluate(bindings) == 'a')
+        bindings["x"] = 0
+        assert(c.evaluate(bindings) == None)
+        bindings["x"] = 10
+        assert(c.evaluate(bindings) == None)
+        c = qp.parse_expression("CHOOSE(x, 'a', 5, NULL)")
+        bindings = dict([('x', 3), ('y', 10), ('z', 12)])
+        assert(c.evaluate(bindings) == None)
+        bindings["x"] = "2"
+        assert(c.evaluate(bindings) == 5)
+        c = qp.parse_expression("CHOOSE(x % 2 + 1, NULL, 5)")
+        bindings["x"] = 13
+        assert(c.evaluate(bindings) == 5)

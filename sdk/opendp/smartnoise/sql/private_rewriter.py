@@ -160,6 +160,15 @@ class Rewriter:
         Validate().validateQuery(query, self.metadata)
 
         child_scope = Scope()
+
+        if self.options.row_privacy:
+            keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
+        else:
+            key_col = self.key_col(query)
+            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
+        
+        child_scope.push_name(keycount_expr, "keycount")
+
         # we make sure aggregates are in select scope for subqueries
         if query.agg is not None:
             for ge in query.agg.groupingExpressions:
@@ -182,19 +191,10 @@ class Rewriter:
     def exact_aggregates(self, query):
         child_scope = Scope()
 
-        if self.options.row_privacy:
-            keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
-        else:
-            key_col = self.key_col(query)
-            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
-            child_scope.push_name(keycount_expr.expression)
-
         for ne in query.select.namedExpressions:
             child_scope.push_name(ne.expression)
 
-        keycount = NamedExpression(Identifier("keycount"), keycount_expr)
-
-        select = [keycount] + [ne for ne in query.select.namedExpressions]
+        select = [ne for ne in query.select.namedExpressions]
         select = Select(None, select)
 
         subquery = Query(
@@ -247,44 +247,53 @@ class Rewriter:
         child_scope = Scope()
         relations = query.source.relations
         select = [
-                self.clamp_expression(ne, relations, child_scope, self.options.clamp_columns)
+                self.clamp_expression(ne, relations, child_scope, query, self.options.clamp_columns)
                 for ne in query.select.namedExpressions
             ]
         select = Select(None, select)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
         return subquery
 
-    def clamp_expression(self, ne, relations, scope, do_clamp=True):
+    def clamp_expression(self, ne, relations, scope, query, do_clamp=True):
         """
             Lookup the expression referenced in each named expression and
             write a clamped select for it, using the schema
         """
+        def bounds_clamp(colname):
+            if not do_clamp:
+                return None, None
+            if query.agg:
+                grouping_colnames = [col.name for col in query.agg.groupedColumns()]
+                if colname in grouping_colnames:
+                    return None, None
+            minval = None
+            maxval = None
+            sym = col.symbol(relations)
+            if sym.valtype in ["float", "int"] and not sym.unbounded:
+                minval = sym.minval
+                maxval = sym.maxval
+            if minval is None or maxval is None or sym.is_key:
+                return None, None
+            return minval, maxval
+
         exp = ne.expression
         cols = exp.find_nodes(Column)
         if type(exp) is Column:
             cols += [exp]
         for col in cols:
             colname = col.name
-            minval = None
-            maxval = None
-            sym = col.symbol(relations)
-            if do_clamp and sym.valtype in ["float", "int"] and not sym.unbounded:
-                minval = sym.minval
-                maxval = sym.maxval
-                if minval is None or sym.is_key:
-                    cexpr = Column(colname)
-                    ce_name = scope.push_name(cexpr, str(colname))
-                else:
-                    when_min = WhenExpression(
-                        BooleanCompare(col, Op("<"), Literal(minval)), Literal(minval)
-                        )
-                    when_max = WhenExpression(
-                        BooleanCompare(col, Op(">"), Literal(maxval)), Literal(maxval)
-                        )
-                    cexpr = CaseExpression(None, [when_min, when_max], col)
-                    ce_name = scope.push_name(cexpr, str(colname))
-            else:
+            minval, maxval = bounds_clamp(colname)
+            if minval == None:
                 cexpr = Column(colname)
+                ce_name = scope.push_name(cexpr, str(colname))
+            else:
+                when_min = WhenExpression(
+                    BooleanCompare(col, Op("<"), Literal(minval)), Literal(minval)
+                    )
+                when_max = WhenExpression(
+                    BooleanCompare(col, Op(">"), Literal(maxval)), Literal(maxval)
+                    )
+                cexpr = CaseExpression(None, [when_min, when_max], col)
                 ce_name = scope.push_name(cexpr, str(colname))
             col.name = ce_name
         return ne
