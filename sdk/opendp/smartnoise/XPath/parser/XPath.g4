@@ -6,25 +6,41 @@ statement
     ;
 
 innerStatement
-    : (childSelector | rootSelector | descendantSelector) (rootSelector | descendantSelector )*
+    : (childSelector | rootSelector | rootDescendantSelector) (('/' childSelector) | '//' (descendantSelector))*
     ;
 
 childSelector
-    : (IDENTIFIER | ATTRIBUTE | '*') booleanSelector?
+    : (ident=IDENTIFIER | attr=ATTRIBUTE | allsel=allSelect) booleanSelector?
     ;
 
 rootSelector
-    : '/' (IDENTIFIER | ATTRIBUTE | '*') booleanSelector?
+    : '/' (ident=IDENTIFIER | attr=ATTRIBUTE | allsel=allSelect) booleanSelector?
+    ;
+
+rootDescendantSelector
+    : '//' (ident=IDENTIFIER | attr=ATTRIBUTE | allsel=allSelect) booleanSelector?
     ;
 
 descendantSelector
-    : '//' (IDENTIFIER | ATTRIBUTE | '*') booleanSelector?
+    : (ident=IDENTIFIER | attr=ATTRIBUTE | allsel=allSelect) booleanSelector?
     ;
 
 booleanSelector
-    : '[' innerStatement (comparisonOperator (literal | innerStatement))? ']'
+    : '[' left=innerStatement (op=comparisonOperator (lit=literal | stmt=innerStatement))? ']'
     ;
 
+allSelect
+    : allAttributes
+    | allNodes
+    ;
+
+allNodes
+    : '*'
+    ;
+
+allAttributes
+    : '@*'
+    ;
 
 comparisonOperator
     : EQ | NEQ | NEQJ | LT | LTE | GT | GTE 
@@ -46,13 +62,10 @@ literal
     | NULL      #nullLiteral
     ;
 
-
 number
     : MINUS? DECIMAL_VALUE            #decimalLiteral
     | MINUS? INTEGER_VALUE            #integerLiteral
     ;
-
-
 
 EQ  : '=' | '==';
 NSEQ: '<=>';
@@ -77,7 +90,6 @@ HAT: '^';
 TRUE: T R U E;
 FALSE: F A L S E;
 NULL: N U L L;
-
 
 /*
     Standard Lexer stuff
