@@ -1,4 +1,4 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8-blue)](https://www.python.org/)
 
 <a href="https://smartnoise.org"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
 
@@ -86,10 +86,9 @@ Samples of DP SQL functionality: [here](https://github.com/opendp/smartnoise-sam
 
 ## Communication
 
-- Please use [GitHub issues](https://github.com/opendp/smartnoise-sdk/issues) for bug reports, feature requests, install issues, and ideas.
-- [Gitter](https://gitter.im/opendifferentialprivacy/SmartNoise) is available for general chat and online discussions.
-- For other requests, please contact us at [smartnoise@opendp.org](mailto:smartnoise@opendp.org).
-  - _Note: We encourage you to use [GitHub issues](https://github.com/opendp/smartnoise-sdk/issues), especially for bugs._
+- You are very welcome to join us on [GitHub Discussions](https://github.com/opendp/opendp/discussions/categories/smartnoise)!
+- Please use [GitHub Issues](https://github.com/opendp/smartnoise-sdk/issues) for bug reports and feature requests.
+- For other requests, including security issues, please contact us at [smartnoise@opendp.org](mailto:smartnoise@opendp.org).
 
 ## Releases and Contributing
 
