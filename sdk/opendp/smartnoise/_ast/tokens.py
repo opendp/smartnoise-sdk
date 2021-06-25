@@ -1,6 +1,6 @@
 from typing import List, Any, Dict, Union
 import itertools
-
+from opendp.smartnoise.xpath.parse import XPath
 
 class Token(str):
     def __init__(self, text):
@@ -101,6 +101,11 @@ class Sql:
     def children(self):
         return []
 
+    def xpath(self, path):
+        p = XPath()
+        x = p.parse(path)
+        return x.evaluate(self)
+        
     def find_node(self, type_name):
         """
             Walks the tree and returns the first node

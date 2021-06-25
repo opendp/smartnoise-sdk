@@ -169,6 +169,27 @@ class TestXPathExecutionWithRewrite:
         assert(res[0].__class__.__name__ == "Query")
         assert(str(xx) == path)
 
-
+class TestSqlDecorator:
+    def test_compare_lit(self):
+        path = "//ArithmeticExpression[@right > 2]"
+        res = q.xpath(path)
+        assert(len(res) == 2)
+    def test_attrib_equal(self):
+        path = "//AggFunction[@name == 'COUNT']"
+        res = root.xpath(path)
+        assert(len(res) == 3)
+    def test_descend_attr_match(self):
+        path = '//*[@left]' # returns value
+        xx = p.parse(path)
+        res = root.xpath(path)
+        assert(len(res) >= 17)
+    def test_attr_exists(self):
+        path = '/Query[@soos]' # returns []
+        res = root.xpath(path)
+        assert(len(res) == 0)
+    def test_descend_attr(self):
+        path = '//@name'
+        res = root.xpath(path)
+        assert(len(res) >= 41)
 
 
