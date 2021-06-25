@@ -6,7 +6,7 @@ statement
     ;
 
 innerStatement
-    : (childSelector | rootSelector | rootDescendantSelector) (('/' childSelector) | '//' (descendantSelector))*
+    : (childSelector | rootSelector | rootDescendantSelector) (indexSelector | ('/' childSelector) | '//' (descendantSelector))*
     ;
 
 childSelector
@@ -26,7 +26,12 @@ descendantSelector
     ;
 
 booleanSelector
-    : '[' left=innerStatement (op=comparisonOperator (lit=literal | stmt=innerStatement))? ']'
+    : '[' (left=innerStatement) (op=comparisonOperator (rlit=literal | stmt=innerStatement))? ']'
+    | '[' llit=literal op=comparisonOperator (rlit=literal | stmt=innerStatement) ']'
+    ; 
+
+indexSelector
+    : '[' index=INTEGER_VALUE ']'
     ;
 
 allSelect
@@ -62,6 +67,7 @@ literal
     | NULL      #nullLiteral
     ;
 
+
 number
     : MINUS? DECIMAL_VALUE            #decimalLiteral
     | MINUS? INTEGER_VALUE            #integerLiteral
@@ -95,8 +101,8 @@ NULL: N U L L;
     Standard Lexer stuff
 */
 STRING
-    : '\'' ( ~('\''|'\\') | ('\\' .) )* '\'';
-
+    : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
+    ;
 
 INTEGER_VALUE
     : DIGIT+

@@ -12,46 +12,56 @@ else:
 def serializedATN():
     with StringIO() as buf:
         buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3#")
-        buf.write("~\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b")
-        buf.write("\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16\t")
-        buf.write("\16\4\17\t\17\4\20\t\20\3\2\3\2\3\2\3\3\3\3\3\3\5\3\'")
-        buf.write("\n\3\3\3\3\3\3\3\3\3\7\3-\n\3\f\3\16\3\60\13\3\3\4\3\4")
-        buf.write("\3\4\5\4\65\n\4\3\4\5\48\n\4\3\5\3\5\3\5\3\5\5\5>\n\5")
-        buf.write("\3\5\5\5A\n\5\3\6\3\6\3\6\3\6\5\6G\n\6\3\6\5\6J\n\6\3")
-        buf.write("\7\3\7\3\7\5\7O\n\7\3\7\5\7R\n\7\3\b\3\b\3\b\3\b\3\b\5")
-        buf.write("\bY\n\b\5\b[\n\b\3\b\3\b\3\t\3\t\5\ta\n\t\3\n\3\n\3\13")
-        buf.write("\3\13\3\f\3\f\3\r\3\r\3\16\3\16\3\17\3\17\3\17\3\17\3")
-        buf.write("\17\5\17r\n\17\3\20\5\20u\n\20\3\20\3\20\5\20y\n\20\3")
-        buf.write("\20\5\20|\n\20\3\20\2\2\21\2\4\6\b\n\f\16\20\22\24\26")
-        buf.write("\30\32\34\36\2\4\4\2\7\7\t\16\3\2\31\32\2\u0088\2 \3\2")
-        buf.write("\2\2\4&\3\2\2\2\6\64\3\2\2\2\b9\3\2\2\2\nB\3\2\2\2\fN")
-        buf.write("\3\2\2\2\16S\3\2\2\2\20`\3\2\2\2\22b\3\2\2\2\24d\3\2\2")
-        buf.write("\2\26f\3\2\2\2\30h\3\2\2\2\32j\3\2\2\2\34q\3\2\2\2\36")
-        buf.write("{\3\2\2\2 !\5\4\3\2!\"\7\2\2\3\"\3\3\2\2\2#\'\5\6\4\2")
-        buf.write("$\'\5\b\5\2%\'\5\n\6\2&#\3\2\2\2&$\3\2\2\2&%\3\2\2\2\'")
-        buf.write(".\3\2\2\2()\7\22\2\2)-\5\6\4\2*+\7\3\2\2+-\5\f\7\2,(\3")
-        buf.write("\2\2\2,*\3\2\2\2-\60\3\2\2\2.,\3\2\2\2./\3\2\2\2/\5\3")
-        buf.write("\2\2\2\60.\3\2\2\2\61\65\7 \2\2\62\65\7\37\2\2\63\65\5")
-        buf.write("\20\t\2\64\61\3\2\2\2\64\62\3\2\2\2\64\63\3\2\2\2\65\67")
-        buf.write("\3\2\2\2\668\5\16\b\2\67\66\3\2\2\2\678\3\2\2\28\7\3\2")
-        buf.write("\2\29=\7\22\2\2:>\7 \2\2;>\7\37\2\2<>\5\20\t\2=:\3\2\2")
-        buf.write("\2=;\3\2\2\2=<\3\2\2\2>@\3\2\2\2?A\5\16\b\2@?\3\2\2\2")
-        buf.write("@A\3\2\2\2A\t\3\2\2\2BF\7\3\2\2CG\7 \2\2DG\7\37\2\2EG")
-        buf.write("\5\20\t\2FC\3\2\2\2FD\3\2\2\2FE\3\2\2\2GI\3\2\2\2HJ\5")
-        buf.write("\16\b\2IH\3\2\2\2IJ\3\2\2\2J\13\3\2\2\2KO\7 \2\2LO\7\37")
-        buf.write("\2\2MO\5\20\t\2NK\3\2\2\2NL\3\2\2\2NM\3\2\2\2OQ\3\2\2")
-        buf.write("\2PR\5\16\b\2QP\3\2\2\2QR\3\2\2\2R\r\3\2\2\2ST\7\4\2\2")
-        buf.write("TZ\5\4\3\2UX\5\26\f\2VY\5\34\17\2WY\5\4\3\2XV\3\2\2\2")
-        buf.write("XW\3\2\2\2Y[\3\2\2\2ZU\3\2\2\2Z[\3\2\2\2[\\\3\2\2\2\\")
-        buf.write("]\7\5\2\2]\17\3\2\2\2^a\5\24\13\2_a\5\22\n\2`^\3\2\2\2")
-        buf.write("`_\3\2\2\2a\21\3\2\2\2bc\7\21\2\2c\23\3\2\2\2de\7\6\2")
-        buf.write("\2e\25\3\2\2\2fg\t\2\2\2g\27\3\2\2\2hi\t\3\2\2i\31\3\2")
-        buf.write("\2\2jk\7\21\2\2k\33\3\2\2\2lr\7\34\2\2mr\5\36\20\2nr\7")
-        buf.write("\31\2\2or\7\32\2\2pr\7\33\2\2ql\3\2\2\2qm\3\2\2\2qn\3")
-        buf.write("\2\2\2qo\3\2\2\2qp\3\2\2\2r\35\3\2\2\2su\7\20\2\2ts\3")
-        buf.write("\2\2\2tu\3\2\2\2uv\3\2\2\2v|\7\36\2\2wy\7\20\2\2xw\3\2")
-        buf.write("\2\2xy\3\2\2\2yz\3\2\2\2z|\7\35\2\2{t\3\2\2\2{x\3\2\2")
-        buf.write("\2|\37\3\2\2\2\24&,.\64\67=@FINQXZ`qtx{")
+        buf.write("\u0090\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
+        buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
+        buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\3\2\3\2\3\2\3\3\3")
+        buf.write("\3\3\3\5\3)\n\3\3\3\3\3\3\3\3\3\3\3\7\3\60\n\3\f\3\16")
+        buf.write("\3\63\13\3\3\4\3\4\3\4\5\48\n\4\3\4\5\4;\n\4\3\5\3\5\3")
+        buf.write("\5\3\5\5\5A\n\5\3\5\5\5D\n\5\3\6\3\6\3\6\3\6\5\6J\n\6")
+        buf.write("\3\6\5\6M\n\6\3\7\3\7\3\7\5\7R\n\7\3\7\5\7U\n\7\3\b\3")
+        buf.write("\b\3\b\3\b\3\b\5\b\\\n\b\5\b^\n\b\3\b\3\b\3\b\3\b\3\b")
+        buf.write("\3\b\3\b\5\bg\n\b\3\b\3\b\5\bk\n\b\3\t\3\t\3\t\3\t\3\n")
+        buf.write("\3\n\5\ns\n\n\3\13\3\13\3\f\3\f\3\r\3\r\3\16\3\16\3\17")
+        buf.write("\3\17\3\20\3\20\3\20\3\20\3\20\5\20\u0084\n\20\3\21\5")
+        buf.write("\21\u0087\n\21\3\21\3\21\5\21\u008b\n\21\3\21\5\21\u008e")
+        buf.write("\n\21\3\21\2\2\22\2\4\6\b\n\f\16\20\22\24\26\30\32\34")
+        buf.write("\36 \2\4\4\2\7\7\t\16\3\2\31\32\2\u009c\2\"\3\2\2\2\4")
+        buf.write("(\3\2\2\2\6\67\3\2\2\2\b<\3\2\2\2\nE\3\2\2\2\fQ\3\2\2")
+        buf.write("\2\16j\3\2\2\2\20l\3\2\2\2\22r\3\2\2\2\24t\3\2\2\2\26")
+        buf.write("v\3\2\2\2\30x\3\2\2\2\32z\3\2\2\2\34|\3\2\2\2\36\u0083")
+        buf.write("\3\2\2\2 \u008d\3\2\2\2\"#\5\4\3\2#$\7\2\2\3$\3\3\2\2")
+        buf.write("\2%)\5\6\4\2&)\5\b\5\2\')\5\n\6\2(%\3\2\2\2(&\3\2\2\2")
+        buf.write("(\'\3\2\2\2)\61\3\2\2\2*\60\5\20\t\2+,\7\22\2\2,\60\5")
+        buf.write("\6\4\2-.\7\3\2\2.\60\5\f\7\2/*\3\2\2\2/+\3\2\2\2/-\3\2")
+        buf.write("\2\2\60\63\3\2\2\2\61/\3\2\2\2\61\62\3\2\2\2\62\5\3\2")
+        buf.write("\2\2\63\61\3\2\2\2\648\7 \2\2\658\7\37\2\2\668\5\22\n")
+        buf.write("\2\67\64\3\2\2\2\67\65\3\2\2\2\67\66\3\2\2\28:\3\2\2\2")
+        buf.write("9;\5\16\b\2:9\3\2\2\2:;\3\2\2\2;\7\3\2\2\2<@\7\22\2\2")
+        buf.write("=A\7 \2\2>A\7\37\2\2?A\5\22\n\2@=\3\2\2\2@>\3\2\2\2@?")
+        buf.write("\3\2\2\2AC\3\2\2\2BD\5\16\b\2CB\3\2\2\2CD\3\2\2\2D\t\3")
+        buf.write("\2\2\2EI\7\3\2\2FJ\7 \2\2GJ\7\37\2\2HJ\5\22\n\2IF\3\2")
+        buf.write("\2\2IG\3\2\2\2IH\3\2\2\2JL\3\2\2\2KM\5\16\b\2LK\3\2\2")
+        buf.write("\2LM\3\2\2\2M\13\3\2\2\2NR\7 \2\2OR\7\37\2\2PR\5\22\n")
+        buf.write("\2QN\3\2\2\2QO\3\2\2\2QP\3\2\2\2RT\3\2\2\2SU\5\16\b\2")
+        buf.write("TS\3\2\2\2TU\3\2\2\2U\r\3\2\2\2VW\7\4\2\2W]\5\4\3\2X[")
+        buf.write("\5\30\r\2Y\\\5\36\20\2Z\\\5\4\3\2[Y\3\2\2\2[Z\3\2\2\2")
+        buf.write("\\^\3\2\2\2]X\3\2\2\2]^\3\2\2\2^_\3\2\2\2_`\7\5\2\2`k")
+        buf.write("\3\2\2\2ab\7\4\2\2bc\5\36\20\2cf\5\30\r\2dg\5\36\20\2")
+        buf.write("eg\5\4\3\2fd\3\2\2\2fe\3\2\2\2gh\3\2\2\2hi\7\5\2\2ik\3")
+        buf.write("\2\2\2jV\3\2\2\2ja\3\2\2\2k\17\3\2\2\2lm\7\4\2\2mn\7\35")
+        buf.write("\2\2no\7\5\2\2o\21\3\2\2\2ps\5\26\f\2qs\5\24\13\2rp\3")
+        buf.write("\2\2\2rq\3\2\2\2s\23\3\2\2\2tu\7\21\2\2u\25\3\2\2\2vw")
+        buf.write("\7\6\2\2w\27\3\2\2\2xy\t\2\2\2y\31\3\2\2\2z{\t\3\2\2{")
+        buf.write("\33\3\2\2\2|}\7\21\2\2}\35\3\2\2\2~\u0084\7\34\2\2\177")
+        buf.write("\u0084\5 \21\2\u0080\u0084\7\31\2\2\u0081\u0084\7\32\2")
+        buf.write("\2\u0082\u0084\7\33\2\2\u0083~\3\2\2\2\u0083\177\3\2\2")
+        buf.write("\2\u0083\u0080\3\2\2\2\u0083\u0081\3\2\2\2\u0083\u0082")
+        buf.write("\3\2\2\2\u0084\37\3\2\2\2\u0085\u0087\7\20\2\2\u0086\u0085")
+        buf.write("\3\2\2\2\u0086\u0087\3\2\2\2\u0087\u0088\3\2\2\2\u0088")
+        buf.write("\u008e\7\36\2\2\u0089\u008b\7\20\2\2\u008a\u0089\3\2\2")
+        buf.write("\2\u008a\u008b\3\2\2\2\u008b\u008c\3\2\2\2\u008c\u008e")
+        buf.write("\7\35\2\2\u008d\u0086\3\2\2\2\u008d\u008a\3\2\2\2\u008e")
+        buf.write("!\3\2\2\2\26(/\61\67:@CILQT[]fjr\u0083\u0086\u008a\u008d")
         return buf.getvalue()
 
 
@@ -85,19 +95,21 @@ class XPathParser ( Parser ):
     RULE_rootDescendantSelector = 4
     RULE_descendantSelector = 5
     RULE_booleanSelector = 6
-    RULE_allSelect = 7
-    RULE_allNodes = 8
-    RULE_allAttributes = 9
-    RULE_comparisonOperator = 10
-    RULE_booleanValue = 11
-    RULE_allExpression = 12
-    RULE_literal = 13
-    RULE_number = 14
+    RULE_indexSelector = 7
+    RULE_allSelect = 8
+    RULE_allNodes = 9
+    RULE_allAttributes = 10
+    RULE_comparisonOperator = 11
+    RULE_booleanValue = 12
+    RULE_allExpression = 13
+    RULE_literal = 14
+    RULE_number = 15
 
     ruleNames =  [ "statement", "innerStatement", "childSelector", "rootSelector", 
                    "rootDescendantSelector", "descendantSelector", "booleanSelector", 
-                   "allSelect", "allNodes", "allAttributes", "comparisonOperator", 
-                   "booleanValue", "allExpression", "literal", "number" ]
+                   "indexSelector", "allSelect", "allNodes", "allAttributes", 
+                   "comparisonOperator", "booleanValue", "allExpression", 
+                   "literal", "number" ]
 
     EOF = Token.EOF
     T__0=1
@@ -182,9 +194,9 @@ class XPathParser ( Parser ):
         self.enterRule(localctx, 0, self.RULE_statement)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 30
+            self.state = 32
             self.innerStatement()
-            self.state = 31
+            self.state = 33
             self.match(XPathParser.EOF)
         except RecognitionException as re:
             localctx.exception = re
@@ -214,6 +226,13 @@ class XPathParser ( Parser ):
 
         def rootDescendantSelector(self):
             return self.getTypedRuleContext(XPathParser.RootDescendantSelectorContext,0)
+
+
+        def indexSelector(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(XPathParser.IndexSelectorContext)
+            else:
+                return self.getTypedRuleContext(XPathParser.IndexSelectorContext,i)
 
 
         def SLASH(self, i:int=None):
@@ -256,48 +275,52 @@ class XPathParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 36
+            self.state = 38
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [XPathParser.T__3, XPathParser.ASTERISK, XPathParser.ATTRIBUTE, XPathParser.IDENTIFIER]:
-                self.state = 33
+                self.state = 35
                 self.childSelector()
                 pass
             elif token in [XPathParser.SLASH]:
-                self.state = 34
+                self.state = 36
                 self.rootSelector()
                 pass
             elif token in [XPathParser.T__0]:
-                self.state = 35
+                self.state = 37
                 self.rootDescendantSelector()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 44
+            self.state = 47
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==XPathParser.T__0 or _la==XPathParser.SLASH:
-                self.state = 42
+            while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << XPathParser.T__0) | (1 << XPathParser.T__1) | (1 << XPathParser.SLASH))) != 0):
+                self.state = 45
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [XPathParser.SLASH]:
-                    self.state = 38
+                if token in [XPathParser.T__1]:
+                    self.state = 40
+                    self.indexSelector()
+                    pass
+                elif token in [XPathParser.SLASH]:
+                    self.state = 41
                     self.match(XPathParser.SLASH)
-                    self.state = 39
+                    self.state = 42
                     self.childSelector()
                     pass
                 elif token in [XPathParser.T__0]:
-                    self.state = 40
+                    self.state = 43
                     self.match(XPathParser.T__0)
 
-                    self.state = 41
+                    self.state = 44
                     self.descendantSelector()
                     pass
                 else:
                     raise NoViableAltException(self)
 
-                self.state = 46
+                self.state = 49
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -357,32 +380,31 @@ class XPathParser ( Parser ):
 
         localctx = XPathParser.ChildSelectorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 4, self.RULE_childSelector)
-        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 50
+            self.state = 53
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [XPathParser.IDENTIFIER]:
-                self.state = 47
+                self.state = 50
                 localctx.ident = self.match(XPathParser.IDENTIFIER)
                 pass
             elif token in [XPathParser.ATTRIBUTE]:
-                self.state = 48
+                self.state = 51
                 localctx.attr = self.match(XPathParser.ATTRIBUTE)
                 pass
             elif token in [XPathParser.T__3, XPathParser.ASTERISK]:
-                self.state = 49
+                self.state = 52
                 localctx.allsel = self.allSelect()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 53
+            self.state = 56
             self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if _la==XPathParser.T__1:
-                self.state = 52
+            la_ = self._interp.adaptivePredict(self._input,4,self._ctx)
+            if la_ == 1:
+                self.state = 55
                 self.booleanSelector()
 
 
@@ -445,34 +467,33 @@ class XPathParser ( Parser ):
 
         localctx = XPathParser.RootSelectorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 6, self.RULE_rootSelector)
-        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 55
+            self.state = 58
             self.match(XPathParser.SLASH)
-            self.state = 59
+            self.state = 62
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [XPathParser.IDENTIFIER]:
-                self.state = 56
+                self.state = 59
                 localctx.ident = self.match(XPathParser.IDENTIFIER)
                 pass
             elif token in [XPathParser.ATTRIBUTE]:
-                self.state = 57
+                self.state = 60
                 localctx.attr = self.match(XPathParser.ATTRIBUTE)
                 pass
             elif token in [XPathParser.T__3, XPathParser.ASTERISK]:
-                self.state = 58
+                self.state = 61
                 localctx.allsel = self.allSelect()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 62
+            self.state = 65
             self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if _la==XPathParser.T__1:
-                self.state = 61
+            la_ = self._interp.adaptivePredict(self._input,6,self._ctx)
+            if la_ == 1:
+                self.state = 64
                 self.booleanSelector()
 
 
@@ -532,34 +553,33 @@ class XPathParser ( Parser ):
 
         localctx = XPathParser.RootDescendantSelectorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 8, self.RULE_rootDescendantSelector)
-        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 64
+            self.state = 67
             self.match(XPathParser.T__0)
-            self.state = 68
+            self.state = 71
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [XPathParser.IDENTIFIER]:
-                self.state = 65
+                self.state = 68
                 localctx.ident = self.match(XPathParser.IDENTIFIER)
                 pass
             elif token in [XPathParser.ATTRIBUTE]:
-                self.state = 66
+                self.state = 69
                 localctx.attr = self.match(XPathParser.ATTRIBUTE)
                 pass
             elif token in [XPathParser.T__3, XPathParser.ASTERISK]:
-                self.state = 67
+                self.state = 70
                 localctx.allsel = self.allSelect()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 71
+            self.state = 74
             self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if _la==XPathParser.T__1:
-                self.state = 70
+            la_ = self._interp.adaptivePredict(self._input,8,self._ctx)
+            if la_ == 1:
+                self.state = 73
                 self.booleanSelector()
 
 
@@ -619,32 +639,31 @@ class XPathParser ( Parser ):
 
         localctx = XPathParser.DescendantSelectorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 10, self.RULE_descendantSelector)
-        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 76
+            self.state = 79
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [XPathParser.IDENTIFIER]:
-                self.state = 73
+                self.state = 76
                 localctx.ident = self.match(XPathParser.IDENTIFIER)
                 pass
             elif token in [XPathParser.ATTRIBUTE]:
-                self.state = 74
+                self.state = 77
                 localctx.attr = self.match(XPathParser.ATTRIBUTE)
                 pass
             elif token in [XPathParser.T__3, XPathParser.ASTERISK]:
-                self.state = 75
+                self.state = 78
                 localctx.allsel = self.allSelect()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 79
+            self.state = 82
             self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if _la==XPathParser.T__1:
-                self.state = 78
+            la_ = self._interp.adaptivePredict(self._input,10,self._ctx)
+            if la_ == 1:
+                self.state = 81
                 self.booleanSelector()
 
 
@@ -664,8 +683,9 @@ class XPathParser ( Parser ):
             self.parser = parser
             self.left = None # InnerStatementContext
             self.op = None # ComparisonOperatorContext
-            self.lit = None # LiteralContext
+            self.rlit = None # LiteralContext
             self.stmt = None # InnerStatementContext
+            self.llit = None # LiteralContext
 
         def innerStatement(self, i:int=None):
             if i is None:
@@ -678,8 +698,11 @@ class XPathParser ( Parser ):
             return self.getTypedRuleContext(XPathParser.ComparisonOperatorContext,0)
 
 
-        def literal(self):
-            return self.getTypedRuleContext(XPathParser.LiteralContext,0)
+        def literal(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(XPathParser.LiteralContext)
+            else:
+                return self.getTypedRuleContext(XPathParser.LiteralContext,i)
 
 
         def getRuleIndex(self):
@@ -708,34 +731,119 @@ class XPathParser ( Parser ):
         self.enterRule(localctx, 12, self.RULE_booleanSelector)
         self._la = 0 # Token type
         try:
-            self.enterOuterAlt(localctx, 1)
-            self.state = 81
-            self.match(XPathParser.T__1)
-            self.state = 82
-            localctx.left = self.innerStatement()
-            self.state = 88
+            self.state = 104
             self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << XPathParser.EQ) | (1 << XPathParser.NEQ) | (1 << XPathParser.NEQJ) | (1 << XPathParser.LT) | (1 << XPathParser.LTE) | (1 << XPathParser.GT) | (1 << XPathParser.GTE))) != 0):
-                self.state = 83
+            la_ = self._interp.adaptivePredict(self._input,14,self._ctx)
+            if la_ == 1:
+                self.enterOuterAlt(localctx, 1)
+                self.state = 84
+                self.match(XPathParser.T__1)
+
+                self.state = 85
+                localctx.left = self.innerStatement()
+                self.state = 91
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << XPathParser.EQ) | (1 << XPathParser.NEQ) | (1 << XPathParser.NEQJ) | (1 << XPathParser.LT) | (1 << XPathParser.LTE) | (1 << XPathParser.GT) | (1 << XPathParser.GTE))) != 0):
+                    self.state = 86
+                    localctx.op = self.comparisonOperator()
+                    self.state = 89
+                    self._errHandler.sync(self)
+                    token = self._input.LA(1)
+                    if token in [XPathParser.MINUS, XPathParser.TRUE, XPathParser.FALSE, XPathParser.NULL, XPathParser.STRING, XPathParser.INTEGER_VALUE, XPathParser.DECIMAL_VALUE]:
+                        self.state = 87
+                        localctx.rlit = self.literal()
+                        pass
+                    elif token in [XPathParser.T__0, XPathParser.T__3, XPathParser.ASTERISK, XPathParser.SLASH, XPathParser.ATTRIBUTE, XPathParser.IDENTIFIER]:
+                        self.state = 88
+                        localctx.stmt = self.innerStatement()
+                        pass
+                    else:
+                        raise NoViableAltException(self)
+
+
+
+                self.state = 93
+                self.match(XPathParser.T__2)
+                pass
+
+            elif la_ == 2:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 95
+                self.match(XPathParser.T__1)
+                self.state = 96
+                localctx.llit = self.literal()
+                self.state = 97
                 localctx.op = self.comparisonOperator()
-                self.state = 86
+                self.state = 100
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
                 if token in [XPathParser.MINUS, XPathParser.TRUE, XPathParser.FALSE, XPathParser.NULL, XPathParser.STRING, XPathParser.INTEGER_VALUE, XPathParser.DECIMAL_VALUE]:
-                    self.state = 84
-                    localctx.lit = self.literal()
+                    self.state = 98
+                    localctx.rlit = self.literal()
                     pass
                 elif token in [XPathParser.T__0, XPathParser.T__3, XPathParser.ASTERISK, XPathParser.SLASH, XPathParser.ATTRIBUTE, XPathParser.IDENTIFIER]:
-                    self.state = 85
+                    self.state = 99
                     localctx.stmt = self.innerStatement()
                     pass
                 else:
                     raise NoViableAltException(self)
 
+                self.state = 102
+                self.match(XPathParser.T__2)
+                pass
 
 
-            self.state = 90
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class IndexSelectorContext(ParserRuleContext):
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+            self.index = None # Token
+
+        def INTEGER_VALUE(self):
+            return self.getToken(XPathParser.INTEGER_VALUE, 0)
+
+        def getRuleIndex(self):
+            return XPathParser.RULE_indexSelector
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterIndexSelector" ):
+                listener.enterIndexSelector(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitIndexSelector" ):
+                listener.exitIndexSelector(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitIndexSelector" ):
+                return visitor.visitIndexSelector(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def indexSelector(self):
+
+        localctx = XPathParser.IndexSelectorContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 14, self.RULE_indexSelector)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 106
+            self.match(XPathParser.T__1)
+            self.state = 107
+            localctx.index = self.match(XPathParser.INTEGER_VALUE)
+            self.state = 108
             self.match(XPathParser.T__2)
         except RecognitionException as re:
             localctx.exception = re
@@ -783,19 +891,19 @@ class XPathParser ( Parser ):
     def allSelect(self):
 
         localctx = XPathParser.AllSelectContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 14, self.RULE_allSelect)
+        self.enterRule(localctx, 16, self.RULE_allSelect)
         try:
-            self.state = 94
+            self.state = 112
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [XPathParser.T__3]:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 92
+                self.state = 110
                 self.allAttributes()
                 pass
             elif token in [XPathParser.ASTERISK]:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 93
+                self.state = 111
                 self.allNodes()
                 pass
             else:
@@ -842,10 +950,10 @@ class XPathParser ( Parser ):
     def allNodes(self):
 
         localctx = XPathParser.AllNodesContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 16, self.RULE_allNodes)
+        self.enterRule(localctx, 18, self.RULE_allNodes)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 96
+            self.state = 114
             self.match(XPathParser.ASTERISK)
         except RecognitionException as re:
             localctx.exception = re
@@ -886,10 +994,10 @@ class XPathParser ( Parser ):
     def allAttributes(self):
 
         localctx = XPathParser.AllAttributesContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 18, self.RULE_allAttributes)
+        self.enterRule(localctx, 20, self.RULE_allAttributes)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 98
+            self.state = 116
             self.match(XPathParser.T__3)
         except RecognitionException as re:
             localctx.exception = re
@@ -950,11 +1058,11 @@ class XPathParser ( Parser ):
     def comparisonOperator(self):
 
         localctx = XPathParser.ComparisonOperatorContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 20, self.RULE_comparisonOperator)
+        self.enterRule(localctx, 22, self.RULE_comparisonOperator)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 100
+            self.state = 118
             _la = self._input.LA(1)
             if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << XPathParser.EQ) | (1 << XPathParser.NEQ) | (1 << XPathParser.NEQJ) | (1 << XPathParser.LT) | (1 << XPathParser.LTE) | (1 << XPathParser.GT) | (1 << XPathParser.GTE))) != 0)):
                 self._errHandler.recoverInline(self)
@@ -1005,11 +1113,11 @@ class XPathParser ( Parser ):
     def booleanValue(self):
 
         localctx = XPathParser.BooleanValueContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 22, self.RULE_booleanValue)
+        self.enterRule(localctx, 24, self.RULE_booleanValue)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 102
+            self.state = 120
             _la = self._input.LA(1)
             if not(_la==XPathParser.TRUE or _la==XPathParser.FALSE):
                 self._errHandler.recoverInline(self)
@@ -1057,10 +1165,10 @@ class XPathParser ( Parser ):
     def allExpression(self):
 
         localctx = XPathParser.AllExpressionContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 24, self.RULE_allExpression)
+        self.enterRule(localctx, 26, self.RULE_allExpression)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 104
+            self.state = 122
             self.match(XPathParser.ASTERISK)
         except RecognitionException as re:
             localctx.exception = re
@@ -1212,39 +1320,39 @@ class XPathParser ( Parser ):
     def literal(self):
 
         localctx = XPathParser.LiteralContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 26, self.RULE_literal)
+        self.enterRule(localctx, 28, self.RULE_literal)
         try:
-            self.state = 111
+            self.state = 129
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [XPathParser.STRING]:
                 localctx = XPathParser.StringLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 1)
-                self.state = 106
+                self.state = 124
                 self.match(XPathParser.STRING)
                 pass
             elif token in [XPathParser.MINUS, XPathParser.INTEGER_VALUE, XPathParser.DECIMAL_VALUE]:
                 localctx = XPathParser.NumberLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
-                self.state = 107
+                self.state = 125
                 self.number()
                 pass
             elif token in [XPathParser.TRUE]:
                 localctx = XPathParser.TrueLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
-                self.state = 108
+                self.state = 126
                 self.match(XPathParser.TRUE)
                 pass
             elif token in [XPathParser.FALSE]:
                 localctx = XPathParser.FalseLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 4)
-                self.state = 109
+                self.state = 127
                 self.match(XPathParser.FALSE)
                 pass
             elif token in [XPathParser.NULL]:
                 localctx = XPathParser.NullLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 5)
-                self.state = 110
+                self.state = 128
                 self.match(XPathParser.NULL)
                 pass
             else:
@@ -1331,39 +1439,39 @@ class XPathParser ( Parser ):
     def number(self):
 
         localctx = XPathParser.NumberContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 28, self.RULE_number)
+        self.enterRule(localctx, 30, self.RULE_number)
         self._la = 0 # Token type
         try:
-            self.state = 121
+            self.state = 139
             self._errHandler.sync(self)
-            la_ = self._interp.adaptivePredict(self._input,17,self._ctx)
+            la_ = self._interp.adaptivePredict(self._input,19,self._ctx)
             if la_ == 1:
                 localctx = XPathParser.DecimalLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 1)
-                self.state = 114
+                self.state = 132
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==XPathParser.MINUS:
-                    self.state = 113
+                    self.state = 131
                     self.match(XPathParser.MINUS)
 
 
-                self.state = 116
+                self.state = 134
                 self.match(XPathParser.DECIMAL_VALUE)
                 pass
 
             elif la_ == 2:
                 localctx = XPathParser.IntegerLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
-                self.state = 118
+                self.state = 136
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==XPathParser.MINUS:
-                    self.state = 117
+                    self.state = 135
                     self.match(XPathParser.MINUS)
 
 
-                self.state = 120
+                self.state = 138
                 self.match(XPathParser.INTEGER_VALUE)
                 pass
 

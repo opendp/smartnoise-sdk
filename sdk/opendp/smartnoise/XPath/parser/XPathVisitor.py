@@ -44,6 +44,11 @@ class XPathVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by XPathParser#indexSelector.
+    def visitIndexSelector(self, ctx:XPathParser.IndexSelectorContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by XPathParser#allSelect.
     def visitAllSelect(self, ctx:XPathParser.AllSelectContext):
         return self.visitChildren(ctx)

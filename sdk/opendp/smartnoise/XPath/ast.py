@@ -1,6 +1,21 @@
 from typing import Union, Sequence, Iterable
+import operator
+import numpy as np
+from numpy.lib.arraysetops import isin
+from pandas.core.indexing import IndexSlice
 
-from antlr4.atn.Transition import AtomTransition
+ops = {
+    ">": operator.gt,
+    "<": operator.lt,
+    ">=": operator.ge,
+    "<=": operator.le,
+    "=": operator.eq,
+    "!=": operator.ne,
+    "==": operator.eq,
+    "<>": operator.ne,
+    "and": np.logical_and,
+    "or": np.logical_or,
+}
 
 def flatten(lst):
     for item in lst:
@@ -9,28 +24,44 @@ def flatten(lst):
         else:
             yield item
 
-class StringLiteral:
+class Literal:
+    def __str__(self):
+        return str(self.value)
+    def evaluate(self, node, idx):
+        return self.value
+
+class StringLiteral(Literal):
     def __init__(self, value : str):
         self.value = value
+    def __str__(self):
+        return "'" + self.value + "'"
 
-class NumericLiteral:
+class NumericLiteral(Literal):
     def __init__(self, value : Union[int, float]):
         self.value = value
 
 class NullLiteral:
     def __init__(self):
-        pass
+        self.value = None
+    def __str__(self):
+        return 'NULL'
 
 class Identifier:
     def __init__(self, name : str):
         self.name = name
+    def __str__(self):
+        return self.name
 
 class AllNodes:
-    def evaluate(self, node):
+    def __str__(self):
+        return '*'
+    def evaluate(self, node, idx):
         return [c for c in node.children() if c is not None]
 
 class AllAttributes:
-    def evaluate(self, node):
+    def __str__(self):
+        return '@*'
+    def evaluate(self, node, idx):
         d = node.__dict__
         return [Attribute(k, d[k]) for k in d.keys() if d[k] is not None]
 
@@ -38,14 +69,24 @@ class Attribute:
     def __init__(self, name : str, value : str = None):
         self.name = name
         self.value = value
+    def __str__(self):
+        return "@" + self.name
 
 class Statement:
     def __init__(self, steps : Sequence):
         self.steps = steps
-    def evaluate(self, node):
+    def __str__(self):
+        out = str(self.steps[0])
+        if len(self.steps) > 1:
+            for step in self.steps[1:]:
+                if not isinstance(step, IndexSelector):
+                    out = out + '/'
+                out = out + str(step)
+        return out
+    def evaluate(self, node, idx=0):
         n = [node]
         for s in self.steps:
-            res = list(flatten([s.evaluate(nn) for nn in n]))
+            res = list(flatten([s.evaluate(nn, idx) for nn, idx in zip(n, range(len(n)))]))
             n = [r for r in res if r is not None]
         return [nn for nn in n if nn is not None]
 
@@ -54,18 +95,42 @@ class Condition:
         self.left = left
         self.right = right
         self.operator = operator
-    def evaluate(self, node):
-        l = self.left.evaluate(node)
+    def __str__(self):
+        return '[' + str(self.left) + ('' if self.operator is None else ' ' + self.operator + ' ' + str(self.right)) + ']'
+    def evaluate(self, node, idx):
+        l = self.left.evaluate(node, 0)
         if self.operator is None:
-            return len(l) >= 1
+            if isinstance(l, int):
+                return node.children()[l]
+            else:
+                if len(l) >= 1:
+                    return node
+                else:
+                    return None
         else:
-            raise ValueError("Not implemented")
+            r = self.right.evaluate(node, 0)
+            if isinstance(l, list) and not isinstance(l, str):
+                if len(l) > 1:
+                    return None
+                l = l[0]
+            if isinstance(r, list) and not isinstance(r, str):
+                if len(r) > 1:
+                    return None
+                r = r[0]
+            while isinstance(l, (Attribute, Literal)) or l.__class__.__name__ == 'Literal':
+                l = l.value
+            while isinstance(r, (Attribute, Literal)) or r.__class__.__name__ == 'Literal':
+                r = r.value            
+            match = bool(ops[self.operator.lower()](l, r))
+            return node if match else None
 
 class RootSelect:
     def __init__(self, target : Union[Identifier, Attribute], condition : Condition = None):
         self.target = target
         self.condition = condition
-    def evaluate(self, node):
+    def __str__(self):
+        return '/' + str(self.target) + ('' if self.condition is None else str(self.condition))
+    def evaluate(self, node, idx):
         r = []
         if isinstance(self.target, Identifier):
             cname = node.__class__.__name__
@@ -77,15 +142,16 @@ class RootSelect:
                 if v is not None:
                     r.append(Attribute(self.target.name, v))
         if r != [] and self.condition is not None:
-            if not self.condition.evaluate(node):
-                return []
+            r = [self.condition.evaluate(node, 0)]
         return r
 
 class ChildSelect:
     def __init__(self, target : Union[Identifier, Attribute], condition : Condition = None):
         self.target = target
         self.condition = condition
-    def evaluate(self, node):
+    def __str__(self):
+        return str(self.target) + ('' if self.condition is None else str(self.condition))
+    def evaluate(self, node, idx):
         r = []
         if isinstance(self.target, Identifier):
             for n in node.children():
@@ -98,9 +164,10 @@ class ChildSelect:
                 if v is not None:
                     r.append(Attribute(self.target.name, v))
         elif isinstance(self.target, (AllNodes, AllAttributes)):
-            r.append(list(flatten(self.target.evaluate(node))))
+            r.append(list(flatten(self.target.evaluate(node, 0))))
         if r != [] and self.condition is not None:
-            r = [n for n in r if self.condition.evaluate(n)]
+            r = [self.condition.evaluate(n, idx) for n, idx in zip(r, range(len(r)))]
+            r = [n for n in r if n is not None]
         return r
 
 class DescendantSelect:
@@ -108,22 +175,28 @@ class DescendantSelect:
     def __init__(self, target : Union[Identifier, Attribute], condition : Condition = None):
         self.target = target
         self.condition = condition
-    def evaluate(self, node):
+    def __str__(self):
+        return '/' + str(self.target) + ('' if self.condition is None else str(self.condition))
+    def evaluate(self, node, idx):
         r = []
         # recurse descendants
         step = RootDescendantSelect(self.target, self.condition) # should condition here be None?
-        for n in node.children():
+        children = node.children()
+        for n, idx in zip(children, range(len(children))):
             if n is not None:
-                r.append(list(flatten(step.evaluate(n))))
+                r.append(list(flatten(step.evaluate(n, idx))))
         if r != [] and self.condition is not None:
-            r = [n for n in r if self.condition.evaluate(n)]
+            r = [self.condition.evaluate(n, idx) for n, idx in zip(r, range(len(r)))]
+            r = [n for n in r if n is not None]
         return flatten(r)
 
 class RootDescendantSelect:
     def __init__(self, target : Union[Identifier, Attribute], condition : Condition = None):
         self.target = target
         self.condition = condition
-    def evaluate(self, node):
+    def __str__(self):
+        return '//' + str(self.target) + ('' if self.condition is None else str(self.condition))
+    def evaluate(self, node, idx):
         r = []
         # first look at self
         if isinstance(self.target, Identifier):
@@ -136,12 +209,23 @@ class RootDescendantSelect:
                 if v is not None:
                     r.append(Attribute(self.target.name, v))
         elif isinstance(self.target, (AllNodes, AllAttributes)):
-            r.append(list(flatten(self.target.evaluate(node))))
+            r.append(list(flatten(self.target.evaluate(node, 0))))
         # recurse descendants
-        for n in node.children():
+        children = node.children()
+        
+        for n, idx in zip(children, range(len(children))):
             if n is not None:
-                r.append(list(flatten(self.evaluate(n))))
+                r.append(list(flatten(self.evaluate(n, idx))))
         r = list(flatten(r))
         if r != [] and self.condition is not None:
-            r = [n for n in r if self.condition.evaluate(n)]
+            r = [self.condition.evaluate(n, idx) for n , idx in zip(r, range(len(r)))]
+            r = [n for n in r if n is not None]
         return list(flatten(r))
+
+class IndexSelector:
+    def __init__(self, index):
+        self.index = index
+    def __str__(self):
+        return '[' + str(self.index) + ']'
+    def evaluate(self, node, idx):
+        return node if idx == self.index else None

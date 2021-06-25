@@ -79,15 +79,20 @@ class SelectorVisitor(XPathVisitor):
         target =self.getIdentifier(ctx)
         b = self.getBoolean(ctx)
         return DescendantSelect(target, b)
+    def visitIndexSelector(self, ctx: XPathParser.IndexSelectorContext):
+        return IndexSelector(int(ctx.index.text))
 
 class BooleanVisitor(XPathVisitor):
     def visitBooleanSelector(self, ctx: XPathParser.BooleanSelectorContext):
         sv = StatementVisitor()
         lv = LiteralVisitor()
-        left = sv.visit(ctx.left)
+        if ctx.left is not None:
+            left = sv.visit(ctx.left)
+        elif ctx.llit is not None:
+            left = lv.visit(ctx.llit)
         op = None if ctx.op is None else lv.visit(ctx.op)
         stmt = None if ctx.stmt is None else sv.visit(ctx.stmt)
-        lit = None if ctx.lit is None else lv.visit(ctx.lit)
+        lit = None if ctx.rlit is None else lv.visit(ctx.rlit)
         if lit is not None:
             stmt = lit
         return Condition(left, op, stmt)
@@ -100,7 +105,7 @@ class LiteralVisitor(XPathVisitor):
     def visitIntegerLiteral(self, ctx: XPathParser.IntegerLiteralContext):
         return NumericLiteral(int(ctx.getText()))
     def visitStringLiteral(self, ctx: XPathParser.StringLiteralContext):
-        return StringLiteral(ctx.getText())
+        return StringLiteral(ctx.getText()[1:-1])
     def visitComparisonOperator(self, ctx: XPathParser.ComparisonOperatorContext):
         return ctx.getText()
 
