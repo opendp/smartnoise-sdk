@@ -31,7 +31,7 @@ jobs:
         pip install --use-feature=2020-resolver -r smartnoise-samples/requirements.txt
     - name: Install additional dependencies
       run: |
-        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark nltk 
+        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark nltk scikit-learn scikit-image
     - name: Install opendp-smartnoise
       run: |
         pip install --use-feature=2020-resolver ./sdk
