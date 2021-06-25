@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --use-feature=2020-resolver -r tests/requirements.txt
-        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark
+        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark seaborn nltk z3
     - name: Install opendp-smartnoise
       run: |
         pip install --use-feature=2020-resolver ./sdk
