@@ -56,12 +56,14 @@ class AllNodes:
     def __str__(self):
         return '*'
     def evaluate(self, node, idx):
+        node = traverse_short(node)
         return [c for c in node.children() if c is not None]
 
 class AllAttributes:
     def __str__(self):
         return '@*'
     def evaluate(self, node, idx):
+        node = traverse_short(node)
         d = node.__dict__
         return [Attribute(k, d[k]) for k in d.keys() if d[k] is not None]
 
@@ -71,6 +73,8 @@ class Attribute:
         self.value = value
     def __str__(self):
         return "@" + self.name
+    def children(self):
+        return [self.value]
 
 class Statement:
     def __init__(self, steps : Sequence):
@@ -84,8 +88,9 @@ class Statement:
                 out = out + str(step)
         return out
     def evaluate(self, node, idx=0):
-        n = [node]
+        n = [traverse_short(node)]
         for s in self.steps:
+            x = 1
             res = list(flatten([s.evaluate(nn, idx) for nn, idx in zip(n, range(len(n)))]))
             n = [r for r in res if r is not None]
         return [nn for nn in n if nn is not None]
@@ -98,6 +103,7 @@ class Condition:
     def __str__(self):
         return '[' + str(self.left) + ('' if self.operator is None else ' ' + self.operator + ' ' + str(self.right)) + ']'
     def evaluate(self, node, idx):
+        node = traverse_short(node)
         l = self.left.evaluate(node, 0)
         if self.operator is None:
             if isinstance(l, int):
@@ -110,17 +116,15 @@ class Condition:
         else:
             r = self.right.evaluate(node, 0)
             if isinstance(l, list) and not isinstance(l, str):
-                if len(l) > 1:
+                if len(l) != 1:
                     return None
                 l = l[0]
             if isinstance(r, list) and not isinstance(r, str):
-                if len(r) > 1:
+                if len(r) !=1:
                     return None
                 r = r[0]
-            while isinstance(l, (Attribute, Literal)) or l.__class__.__name__ == 'Literal':
-                l = l.value
-            while isinstance(r, (Attribute, Literal)) or r.__class__.__name__ == 'Literal':
-                r = r.value            
+            l = traverse(l)
+            r = traverse(r)
             match = bool(ops[self.operator.lower()](l, r))
             return node if match else None
 
@@ -132,6 +136,7 @@ class RootSelect:
         return '/' + str(self.target) + ('' if self.condition is None else str(self.condition))
     def evaluate(self, node, idx):
         r = []
+        node = traverse_short(node)
         if isinstance(self.target, Identifier):
             cname = node.__class__.__name__
             if self.target.name == cname:
@@ -155,10 +160,14 @@ class ChildSelect:
         r = []
         if isinstance(self.target, Identifier):
             for n in node.children():
+                while isinstance(n, (Attribute, Literal)) or n.__class__.__name__ == 'Literal':
+                    n = n.value            
                 cname = n.__class__.__name__
                 if self.target.name == cname:
                     r.append(n)
         elif isinstance(self.target, Attribute): # it's an attribute
+            while isinstance(node, (Attribute, Literal)) or node.__class__.__name__ == 'Literal':
+                node = node.value            
             if hasattr(node, self.target.name):
                 v = getattr(node, self.target.name)
                 if v is not None:
@@ -179,15 +188,13 @@ class DescendantSelect:
         return '/' + str(self.target) + ('' if self.condition is None else str(self.condition))
     def evaluate(self, node, idx):
         r = []
+        node = traverse_short(node)
         # recurse descendants
         step = RootDescendantSelect(self.target, self.condition) # should condition here be None?
         children = node.children()
         for n, idx in zip(children, range(len(children))):
             if n is not None:
                 r.append(list(flatten(step.evaluate(n, idx))))
-        if r != [] and self.condition is not None:
-            r = [self.condition.evaluate(n, idx) for n, idx in zip(r, range(len(r)))]
-            r = [n for n in r if n is not None]
         return flatten(r)
 
 class RootDescendantSelect:
@@ -198,6 +205,7 @@ class RootDescendantSelect:
         return '//' + str(self.target) + ('' if self.condition is None else str(self.condition))
     def evaluate(self, node, idx):
         r = []
+        node = traverse_short(node)
         # first look at self
         if isinstance(self.target, Identifier):
             cname = node.__class__.__name__
@@ -229,3 +237,15 @@ class IndexSelector:
         return '[' + str(self.index) + ']'
     def evaluate(self, node, idx):
         return node if idx == self.index else None
+
+def traverse_short(node):
+    # traverse XPath Attributes and Literals
+    while isinstance(node, (Attribute, Literal)):
+        node = node.value
+    return node
+
+def traverse(node):
+    # traverse all literals to prepare for boolean
+    while isinstance(node, (Attribute, Literal)) or node.__class__.__name__ == 'Literal':
+        node = node.value
+    return node

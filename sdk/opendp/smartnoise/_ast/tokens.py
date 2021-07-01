@@ -105,7 +105,16 @@ class Sql:
         p = XPath()
         x = p.parse(path)
         return x.evaluate(self)
-        
+
+    def xpath_first(self, path):
+        p = XPath()
+        x = p.parse(path)
+        res = x.evaluate(self)
+        if len(res) == 0:
+            return None
+        else:
+            return res[0]
+
     def find_node(self, type_name):
         """
             Walks the tree and returns the first node
