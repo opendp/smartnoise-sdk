@@ -12,15 +12,25 @@ class Accuracy:
     Routines to compute the error bounds for summary statistic at specified
     alpha.  These are hard-coded to the Gaussian mechanism we use, and will need
     to be generalized if we allow pluggable mechanisms.
+
+    All formulas from: https://github.com/opendp/smartnoise-sdk/blob/main/papers/DP_SQL_budget.pdf
     """
     def __init__(self, query: Query, subquery: Query, privacy : Privacy):
+        """
+        Detection of formulas happens only once per query
+        """
         self.privacy = privacy
-        self.max_contrib = query.max_ids
+        self.max_contrib = query.max_ids # always take from Query
         self.base_scale = self.scale(sensitivity=1.0)
         
         detect = DetectFormula(query, subquery)
         self.properties = [detect.detect(ne) for ne in query.xpath("/Query/Select//NamedExpression")]
-
+    """
+    Each formula takes an alpha, properties, and row.
+    The properties argument gives the locations and sensitivities
+     of each column from the subquery that is used to compute this
+     output column.  The properties are populated at detect time.
+    """
     def count(self, *ignore, alpha: float, properties={}, row:Tuple=None):
         sigma = self.scale(sensitivity=1)
         return self.percentile(percentile=1 - alpha, sigma=sigma)
@@ -28,6 +38,7 @@ class Accuracy:
         sigma = self.scale(sensitivity=properties["sensitivity"]["sum"])
         return self.percentile(percentile=1 - alpha, sigma=sigma)
     def _mean(self, *ignore, alpha:float, sigma_1:float, sigma_2:float, n:float, sum_val:float):
+        # mean, variance, and stddev all use this formula
         shift = math.sqrt(2 * math.log(4/alpha)) 
         if n <= 2 * shift * sigma_1:
             return None
@@ -70,13 +81,22 @@ class Accuracy:
         else:
             return None
     def scale(self, *ignore, sensitivity: float):
+        # compute sigma for a given set of privacy parameters, sensitivity, and max_contrib
         sigma = (math.sqrt(math.log(1/self.privacy.delta)) + math.sqrt(math.log(1/self.privacy.delta) + self.privacy.epsilon)) / (math.sqrt(2) * self.privacy.epsilon)
         return sigma * self.max_contrib * sensitivity
     def percentile(self, *ignore, percentile: float, sigma: float):
+        # qnorm
         dist = norm(0, sigma)
         right = (1.0 + percentile) / 2
         return dist.ppf(right)
     def accuracy(self, *ignore, row:Tuple, alpha:float):
+        """
+        Returns a tuple of the same size as the output row, with +/-
+         accuracy for the supplied alpha.  This method will be called
+         once per output row, per alpha.
+        Returns 'None' if accuracy is not relevant or available.
+        Requires a row argument with a tuple of the same size as the subquery result.
+        """
         out_row = []
         for p in self.properties:
             if p is None:
@@ -103,12 +123,18 @@ class DetectFormula:
         self.query = query
         self.subquery = subquery
     def get_index(self, query: Query, cname: str) -> int:
+        """
+        Helper method, gets the column index of a named output column
+        """
         namedExpressions = query.xpath("/Query/Select//NamedExpression")
         for idx in range(len(namedExpressions)):
             if namedExpressions[idx].name == cname:
                 return idx
         return -1
     def get_sensitivity(self, node: NamedExpression):
+        """
+        Helper method, gets the sensitivity of the given NamedExpression
+        """
         source_path = "@m_symbol/@expression//TableColumn"
         source = node.xpath_first(source_path)
         if source:
@@ -116,7 +142,10 @@ class DetectFormula:
         else:
             return None
     def count(self, node: NamedExpression):
-        # expects a named expression
+        """
+        Use XPath to match any output column like (count_age)
+         where count_age is COUNT(age) in the subquery
+        """
         cname = node.xpath_first('/NamedExpression/NestedExpression/Column/@name')
         if cname:
             cname = cname.value
@@ -139,7 +168,10 @@ class DetectFormula:
                     }
         return None
     def sum(self, node: NamedExpression):
-        # expects a named expression
+        """
+        Use XPath to match any output column like (sum_age)
+         where count_age is SUM(age) in the subquery
+        """
         cname = node.xpath_first('/NamedExpression/NestedExpression/Column/@name')
         if cname:
             cname = cname.value
@@ -161,6 +193,10 @@ class DetectFormula:
                     }
         return None
     def mean(self, node:NamedExpression):
+        """
+        Use XPath to match any output column like (sum_age / count_age)
+         where count_age is COUNT(age) in the subquery and sum_age is SUM(age)
+        """
         cnames = node.xpath("/NamedExpression/NestedExpression/NestedExpression/ArithmeticExpression[@op='/']//Column/@name")
         if len(cnames) == 2:
             l_name, r_name = [c.value for c in cnames]
@@ -190,6 +226,11 @@ class DetectFormula:
                     }
         return None
     def _check_var_formula(self, node:ArithmeticExpression):
+        """
+        Use XPath to match an expression that looks like
+         ( ( sum_alias_0xd539 / count_alias_0xd539 ) - ( sum_age / count_age ) * ( sum_age / count_age ) )
+         where the sum_alias is SUM(age*age), and sum_age and count_age are as in mean formula
+        """
         subtract = node
         left = subtract.left.xpath_first("/NestedExpression/ArithmeticExpression[@op='/']")
         if left:
@@ -251,15 +292,14 @@ class DetectFormula:
                                         }
                                     }
         return None
-
     def variance(self, node:NamedExpression):
         subtract = node.xpath_first("/NamedExpression/NestedExpression/ArithmeticExpression[@op='-']")
         if subtract:
             return self._check_var_formula(subtract)
         else:
             return None
-
     def stddev(self, node:NamedExpression):
+        # same formula as variance, but inside SQRT(...)
         sqrt = node.xpath_first("NestedExpression/MathFunction[@name='SQRT']")
         if sqrt:
             retval = self._check_var_formula(sqrt.expression)
@@ -268,8 +308,12 @@ class DetectFormula:
             return retval
         else:
             return None
-
     def detect(self, node: NamedExpression):
+        """
+        Checks a single NamedExpression against all known formulas
+         for which accuracy is available.  Returns a properties bag for the
+         formula if there is a match.
+        """
         p = self.count(node)
         if p:
             return p
