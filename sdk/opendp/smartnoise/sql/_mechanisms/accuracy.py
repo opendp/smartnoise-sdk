@@ -263,19 +263,22 @@ class DetectFormula:
                             sum_col and 
                             count_col
                         ):
-                            if sum_of_squares.xpath("AggFunction[@name='SUM']/ArithmeticExpression[@op='*']") and count_of_squares.xpath("AggFunction[@name='COUNT']/ArithmeticExpression[@op='*']"):
+                            if (
+                                sum_of_squares.xpath("AggFunction[@name='SUM']/ArithmeticExpression[@op='*']") and 
+                                count_of_squares.xpath("AggFunction[@name='COUNT']")
+                            ):
                                 sum_s_cols = sum_of_squares.xpath("//Column/@name")
                                 count_s_cols = count_of_squares.xpath("//Column/@name")
                                 sum_cols = sum_col.xpath("//Column/@name")
                                 count_cols = count_col.xpath("//Column/@name")
                                 if (
                                     len(sum_s_cols) == 2 and 
-                                    len(count_s_cols) == 2 and 
+                                    len(count_s_cols) == 1 and 
                                     len(sum_cols) == 1 and
                                     len(count_cols) == 1 and
                                     sum_cols[0].value == count_cols[0].value and
                                     sum_s_cols[0].value == sum_s_cols[1].value and 
-                                    all([s.value == c.value for s, c in zip(sum_s_cols, count_s_cols)])
+                                    all([s.value == count_s_cols[0].value for s in sum_s_cols])
                                     and sum_cols[0].value == sum_s_cols[0].value
                                 ):
                                     return {
