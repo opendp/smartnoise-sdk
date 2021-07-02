@@ -67,6 +67,35 @@ class TestAccuracy:
         assert(np.isclose(a, 25.3707))
         a = acc.mean(alpha=0.01, properties=p, row=row)
         assert(np.isclose(a, 30.1797))
+    def test_var_acc(self):
+        p = [p for p in acc.properties if p and p['statistic'] == 'variance']
+        p = p[0]
+        row = [0, 0, 0, 0, 0]
+        sum_idx = p['columns']['sum']
+        sum_s_idx = p['columns']['sum_of_squares']
+        count_idx = p['columns']['count']
+        row[sum_idx] = 100 * 51
+        row[sum_s_idx] = 100 * (49 * 49)
+        row[count_idx] = 100
+        a = acc.variance(alpha=0.05, properties=p, row=row)
+        assert(np.isclose(a, 5211.43496))
+        a = acc.variance(alpha=0.01, properties=p, row=row)
+        assert(np.isclose(a, 6358.240726))
+    def test_std_acc(self):
+        p = [p for p in acc.properties if p and p['statistic'] == 'stddev']
+        p = p[0]
+        row = [0, 0, 0, 0, 0]
+        sum_idx = p['columns']['sum']
+        sum_s_idx = p['columns']['sum_of_squares']
+        count_idx = p['columns']['count']
+        row[sum_idx] = 100 * 51
+        row[sum_s_idx] = 100 * (49 * 49)
+        row[count_idx] = 100
+        a = acc.stddev(alpha=0.05, properties=p, row=row)
+        assert(np.isclose(a, 72.1902692))
+        a = acc.stddev(alpha=0.01, properties=p, row=row)
+        assert(np.isclose(a, 79.7385774))
+
 
 class TestAccuracyDetect:
     def test_detect(self):
@@ -88,4 +117,4 @@ class TestExecution:
             assert(len(row) == 5)
             assert(len(accuracy) == 2)
             acc99, acc95 = accuracy
-            assert(all([a99 > a95 for a99, a95 in zip(acc99, acc95) if a99 and a95]))
+            assert(all([a99 > a95 for a99, a95 in zip(acc99, acc95)]))

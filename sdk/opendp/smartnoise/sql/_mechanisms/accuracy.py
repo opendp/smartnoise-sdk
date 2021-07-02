@@ -27,6 +27,15 @@ class Accuracy:
     def sum(self, *ignore, alpha: float, properties={}, row:Tuple=None):
         sigma = self.scale(sensitivity=properties["sensitivity"]["sum"])
         return self.percentile(percentile=1 - alpha, sigma=sigma)
+    def _mean(self, *ignore, alpha:float, sigma_1:float, sigma_2:float, n:float, sum_val:float):
+        shift = math.sqrt(2 * math.log(4/alpha)) 
+        if n <= 2 * shift * sigma_1:
+            return None
+        else:
+            left = (shift * sigma_2)/n
+            right = (2 * shift * math.fabs(sum_val) * sigma_1 + 4 * math.log(4/alpha) * sigma_1 * sigma_2) / (n * n)
+            return right + left
+
     def mean(self, *ignore, alpha: float, properties={}, row: Tuple):
         n_idx = properties['columns']['count']
         sum_idx = properties['columns']['sum']
@@ -35,17 +44,31 @@ class Accuracy:
         sigma = self.scale(sensitivity=1)
         sum_sens = properties['sensitivity']['sum']
         sigma_sum = self.scale(sensitivity=sum_sens)
-        shift = math.sqrt(2 * math.log(4/alpha)) 
-        if n <= 2 * shift * sigma:
-            return None
-        else:
-            left = (shift * sigma_sum)/n
-            right = (2 * shift * math.fabs(sum_val) * sigma + 4 * math.log(4/alpha) * sigma * sigma_sum) / (n * n)
-            return right + left
+        return self._mean(alpha=alpha, sigma_1=sigma, sigma_2=sigma_sum, n=n, sum_val=sum_val)
+
     def variance(self, *ignore, alpha: float,  properties={}, row: Tuple):
-        return None
+        n_idx = properties['columns']['count']
+        sum_idx = properties['columns']['sum']
+        sum_s_idx = properties['columns']['sum_of_squares']
+        n = row[n_idx]
+        sum_val = row[sum_idx]
+        sum_s_val = row[sum_s_idx]
+        sigma_count = self.scale(sensitivity=1)
+        sum_sens = properties['sensitivity']['sum']
+        sigma_sum = self.scale(sensitivity=sum_sens)
+        sigma_sum_s = self.scale(sensitivity=(sum_sens*sum_sens))
+        f1 = self._mean(alpha=alpha, sigma_1=sigma_count, sigma_2=sigma_sum_s, n=n, sum_val=sum_s_val)
+        f2 = self._mean(alpha=alpha, sigma_1=sigma_count, sigma_2=sigma_sum, n=n, sum_val=sum_val)
+        if f1 and f2:
+            return f1 + f2 * (f2 + ((2*sum_val)/n))
+        else:
+            return None
     def stddev(self, *ignore, alpha: float,  properties={}, row:Tuple):
-        return None
+        v = self.variance(alpha=alpha, properties=properties, row=row)
+        if v:
+            return math.sqrt(v)
+        else:
+            return None
     def scale(self, *ignore, sensitivity: float):
         sigma = (math.sqrt(math.log(1/self.privacy.delta)) + math.sqrt(math.log(1/self.privacy.delta) + self.privacy.epsilon)) / (math.sqrt(2) * self.privacy.epsilon)
         return sigma * self.max_contrib * sensitivity
