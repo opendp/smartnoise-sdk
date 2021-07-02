@@ -17,18 +17,16 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
 meta = CollectionMetadata.from_file(meta_path)
 pums = pd.read_csv(csv_path)
-query = 'SELECT AVG(age), STD(age), VAR(age), SUM(age), COUNT(age) FROM PUMS.PUMS'
+query = 'SELECT AVG(age), STD(age), VAR(age), SUM(age), COUNT(age) FROM PUMS.PUMS GROUP BY sex'
 q = QueryParser(meta).query(query)
-reader = SqlReader.from_connection(pums, "pandas", metadata=meta)
-priv = PrivateReader(reader, meta, 1.0)
+
+privacy = Privacy(alphas=[0.01, 0.05], delta=1/(math.sqrt(100) * 100))
+priv = PrivateReader.from_connection(pums, engine="pandas", privacy=privacy, metadata=meta)
 subquery, root = priv.rewrite(query)
 
 meta = CollectionMetadata.from_file('datasets/PUMS.yaml')
 
-
-privacy = Privacy(alphas=[0.01, 0.05], delta=1/(math.sqrt(100) * 100))
 acc = Accuracy(root, subquery, privacy)
-
 
 class TestAccuracy:
     def test_count_sigma(self):
@@ -59,7 +57,35 @@ class TestAccuracy:
         assert(np.isclose(a, 753.978))
     def test_mean_acc(self):
         p = [p for p in acc.properties if p and p['statistic'] == 'mean']
-        a = acc.mean(alpha=0.05, properties=p[0], row=(0, 100, 100 * 50, 30, 22))
+        p = p[0]
+        row = [0, 0, 0, 0, 0]
+        sum_idx = p['columns']['sum']
+        count_idx = p['columns']['count']
+        row[sum_idx] = 100 * 50
+        row[count_idx] = 100
+        a = acc.mean(alpha=0.05, properties=p, row=row)
         assert(np.isclose(a, 25.3707))
-        a = acc.mean(alpha=0.01, properties=p[0], row=(0, 100, 100 * 50, 30, 22))
+        a = acc.mean(alpha=0.01, properties=p, row=row)
         assert(np.isclose(a, 30.1797))
+
+class TestAccuracyDetect:
+    def test_detect(self):
+        assert(acc.properties[0]['statistic'] == 'mean')
+        assert(acc.properties[1]['statistic'] == 'stddev')
+        assert(acc.properties[2]['statistic'] == 'variance')
+        assert(acc.properties[3]['statistic'] == 'sum')
+        assert(acc.properties[4]['statistic'] == 'count')
+
+class TestExecution:
+    def test_no_accuracy(self):
+        res = priv.execute(query)
+        assert(len(res) == 3)
+        assert(all([len(r) == 5 for r in res]))
+    def test_accuracy(self):
+        res = priv.execute_with_accuracy(query)
+        assert(len(res) == 3)
+        for row, accuracy in res:
+            assert(len(row) == 5)
+            assert(len(accuracy) == 2)
+            acc99, acc95 = accuracy
+            assert(all([a99 > a95 for a99, a95 in zip(acc99, acc95) if a99 and a95]))

@@ -3,6 +3,7 @@ from os import name
 from typing import List, Tuple
 from opendp.smartnoise._ast.ast import Query
 from opendp.smartnoise._ast.expression import NamedExpression
+from opendp.smartnoise._ast.expressions.numeric import ArithmeticExpression
 from opendp.smartnoise.sql.privacy import Privacy
 from scipy.stats import norm
 
@@ -52,6 +53,27 @@ class Accuracy:
         dist = norm(0, sigma)
         right = (1.0 + percentile) / 2
         return dist.ppf(right)
+    def accuracy(self, *ignore, row:Tuple, alpha:float):
+        out_row = []
+        for p in self.properties:
+            if p is None:
+                out_row.append(None)
+            else:
+                stat = p["statistic"]
+                r = None
+                if stat == "count":
+                    r = self.count(alpha=alpha, properties=p, row=row)
+                elif stat == "sum":
+                    r = self.sum(alpha=alpha, properties=p, row=row)
+                elif stat == "mean":
+                    r = self.mean(alpha=alpha, properties=p, row=row)
+                elif stat == "variance":
+                    r = self.variance(alpha=alpha, properties=p, row=row)
+                elif stat == "stddev":
+                    r = self.stddev(alpha=alpha, properties=p, row=row)
+                out_row.append(r)
+        return tuple(out_row)
+            
 
 class DetectFormula:
     def __init__(self, query: Query, subquery: Query):
@@ -127,8 +149,11 @@ class DetectFormula:
             r_source = self.subquery.xpath_first(r_source_path)
             sens = self.get_sensitivity(r_source)
 
-            if l_source.xpath("AggFunction[@name='SUM']") and r_source.xpath("AggFunction[@name='COUNT']"):
-                if l_source.xpath_first("//Column").name == r_source.xpath_first("//Column").name:
+            if (
+                l_source.xpath("AggFunction[@name='SUM']") and 
+                r_source.xpath("AggFunction[@name='COUNT']") and
+                l_source.xpath_first("//Column").name == r_source.xpath_first("//Column").name
+            ):
                     return {
                         'statistic': 'mean',
                         'columns':  {
@@ -141,6 +166,86 @@ class DetectFormula:
                         }
                     }
         return None
+    def _check_var_formula(self, node:ArithmeticExpression):
+        subtract = node
+        left = subtract.left.xpath_first("/NestedExpression/ArithmeticExpression[@op='/']")
+        if left:
+            l_cnames = left.xpath("//Column/@name")
+            if len(l_cnames) == 2:
+                right = subtract.right.xpath_first("/ArithmeticExpression[@op='*']")
+                if right:
+                    rightleft = right.left.xpath_first("/NestedExpression/ArithmeticExpression[@op='/']")
+                    rightright = right.right.xpath_first("/NestedExpression/ArithmeticExpression[@op='/']")
+                    rl_cnames = rightleft.xpath("//Column/@name")
+                    rr_cnames = rightright.xpath("//Column/@name")
+                    if (
+                        len(rl_cnames) == 2 and 
+                        len(rr_cnames) == 2 and 
+                        all([rl.value == rr.value for rl, rr in zip(rl_cnames, rr_cnames)])
+                    ):
+                        sum_of_squares = self.subquery.xpath_first(f"/Query/Select//NamedExpression[@name='{l_cnames[0].value}']")
+                        sum_s_idx = self.get_index(self.subquery, l_cnames[0].value)
+                        sum_s_sens = self.get_sensitivity(sum_of_squares)
+                        count_of_squares = self.subquery.xpath_first(f"/Query/Select//NamedExpression[@name='{l_cnames[1].value}']")
+                        sum_col = self.subquery.xpath_first(f"/Query/Select//NamedExpression[@name='{rl_cnames[0].value}']")
+                        sum_idx = self.get_index(self.subquery, rl_cnames[0].value)
+                        sum_sens = self.get_sensitivity(sum_col)
+                        count_col = self.subquery.xpath_first(f"/Query/Select//NamedExpression[@name='{rl_cnames[1].value}']")
+                        count_idx = self.get_index(self.subquery, rl_cnames[1].value)
+                        # we don't need to check right side, since we verified source is the same as left
+                        if (
+                            sum_of_squares and 
+                            count_of_squares and 
+                            sum_col and 
+                            count_col
+                        ):
+                            if sum_of_squares.xpath("AggFunction[@name='SUM']/ArithmeticExpression[@op='*']") and count_of_squares.xpath("AggFunction[@name='COUNT']/ArithmeticExpression[@op='*']"):
+                                sum_s_cols = sum_of_squares.xpath("//Column/@name")
+                                count_s_cols = count_of_squares.xpath("//Column/@name")
+                                sum_cols = sum_col.xpath("//Column/@name")
+                                count_cols = count_col.xpath("//Column/@name")
+                                if (
+                                    len(sum_s_cols) == 2 and 
+                                    len(count_s_cols) == 2 and 
+                                    len(sum_cols) == 1 and
+                                    len(count_cols) == 1 and
+                                    sum_cols[0].value == count_cols[0].value and
+                                    sum_s_cols[0].value == sum_s_cols[1].value and 
+                                    all([s.value == c.value for s, c in zip(sum_s_cols, count_s_cols)])
+                                    and sum_cols[0].value == sum_s_cols[0].value
+                                ):
+                                    return {
+                                        'statistic': 'variance',
+                                        'columns': {
+                                            'sum_of_squares': sum_s_idx,
+                                            'sum': sum_idx,
+                                            'count': count_idx
+                                        },
+                                        'sensitivity': {
+                                            'sum_of_squares': sum_s_sens,
+                                            'sum': sum_sens,
+                                            'count': 1
+                                        }
+                                    }
+        return None
+
+    def variance(self, node:NamedExpression):
+        subtract = node.xpath_first("/NamedExpression/NestedExpression/ArithmeticExpression[@op='-']")
+        if subtract:
+            return self._check_var_formula(subtract)
+        else:
+            return None
+
+    def stddev(self, node:NamedExpression):
+        sqrt = node.xpath_first("NestedExpression/MathFunction[@name='SQRT']")
+        if sqrt:
+            retval = self._check_var_formula(sqrt.expression)
+            if retval:
+                retval['statistic'] = 'stddev'
+            return retval
+        else:
+            return None
+
     def detect(self, node: NamedExpression):
         p = self.count(node)
         if p:
@@ -149,6 +254,12 @@ class DetectFormula:
         if p:
             return p
         p = self.mean(node)
+        if p:
+            return p
+        p = self.variance(node)
+        if p:
+            return p
+        p = self.stddev(node)
         if p:
             return p
         return None

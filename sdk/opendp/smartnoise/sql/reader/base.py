@@ -23,7 +23,6 @@ class SqlReader(Reader):
             return _reader(conn=conn, **kwargs)
         else:
             raise ValueError("Auto-detect from connection is not implemented yet")
-        _serializer
     def __init__(self, engine=None):
         self.compare = NameCompare.get_name_compare(engine)
         self.serializer = Serializer.get_serializer(engine)
