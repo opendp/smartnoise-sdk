@@ -69,20 +69,12 @@ class PrivateReader(Reader):
             )
 
         self.rewriter = Rewriter(metadata)
-        self.epsilon_per_column = epsilon_per_column
         self._options = PrivateReaderOptions()
-
-        self.delta = delta
-        self.alphas = []
 
         if privacy:
             self.privacy = privacy
-            self.epsilon_per_column = privacy.epsilon
-            self.delta = privacy.delta
-            self.alphas = privacy.alphas
         else:
             self.privacy = Privacy(epsilon=epsilon_per_column, delta=delta)
-
 
         self._cached_exact = None
         self._cached_ast = None
@@ -92,13 +84,6 @@ class PrivateReader(Reader):
     def from_connection(cls, conn, *ignore, engine=None, privacy, metadata, **kwargs):
         _reader = SqlReader.from_connection(conn, engine=engine, metadata=metadata, **kwargs)
         return PrivateReader(_reader, metadata, privacy=privacy)
-    @property
-    def epsilon(self):
-        module_logger.warning(
-            "Epsilon property will be replaced with "
-            "the more descriptive epsilon_per_column property."
-        )
-        return self.epsilon_per_column
 
     @property
     def engine(self):
@@ -199,13 +184,13 @@ class PrivateReader(Reader):
 
         thresh_scale = math.sqrt(max_contrib) * (
             (
-                math.sqrt(math.log(1 / self.delta))
-                + math.sqrt(math.log(1 / self.delta) + self.epsilon_per_column)
+                math.sqrt(math.log(1 / self.privacy.delta))
+                + math.sqrt(math.log(1 / self.privacy.delta) + self.privacy.epsilon)
             )
-            / (math.sqrt(2) * self.epsilon_per_column)
+            / (math.sqrt(2) * self.privacy.epsilon)
         )
         self.tau = 1 + thresh_scale * math.sqrt(
-            2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.delta))
+            2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.privacy.delta))
         )
 
         syms = subquery.all_symbols()
@@ -243,7 +228,7 @@ class PrivateReader(Reader):
 
         # make a list of mechanisms in column order
         mechs = [
-            Gaussian(self.epsilon_per_column, self.delta, s, max_contrib) if s is not None else None
+            Gaussian(self.privacy.epsilon, self.privacy.delta, s, max_contrib) if s is not None else None
             for s in sens
         ]
 
