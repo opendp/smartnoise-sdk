@@ -37,7 +37,7 @@ class PrestoReader(SqlReader):
 
         self.update_connection_string()
 
-    def execute(self, query):
+    def execute(self, query, *ignore, accuracy:bool=False):
         """
             Executes a raw SQL string against the database and returns
             tuples for rows.  This will NOT fix the query to target the

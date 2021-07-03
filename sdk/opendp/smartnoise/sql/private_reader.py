@@ -167,6 +167,9 @@ class PrivateReader(Reader):
     def execute_with_accuracy(self, query_string:str):
         return self.execute(query_string, accuracy=True)
 
+    def execute_with_accuracy_df(self, query_string:str, *ignore, privacy:bool=False):
+        return self.execute_df(query_string, accuracy=True)
+
 
     def execute(self, query_string, accuracy:bool=False):
         """Executes a query and returns a recordset that is differentially private.

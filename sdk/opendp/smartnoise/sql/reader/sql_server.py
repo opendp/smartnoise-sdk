@@ -41,7 +41,7 @@ class SqlServerReader(SqlReader):
 
             self.update_connection_string()
 
-    def execute(self, query):
+    def execute(self, query, *ignore, accuracy:bool=False):
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
         if self.conn is not None:

@@ -14,16 +14,13 @@ class SparkReader(SqlReader):
         self.api = conn
         self.database = "Spark Session"
 
-    def execute(self, query):
+    def execute(self, query, *ignore, accuracy:bool=False):
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
         return self.api.sql(query)
 
     def _to_df(rows):
         return rows
-
-    def execute_typed(self, query):
-        return self.execute(query)
 
     def db_name(self):
         return self.database

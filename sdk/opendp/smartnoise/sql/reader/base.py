@@ -31,18 +31,18 @@ class SqlReader(Reader):
         self.compare = NameCompare.get_name_compare(engine)
         self.serializer = Serializer.get_serializer(engine)
 
-    def execute(self, query):
+    def execute(self, query, *ignore, accuracy:bool=False):
         raise NotImplementedError("Execute must be implemented on the inherited class")
-    def _execute_ast(self, query):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False):
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_ast.  To execute strings, use execute.")
         if hasattr(self, "serializer") and self.serializer is not None:
             query_string = self.serializer.serialize(query)
         else:
             query_string = str(query)
-        return self.execute(query_string)
-    def _execute_ast_df(self, query):
-        return self._to_df(self._execute_ast(query))
+        return self.execute(query_string, accuracy=accuracy)
+    def _execute_ast_df(self, query, *ignore, accuracy:bool=False):
+        return self._to_df(self._execute_ast(query, accuracy=accuracy))
 
 
 """

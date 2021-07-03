@@ -1,6 +1,7 @@
 import os
 import subprocess
 from opendp.smartnoise.sql._mechanisms.accuracy import Accuracy
+from pyspark.sql import SparkSession
 import numpy as np
 import math
 
@@ -21,10 +22,8 @@ query = 'SELECT AVG(age), STD(age), VAR(age), SUM(age), COUNT(age) FROM PUMS.PUM
 q = QueryParser(meta).query(query)
 
 privacy = Privacy(alphas=[0.01, 0.05], delta=1/(math.sqrt(100) * 100))
-priv = PrivateReader.from_connection(pums, engine="pandas", privacy=privacy, metadata=meta)
+priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta)
 subquery, root = priv.rewrite(query)
-
-meta = CollectionMetadata.from_file('datasets/PUMS.yaml')
 
 acc = Accuracy(root, subquery, privacy)
 
@@ -118,3 +117,31 @@ class TestExecution:
             assert(len(accuracy) == 2)
             acc99, acc95 = accuracy
             assert(all([a99 > a95 for a99, a95 in zip(acc99, acc95)]))
+    def test_pandas_df_accuracy(self):
+        res = priv.execute_with_accuracy_df(query)
+        df, accuracies = res
+        acc99, acc95 = accuracies
+        assert(len(df) == 2)
+        assert(len(acc99) == 2)
+        assert(len(acc95) == 2)
+        assert(len(df.columns) == 5)
+        assert(len(acc99.columns) == 5)
+        assert(len(acc95.columns) == 5)
+    def test_spark_accuracy(self):
+        spark = SparkSession.builder.getOrCreate()
+        pums = spark.read.load(csv_path, format="csv", sep=",",inferSchema="true", header="true")
+        query_modified = query.replace("PUMS.PUMS", "PUMS")
+        pums.createOrReplaceTempView("PUMS")
+        priv = PrivateReader.from_connection(spark, metadata=meta, privacy=privacy)
+        priv.reader.compare.search_path = ["PUMS"]
+        res = priv.execute_with_accuracy(query_modified)
+        row_count = 0
+        for row, accuracies in res.collect():
+            row_count += 1
+            acc99, acc95 = accuracies
+            assert(len(row) == 5)
+            assert(len(acc99) == 5)
+            assert(len(acc95) == 5)
+        assert(row_count == 2) # PipelineRDD doesn't return column names
+
+
