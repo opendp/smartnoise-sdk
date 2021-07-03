@@ -193,7 +193,9 @@ class PrivateReader(Reader):
         subquery, query = self.rewrite_ast(query)
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
 
-        _accuracy = Accuracy(query, subquery, self.privacy)
+        _accuracy = None
+        if accuracy:
+            _accuracy = Accuracy(query, subquery, self.privacy)
 
         thresh_scale = math.sqrt(max_contrib) * (
             (
@@ -251,6 +253,7 @@ class PrivateReader(Reader):
             if self._cached_exact is not None:
                 if subquery == self._cached_ast:
                     db_rs = self._cached_exact
+                    _accuracy = self._cached_accuracy
                 else:
                     raise ValueError(
                         "Cannot run different query against cached result.  "
@@ -260,9 +263,10 @@ class PrivateReader(Reader):
                 db_rs = self._get_reader(subquery)._execute_ast(subquery)
                 self._cached_exact = list(db_rs)
                 self._cached_ast = subquery
+                self._cached_accuracy = _accuracy
         else:
-            self.cached_exact = None
-            self.cached_ast = None
+            self._cached_exact = None
+            self._cached_ast = None
             db_rs = self._get_reader(subquery)._execute_ast(subquery)
 
         clamp_counts = self._options.clamp_counts
@@ -444,7 +448,7 @@ class PrivateReader(Reader):
             return out_rows
 
     def _execute_ast_df(self, query, cache_exact=False):
-        return self._to_df(self._execute_ast(query, cache_exact))
+        return self._to_df(self._execute_ast(query, cache_exact=cache_exact))
 
 
 class PrivateReaderOptions:
