@@ -18,7 +18,7 @@ class PrestoReader(SqlReader):
 
     ENGINE = Engine.PRESTO
 
-    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None):
+    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
 
         if conn is not None:

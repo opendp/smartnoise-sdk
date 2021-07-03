@@ -12,7 +12,7 @@ class PostgresReader(SqlReader):
 
     ENGINE = Engine.POSTGRES
 
-    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None):
+    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
         import psycopg2
         self.api = psycopg2

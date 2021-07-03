@@ -2,6 +2,8 @@ from opendp.smartnoise.reader.base import Reader
 from opendp.smartnoise.sql.reader.engine import Engine
 import importlib
 
+from opendp.smartnoise.sql.reader.probe import Probe
+
 class SqlReader(Reader):
     @classmethod
     def get_reader_class(cls, engine):
@@ -18,11 +20,13 @@ class SqlReader(Reader):
             return class_
     @classmethod
     def from_connection(cls, conn, engine=None, **kwargs):
-        if engine is not None:
-            _reader = cls.get_reader_class(engine)
-            return _reader(conn=conn, **kwargs)
-        else:
-            raise ValueError("Auto-detect from connection is not implemented yet")
+        if engine is None:
+            probe = Probe()
+            engine = probe.engine(conn)
+            if engine is None:
+                raise ValueError("Unable to detect the database engine.  Please pass in engine parameter")
+        _reader = cls.get_reader_class(engine)
+        return _reader(conn=conn, **kwargs)
     def __init__(self, engine=None):
         self.compare = NameCompare.get_name_compare(engine)
         self.serializer = Serializer.get_serializer(engine)

@@ -8,7 +8,7 @@ from opendp.smartnoise._ast.expressions.numeric import BareFunction
 class SparkReader(SqlReader):
     ENGINE = Engine.SPARK
 
-    def __init__(self, conn):
+    def __init__(self, conn, **kwargs):
         super().__init__(self.ENGINE)
 
         self.api = conn

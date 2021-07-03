@@ -90,11 +90,8 @@ class PrivateReader(Reader):
 
     @classmethod
     def from_connection(cls, conn, *ignore, engine=None, privacy, metadata, **kwargs):
-        if engine is not None:
-            _reader = SqlReader.from_connection(conn, engine=engine, metadata=metadata, **kwargs)
-            return PrivateReader(_reader, metadata, privacy=privacy)
-        else:
-            raise ValueError("Auto-detect from connection is not implemented yet")
+        _reader = SqlReader.from_connection(conn, engine=engine, metadata=metadata, **kwargs)
+        return PrivateReader(_reader, metadata, privacy=privacy)
     @property
     def epsilon(self):
         module_logger.warning(
@@ -325,6 +322,9 @@ class PrivateReader(Reader):
                     return bool(str(val).replace('"', "").replace("'", ""))
             else:
                 raise ValueError("Can't convert type " + type)
+        
+
+        alphas = [alpha for alpha in self.privacy.alphas]
 
         def process_out_row(row):
             bindings = dict((name.lower(), val) for name, val in zip(source_col_names, row))
@@ -332,8 +332,8 @@ class PrivateReader(Reader):
             out_row =[convert(val, type) for val, type in zip(row, out_types)]
 
             # compute accuracies
-            if accuracy == True and self.privacy.alphas:
-                accuracies = [_accuracy.accuracy(row=list(row), alpha=alpha) for alpha in self.privacy.alphas]
+            if accuracy == True and alphas:
+                accuracies = [_accuracy.accuracy(row=list(row), alpha=alpha) for alpha in alphas]
                 return tuple([out_row, accuracies])
             else:
                 return tuple([out_row, []])
@@ -427,7 +427,7 @@ class PrivateReader(Reader):
                 out = map(drop_accuracy, out)
 
         # output it
-        if hasattr(out, "toDF"):
+        if accuracy == False and hasattr(out, "toDF"):
             # Pipeline RDD
             return out.toDF(out_col_names)
         elif hasattr(out, "map"):

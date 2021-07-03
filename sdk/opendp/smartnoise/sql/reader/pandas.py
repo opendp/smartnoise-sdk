@@ -9,7 +9,7 @@ import re
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
-    def __init__(self, df=None, metadata=None, conn=None):
+    def __init__(self, df=None, metadata=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
         if conn is not None:
             df = conn
