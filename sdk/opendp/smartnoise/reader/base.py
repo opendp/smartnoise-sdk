@@ -8,7 +8,7 @@ class Reader:
     def engine(self):
         return self.ENGINE
 
-    def execute(self, query, *ignore, accuracy:bool=False):
+    def execute(self, query, *ignore, accuracy: bool = False):
         raise NotImplementedError("Execute must be implemented on the inherited class")
 
     def _to_df(self, rows):
@@ -38,10 +38,9 @@ class Reader:
                         accuracies[idx].append(acc_row)
 
                 return [pd.DataFrame(result[1:], columns=result[0]),
-                       [pd.DataFrame(a[1:], columns=a[0]) for a in accuracies]]
+                        [pd.DataFrame(a[1:], columns=a[0]) for a in accuracies]]
 
-
-    def execute_df(self, query, *ignore, accuracy:bool=False):
+    def execute_df(self, query, *ignore, accuracy: bool = False):
         if not isinstance(query, str):
             raise ValueError("Please pass a string to this function.")
 

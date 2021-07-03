@@ -44,7 +44,6 @@ class SqlReader(Reader):
     def _execute_ast_df(self, query, *ignore, accuracy:bool=False):
         return self._to_df(self._execute_ast(query, accuracy=accuracy))
 
-
 """
     Implements engine-specific identifier matching rules
     for escaped identifiers.
