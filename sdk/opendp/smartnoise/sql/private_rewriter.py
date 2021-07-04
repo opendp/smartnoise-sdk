@@ -1,3 +1,4 @@
+import importlib
 import random
 import string
 
@@ -50,7 +51,8 @@ class Rewriter:
 
     def __init__(self, metadata):
         self.options = RewriterOptions()
-        self.metadata = metadata
+        class_ = getattr(importlib.import_module("opendp.smartnoise.metadata.collection"), "CollectionMetadata")
+        self.metadata = class_.from_(metadata)
 
     def calculate_avg(self, exp, scope):
         """

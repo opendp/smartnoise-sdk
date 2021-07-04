@@ -1,3 +1,4 @@
+import importlib
 import logging
 import warnings
 import math
@@ -15,12 +16,10 @@ from opendp.smartnoise._ast.expressions import sql as ast
 from opendp.smartnoise.reader import Reader
 
 from ._mechanisms.gaussian import Gaussian
-from opendp.smartnoise.report import Interval, Intervals, Result
 
 module_logger = logging.getLogger(__name__)
 
 import itertools
-
 
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results
@@ -59,14 +58,10 @@ class PrivateReader(Reader):
         else:
             raise ValueError("Parameter reader must be of type Reader")
 
-        # using string here, because we don't want to import .metadata due to circular reference
-        if "metadata.collection.CollectionMetadata" in str(type(metadata)):
-            self.metadata = metadata
-        else:
-            raise ValueError(
-                "Parameter metadata must be of type CollectionMetadata. Got {0}",
-                str(type(metadata)),
-            )
+        # we can replace this when we remove
+        # CollectionMetadata from the root __init__
+        class_ = getattr(importlib.import_module("opendp.smartnoise.metadata.collection"), "CollectionMetadata")
+        self.metadata = class_.from_(metadata)
 
         self.rewriter = Rewriter(metadata)
         self._options = PrivateReaderOptions()
