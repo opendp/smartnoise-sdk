@@ -64,3 +64,38 @@ class TestOdometer:
         res = priv.execute("SELECT COUNT(DISTINCT age) FROM PUMS.PUMS GROUP BY educ")
         # This is a bug.  This should be 1, because keycount is never used
         assert(priv.odometer.k == 2)
+    def test_variance(self):
+        meta_obj['PUMS.PUMS'].row_privacy = True
+        meta_obj['PUMS.PUMS']['pid'].is_key = False
+        meta_obj['PUMS.PUMS'].censor_dims = True
+        priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
+        res = priv.execute("SELECT VAR(age) FROM PUMS.PUMS GROUP BY educ")
+        assert(priv.odometer.k == 3)
+    def test_std(self):
+        meta_obj['PUMS.PUMS'].row_privacy = True
+        meta_obj['PUMS.PUMS']['pid'].is_key = False
+        meta_obj['PUMS.PUMS'].censor_dims = True
+        priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
+        res = priv.execute("SELECT STD(age) FROM PUMS.PUMS GROUP BY sex")
+        assert(priv.odometer.k == 3)
+    def test_avg(self):
+        meta_obj['PUMS.PUMS'].row_privacy = True
+        meta_obj['PUMS.PUMS']['pid'].is_key = False
+        meta_obj['PUMS.PUMS'].censor_dims = True
+        priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
+        res = priv.execute("SELECT AVG(age) FROM PUMS.PUMS GROUP BY educ")
+        assert(priv.odometer.k == 2)
+    def test_sum(self):
+        meta_obj['PUMS.PUMS'].row_privacy = True
+        meta_obj['PUMS.PUMS']['pid'].is_key = False
+        meta_obj['PUMS.PUMS'].censor_dims = True
+        priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
+        res = priv.execute("SELECT SUM(age) FROM PUMS.PUMS GROUP BY educ")
+        assert(priv.odometer.k == 2)
+    def test_three_var(self):
+        meta_obj['PUMS.PUMS'].row_privacy = True
+        meta_obj['PUMS.PUMS']['pid'].is_key = False
+        meta_obj['PUMS.PUMS'].censor_dims = True
+        priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
+        res = priv.execute("SELECT VAR(age), VAR(educ), VAR(income) FROM PUMS.PUMS GROUP BY sex")
+        assert(priv.odometer.k == 5)
