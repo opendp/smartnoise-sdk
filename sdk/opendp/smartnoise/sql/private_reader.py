@@ -4,7 +4,9 @@ import warnings
 import math
 import numpy as np
 from opendp.smartnoise.sql._mechanisms.accuracy import Accuracy
+from opendp.smartnoise.sql.odometer import Odometer
 from opendp.smartnoise.sql.privacy import Privacy
+
 from opendp.smartnoise.sql.reader.base import SqlReader
 from .dpsu import run_dpsu
 from .private_rewriter import Rewriter
@@ -70,9 +72,12 @@ class PrivateReader(Reader):
             self.privacy = privacy
         else:
             self.privacy = Privacy(epsilon=epsilon_per_column, delta=delta)
+        
+        self.odometer = Odometer(self.privacy)
 
         self._cached_exact = None
         self._cached_ast = None
+
         self.refresh_options()
 
     @classmethod
@@ -412,6 +417,9 @@ class PrivateReader(Reader):
                 out = out.map(drop_accuracy)
             else:
                 out = map(drop_accuracy, out)
+
+        # increment odometer
+        self.odometer.spend(len([m for m in mechs if m]))
 
         # output it
         if accuracy == False and hasattr(out, "toDF"):
