@@ -64,8 +64,7 @@ class TestOdometer:
         assert(priv.odometer.spent == (0.0, 0.0))
         assert(priv.odometer.k == 0)
         res = priv.execute("SELECT COUNT(DISTINCT age) FROM PUMS.PUMS GROUP BY educ")
-        # This is a bug.  This should be 1, because keycount is never used
-        assert(priv.odometer.k == 2)
+        assert(priv.odometer.k == 1)
     def test_variance(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False

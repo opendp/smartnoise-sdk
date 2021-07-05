@@ -171,8 +171,9 @@ class Rewriter:
         else:
             key_col = self.key_col(query)
             keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
-        
-        child_scope.push_name(keycount_expr, "keycount")
+
+        if self.options.censor_dims:
+            child_scope.push_name(keycount_expr, "keycount")
 
         # we make sure aggregates are in select scope for subqueries
         if query.agg is not None:
@@ -250,6 +251,9 @@ class Rewriter:
 
     def per_key_clamped(self, query):
         child_scope = Scope()
+        key_col = self.key_col(query)
+        if self.options.reservoir_sample and not self.options.row_privacy:
+            child_scope.push_name(Column(key_col), key_col)
         relations = query.source.relations
         select = [
                 self.clamp_expression(ne, relations, child_scope, query, self.options.clamp_columns)
@@ -384,15 +388,17 @@ class Scope:
 class RewriterOptions:
     """Options that modify rewriter behavior"""
 
-    def __init__(self, row_privacy=False, reservoir_sample=True, clamp_columns=True, max_contrib=1):
+    def __init__(self, row_privacy=False, reservoir_sample=True, clamp_columns=True, max_contrib=1, censor_dims=True):
         """Initialize options before running the rewriter
 
         :param row_privacy: boolean, True if each row is a separate individual
         :param reservoir_sample: boolean, set to False if the data collection will never have more than max_contrib record per individual
         :param clamp_columns: boolean, set to False to allow values that exceed lower and higher limit specified in metadata.  May impact privacy
         :param max_contrib: int, set to maximum number of individuals that can appear in any query result.  Affects sensitivity
+        :param censor_dims: boolean, tells whether or not to censor infrequent dimensions
         """
         self.row_privacy = row_privacy
         self.reservoir_sample = reservoir_sample
         self.clamp_columns = clamp_columns
         self.max_contrib = max_contrib
+        self.censor_dims = censor_dims

@@ -105,6 +105,7 @@ class PrivateReader(Reader):
         self.rewriter.options.reservoir_sample = self._options.reservoir_sample
         self.rewriter.options.clamp_columns = self._options.clamp_columns
         self.rewriter.options.max_contrib = self._options.max_contrib
+        self.rewriter.options.censor_dims = self._options.censor_dims
 
     @staticmethod
     def get_budget_multiplier(schema, reader, query):
