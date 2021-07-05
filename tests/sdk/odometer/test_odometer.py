@@ -1,8 +1,10 @@
 import os
 import subprocess
+from opendp.smartnoise.sql.odometer import Odometer, OdometerHeterogeneous
 from opendp.smartnoise.sql.privacy import Privacy
 from opendp.smartnoise.sql.private_reader import PrivateReader
 import pandas as pd
+import numpy as np
 
 
 from opendp.smartnoise.metadata.collection import CollectionMetadata
@@ -99,3 +101,27 @@ class TestOdometer:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv.execute("SELECT VAR(age), VAR(educ), VAR(income) FROM PUMS.PUMS GROUP BY sex")
         assert(priv.odometer.k == 5)
+    def test_odo_hom(self):
+        privacy = Privacy(epsilon=0.1, delta = 1/(1000))
+        odo = Odometer(privacy)
+        for _ in range(300):
+            odo.spend()
+        eps, delt = odo.spent
+        assert(np.isclose(eps, 8.4917))
+        assert(np.isclose(delt, 0.19256))
+    def test_odo_het(self):
+        privacy = Privacy(epsilon=0.1, delta = 1/(1000))
+        odo = OdometerHeterogeneous(privacy)
+        for _ in range(300):
+            odo.spend()
+        eps, delt = odo.spent
+        assert(np.isclose(eps, 8.2519))
+        assert(np.isclose(delt, 0.2596633))
+    def test_odo_het_alternate(self):
+        privacy = Privacy(epsilon=0.1, delta = 1/(1000))
+        odo = OdometerHeterogeneous()
+        for _ in range(300):
+            odo.spend(privacy)
+        eps, delt = odo.spent
+        assert(np.isclose(eps, 8.2519))
+        assert(np.isclose(delt, 0.2596633))
