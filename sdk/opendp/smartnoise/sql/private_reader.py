@@ -13,7 +13,7 @@ from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
 
-from opendp.smartnoise._ast.ast import Top
+from opendp.smartnoise._ast.ast import Query, Top
 from opendp.smartnoise._ast.expressions import sql as ast
 from opendp.smartnoise.reader import Reader
 
@@ -107,9 +107,17 @@ class PrivateReader(Reader):
         self.rewriter.options.max_contrib = self._options.max_contrib
         self.rewriter.options.censor_dims = self._options.censor_dims
 
-    @staticmethod
-    def get_budget_multiplier(schema, reader, query):
-        return len(PrivateReader(reader, schema, 1).get_privacy_cost(query))
+    def get_budget_multiplier(self, query_string):
+        self.refresh_options()
+        subquery, query = self.rewrite(query_string)
+        mechs = self._get_mechanisms(subquery)
+        return len([m for m in mechs if m])
+    
+    def get_privacy_cost(self, query_string):
+        odo = Odometer(self.privacy)
+        k = self.get_budget_multiplier(query_string)
+        odo.spend(k)
+        return odo.spent
 
     def parse_query_string(self, query_string):
         queries = QueryParser(self.metadata).queries(query_string)
@@ -133,11 +141,6 @@ class PrivateReader(Reader):
         subquery = query.source.relations[0].primary.query
         return (subquery, query)
 
-    def get_privacy_cost(self, query_string):
-        self.refresh_options()
-        subquery, query = self.rewrite(query_string)
-        return subquery.numeric_symbols()
-
     def _get_reader(self, query_ast):
         if (
             query_ast.agg is not None
@@ -150,6 +153,35 @@ class PrivateReader(Reader):
         else:
             return self.reader
 
+    def _get_mechanisms(self, subquery: Query):
+        max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
+
+        syms = subquery.all_symbols()
+
+        # list of sensitivities in column order
+        sens = [s[1].sensitivity() for s in syms]
+
+        # set sensitivity to None if the column is a grouping key
+        if subquery.agg is not None:
+            group_keys = [
+                ge.expression.name if hasattr(ge.expression, "name") else None
+                for ge in subquery.agg.groupingExpressions
+            ]
+        else:
+            group_keys = []
+        is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
+        for idx in range(len(sens)):
+            if is_group_key[idx]:
+                sens[idx] = None
+        if any([s is np.inf for s in sens]):
+            raise ValueError(
+                "Query is attempting to query an unbounded column that isn't part of the grouping key"
+            )
+        mechs = [
+            Gaussian(self.privacy.epsilon, self.privacy.delta, s, max_contrib) if s is not None else None
+            for s in sens
+        ]
+        return mechs
     def execute_with_accuracy(self, query_string:str):
         return self.execute(query_string, accuracy=True)
 
@@ -197,41 +229,17 @@ class PrivateReader(Reader):
         syms = subquery.all_symbols()
         source_col_names = [s[0] for s in syms]
 
-        # list of sensitivities in column order
-        sens = [s[1].sensitivity() for s in syms]
-
         # tell which are counts, in column order
         is_count = [s[1].is_count for s in syms]
 
-        # set sensitivity to None if the column is a grouping key
-        if subquery.agg is not None:
-            group_keys = [
-                ge.expression.name if hasattr(ge.expression, "name") else None
-                for ge in subquery.agg.groupingExpressions
-            ]
-        else:
-            group_keys = []
-        is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
-        for idx in range(len(sens)):
-            if is_group_key[idx]:
-                sens[idx] = None
-
-        if any([s is np.inf for s in sens]):
-            raise ValueError(
-                "Query is attempting to query an unbounded column that isn't part of the grouping key"
-            )
-
         kc_pos = None
         for idx in range(len(syms)):
-            sname, sym = syms[idx]
+            sname, _ = syms[idx]
             if sname == "keycount":
                 kc_pos = idx
 
-        # make a list of mechanisms in column order
-        mechs = [
-            Gaussian(self.privacy.epsilon, self.privacy.delta, s, max_contrib) if s is not None else None
-            for s in sens
-        ]
+        # get a list of mechanisms in column order
+        mechs = self._get_mechanisms(subquery)
 
         # execute the subquery against the backend and load in tuples
         if cache_exact:
@@ -262,7 +270,8 @@ class PrivateReader(Reader):
             row = [v for v in row_in]
             # set null to 0 before adding noise
             for idx in range(len(row)):
-                if sens[idx] is not None and row[idx] is None:
+                #if sens[idx] is not None and row[idx] is None:
+                if mechs[idx] and row[idx] is None:
                     row[idx] = 0.0
             # call all mechanisms to add noise
             out_row = [
