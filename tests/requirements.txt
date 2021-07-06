@@ -12,3 +12,4 @@ gym
 flake8
 diffprivlib
 graphviz
+keyring

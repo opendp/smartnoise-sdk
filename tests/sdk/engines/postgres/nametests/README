@@ -1,0 +1,4 @@
+Test database for unit tests for identifier escaping
+To install, launch a terminal from this folder, and:
+
+    source install.sh

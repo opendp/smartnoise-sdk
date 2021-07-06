@@ -1,6 +1,6 @@
 import os
 
-from .base import SqlReader, NameCompare
+from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
 
 from opendp.smartnoise._ast.ast import Relation
@@ -18,28 +18,36 @@ class SqlServerReader(SqlReader):
 
     ENGINE = Engine.SQL_SERVER
 
-    def __init__(self, host, database, user, password=None, port=None):
-        super().__init__(SqlServerNameCompare(), SqlServerSerializer())
-        import pyodbc  # TODO do we add all reader dependencies as smartnoise-sdk dependencies?
+    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None):
+        super().__init__(self.ENGINE)
+        import pyodbc
 
         # this reader would break in the module code as is
         self.api = pyodbc
-        self.host = host
-        self.database = database
-        self.user = user
-        self.port = port
 
-        if password is None:
-            if "SA_PASSWORD" in os.environ:
-                password = os.environ["SA_PASSWORD"]
-        self.password = password
+        if conn is not None:
+            self.conn = conn
+        else:
+            # generate a connection string
+            self.host = host
+            self.database = database
+            self.user = user
+            self.port = port
 
-        self.update_connection_string()
+            if password is None:
+                if "SA_PASSWORD" in os.environ:
+                    password = os.environ["SA_PASSWORD"]
+            self.password = password
+
+            self.update_connection_string()
 
     def execute(self, query):
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
-        cnxn = self.api.connect(self.connection_string)
+        if self.conn is not None:
+            cnxn = self.conn
+        else:
+            cnxn = self.api.connect(self.connection_string)
         cursor = cnxn.cursor()
         cursor.execute(str(query))
         if cursor.description is None:
@@ -71,7 +79,7 @@ class SqlServerReader(SqlReader):
         return dbname
 
 
-class SqlServerSerializer:
+class SqlServerSerializer(Serializer):
     def serialize(self, query):
         for re in [n for n in query.find_nodes(BareFunction) if n.name == "RANDOM"]:
             re.name = "NEWID"

@@ -1,4 +1,4 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8-blue)](https://www.python.org/)
 
 <a href="https://smartnoise.org"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
 
@@ -13,8 +13,8 @@
 The tools SmartNoise SDK allows researchers and analysts to:
 
 * Use SQL dialect to create differentially private results over tabular data stores
-* Host a service to compose queries from heterogeneous differential privacy modules (including non-SQL) against shared privacy budget
 * Perform privacy algorithm stochastic testing against differential privacy modules
+* Generate differentially private synthetic datasets
 
 This SmartNoise System is currently aimed at scenarios where differential privacy can be used in scenarios where the researcher is trusted by the data owner.  Future releases will focus on hardened scenarios where the researcher or analyst is untrusted.  
 
@@ -24,12 +24,6 @@ This SmartNoise System is currently aimed at scenarios where differential privac
 The data access library intercepts SQL queries and processes the queries to return differentially private results.  It is implemented in Python and designed to operate like any ODBC or DBAPI source.  We provide support for PostgreSQL, SQL Server, Spark, Presto, and Pandas.
 
 Detailed documentation, as well as information about plugging in to other database backends, can be found [here](https://github.com/opendp/smartnoise-samples/tree/master/docs).
-
-## Service
-
-The reference execution service provides a REST endpoint that can serve requests against shared data sources.  It is designed to allow pluggable composition of many heterogeneous differential privacy modules.  Heterogeneous requests against the same data source will compose privacy budget.  We include SQL dialect, differentially-private graph (core), and a Logistic Regression module from IBM's diffprivlib.
-
-More information, including information about creating and integrating your own privacy modules, can be found [here](https://github.com/opendp/smartnoise-sdk/tree/master/service).
 
 ## Evaluator
 
@@ -45,7 +39,7 @@ The system's SmartNoise Core library can be installed from PyPi:
 Documentation for SDK functionality: [here](https://opendp.github.io/smartnoise-samples/docs/api/system/)
 
 ### Experimental
-Service API specification: [here](https://github.com/opendp/smartnoise-sdk/blob/master/service/openapi/swagger.yml)
+None
 
 ## Getting started
 ### venv setup
@@ -92,10 +86,9 @@ Samples of DP SQL functionality: [here](https://github.com/opendp/smartnoise-sam
 
 ## Communication
 
-- Please use [GitHub issues](https://github.com/opendp/smartnoise-sdk/issues) for bug reports, feature requests, install issues, and ideas.
-- [Gitter](https://gitter.im/opendifferentialprivacy/SmartNoise) is available for general chat and online discussions.
-- For other requests, please contact us at [smartnoise@opendp.org](mailto:smartnoise@opendp.org).
-  - _Note: We encourage you to use [GitHub issues](https://github.com/opendp/smartnoise-sdk/issues), especially for bugs._
+- You are very welcome to join us on [GitHub Discussions](https://github.com/opendp/opendp/discussions/categories/smartnoise)!
+- Please use [GitHub Issues](https://github.com/opendp/smartnoise-sdk/issues) for bug reports and feature requests.
+- For other requests, including security issues, please contact us at [smartnoise@opendp.org](mailto:smartnoise@opendp.org).
 
 ## Releases and Contributing
 

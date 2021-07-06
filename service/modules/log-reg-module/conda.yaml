@@ -1,9 +1,0 @@
-name: tutorial
-channels:
-  - defaults
-dependencies:
-  - pip:
-    - mlflow
-    - pandas
-    - diffprivlib
-    - opendp-smartnoise

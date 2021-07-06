@@ -1,4 +1,5 @@
-from .base import SqlReader, NameCompare
+from pandas.core.algorithms import value_counts
+from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
 import copy
 import warnings
@@ -8,8 +9,14 @@ import re
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
-    def __init__(self, df, metadata):
-        super().__init__()
+    def __init__(self, df=None, metadata=None, conn=None):
+        super().__init__(self.ENGINE)
+        if conn is not None:
+            df = conn
+        if metadata is None:
+            raise ValueError("Load without metadata is not yet implemented")
+        if df is None:
+            raise ValueError("Pass in a Pandas dataframe")
         # using string here, because we don't want to import .metadata due to circular reference
         if "metadata.collection.CollectionMetadata" in str(type(df)):
             warnings.warn(
@@ -143,3 +150,11 @@ class PandasReader(SqlReader):
         return [tuple([col for col in q_result.columns])] + [
             val[1:] for val in q_result.itertuples()
         ]
+
+class PandasNameCompare(NameCompare):
+    def __init__(self, search_path=None):
+        super().__init__(search_path)
+
+class PandasSerializer(Serializer):
+    def __init__(self):
+        super().__init__()

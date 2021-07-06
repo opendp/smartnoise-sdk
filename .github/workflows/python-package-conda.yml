@@ -25,6 +25,9 @@ jobs:
       run: |
         pip install --use-feature=2020-resolver -r tests/requirements.txt
         pip install --use-feature=2020-resolver psycopg2
+        pip install --use-feature=2020-resolver readchar
+        pip install --use-feature=2020-resolver pyodbc
+        pip install --use-feature=2020-resolver keyring
     - name: Install opendp-smartnoise
       run: |
         pip install --use-feature=2020-resolver ./sdk
@@ -38,10 +41,5 @@ jobs:
       run: |
         conda install pytest
         pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
-#    - name: Test Service
-#      run: |
-#        python service/application.py > logs &
-#        sleep 30
-#        python -m pytest tests/service -s -m "not dataverse_token"  --junitxml=./TEST-SERVICE.xml
 
         

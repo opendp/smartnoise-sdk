@@ -1,4 +1,4 @@
-name: Test Samples
+name: Run Sample Notebooks
 
 on: [workflow_dispatch]
 
@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8]
       max-parallel: 5
 
     steps:
@@ -21,17 +21,20 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
-      run: |
-        pip install --use-feature=2020-resolver -r tests/requirements.txt
-        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark
-    - name: Install opendp-smartnoise
-      run: |
-        pip install --use-feature=2020-resolver ./sdk
     - name: Clone samples
       run: |
         git clone https://github.com/opendp/smartnoise-samples.git
+        touch smartnoise-samples/devops
         git clone https://github.com/opendp/dp-test-datasets.git
+    - name: Samples dependencies
+      run: |
+        pip install --use-feature=2020-resolver -r smartnoise-samples/requirements.txt
+    - name: Install additional dependencies
+      run: |
+        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark nltk scikit-learn scikit-image
+    - name: Install opendp-smartnoise
+      run: |
+        pip install --use-feature=2020-resolver ./sdk
     - name: Test Notebooks
       run: |
         conda install pytest
