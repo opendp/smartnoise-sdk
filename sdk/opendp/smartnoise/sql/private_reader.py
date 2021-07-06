@@ -24,8 +24,35 @@ module_logger = logging.getLogger(__name__)
 import itertools
 
 class PrivateReader(Reader):
-    """Executes SQL queries against tabular data sources and returns differentially private results
+    """Executes SQL queries against tabular data sources and returns differentially private results.
+
+    PrivateReader should be created using the `from_connection` factory method.  For example,
+    using pyodbc:
+    
+    .. code-block:: python
+
+        meta = 'datasets/PUMS.yaml'
+        conn = pyodbc.connect(dsn)
+        privacy = Privacy(epsilon=0.1, delta=1/10000)
+        reader = PrivateReader.from_connection(conn, metadata=meta, privacy=privacy)
+
+        result = reader.execute('SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
+
+    or using a Pandas dataframe:
+
+    .. code-block:: python
+
+        meta = 'datasets/PUMS.yaml'
+        csv = 'datasets/PUMS.csv'
+        pums = pd.read_csv(csv)
+
+        privacy = Privacy(epsilon=0.1, delta=1/10000)
+        reader = PrivateReader.from_connection(pums, metadata=meta, privacy=privacy)
+
+        result = reader.execute('SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
+
     """
+
 
     def __init__(
         self,
@@ -78,18 +105,33 @@ class PrivateReader(Reader):
         self._cached_exact = None
         self._cached_ast = None
 
-        self.refresh_options()
+        self._refresh_options()
 
     @classmethod
-    def from_connection(cls, conn, *ignore, engine=None, privacy, metadata, **kwargs):
+    def from_connection(cls, conn, *ignore, privacy, metadata, engine=None, **kwargs):
+        """Create a private reader over an established SQL connection.  If `engine` is not
+        passed in, the engine will be automatically detected.
+
+        :param conn: An established database connection.  Can be pyodbc, psycopg2, SparkSession, Pandas DataFrame, or Presto.
+        :param privacy:  A Privacy object with epsilon, delta, and other privacy properties.  Keyword-only.
+        :param metadata: The metadata describing the database.  `Metadata documentation is here <https://github.com/opendp/smartnoise-sdk/blob/new_opendp/sdk/Metadata.md>`_.  Keyword-only.
+        :param engine: Optional keyword-only argument that can be used to specify engine-specific rules if automatic detection fails.  This should only be necessary when using an uncommon database or middleware.
+        :returns: A `PrivateReader` object initialized to process queries against the supplied connection, using the supplied `Privacy` properties.
+        """
         _reader = SqlReader.from_connection(conn, engine=engine, metadata=metadata, **kwargs)
         return PrivateReader(_reader, metadata, privacy=privacy)
 
     @property
-    def engine(self):
+    def engine(self) -> str:
+        """The engine being used by this private reader.
+
+            df = pd.read_csv('datasets/PUMS.csv')
+            reader = PrivateReader.from_connection(df, metadata=meta, privacy=privacy)
+            assert(reader.engine == 'pandas')
+        """
         return self.reader.engine
 
-    def refresh_options(self):
+    def _refresh_options(self):
         self.rewriter = Rewriter(self.metadata)
         self.metadata.compare = self.reader.compare
         tables = self.metadata.tables()
@@ -108,18 +150,38 @@ class PrivateReader(Reader):
         self.rewriter.options.censor_dims = self._options.censor_dims
 
     def get_budget_multiplier(self, query_string):
-        self.refresh_options()
-        subquery, query = self.rewrite(query_string)
+        """Analyzes the query and tells how many differentially private mechanism invocations
+         will be required to execute the query.  SUM and COUNT both use 1, while MEAN (composed of 
+         a SUM divided by a COUNT) uses 2.  VAR and STDDEV use 3.
+
+            mul = priv.get_budget_multiplier('SELECT AVG(age) FROM PUMS.PUMS GROUP BY sex')
+            assert(mul == 2)
+
+        """
+        self._refresh_options()
+        subquery, _ = self._rewrite(query_string)
         mechs = self._get_mechanisms(subquery)
         return len([m for m in mechs if m])
     
     def get_privacy_cost(self, query_string):
+        """Estimates the epsilon and delta cost for running the given query.
+        """
         odo = Odometer(self.privacy)
         k = self.get_budget_multiplier(query_string)
         odo.spend(k)
         return odo.spent
 
-    def parse_query_string(self, query_string):
+    def parse_query_string(self, query_string) -> Query:
+        """Parse a query string using this `PrivateReader`'s metadata, returning a `Query` from the AST.
+
+            reader = PrivateReader.from_connection(pums, metadata=meta, privacy=privacy)
+            query_string = 'SELECT STDDEV(age) AS age FROM PUMS.PUMS'
+            query = reader.parse_query_string(query_string)
+            age_node = query.xpath_first("//NamedExpression[@name='age']")
+            dot = age_node.visualize() # visualize the formula in the AST
+            dot.render('age', view=True, cleanup=True)
+
+        """
         queries = QueryParser(self.metadata).queries(query_string)
         if len(queries) > 1:
             raise ValueError("Too many queries provided.  We can only execute one query at a time.")
@@ -127,16 +189,20 @@ class PrivateReader(Reader):
             return []
         return queries[0]
 
-    def rewrite(self, query_string):
+    def _rewrite(self, query_string):
+        if not isinstance(query_string, str):
+            raise ValueError("Please pass a query string to _rewrite()")
         query = self.parse_query_string(query_string)
-        return self.rewrite_ast(query)
+        return self._rewrite_ast(query)
 
-    def rewrite_ast(self, query):
+    def _rewrite_ast(self, query):
+        if isinstance(query, str):
+            raise ValueError("Please pass a Query AST object to _rewrite_ast()")
         query_max_contrib = query.max_ids
         if self._options.max_contrib is None or self._options.max_contrib > query_max_contrib:
             self._options.max_contrib = query_max_contrib
 
-        self.refresh_options()
+        self._refresh_options()
         query = self.rewriter.query(query)
         subquery = query.source.relations[0].primary.query
         return (subquery, query)
@@ -208,7 +274,7 @@ class PrivateReader(Reader):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
-        subquery, query = self.rewrite_ast(query)
+        subquery, query = self._rewrite_ast(query)
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
 
         _accuracy = None

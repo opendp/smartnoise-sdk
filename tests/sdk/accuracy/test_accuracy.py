@@ -23,7 +23,7 @@ q = QueryParser(meta).query(query)
 
 privacy = Privacy(alphas=[0.01, 0.05], delta=1/(math.sqrt(100) * 100))
 priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta)
-subquery, root = priv.rewrite(query)
+subquery, root = priv._rewrite(query)
 
 acc = Accuracy(root, subquery, privacy)
 
