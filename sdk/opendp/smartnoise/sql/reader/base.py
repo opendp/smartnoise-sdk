@@ -2,6 +2,8 @@ from opendp.smartnoise.reader.base import Reader
 from opendp.smartnoise.sql.reader.engine import Engine
 import importlib
 
+from opendp.smartnoise.sql.reader.probe import Probe
+
 class SqlReader(Reader):
     @classmethod
     def get_reader_class(cls, engine):
@@ -18,29 +20,29 @@ class SqlReader(Reader):
             return class_
     @classmethod
     def from_connection(cls, conn, engine=None, **kwargs):
-        if engine is not None:
-            _reader = cls.get_reader_class(engine)
-            return _reader(conn=conn, **kwargs)
-        else:
-            raise ValueError("Auto-detect from connection is not implemented yet")
-        _serializer
+        if engine is None:
+            probe = Probe()
+            engine = probe.engine(conn)
+            if engine is None:
+                raise ValueError("Unable to detect the database engine.  Please pass in engine parameter")
+        _reader = cls.get_reader_class(engine)
+        return _reader(conn=conn, **kwargs)
     def __init__(self, engine=None):
         self.compare = NameCompare.get_name_compare(engine)
         self.serializer = Serializer.get_serializer(engine)
 
-    def execute(self, query):
+    def execute(self, query, *ignore, accuracy:bool=False):
         raise NotImplementedError("Execute must be implemented on the inherited class")
-    def _execute_ast(self, query):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False):
         if isinstance(query, str):
             raise ValueError("Please pass ASTs to execute_ast.  To execute strings, use execute.")
         if hasattr(self, "serializer") and self.serializer is not None:
             query_string = self.serializer.serialize(query)
         else:
             query_string = str(query)
-        return self.execute(query_string)
-    def _execute_ast_df(self, query):
-        return self._to_df(self._execute_ast(query))
-
+        return self.execute(query_string, accuracy=accuracy)
+    def _execute_ast_df(self, query, *ignore, accuracy:bool=False):
+        return self._to_df(self._execute_ast(query, accuracy=accuracy))
 
 """
     Implements engine-specific identifier matching rules

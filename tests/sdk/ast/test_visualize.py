@@ -42,7 +42,7 @@ class TestAstVisualize:
         parsed_query = QueryParser(schema).query(query)
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 1.0)
-        inner, outer = private_reader.rewrite_ast(parsed_query)
+        inner, outer = private_reader._rewrite_ast(parsed_query)
         graph = outer.visualize(n_trunc=30)
         assert(isinstance(graph, Digraph))
         #graph.render('ast_digraph', view=True, cleanup=True)
@@ -53,7 +53,7 @@ class TestAstVisualize:
         query = "SELECT AVG(age) AS my_sum FROM PUMS.PUMS GROUP BY age"
         reader = PandasReader(df, schema)
         private_reader = PrivateReader(reader, schema, 1.0)
-        inner, outer = private_reader.rewrite(query)
+        inner, outer = private_reader._rewrite(query)
         aggfuncs = outer.find_nodes(AggFunction)
         for aggfunc in aggfuncs:
             graph = aggfunc.visualize(n_trunc=30)

@@ -22,7 +22,7 @@ query = 'SELECT AVG(age) + 3, STD(age), VAR(age), SUM(age) / 10, COUNT(age) + 2 
 q = QueryParser(meta).query(query)
 reader = SqlReader.from_connection(pums, "pandas", metadata=meta)
 priv = PrivateReader(reader, meta, 1.0)
-subquery, root = priv.rewrite(query)
+subquery, root = priv._rewrite(query)
 
 class TestXPathExecutionNoRewrite:
     def test_all_root_descend(self):
@@ -103,7 +103,7 @@ class TestXPathExecutionWithRewrite:
         path = '//*' # returns value
         xx = p.parse(path)
         res = xx.evaluate(root)
-        assert(len(res) > 250)
+        assert(len(res) > 230)
     def test_all_with_condition(self):
         path = '//*[@left]' # returns value
         xx = p.parse(path)
@@ -153,7 +153,7 @@ class TestXPathExecutionWithRewrite:
         path = "//AggFunction[@name == 'COUNT']"
         xx = p.parse(path)
         res = xx.evaluate(root)
-        assert(len(res) == 3)
+        assert(len(res) == 2)
         assert(str(xx) == path)
     def test_indexer_no_match(self):
         path = '/Query[1]' # returns value
@@ -177,7 +177,7 @@ class TestSqlDecorator:
     def test_attrib_equal(self):
         path = "//AggFunction[@name == 'COUNT']"
         res = root.xpath(path)
-        assert(len(res) == 3)
+        assert(len(res) == 2)
     def test_descend_attr_match(self):
         path = '//*[@left]' # returns value
         xx = p.parse(path)

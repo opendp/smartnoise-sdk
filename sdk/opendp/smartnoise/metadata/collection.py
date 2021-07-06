@@ -1,6 +1,7 @@
 import importlib
 import yaml
 import io
+from os import path
 
 from opendp.smartnoise.sql.reader.base import NameCompare
 
@@ -55,6 +56,21 @@ class CollectionMetadata:
         """Load the metadata from a dict object"""
         ys = CollectionYamlLoader("dummy")
         return ys._create_metadata_object(schema_dict)
+
+    @classmethod 
+    def from_(cls, val):
+        if isinstance(val, CollectionMetadata):
+            return val
+        elif isinstance(val, str):
+            if path.exists(val):
+                return cls.from_file(val)
+            else:
+                # could allow YAML strings here.  Throw for now
+                raise ValueError(f"Unable to load metadata path {val}")
+        elif isinstance(val, dict):
+            return cls.from_dict(val)
+        else:
+            raise ValueError(f"Metadata needs to be string, dictionary, or CollectionMetadata.  Got {str(type(val))}")
 
     def to_file(self, file, collection_name):
         """Save collection metadata to a YAML file"""

@@ -1,4 +1,4 @@
-from pandas.core.algorithms import value_counts
+import importlib
 from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
 import copy
@@ -9,7 +9,7 @@ import re
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
-    def __init__(self, df=None, metadata=None, conn=None):
+    def __init__(self, df=None, metadata=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
         if conn is not None:
             df = conn
@@ -27,6 +27,12 @@ class PandasReader(SqlReader):
             df = metadata
             metadata = tmp
         self.df = df
+
+        # we can replace this when we remove
+        # CollectionMetadata from the root __init__
+        class_ = getattr(importlib.import_module("opendp.smartnoise.metadata.collection"), "CollectionMetadata")
+        metadata = class_.from_(metadata)
+
         self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
         import sqlite3
 
@@ -108,7 +114,7 @@ class PandasReader(SqlReader):
         dbname = self.execute(sql)[1][0]
         return dbname
 
-    def execute(self, query):
+    def execute(self, query, *ignore, accuracy:bool=False):
         """
             Executes a raw SQL string against the database and returns
             tuples for rows.  This will NOT fix the query to target the

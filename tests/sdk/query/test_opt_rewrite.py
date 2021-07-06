@@ -23,7 +23,7 @@ class TestOptRewriter:
         private_reader = PrivateReader(reader, meta, 1.0)
         query = "SELECT COUNT (*) AS foo, COUNT(DISTINCT pid) AS bar FROM PUMS.PUMS"
         q = QueryParser(meta).query(query)
-        inner, outer = private_reader.rewrite_ast(q)
+        inner, outer = private_reader._rewrite_ast(q)
         ne = outer.select.namedExpressions
         assert(ne[0].expression.expression.name != 'keycount')
         assert(ne[1].expression.expression.name == 'keycount')
@@ -36,7 +36,7 @@ class TestOptRewriter:
         private_reader = PrivateReader(reader, meta, 1.0)
         query = "SELECT COUNT (*) AS foo, COUNT(DISTINCT pid) AS bar FROM PUMS.PUMS"
         q = QueryParser(meta).query(query)
-        inner, outer = private_reader.rewrite_ast(q)
+        inner, outer = private_reader._rewrite_ast(q)
         ne = outer.select.namedExpressions
         assert(ne[0].expression.expression.name == 'keycount')
         assert(ne[1].expression.expression.name != 'keycount')
@@ -49,7 +49,7 @@ class TestOptRewriter:
         reader = PostgresReader("localhost", "PUMS", "admin", "password")
         private_reader = PrivateReader(reader, meta, 1.0)
         query = 'SELECT COUNT (DISTINCT pid) AS foo, COUNT(DISTINCT "PiD") AS bar FROM PUMS.PUMS'
-        inner, outer = private_reader.rewrite(query)
+        inner, outer = private_reader._rewrite(query)
         ne = outer.select.namedExpressions
         assert(ne[0].expression.expression.name == 'keycount')
         assert(ne[1].expression.expression.name != 'keycount')
@@ -60,7 +60,7 @@ class TestOptRewriter:
         private_reader = PrivateReader(reader, meta, 1.0)
         query = 'SELECT AVG(age), SUM(age), COUNT(age) FROM PUMS.PUMS'
         q = QueryParser(meta).query(query)
-        inner, outer = private_reader.rewrite(query)
+        inner, outer = private_reader._rewrite(query)
         names = unique([f.name for f in outer.select.namedExpressions.find_nodes(Column)])
         assert(len(names) == 2)
         assert('count_age' in names)
