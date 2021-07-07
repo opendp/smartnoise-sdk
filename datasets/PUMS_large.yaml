@@ -1,0 +1,32 @@
+Collection:
+  PUMS:
+    PUMS_large:
+      clamp_counts: False
+      censor_dims: False
+      PersonID:
+        type: int
+        private_id: True
+      state:
+        type: int
+      puma:
+        type: string
+      sex:
+        type: string
+      age:
+        lower: 0
+        upper: 100
+        type: int
+      educ:
+        type: string
+      income:
+        lower: 0
+        upper: 500000
+        type: float
+      latino:
+        type: boolean
+      black:
+        type: boolean
+      asian:
+        type: boolean
+      married:
+        type: boolean
