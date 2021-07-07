@@ -9,7 +9,7 @@ import re
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
-    def __init__(self, df=None, metadata=None, conn=None):
+    def __init__(self, df=None, metadata=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
         if conn is not None:
             df = conn
@@ -108,7 +108,7 @@ class PandasReader(SqlReader):
         dbname = self.execute(sql)[1][0]
         return dbname
 
-    def execute(self, query):
+    def execute(self, query, *ignore, accuracy:bool=False):
         """
             Executes a raw SQL string against the database and returns
             tuples for rows.  This will NOT fix the query to target the

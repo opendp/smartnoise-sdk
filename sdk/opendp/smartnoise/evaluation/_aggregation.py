@@ -183,7 +183,7 @@ class Aggregation:
         for idx in range(self.repeat_count):
             dim_rows = []
             num_rows = []
-            singleres = private_reader._execute_ast_df(query_ast, True)
+            singleres = private_reader._execute_ast_df(query_ast, cache_exact=True)
             # values = singleres[col]
             for col in dim_cols:
                 dim_rows.append(singleres[col].tolist())

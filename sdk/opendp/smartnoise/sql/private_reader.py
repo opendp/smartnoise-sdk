@@ -2,6 +2,9 @@ import logging
 import warnings
 import math
 import numpy as np
+from opendp.smartnoise.sql._mechanisms.accuracy import Accuracy
+from opendp.smartnoise.sql.privacy import Privacy
+from opendp.smartnoise.sql.reader.base import SqlReader
 from .dpsu import run_dpsu
 from .private_rewriter import Rewriter
 from .parse import QueryParser
@@ -27,11 +30,11 @@ class PrivateReader(Reader):
         self,
         reader,
         metadata,
-        epsilon_per_column,
+        epsilon_per_column=1.0,
         delta=10e-16,
-        interval_widths=None,
-        options=None,
-        epsilon=None,
+        *ignore,
+        privacy=None
+
     ):
         """Create a new private reader.
 
@@ -40,9 +43,6 @@ class PrivateReader(Reader):
                 The PrivateReader intercepts queries to the underlying reader and ensures differential privacy.
             :param epsilon_per_column: The privacy budget to spend for each column in the query
             :param delta: The delta privacy parameter
-            :param interval_widths: If supplied, returns confidence intervals of the specified width, e.g. [0.95, 0.75]
-            :param options: A PrivateReaderOptions with flags that change the behavior of the privacy
-                engine.
         """
         # check for old calling convention
         if isinstance(metadata, Reader):
@@ -70,25 +70,28 @@ class PrivateReader(Reader):
 
         self.rewriter = Rewriter(metadata)
         self.epsilon_per_column = epsilon_per_column
-        if epsilon is not None:
-            message = (
-                "epsilon named parameter was replaced with "
-                "epsilon_per_column to be more descriptive."
-            )
-            if epsilon != epsilon_per_column:
-                raise Exception(message)
-            else:
-                module_logger.warning(message)
-        if options is not None:
-            raise ValueError("Options has been deprecated.  Use metadata")
         self._options = PrivateReaderOptions()
 
         self.delta = delta
-        self.interval_widths = interval_widths
+        self.alphas = []
+
+        if privacy:
+            self.privacy = privacy
+            self.epsilon_per_column = privacy.epsilon
+            self.delta = privacy.delta
+            self.alphas = privacy.alphas
+        else:
+            self.privacy = Privacy(epsilon=epsilon_per_column, delta=delta)
+
+
         self._cached_exact = None
         self._cached_ast = None
         self.refresh_options()
 
+    @classmethod
+    def from_connection(cls, conn, *ignore, engine=None, privacy, metadata, **kwargs):
+        _reader = SqlReader.from_connection(conn, engine=engine, metadata=metadata, **kwargs)
+        return PrivateReader(_reader, metadata, privacy=privacy)
     @property
     def epsilon(self):
         module_logger.warning(
@@ -161,7 +164,14 @@ class PrivateReader(Reader):
         else:
             return self.reader
 
-    def execute(self, query_string):
+    def execute_with_accuracy(self, query_string:str):
+        return self.execute(query_string, accuracy=True)
+
+    def execute_with_accuracy_df(self, query_string:str, *ignore, privacy:bool=False):
+        return self.execute_df(query_string, accuracy=True)
+
+
+    def execute(self, query_string, accuracy:bool=False):
         """Executes a query and returns a recordset that is differentially private.
 
         Follows ODBC and DB_API convention of consuming query as a string and returning
@@ -174,14 +184,19 @@ class PrivateReader(Reader):
          contain column names.
         """
         query = self.parse_query_string(query_string)
-        return self._execute_ast(query)
+        return self._execute_ast(query, accuracy=accuracy)
 
-    def _execute_ast(self, query, cache_exact=False):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False, cache_exact=False):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
         subquery, query = self.rewrite_ast(query)
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
+
+        _accuracy = None
+        if accuracy:
+            _accuracy = Accuracy(query, subquery, self.privacy)
+
         thresh_scale = math.sqrt(max_contrib) * (
             (
                 math.sqrt(math.log(1 / self.delta))
@@ -238,6 +253,7 @@ class PrivateReader(Reader):
             if self._cached_exact is not None:
                 if subquery == self._cached_ast:
                     db_rs = self._cached_exact
+                    _accuracy = self._cached_accuracy
                 else:
                     raise ValueError(
                         "Cannot run different query against cached result.  "
@@ -247,9 +263,10 @@ class PrivateReader(Reader):
                 db_rs = self._get_reader(subquery)._execute_ast(subquery)
                 self._cached_exact = list(db_rs)
                 self._cached_ast = subquery
+                self._cached_accuracy = _accuracy
         else:
-            self.cached_exact = None
-            self.cached_ast = None
+            self._cached_exact = None
+            self._cached_ast = None
             db_rs = self._get_reader(subquery)._execute_ast(subquery)
 
         clamp_counts = self._options.clamp_counts
@@ -282,6 +299,7 @@ class PrivateReader(Reader):
         else:
             out = map(process_row, db_rs[1:])
 
+        # censor infrequent dimensions
         if subquery.agg is not None and self._options.censor_dims:
             if kc_pos == None:
                 raise ValueError("Query needs a key count column to censor dimensions")
@@ -311,11 +329,21 @@ class PrivateReader(Reader):
                     return bool(str(val).replace('"', "").replace("'", ""))
             else:
                 raise ValueError("Can't convert type " + type)
+        
+
+        alphas = [alpha for alpha in self.privacy.alphas]
 
         def process_out_row(row):
             bindings = dict((name.lower(), val) for name, val in zip(source_col_names, row))
             row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
-            return [convert(val, type) for val, type in zip(row, out_types)]
+            out_row =[convert(val, type) for val, type in zip(row, out_types)]
+
+            # compute accuracies
+            if accuracy == True and alphas:
+                accuracies = [_accuracy.accuracy(row=list(row), alpha=alpha) for alpha in alphas]
+                return tuple([out_row, accuracies])
+            else:
+                return tuple([out_row, []])
 
         if hasattr(out, "map"):
             # it's an RDD
@@ -324,7 +352,7 @@ class PrivateReader(Reader):
             out = map(process_out_row, out)
 
         def filter_aggregate(row, condition):
-            bindings = dict((name.lower(), val) for name, val in zip(out_col_names, row))
+            bindings = dict((name.lower(), val) for name, val in zip(out_col_names, row[0]))
             keep = condition.evaluate(bindings)
             return keep
 
@@ -359,17 +387,19 @@ class PrivateReader(Reader):
                 sort_fields.append(sf)
 
             def sort_func(row):
-                return tuple(
+                row_value, accuracies = row
+                out_row_value = tuple(
                     [
-                        row[idx]
+                        row_value[idx]
                         if not desc
-                        else not row[idx]
+                        else not row_value[idx]
                         if out_types[idx] == "boolean"
-                        else -row[idx]
+                        else -row_value[idx]
                         for desc, idx in sort_fields
                     ]
                 )
-
+                return tuple([out_row_value, accuracies])
+                
             if hasattr(out, "sortBy"):
                 out = out.sortBy(sort_func)
             else:
@@ -393,19 +423,32 @@ class PrivateReader(Reader):
                 else:
                     out = itertools.islice(out, limit_rows)
 
+        # drop empty accuracy if no accuracy requested
+        def drop_accuracy(row):
+            return row[0]
+        if accuracy == False:
+            if hasattr(out, "map"):
+                # it's an RDD
+                out = out.map(drop_accuracy)
+            else:
+                out = map(drop_accuracy, out)
+
         # output it
-        if hasattr(out, "toDF"):
+        if accuracy == False and hasattr(out, "toDF"):
             # Pipeline RDD
             return out.toDF(out_col_names)
         elif hasattr(out, "map"):
             # Bare RDD
             return out
         else:
-            out_rows = [out_col_names] + list(out)
+            row0 = [out_col_names]
+            if accuracy == True:
+                row0 = [[out_col_names, [[col_name+'_' + str(1-alpha).replace('0.', '') for col_name in out_col_names] for alpha in self.privacy.alphas ]]]
+            out_rows = row0 + list(out)
             return out_rows
 
     def _execute_ast_df(self, query, cache_exact=False):
-        return self._to_df(self._execute_ast(query, cache_exact))
+        return self._to_df(self._execute_ast(query, cache_exact=cache_exact))
 
 
 class PrivateReaderOptions:

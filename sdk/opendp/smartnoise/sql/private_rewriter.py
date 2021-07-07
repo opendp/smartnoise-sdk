@@ -73,9 +73,12 @@ class Rewriter:
         expr = exp.expression
         quant = exp.quantifier
 
-        avg_of_square = self.calculate_avg(
-            AggFunction(FuncName("AVG"), quant, ArithmeticExpression(expr, Op("*"), expr)), scope
-        )
+        sum_expr = self.push_sum_or_count(AggFunction(FuncName("SUM"), quant, ArithmeticExpression(expr, Op("*"), expr)), scope)
+        count_expr = self.push_sum_or_count(AggFunction(FuncName("COUNT"), quant, expr), scope)
+
+        avg_of_square = NestedExpression(ArithmeticExpression(sum_expr, Op("/"), count_expr))
+
+
         avg = self.calculate_avg(AggFunction(FuncName("AVG"), quant, expr), scope)
         avg_squared = ArithmeticExpression(avg, Op("*"), avg)
 
