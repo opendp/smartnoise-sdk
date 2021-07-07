@@ -2,6 +2,8 @@ import importlib
 import random
 import string
 
+from opendp.smartnoise._ast.tokens import Seq
+
 from .parse import QueryParser
 
 from opendp.smartnoise._ast.validate import Validate
@@ -232,7 +234,7 @@ class Rewriter:
                     Identifier("row_num"),
                     RankingFunction(FuncName("ROW_NUMBER"),
                                     OverClause(
-                                        Column(key_col),
+                                        Seq([Column(key_col)]),
                                         Order([
                                             SortItem(BareFunction(FuncName("RANDOM")), None)
                                             ])

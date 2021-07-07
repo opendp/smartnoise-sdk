@@ -18,7 +18,7 @@ class SqlServerReader(SqlReader):
 
     ENGINE = Engine.SQL_SERVER
 
-    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None):
+    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
         import pyodbc
 

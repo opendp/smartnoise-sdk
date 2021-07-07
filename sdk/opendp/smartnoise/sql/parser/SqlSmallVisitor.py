@@ -229,6 +229,11 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlSmallParser#typename.
+    def visitTypename(self, ctx:SqlSmallParser.TypenameContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlSmallParser#bareFunc.
     def visitBareFunc(self, ctx:SqlSmallParser.BareFuncContext):
         return self.visitChildren(ctx)
@@ -261,6 +266,16 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#chooseFunc.
     def visitChooseFunc(self, ctx:SqlSmallParser.ChooseFuncContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#castFunc.
+    def visitCastFunc(self, ctx:SqlSmallParser.CastFuncContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#stringAggFunc.
+    def visitStringAggFunc(self, ctx:SqlSmallParser.StringAggFuncContext):
         return self.visitChildren(ctx)
 
 

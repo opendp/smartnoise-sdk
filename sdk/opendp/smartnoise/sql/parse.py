@@ -1,5 +1,7 @@
 
 import importlib
+
+from pyspark.sql.functions import exp
 from .parser.SqlSmallLexer import SqlSmallLexer  # type: ignore
 from .parser.SqlSmallParser import SqlSmallParser  # type: ignore
 from .parser.SqlSmallVisitor import SqlSmallVisitor  # type: ignore
@@ -227,6 +229,9 @@ class ExpressionVisitor(SqlSmallVisitor):
     def visitColumnName(self, ctx):
         return Column(ctx.name.getText())
 
+    def visitTypename(self, ctx: SqlSmallParser.TypenameContext):
+        return Literal(ctx.getText())
+
     def visitCaseExpr(self, ctx):
         return CaseExpressionVisitor().visit(ctx)
 
@@ -298,6 +303,20 @@ class ExpressionVisitor(SqlSmallVisitor):
         no = ExpressionVisitor().visit(ctx.no)
         return IIFFunction(test, yes, no)
 
+    def visitCastFunc(self, ctx: SqlSmallParser.CastFuncContext):
+        expr = ExpressionVisitor().visit(ctx.expr)
+        typename = ExpressionVisitor().visit(ctx.tname)
+        return CastFunction(expr, typename)
+
+    def visitStringAggFunc(self, ctx: SqlSmallParser.StringAggFuncContext):
+        expr = ExpressionVisitor().visit(ctx.expr)
+        delim = str(ctx.delim.text)
+        if len(delim) == 2:
+            delim = ""
+        elif len(delim) > 2:
+            delim = delim[1:-1] # remove quotes
+        return StringAggFunction(expr, Literal(delim))
+
     def visitRoundFunction(self, ctx):
         expression = ExpressionVisitor().visit(ctx.expression())
         digits = ExpressionVisitor().visit(ctx.digits)
@@ -326,12 +345,10 @@ class ExpressionVisitor(SqlSmallVisitor):
         return RankingFunction(fname, over)
 
     def visitOverClause(self, ctx):
-        partition = (
-            ExpressionVisitor().visit(ctx.expression()) if ctx.expression() is not None else None
-        )
+        partitions = [self.visit(si) for si in ctx.partitions]
         oc = ctx.orderClause()
         order = OrderVisitor().visit(oc) if oc is not None else None
-        return OverClause(partition, order)
+        return OverClause(partitions, order)
 
 
 class CaseExpressionVisitor(SqlSmallVisitor):

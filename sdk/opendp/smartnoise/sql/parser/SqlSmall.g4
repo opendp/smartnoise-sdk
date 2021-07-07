@@ -137,6 +137,10 @@ predicate
     | IS NOT? kind=(NULL | TRUE | FALSE) #isCondition
     ;
 
+typename
+    : 'int' | 'varchar' | 'boolean' | 'double precision'
+    ;
+
 functionExpression
     : bareFunction              #bareFunc
     | roundFunction             #roundFunc
@@ -145,6 +149,8 @@ functionExpression
     | function=mathFunctionName '(' expression ')' #mathFunc
     | IIF '(' test=booleanExpression ',' yes=expression ',' no=expression ')' #iifFunc
     | CHOOSE '(' index=expression (',' literal)+ ')' # chooseFunc
+    | CAST '(' expr=expression AS tname=typename ')' #castFunc
+    | STRING_AGG '(' expr=expression ',' delim=STRING ')' #stringAggFunc
     ;
 
 booleanExpression
@@ -195,7 +201,7 @@ mathFunctionName : ABS | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LOG | LO
 
 bareFunctionName : PI | RANDOM | RAND | NEWID;
 
-overClause : OVER '(' (PARTITION BY expression)? (orderClause)? ')';
+overClause : OVER '(' (PARTITION BY partitions+=expression (',' partitions+=expression)*)? (orderClause)? ')';
 
 aliasedSubquery : subquery (AS alias=identifier)?;
 
@@ -233,6 +239,7 @@ AVG: A V G;
 BETWEEN: B E T W E E N;
 BY: B Y;
 CASE: C A S E;
+CAST: C A S T;
 CEILING: C E I L I N G;
 CHOOSE: C H O O S E;
 COS: C O S;
@@ -297,6 +304,7 @@ SQRT: S Q R T;
 SQUARE: S Q U A R E;
 STD: S T D;
 STDDEV: S T D D E V;
+STRING_AGG: S T R I N G UNDERSCORE A G G;
 SUM: S U M;
 TAN: T A N;
 THEN: T H E N;
@@ -328,6 +336,7 @@ AMPERSAND: '&';
 PIPE: '|';
 CONCAT_PIPE: '||';
 HAT: '^';
+UNDERSCORE: '_';
 
 
 /*

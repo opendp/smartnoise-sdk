@@ -134,21 +134,21 @@ class RankingFunction(SqlExpr):
 
 
 class OverClause(SqlExpr):
-    def __init__(self, partition, order):
-        self.partition = partition
+    def __init__(self, partitions, order):
+        self.partitions = Seq(partitions)
         self.order = order
 
     def children(self):
         pre = [Token("OVER"), Token("(")]
         post = [Token(")")]
-        partition = (
-            [] if self.partition is None else [Token("PARTITION"), Token("BY"), self.partition]
+        partitions = (
+            [] if self.partitions is None else [Token("PARTITION"), Token("BY"), self.partitions]
         )
         order = [] if self.order is None else [self.order]
-        return pre + partition + order + post
+        return pre + partitions + order + post
 
     def symbol(self, relations):
-        return OverClause(self.partition.symbol(relations), self.order.symbol(relations))
+        return OverClause([p.symbol(relations) for p in self.partitions], self.order.symbol(relations))
 
 
 class GroupingExpression(SqlExpr):

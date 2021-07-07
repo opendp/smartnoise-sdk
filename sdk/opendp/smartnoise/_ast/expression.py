@@ -3,6 +3,8 @@ from .tokens import *
 from .expressions.numeric import *
 from .expressions.logical import *
 from .expressions.sql import *
+from .expressions.string import *
+from .expressions.types import *
 
 
 EXPR_TYPE = Union[
