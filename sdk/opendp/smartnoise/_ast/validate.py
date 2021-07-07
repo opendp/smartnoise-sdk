@@ -1,5 +1,4 @@
 import importlib
-from sys import meta_path
 from .ast import *
 
 
