@@ -123,6 +123,7 @@ class TestQuery:
         trs = private_reader.execute_df("SELECT POWER(SUM(age), 2) as age_total FROM PUMS.PUMS")
         assert(trs['age_total'][0] > 1000 ** 2)
     def test_execute_with_dpsu(self):
+        
         schema_dpsu = copy.copy(schema)
         schema_dpsu["PUMS.PUMS"].use_dpsu = True
         reader = PandasReader(df, schema_dpsu)
