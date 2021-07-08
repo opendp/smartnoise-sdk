@@ -27,7 +27,6 @@ else:
         if password is not None:
             database = conns[engine]["databases"]["NameTests"]
             dsn = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={host};DATABASE={database};UID={user};PWD={password}"
-            print(dsn)
             connection = pyodbc.connect(dsn)
             dsn = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={host};DATABASE=2NameTests;UID={user};PWD={password}"
             connection_case = pyodbc.connect(dsn)

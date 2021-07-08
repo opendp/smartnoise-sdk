@@ -1,3 +1,4 @@
+import importlib
 from .ast import *
 
 
@@ -30,7 +31,12 @@ class QueryConstraints:
 
     def __init__(self, query, metadata):
         self.query = query
-        self.metadata = metadata
+
+        if metadata:
+            class_ = getattr(importlib.import_module("opendp.smartnoise.metadata.collection"), "CollectionMetadata")
+            self.metadata = class_.from_(metadata)
+        else:
+            self.metadata = metadata
 
     def validate_all(self):
         # will throw if more or less than one key

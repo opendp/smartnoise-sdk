@@ -1,4 +1,4 @@
-from pandas.core.algorithms import value_counts
+import importlib
 from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
 import copy
@@ -27,6 +27,12 @@ class PandasReader(SqlReader):
             df = metadata
             metadata = tmp
         self.df = df
+
+        # we can replace this when we remove
+        # CollectionMetadata from the root __init__
+        class_ = getattr(importlib.import_module("opendp.smartnoise.metadata.collection"), "CollectionMetadata")
+        metadata = class_.from_(metadata)
+
         self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
         import sqlite3
 
