@@ -396,8 +396,8 @@ class PrivateReader(Reader):
 
         def process_out_row(row):
             bindings = dict((name.lower(), val) for name, val in zip(source_col_names, row))
-            row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
-            out_row =[convert(val, type) for val, type in zip(row, out_types)]
+            out_row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
+            out_row =[convert(val, type) for val, type in zip(out_row, out_types)]
 
             # compute accuracies
             if accuracy == True and alphas:
