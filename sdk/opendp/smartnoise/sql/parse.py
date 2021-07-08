@@ -1,4 +1,5 @@
 
+import importlib
 from .parser.SqlSmallLexer import SqlSmallLexer  # type: ignore
 from .parser.SqlSmallParser import SqlSmallParser  # type: ignore
 from .parser.SqlSmallVisitor import SqlSmallVisitor  # type: ignore
@@ -11,7 +12,11 @@ from opendp.smartnoise._ast.ast import *
 
 class QueryParser:
     def __init__(self, metadata=None):
-        self.metadata = metadata
+        if metadata:
+            class_ = getattr(importlib.import_module("opendp.smartnoise.metadata.collection"), "CollectionMetadata")
+            self.metadata = class_.from_(metadata)
+        else:
+            self.metadata = None
 
     def start_parser(self, stream):
         lexer = SqlSmallLexer(stream)
@@ -25,6 +30,10 @@ class QueryParser:
     def queries(self, query_string, metadata=None):
         if metadata is None and self.metadata is not None:
             metadata = self.metadata
+        elif metadata:
+            class_ = getattr(importlib.import_module("opendp.smartnoise.metadata.collection"), "CollectionMetadata")
+            metadata = class_.from_(metadata)
+
         istream = InputStream(query_string)
         parser = self.start_parser(istream)
         bv = BatchVisitor()

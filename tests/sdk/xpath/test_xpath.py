@@ -22,7 +22,7 @@ query = 'SELECT AVG(age) + 3, STD(age), VAR(age), SUM(age) / 10, COUNT(age) + 2 
 q = QueryParser(meta).query(query)
 reader = SqlReader.from_connection(pums, "pandas", metadata=meta)
 priv = PrivateReader(reader, meta, 1.0)
-subquery, root = priv.rewrite(query)
+subquery, root = priv._rewrite(query)
 
 class TestXPathExecutionNoRewrite:
     def test_all_root_descend(self):

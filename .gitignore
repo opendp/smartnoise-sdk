@@ -115,6 +115,7 @@ result.json
 
 # Local copy of core_library
 sdk/opendp/smartnoise/core/
+sdk/opendp/v1/
 
 
 # datasets
