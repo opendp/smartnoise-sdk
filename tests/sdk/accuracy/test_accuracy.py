@@ -77,9 +77,9 @@ class TestAccuracy:
         row[sum_s_idx] = 100 * (49 * 49)
         row[count_idx] = 100
         a = acc.variance(alpha=0.05, properties=p, row=row)
-        assert(np.isclose(a, 5211.43496))
+        assert(np.isclose(a, 5509.55))
         a = acc.variance(alpha=0.01, properties=p, row=row)
-        assert(np.isclose(a, 6358.240726))
+        assert(np.isclose(a, 6634.06837))
     def test_std_acc(self):
         p = [p for p in acc.properties if p and p['statistic'] == 'stddev']
         p = p[0]
@@ -91,9 +91,9 @@ class TestAccuracy:
         row[sum_s_idx] = 100 * (49 * 49)
         row[count_idx] = 100
         a = acc.stddev(alpha=0.05, properties=p, row=row)
-        assert(np.isclose(a, 72.1902692))
+        assert(np.isclose(a, 74.22634))
         a = acc.stddev(alpha=0.01, properties=p, row=row)
-        assert(np.isclose(a, 79.7385774))
+        assert(np.isclose(a, 81.44979))
 
 
 class TestAccuracyDetect:
