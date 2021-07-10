@@ -1,7 +1,5 @@
 
 import importlib
-
-from pyspark.sql.functions import exp
 from .parser.SqlSmallLexer import SqlSmallLexer  # type: ignore
 from .parser.SqlSmallParser import SqlSmallParser  # type: ignore
 from .parser.SqlSmallVisitor import SqlSmallVisitor  # type: ignore

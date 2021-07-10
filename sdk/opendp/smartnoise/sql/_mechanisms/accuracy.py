@@ -44,8 +44,9 @@ class Accuracy:
             return None
         else:
             left = (shift * sigma_2)/n
-            right = (2 * shift * math.fabs(sum_val) * sigma_1 + 4 * math.log(4/alpha) * sigma_1 * sigma_2) / (n * n)
-            return right + left
+            right = (2 * shift * math.fabs(sum_val) * sigma_1 + 4 * math.log(4/alpha) * sigma_1 * sigma_2) 
+            right = right / (n * n)
+            return left + right
 
     def mean(self, *ignore, alpha: float, properties={}, row: Tuple):
         n_idx = properties['columns']['count']
@@ -58,6 +59,7 @@ class Accuracy:
         return self._mean(alpha=alpha, sigma_1=sigma, sigma_2=sigma_sum, n=n, sum_val=sum_val)
 
     def variance(self, *ignore, alpha: float,  properties={}, row: Tuple):
+        alpha = 2.0/3.0 * alpha
         n_idx = properties['columns']['count']
         sum_idx = properties['columns']['sum']
         sum_s_idx = properties['columns']['sum_of_squares']
@@ -216,8 +218,8 @@ class DetectFormula:
                     return {
                         'statistic': 'mean',
                         'columns':  {
-                            'sum': r_idx,
-                            'count': l_idx
+                            'sum': l_idx,
+                            'count': r_idx
                         },
                         'sensitivity': {
                             'sum': sens,
