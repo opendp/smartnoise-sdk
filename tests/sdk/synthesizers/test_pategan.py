@@ -28,15 +28,16 @@ df = pd.read_csv(csv_path)
 @pytest.mark.torch
 class TestDPGAN:
     def setup(self):
-        epsilon = 1.0
-        self.pategan = PytorchDPSynthesizer(PATEGAN(epsilon), GeneralTransformer())
+        self.pategan = PytorchDPSynthesizer(1.0, PATEGAN(1.0), GeneralTransformer())
 
     def test_fit(self):
-        self.pategan.fit(df)
+        df_non_continuous = df[['sex','educ','race','married']]
+        self.pategan.fit(df_non_continuous, categorical_columns=['sex','educ','race','married'])
         assert self.pategan.gan.generator
 
     def test_sample(self):
-        self.pategan.fit(df)
-        sample_size = len(df)
+        df_non_continuous = df[['sex','educ','race','married']]
+        self.pategan.fit(df_non_continuous, categorical_columns=['sex','educ','race','married'])
+        sample_size = len(df_non_continuous)
         synth_data = self.pategan.sample(sample_size)
-        assert synth_data.shape == df.shape
+        assert synth_data.shape == df_non_continuous.shape

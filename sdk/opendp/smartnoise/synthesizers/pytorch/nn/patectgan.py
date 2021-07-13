@@ -355,7 +355,7 @@ class PATECTGAN(CTGANSynthesizer):
                 )
 
     def w_loss(self, output, labels):
-        vals = torch.cat([labels, output], axis=1)
+        vals = torch.cat([labels[None, :], output[None, :]], axis=1)
         ordered = vals[vals[:, 0].sort()[1]]
         data_list = torch.split(ordered, labels.shape[0] - int(labels.sum().item()))
         fake_score = data_list[0][:, 1]
