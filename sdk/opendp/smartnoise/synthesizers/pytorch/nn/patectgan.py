@@ -235,7 +235,7 @@ class PATECTGAN(CTGANSynthesizer):
                     )
                     labels = torch.cat([label_fake, label_true])
 
-                    error_d = criterion(y_all, labels)
+                    error_d = criterion(y_all.squeeze(), labels)
                     error_d.backward()
 
                     if self.regularization == "dragan":
@@ -285,7 +285,7 @@ class PATECTGAN(CTGANSynthesizer):
                     self.num_teachers, votes, noise_multiplier, l_list, device=self.device
                 )
 
-                loss_s = criterion(output, predictions.float().to(self.device))
+                loss_s = criterion(output.squeeze(), predictions.float().to(self.device))
 
                 optimizer_s.zero_grad()
                 loss_s.backward()
@@ -336,7 +336,7 @@ class PATECTGAN(CTGANSynthesizer):
                     dtype=torch.float,
                     device=self.device,
                 )
-                loss_g = criterion(y_fake, label_g.float())
+                loss_g = criterion(y_fake.squeeze(), label_g.float())
                 loss_g = loss_g + cross_entropy
             else:
                 loss_g = -torch.mean(y_fake) + cross_entropy
