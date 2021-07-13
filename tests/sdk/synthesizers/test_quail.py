@@ -32,20 +32,20 @@ df = pd.read_csv(csv_path)
 class TestQUAIL:
     def setup(self):
         def QuailClassifier(epsilon):
-            return DPLR(epsilon)
+            return DPLR(epsilon=epsilon)
 
         def QuailSynth(epsilon):
             return PytorchDPSynthesizer(epsilon=epsilon, preprocessor=None,
-                            gan=PATECTGAN(epsilon, loss='cross_entropy', batch_size=50, pack=1, sigma=5.0))
+                            gan=PATECTGAN(loss='cross_entropy', batch_size=50, pack=1, sigma=5.0))
 
-        self.quail = QUAILSynthesizer(3.0, QuailSynth, QuailClassifier, 'married')
+        self.quail = QUAILSynthesizer(3.0, QuailSynth, QuailClassifier, 'married', eps_split=0.8)
 
     def test_fit(self):
-        self.quail.fit(df, categorical_columns=['sex','educ','race','married'])
+        self.quail.fit(df)
         assert self.quail.private_synth
 
     def test_sample(self):
-        self.quail.fit(df, categorical_columns=['sex','educ','race','married'])
+        self.quail.fit(df)
         sample_size = len(df)
         synth_data = self.quail.sample(sample_size)
         assert synth_data.shape == df.shape
