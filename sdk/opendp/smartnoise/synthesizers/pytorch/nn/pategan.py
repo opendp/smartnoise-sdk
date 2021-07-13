@@ -134,7 +134,7 @@ class PATEGAN:
                 # update moments accountant
                 alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
 
-                loss_s = criterion(output.squeeze(), predictions.to(self.device))
+                loss_s = criterion(output.squeeze(), predictions.to(self.device).squeeze())
                 optimizer_s.zero_grad()
                 loss_s.backward()
                 optimizer_s.step()
