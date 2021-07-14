@@ -80,7 +80,7 @@ class DPGAN:
                     (self.batch_size,), 0, dtype=torch.float, device=self.device
                 )
                 output = discriminator(fake_data.detach())
-                loss_d_fake = criterion(output, label_fake)
+                loss_d_fake = criterion(output.squeeze(), label_fake)
                 loss_d_fake.backward()
                 optimizer_d.step()
 
@@ -89,7 +89,7 @@ class DPGAN:
                     (self.batch_size,), 1, dtype=torch.float, device=self.device
                 )
                 output = discriminator(real_data.float())
-                loss_d_real = criterion(output, label_true)
+                loss_d_real = criterion(output.squeeze(), label_true)
                 loss_d_real.backward()
                 optimizer_d.step()
 
@@ -104,7 +104,7 @@ class DPGAN:
                 self.generator.zero_grad()
                 label_g = torch.full((self.batch_size,), 1, dtype=torch.float, device=self.device)
                 output_g = discriminator(fake_data)
-                loss_g = criterion(output_g, label_g)
+                loss_g = criterion(output_g.squeeze(), label_g)
                 loss_g.backward()
                 optimizer_g.step()
 

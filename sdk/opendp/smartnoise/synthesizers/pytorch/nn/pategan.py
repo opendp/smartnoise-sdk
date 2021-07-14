@@ -110,7 +110,7 @@ class PATEGAN:
                         (real_data.shape[0],), 1, dtype=torch.float, device=self.device
                     )
                     output = teacher_disc[i](real_data)
-                    loss_t_real = criterion(output, label_real.double())
+                    loss_t_real = criterion(output.squeeze(), label_real.double())
                     loss_t_real.backward()
 
                     # train with fake data
@@ -120,7 +120,7 @@ class PATEGAN:
                     )
                     fake_data = self.generator(noise.double())
                     output = teacher_disc[i](fake_data)
-                    loss_t_fake = criterion(output, label_fake.double())
+                    loss_t_fake = criterion(output.squeeze(), label_fake.double())
                     loss_t_fake.backward()
                     optimizer_t[i].step()
 
@@ -134,7 +134,7 @@ class PATEGAN:
                 # update moments accountant
                 alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
 
-                loss_s = criterion(output, predictions.to(self.device))
+                loss_s = criterion(output.squeeze(), predictions.to(self.device).squeeze())
                 optimizer_s.zero_grad()
                 loss_s.backward()
                 optimizer_s.step()
@@ -144,7 +144,7 @@ class PATEGAN:
             noise = torch.rand(self.batch_size, self.latent_dim, device=self.device)
             gen_data = self.generator(noise.double())
             output_g = student_disc(gen_data)
-            loss_g = criterion(output_g, label_g.double())
+            loss_g = criterion(output_g.squeeze(), label_g.double())
             optimizer_g.zero_grad()
             loss_g.backward()
             optimizer_g.step()

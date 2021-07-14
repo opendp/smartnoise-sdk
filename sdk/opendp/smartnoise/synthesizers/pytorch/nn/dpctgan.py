@@ -236,7 +236,7 @@ class DPCTGAN(CTGANSynthesizer):
 
                     #    print ('label_fake is {}'.format(label_fake))
 
-                    error_d_fake = criterion(y_fake, label_fake)
+                    error_d_fake = criterion(y_fake.squeeze(), label_fake)
                     error_d_fake.backward()
                     optimizer_d.step()
 
@@ -248,7 +248,7 @@ class DPCTGAN(CTGANSynthesizer):
                         device=self.device,
                     )
                     y_real = discriminator(real_cat)
-                    error_d_real = criterion(y_real, label_true)
+                    error_d_real = criterion(y_real.squeeze(), label_true)
                     error_d_real.backward()
                     optimizer_d.step()
 
@@ -310,7 +310,7 @@ class DPCTGAN(CTGANSynthesizer):
                         device=self.device,
                     )
                     # label_g = torch.full(int(self.batch_size/self.pack,),1,device=self.device)
-                    loss_g = criterion(y_fake, label_g)
+                    loss_g = criterion(y_fake.squeeze(), label_g)
                     loss_g = loss_g + cross_entropy
                 else:
                     loss_g = -torch.mean(y_fake) + cross_entropy
