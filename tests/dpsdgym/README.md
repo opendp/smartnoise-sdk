@@ -1,4 +1,15 @@
 # Differentially Private Synthetic Data Gym (DPSDGym)
+## TLDR
+Pip install requirements
+```
+pip install -r requirements.txt
+```
+Run evaluation suite on a dataset with the command
+```
+python main.py [dataset]
+ex: (python main.py car)
+```
+## More info
 Differentially Private Synthetic Data Gym (DPSDGym) provides infrastructure to evaluate differentially private synthetic data generators on tabular datasets using best methods from recent literature (see citations). As of now, this includes:
 1. propensity Mean Squared Error (pMSE) [(1)](https://arxiv.org/pdf/2004.07740.pdf)
 2. Wasserstein Randomization [(1)](https://arxiv.org/pdf/2004.07740.pdf)
@@ -15,8 +26,9 @@ Differentially Private Synthetic Data Gym (DPSDGym) provides infrastructure to e
 DPSDGym contains a data loader function that retrieves datasets from the [UCI ML Repository](https://archive.ics.uci.edu/ml/datasets.php). Currently, DPSDGym has been tested with:
 * [Car Evaluation Data Set](https://archive.ics.uci.edu/ml/datasets/Car+Evaluation)
 * [Mushroom Data Set](https://archive.ics.uci.edu/ml/datasets/Mushroom)
-* [Wine Quality Data Set](https://archive.ics.uci.edu/ml/datasets/wine+quality)
-* [Nursery Data Set](https://archive.ics.uci.edu/ml/datasets/nursery)
+* [Adult Data Set](http://archive.ics.uci.edu/ml/datasets/Adult)
+* [Online Shoppers Data Set](https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+Dataset#)
+* [Bank Marketing Data Set](https://archive.ics.uci.edu/ml/datasets/Bank+Marketing#)
 
 These datasets and their specifications are included already in the datasets.json file. They should work outright.
 
@@ -56,23 +68,17 @@ Make sure you have the following installed in a conda env, before running the ev
 ## Usage
 Once the configuration/datasets are set up, the entire evaluation pipeline, with all metrics, can be run through the eval script
 ```
-python main.py
+python main.py [dataset]
 ```
-Flags can be specified to specify which metrics, epsilon and datasets should be used to run the evaluation:
+<!-- Flags can be used to specify which metrics to run in the evaluation. You could equivalently run
 ```
-python main.py -d bank adult -e 0.01 0.1 1 -m pmse ml_eval wasserstein
+python main.py wasserstein pmse ml_eval sra
 ```
-(Note that `sra` can only be run if `ml_eval` is also run.)
-
-One can also run the entire evaluation pipeline using MLFlow from the command line, for example:
-```
-mlflow run "tests/dpsdgym" -P dataset="bank adult mushroom" -P epsilons="1 2" -P eval_metrics="mse ml_eval wasserstein"
-```
-Please refer to conf.py and datasets.json to see which datasets and metrics can be specified.
+(Note that `sra` can only be run if `ml_eval` is also run.) -->
 
 The default epsilon increments for the evaluation (different privacy settings):
 ```python
-EPSILONS = [0.01, 0.1, 0.5, 1.0, 3.0, 6.0, 9.0]
+epsilons=[0.01, 0.1, 0.5, 1.0, 3.0, 6.0, 9.0]
 ```
 Epsilon here is usually graphed on a log scale, hence the big jumps in privacy. Adding more fine grained epsilons, especially in the earlier values, is probably a good idea.
 
@@ -82,7 +88,7 @@ mlflow ui
 ```
 Due to the unique nature of evaluating differential privacy across privacy budgets, it can sometimes be difficult to analyze the special case metrics using the mlflow ui. We've added an accompanying notebook which helps with visualizing the metrics across privacy values.
 ```
-jupyter notebook plot.ipynb
+jupyter notebook plot-v2.ipynb
 ```
 
 ## Other Resources

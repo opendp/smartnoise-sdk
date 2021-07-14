@@ -4,3 +4,6 @@ scipy
 mlflow==1.4.0
 diffprivlib
 pandas==0.25.3
+opacus
+torch
+ctgan==0.2.2.dev1
