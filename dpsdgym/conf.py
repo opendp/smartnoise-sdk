@@ -50,66 +50,64 @@ KNOWN_MODELS_STR = ['AdaBoostClassifier', 'BaggingClassifier',
 SYNTH_SETTINGS = {
     'dpctgan': {
         'default': {
-
-            'gan': DPCTGAN(epochs=100)
+            'gan': DPCTGAN(epsilon=0.1, epochs=100)
         }
     },
     'patectgan': {
         'default': {
-
-            'gan': PATECTGAN(epochs=100)
+            'gan': PATECTGAN(epsilon=0.1, epochs=100)
         },
     },
     'dpgan': {
         'default': {
             'preprocessor': GeneralTransformer(),
-            'gan': DPGAN(batch_size=640, epochs=100)
+            'gan': DPGAN(epsilon=0.1, batch_size=640, epochs=100)
         },
     },
     'pategan': {
         'default': {
             'preprocessor': GeneralTransformer(),
-            'gan': PATEGAN(batch_size=1280)
+            'gan': PATEGAN(epsilon=0.1, batch_size=1280)
         }
     },
     'mwem': {
         'car': {
-            'Q_count':400,
+            'q_count':400,
             'iterations':20,
             'mult_weights_iterations': 15,
             'split_factor':7,
             'max_bin_count':400
         },
         'mushroom': {
-            'Q_count':400,
+            'q_count':400,
             'iterations':30,
             'mult_weights_iterations':20,
             'split_factor':4,
             'max_bin_count':400
         },
         'bank': {
-            'Q_count':400,
+            'q_count':400,
             'iterations':25,
             'mult_weights_iterations':15,
             'split_factor':3,
             'max_bin_count':200
         },
         'adult': {
-            'Q_count': 400,
+            'q_count': 400,
             'iterations':20,
             'mult_weights_iterations':15,
             'splits':[[0,1,2],[3,4,5],[6,7,8],[9,10],[11,12],[13,14]],
             'max_bin_count':100
         },
         'shopping': {
-            'Q_count':400,
+            'q_count':400,
             'iterations':30,
             'mult_weights_iterations':20,
             'split_factor':2,
             'max_bin_count':400
         },
         'default': {
-            'Q_count':400,
+            'q_count':400,
             'iterations':30,
             'mult_weights_iterations':20,
             'split_factor':3,
