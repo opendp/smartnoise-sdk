@@ -5,9 +5,9 @@ mlflow
 connexion
 sklearn
 matplotlib
-ctgan==0.2.1.dev0
-opacus
-torch==1.7.1
+ctgan==0.2.2.dev1
+opacus==0.9.0
+torch==1.6.0
 gym
 flake8
 diffprivlib
