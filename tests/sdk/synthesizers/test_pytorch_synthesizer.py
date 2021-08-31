@@ -7,15 +7,15 @@ import pandas as pd
 
 from opendp.smartnoise.metadata import CollectionMetadata
 
-try:
-    from opendp.smartnoise.synthesizers.preprocessors import GeneralTransformer
-    from opendp.smartnoise.synthesizers.pytorch import PytorchDPSynthesizer
-    from opendp.smartnoise.synthesizers.pytorch.nn import DPGAN, DPCTGAN, PATECTGAN
+# try:
+from opendp.smartnoise.synthesizers.preprocessors import GeneralTransformer
+from opendp.smartnoise.synthesizers.pytorch import PytorchDPSynthesizer
+from opendp.smartnoise.synthesizers.pytorch.nn import DPGAN, DPCTGAN, PATECTGAN
 
-except Exception as e:
-    import logging
-    test_logger = logging.getLogger(__name__)
-    test_logger.warning("Requires torch and torchdp. Failed with Exception {}".format(e))
+# except Exception as e:
+#     import logging
+#     test_logger = logging.getLogger(__name__)
+#     test_logger.warning("Requires torch and torchdp. Failed with Exception {}".format(e))
 
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
