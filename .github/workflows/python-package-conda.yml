@@ -34,6 +34,9 @@ jobs:
         pip install readchar
         pip install --user pyodbc
         pip install keyring
+    - name: Upgrade pip
+      run: |
+        pip install --upgrade pip
     - name: Install opendp-smartnoise
       run: |
         pip install --use-feature=2020-resolver ./sdk
