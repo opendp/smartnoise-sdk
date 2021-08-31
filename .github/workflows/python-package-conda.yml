@@ -21,15 +21,18 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Upgrade pip
+    - name: Get development headers
       run: |
-        pip install --upgrade pip
+        sudo apt-get install python3-dev libpq-dev unixodbc-dev
+    - name: Get correct pip version
+      run: |
+        pip install pip==18.1
     - name: Install dependencies
       run: |
         pip install -r tests/requirements.txt
         pip install psycopg2
         pip install readchar
-        pip install pyodbc
+        pip install --user pyodbc
         pip install keyring
     - name: Install opendp-smartnoise
       run: |
