@@ -21,12 +21,15 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install cython
+      run: |
+        pip install --upgrade pip
+        pip install cython wheel
     - name: Get development headers
       run: |
-        sudo apt-get install python3-dev libpq-dev unixodbc-dev
-    - name: Get correct pip version
-      run: |
-        pip install pip==18.1
+        apt-get update
+        apt-get -yq upgrade
+        apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev
     - name: Install dependencies
       run: |
         pip install -r tests/requirements.txt
@@ -42,13 +45,13 @@ jobs:
         pip install --use-feature=2020-resolver ./sdk
     - name: Lint with flake8
       run: |
-        conda install flake8
+        pip install flake8
         flake8 sdk/opendp/smartnoise/sql/dpsu.py -v
         flake8 sdk/opendp/smartnoise/reader/ -v
         flake8 sdk/opendp/smartnoise/synthesizers/ -v
     - name: Test SDK
       run: |
-        conda install pytest
+        pip install pytest
         pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
 
         
