@@ -27,9 +27,9 @@ jobs:
         pip install cython wheel
     - name: Get development headers
       run: |
-        apt-get update
-        apt-get -yq upgrade
-        apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev
+        sudo apt-get update
+        sudo apt-get -yq upgrade
+        sudo apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev
     - name: Install dependencies
       run: |
         pip install -r tests/requirements.txt
@@ -42,7 +42,7 @@ jobs:
         pip install --upgrade pip
     - name: Install opendp-smartnoise
       run: |
-        pip install --use-feature=2020-resolver ./sdk
+        pip install ./sdk
     - name: Lint with flake8
       run: |
         pip install flake8

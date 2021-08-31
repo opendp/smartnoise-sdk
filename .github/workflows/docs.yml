@@ -21,13 +21,22 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install cython
+      run: |
+        pip install --upgrade pip
+        pip install cython wheel
+    - name: Get development headers
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq upgrade
+        sudo apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev
     - name: Install dependencies
       run: |
-        pip install --use-feature=2020-resolver -r tests/requirements.txt
-        pip install --use-feature=2020-resolver psycopg2 pyodbc readchar
+        pip install-r tests/requirements.txt
+        pip install psycopg2 pyodbc readchar
     - name: Install opendp-smartnoise
       run: |
-        pip install --use-feature=2020-resolver ./sdk
+        pip install ./sdk
     - name: Clone documentation repo
       run: |
         git clone https://github.com/opendp/opendp-documentation.git
