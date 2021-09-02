@@ -8,39 +8,54 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8]
       max-parallel: 5
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - name: Set up miniconda
+      uses: conda-incubator/setup-miniconda@v2
       with:
+        miniconda-version: "latest"
+        auto-update-conda: true
+        auto-activate-base: true
         python-version: ${{ matrix.python-version }}
-    - name: Add conda to system path
+    - name: Upgrade pip
+      shell: bash -l {0}
       run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install cython
+        conda install pip
+        conda update pip
+    - name: Install cython and pandas
+      shell: bash -l {0}
       run: |
-        pip install --upgrade pip
-        pip install cython wheel
+        pip install cython
+        pip install numpy
+        pip install pandas
     - name: Get development headers
+      shell: bash -l {0}
       run: |
         sudo apt-get update
         sudo apt-get -yq upgrade
-        sudo apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev
+        sudo apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev openjdk-11-jre-headless
     - name: Install dependencies
+      shell: bash -l {0}
       run: |
-        pip install-r tests/requirements.txt
-        pip install psycopg2 pyodbc readchar
+        pip install numpy
+        pip install -r tests/requirements.txt
+        pip install psycopg2
+        pip install readchar
+        pip install --user pyodbc
+        pip install keyring
     - name: Install opendp-smartnoise
+      shell: bash -l {0}
       run: |
         pip install ./sdk
     - name: Clone documentation repo
+      shell: bash -l {0}
       run: |
         git clone https://github.com/opendp/opendp-documentation.git
     - name: Build documentation
+      shell: bash -l {0}
       run: |
         cd opendp-documentation
         pip install -r requirements.txt
