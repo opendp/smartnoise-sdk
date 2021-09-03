@@ -163,7 +163,8 @@ rankingFunction: function=rankingFunctionName  '(' ')' overClause;
 
 roundFunction : ROUND '(' expression ',' digits=number ')';
 
-powerFunction : POWER '(' expression ',' number ')';
+powerFunction :
+    POWER '(' expression ',' number ')';
 
 comparisonOperator
     : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
@@ -191,7 +192,7 @@ rankingFunctionName : ROW_NUMBER | RANK | DENSE_RANK;
 
 aggregateFunctionName : COUNT | SUM | AVG | VAR | VARIANCE | STD | STDDEV | STDEV | MIN | MAX | PERCENTILE_DISC | PERCENTILE_CONT;
 
-mathFunctionName : ABS | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LN | LOG | LOG10 | SIN | COS | TAN | ASIN | ACOS | ATAN  | DEGREES;
+mathFunctionName : ABS | CEIL | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LN | LOG | LOG10 | SIN | COS | TAN | ASIN | ACOS | ATAN  | DEGREES;
 
 bareFunctionName : PI | RANDOM | RAND | NEWID;
 
@@ -234,6 +235,7 @@ AVG: A V G;
 BETWEEN: B E T W E E N;
 BY: B Y;
 CASE: C A S E;
+CEIL: C E I L;
 CEILING: C E I L I N G;
 CHOOSE: C H O O S E;
 COS: C O S;
@@ -337,10 +339,7 @@ HAT: '^';
     Standard Lexer stuff
 */
 STRING
-    : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
-    //| '"' ( ~('"'|'\\') | ('\\' .) )* '"'
-    //| '"' ( '\\'. | '""' | ~('"' | '\\') )* '"'
-    ;
+    : '\'' ( ~('\''|'\\') | ('\\' .) )* '\'';
 //    | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
 //    ;
 

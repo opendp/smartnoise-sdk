@@ -12,6 +12,7 @@ ops = {
 
 funcs = {
     "abs": np.abs,
+    "ceil": np.ceil,
     "ceiling": np.ceil,
     "floor": np.floor,
     "sign": np.sign,
