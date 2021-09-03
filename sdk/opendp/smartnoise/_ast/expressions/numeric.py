@@ -18,6 +18,7 @@ funcs = {
     "sqrt": np.sqrt,
     "square": np.square,
     "exp": np.exp,
+    "ln": np.log,
     "log": np.log,
     "log10": np.log10,
     "sin": np.sin,
