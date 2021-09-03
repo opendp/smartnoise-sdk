@@ -1,7 +1,7 @@
 SELECT 'Foo' FROM BAR;
 SELECT Sales + 7 FROM BAR;
 SELECT Sales * 0.01 AS Pct FROM BAZ;
-SELECT (3 + (Foo / Bar)) 
+SELECT (3 + (Foo / Bar))
 FROM Baz;
 SELECT 0.33 AS OhThreeThree FROM BIP;
 SELECT CASE Z WHEN FOO THEN BAR END, EmployeeName FROM Production.Product ORDER BY ProductNumber;
@@ -35,3 +35,7 @@ SELECT I1 FROM BAZ;
 SELECT POWER(Foo, 2) AS FooSquared FROM BAR;
 SELECT random() as R1, NEWID() as R2 FROM BAR ORDER BY R1, R2;
 select pi() * 3 AS ratio FROM BAR;
+SELECT _FOO FROM BAZ;
+SELECT "âge" FROM BAZ;
+SELECT "検知日時" FROM BAZ;
+SELECT 検知日時 FROM BAZ;
