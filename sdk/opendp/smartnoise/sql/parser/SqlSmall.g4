@@ -192,7 +192,7 @@ rankingFunctionName : ROW_NUMBER | RANK | DENSE_RANK;
 
 aggregateFunctionName : COUNT | SUM | AVG | VAR | VARIANCE | STD | STDDEV | STDEV | MIN | MAX | PERCENTILE_DISC | PERCENTILE_CONT;
 
-mathFunctionName : ABS | CEIL | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LN | LOG | LOG10 | SIN | COS | TAN | ASIN | ACOS | ATAN  | DEGREES;
+mathFunctionName : ABS | CEIL | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LN | LOG | LOG10 | LOG2 | SIN | COS | TAN | ASIN | ACOS | ATAN | ATANH  | DEGREES;
 
 bareFunctionName : PI | RANDOM | RAND | NEWID;
 
@@ -231,6 +231,7 @@ AS: A S;
 ASC: A S C;
 ASIN: A S I N;
 ATAN: A T A N;
+ATANH: A T A N H;
 AVG: A V G;
 BETWEEN: B E T W E E N;
 BY: B Y;
@@ -268,6 +269,7 @@ LIMIT: L I M I T;
 LN: L N;
 LOG: L O G;
 LOG10: L O G '1' '0';
+LOG2: L O G '2';
 MAX: M A X;
 MIN: M I N;
 NEWID: N E W I D;
