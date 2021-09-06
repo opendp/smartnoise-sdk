@@ -163,8 +163,7 @@ rankingFunction: function=rankingFunctionName  '(' ')' overClause;
 
 roundFunction : ROUND '(' expression ',' digits=number ')';
 
-powerFunction :
-    POWER '(' expression ',' number ')';
+powerFunction : POWER '(' expression ',' number ')';
 
 comparisonOperator
     : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
@@ -421,7 +420,6 @@ fragment W : [wW];
 fragment X : [xX];
 fragment Y : [yY];
 fragment Z : [zZ];
-
 
 SIMPLE_COMMENT
     : '--' ~[\r\n]* '\r'? '\n'? -> skip
