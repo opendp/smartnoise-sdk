@@ -17,7 +17,7 @@ query :
       limitClause?
     ;
 
-subquery : 
+subquery :
     '('
     selectClause
     fromClause
@@ -38,15 +38,15 @@ selectClause
 fromClause : FROM relation (',' relation)*;
 
 whereClause
-    : WHERE booleanExpression 
+    : WHERE booleanExpression
     ;
 
 aggregationClause
-    : GROUP BY groupingExpressions+=expression (',' groupingExpressions+=expression)* 
+    : GROUP BY groupingExpressions+=expression (',' groupingExpressions+=expression)*
     ;
 
 havingClause
-    : HAVING booleanExpression 
+    : HAVING booleanExpression
     ;
 
 orderClause
@@ -178,20 +178,20 @@ allExpression
     | identifier '.' ASTERISK
     ;
 
-literal 
-    : STRING    #stringLiteral 
-    | number    #numberLiteral 
+literal
+    : STRING    #stringLiteral
+    | number    #numberLiteral
     | TRUE      #trueLiteral
-    | FALSE     #falseLiteral 
+    | FALSE     #falseLiteral
     | NULL      #nullLiteral
     ;
 
 
 rankingFunctionName : ROW_NUMBER | RANK | DENSE_RANK;
 
-aggregateFunctionName : COUNT | SUM | AVG | VAR | VARIANCE | STD | STDDEV | MIN | MAX | PERCENTILE_DISC | PERCENTILE_CONT;
+aggregateFunctionName : COUNT | SUM | AVG | VAR | VARIANCE | STD | STDDEV | STDEV | MIN | MAX | PERCENTILE_DISC | PERCENTILE_CONT;
 
-mathFunctionName : ABS | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LOG | LOG10 | SIN | COS | TAN | ASIN | ACOS | ATAN  | DEGREES;
+mathFunctionName : ABS | CEIL | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LN | LOG | LOG10 | LOG2 | SIN | COS | TAN | ASIN | ACOS | ATAN | ATANH  | DEGREES;
 
 bareFunctionName : PI | RANDOM | RAND | NEWID;
 
@@ -210,6 +210,7 @@ qualifiedTableName : QN3 | QN2 | IDENT;
 qualifiedColumnName
     : QN2
     | IDENT
+    | '"' STRING '"'
     ;
 
 identifier: IDENT;
@@ -229,10 +230,12 @@ AS: A S;
 ASC: A S C;
 ASIN: A S I N;
 ATAN: A T A N;
+ATANH: A T A N H;
 AVG: A V G;
 BETWEEN: B E T W E E N;
 BY: B Y;
 CASE: C A S E;
+CEIL: C E I L;
 CEILING: C E I L I N G;
 CHOOSE: C H O O S E;
 COS: C O S;
@@ -262,8 +265,10 @@ IS: I S;
 JOIN: J O I N;
 LEFT: L E F T;
 LIMIT: L I M I T;
+LN: L N;
 LOG: L O G;
 LOG10: L O G '1' '0';
+LOG2: L O G '2';
 MAX: M A X;
 MIN: M I N;
 NEWID: N E W I D;
@@ -297,6 +302,7 @@ SQRT: S Q R T;
 SQUARE: S Q U A R E;
 STD: S T D;
 STDDEV: S T D D E V;
+STDEV: S T D E V;
 SUM: S U M;
 TAN: T A N;
 THEN: T H E N;
@@ -345,7 +351,7 @@ INTEGER_VALUE
 
 DECIMAL_VALUE
     : DIGIT+ EXPONENT
-    | DECIMAL_DIGITS EXPONENT? 
+    | DECIMAL_DIGITS EXPONENT?
     ;
 
 
@@ -355,8 +361,12 @@ QN3 : IDENT '.' IDENT '.' IDENT;
 
 IDENT: IDENTIFIER | ESCAPED_IDENTIFIER;
 
+IDENTIFIER_UNICODE : [a-zA-Z_\u00A1-\uFFFF][a-zA-Z_\u00A1-\uFFFF0-9$]*;
+
 IDENTIFIER
     : LETTER+ (LETTER | DIGIT | '_')*
+    | DOUBLEQ_STRING_LITERAL
+    | IDENTIFIER_UNICODE
     ;
 
 ESCAPED_IDENTIFIER
@@ -366,7 +376,9 @@ ESCAPED_IDENTIFIER
     ;
 
 LETTER : (UCASE | LCASE);
+DOUBLEQ_STRING_LITERAL : DQUOTA_STRING;
 
+fragment DQUOTA_STRING : '"' ( '\\'. | '""' | ~('"' | '\\') )* '"';
 fragment DECIMAL_DIGITS
     : DIGIT+ '.' DIGIT*
     ;

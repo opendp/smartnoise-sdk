@@ -12,20 +12,24 @@ ops = {
 
 funcs = {
     "abs": np.abs,
+    "ceil": np.ceil,
     "ceiling": np.ceil,
     "floor": np.floor,
     "sign": np.sign,
     "sqrt": np.sqrt,
     "square": np.square,
     "exp": np.exp,
+    "ln": np.log,
     "log": np.log,
     "log10": np.log10,
+    "log2": np.log2,
     "sin": np.sin,
     "cos": np.cos,
     "tan": np.tan,
     "asin": np.arcsin,
     "acos": np.arccos,
     "atan": np.arctan,
+    "atanh": np.arctanh,
     "degrees": np.degrees,
 }
 
