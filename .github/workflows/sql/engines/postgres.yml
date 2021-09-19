@@ -7,11 +7,11 @@ jobs:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
     # Docker Hub image that `container-job` executes in
-    container: node:10.18-jessie
+    # container: node:10.18-jessie
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.8]
       max-parallel: 5
 
     # Service containers to run with `container-job`
@@ -29,12 +29,31 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniconda-version: "latest"
-        auto-update-conda: true
-        auto-activate-base: true
-        python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v2
+      - name: Install psql
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes install postgresql-client
+      - name: Clone test datasets
+        run: |
+          git clone https://github.com/opendp/dp-test-datasets.git
+      - name: Connect to PostgreSQL
+        shell: bash -l {0}
+        run: |
+          export DATA=`pwd`/dp-test-datasets/data/
+          echo $DATA
+          cd tests/sdk/engines/postgres/PUMS
+          source install.sh
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          POSTGRES_HOST: localhost
+          # The default PostgreSQL port
+          POSTGRES_PORT: 5432
+      - name: Check status
+        shell: bash -l {0}
+        run: |
+          pwd
+          ls -l
