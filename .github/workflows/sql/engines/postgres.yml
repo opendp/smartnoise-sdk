@@ -6,54 +6,64 @@ jobs:
   container-job:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
-    # Docker Hub image that `container-job` executes in
-    # container: node:10.18-jessie
     strategy:
       fail-fast: false
       matrix:
         python-version: [3.8]
       max-parallel: 5
-
-    # Service containers to run with `container-job`
-    services:
-      # Label used to access the service container
-      postgres:
-        # Docker Hub image
-        image: postgres
-        # Provide the password for postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     steps:
       - uses: actions/checkout@v2
-      - name: Install psql
+      - name: Generate random password
+        shell: bash -l {0}
+        run: |
+          echo "export PGPASSWORD=pgpass$RANDOM" > pass.sh
+      - name: Install postgres
+        shell: bash -l {0}
         run: |
           sudo apt-get update
-          sudo apt-get --yes install postgresql-client
+          sudo apt-get --yes install postgresql-client postgresql
+          sudo service postgresql start
+          source pass.sh
+          sudo -u postgres psql -U postgres -d postgres -c "alter user postgres with password '$PGPASSWORD';"
       - name: Clone test datasets
         run: |
           git clone https://github.com/opendp/dp-test-datasets.git
-      - name: Connect to PostgreSQL
+      - name: Install PUMS
         shell: bash -l {0}
         run: |
+          source pass.sh
           export DATA=`pwd`/dp-test-datasets/data/
-          echo $DATA
           cd tests/sdk/engines/postgres/PUMS
           source install.sh
         env:
-          # The hostname used to communicate with the PostgreSQL service container
           POSTGRES_HOST: localhost
-          # The default PostgreSQL port
-          POSTGRES_PORT: 5432
-      - name: Check status
+      - name: Verify database
         shell: bash -l {0}
         run: |
-          pwd
-          ls -l
+          source pass.sh
+          echo $PGPASSWORD
+          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums"
+          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums_large"
+        env:
+          POSTGRES_HOST: localhost
+      - name: Set up miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          auto-update-conda: true
+          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade pip
+        shell: bash -l {0}
+        run: |
+          conda install pip
+          conda update pip
+      - name: Verify database again
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          echo $PGPASSWORD
+          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums"
+          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums_large"
+        env:
+          POSTGRES_HOST: localhost

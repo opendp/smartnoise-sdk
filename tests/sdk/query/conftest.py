@@ -9,7 +9,7 @@ from opendp.smartnoise.metadata.collection import CollectionMetadata
 def reader_factory():
     class Factory:
         def __init__(self):
-            pass
+            self.installed = False
         def create(self):
             raise ValueError("Must override create()")
         def create_private(self, meta, epsilon, delta):
@@ -17,16 +17,22 @@ def reader_factory():
             return PrivateReader(r, meta, epsilon, delta)
     class Pandas(Factory):
         def __init__(self):
-            git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
-            meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
-            csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
-            self.df = pd.read_csv(csv_path)
-            self.meta = CollectionMetadata.from_file(meta_path)
-            self.installed = True
+            super().__init__()
+            skip_pandas = os.environ.get('SKIP_PANDAS')
+            if skip_pandas:
+                self.installed = False
+            else:
+                git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+                meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
+                csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
+                self.df = pd.read_csv(csv_path)
+                self.meta = CollectionMetadata.from_file(meta_path)
+                self.installed = True
         def create(self):
             return PandasReader(self.df, self.meta)
     class Postgres(Factory):
         def __init__(self):
+            super().__init__()
             self.password = os.environ.get('POSTGRES_PASSWORD')
             self.user = os.environ.get('POSTGRES_USER')
             if self.user is None:

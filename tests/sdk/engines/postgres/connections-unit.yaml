@@ -1,0 +1,8 @@
+postgres:
+  host: localhost
+  port: 5432
+  user: postgres
+  databases:
+    NameTests: nametests
+    PUMS: pums
+    PUMS_large: pums_large
