@@ -2,8 +2,10 @@ import os
 import subprocess
 import sys
 import time
+from opendp.smartnoise.sql.privacy import Privacy
 import sklearn.datasets
 import pandas as pd
+import keyring
 
 from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.metadata.collection import Table, Float, String
@@ -12,8 +14,12 @@ from subprocess import Popen, PIPE
 from threading import Thread
 
 import pytest
+import yaml
 
 from requests import Session
+
+from opendp.smartnoise.sql import PrivateReader, PandasReader, PostgresReader, SqlServerReader
+from opendp.smartnoise.metadata.collection import CollectionMetadata
 
 from opendp.smartnoise.client import _get_client
 from opendp.smartnoise.client.restclient.rest_client import RestClient
@@ -92,6 +98,9 @@ if not os.path.exists(reddit_schema_path):
     schema = CollectionMetadata([reddit], "csv")
     schema.to_file(reddit_schema_path, "reddit")
 
+pums_schema_path = os.path.join(root_url,"datasets", "PUMS_row.yaml")
+pums_large_schema_path = os.path.join(root_url,"datasets", "PUMS_large.yaml")
+
 @pytest.fixture(scope="session")
 def client():
     client = _get_client()
@@ -100,6 +109,121 @@ def client():
         client.secretsput(Secret(name="dataverse:{}".format("demo_dataverse"),
                                  value=os.environ[DATAVERSE_TOKEN_ENV_VAR]))
     return client
+
+
+class TestDbEngine:
+    # Connections to a list of test databases sharing connection info
+    def __init__(self, engine, user, host, port, databases):
+        self.metadata = {
+            'PUMS': pums_schema_path,
+            'PUMS_large': pums_large_schema_path
+        }
+        self.engine = engine
+        self.user = user
+        self.host = host
+        self.port = port
+        self.databases = databases
+        env_passwd = engine.upper() + "_" + "PASSWORD"
+        password = os.environ.get(env_passwd)
+        if password is not None:
+            self.password = password
+        else:
+            conn = f"{engine}://{host}:{port}"
+            password = keyring.get_password(conn, user)
+            self.password = password
+        self.connections = {}
+        for database in self.databases:
+            self.connect(database)
+    def connect(self, database):
+        host = self.host
+        user = self.user
+        port = self.port
+        engine = self.engine
+        password = self.password
+        if database not in self.databases:
+            raise ValueError(f"Database {database} is not available for {engine}")
+        dbname = self.databases[database]
+        if self.engine.lower() == "postgres":
+            try:
+                import psycopg2
+                self.connections[database] = psycopg2.connect(host=host, port=port, user=user, password=password, database=dbname)
+            except:
+                print("Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
+        elif self.engine.lower() == "pandas":
+            self.connections['PUMS'] = pd.read_csv(pums_1000_dataset_path)
+        elif self.engine.lower() == "sqlserver":
+            try:
+                import pyodbc
+                dsn = f"Driver={{ODBC Driver 17 for SQL Server}};Server={host},{port};UID={user};Database={dbname};PWD={password}"
+                self.connections[database] = pyodbc.connect(dsn)
+            except:
+                print("Unable to connect to SQL Server database {database}.  Ensure connection info is correct and pyodbc is installed.")
+    def create_private_reader(self, *ignore, metadata, privacy, database, **kwargs):
+        if database not in self.connections:
+            return None
+        else:
+            conn = self.connections[database]
+            return PrivateReader.from_connection(conn, metadata=metadata, privacy=privacy)
+
+class TestDbCollection:
+    # Collection of test databases keyed by engine and database name.
+    # Automatically connects to databases listed in connections-unit.yml
+    def __init__(self):
+        self.engines = {}
+        home = os.path.expanduser("~")
+        p = os.path.join(home, ".smartnoise", "connections-unit.yaml")
+        if not os.environ.get('SKIP_PANDAS'):
+            conns = TestDbEngine('pandas', None, None, None, {'PUMS': 'PUMS'})
+            self.engines['pandas'] = conns
+        else:
+            print("Skipping pandas database tests")
+        if os.environ.get('TEST_SPARK'):
+            pass
+        else:
+            print("TEST_SPARK not set, so skipping Spark tests")
+        if not os.path.exists(p):
+            print ("No config file at ~/.smartnoise/connections-unit.yaml")
+        else:
+            with open(p, 'r') as stream:
+                conns = yaml.safe_load(stream)
+            if conns is None:
+                print("List of installed test engines is empty")
+            else:
+                for engine in conns:
+                    eng = conns[engine]
+                    host = conns[engine]["host"]
+                    port = conns[engine]["port"]
+                    user = conns[engine]["user"]
+                    databases = eng['databases']
+                    self.engines[engine] = TestDbEngine(engine, user, host, port, databases)
+    def __str__(self):
+        description = ""
+        for engine in self.engines:
+            eng = self.engines[engine]
+            description += f"{engine} - {eng.user}@{eng.host}:{eng.port}\n"
+            #description += str(eng.databases)
+            for database in eng.databases:
+                dbdest = eng.databases[database]
+                connected = "(connected)" if database in eng.connections else ""
+                description += f"\t{database} -> {dbdest} {connected}\n"
+        return description
+    def create_private_readers(self, *ignore, metadata, privacy, database, engine=None, **kwargs):
+        readers = []
+        if engine is not None:
+            engines = [engine]
+        else:
+            engines = [eng for eng in self.engines]
+        for engine in engines:
+            eng = self.engines[engine]
+            reader = eng.create_private_reader(metadata=metadata, privacy=privacy, database=database)
+            if reader is not None:
+                readers.append(reader)
+        return readers
+
+@pytest.fixture(scope="module")
+def get_test_databases():
+    return TestDbCollection()
+
 
 def test_client(client):
     pass

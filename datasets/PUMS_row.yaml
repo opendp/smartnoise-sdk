@@ -19,5 +19,3 @@ Database:
         upper: 500000
       married:
         type: string
-      pid:
-        type: int

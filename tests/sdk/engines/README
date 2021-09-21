@@ -2,7 +2,7 @@ Unit tests that require an active database connection.
 
 Test harness requires config with connection info info
 ~/.smartnoise/connections-unit.yaml, passwords in local
-keyring.
+keyring or environment variables.
 
 Test harness will enumerate connections listed in config,
 and only run unit tests for engines where a connection is
