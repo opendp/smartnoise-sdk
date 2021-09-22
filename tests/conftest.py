@@ -102,9 +102,9 @@ if not os.path.exists(reddit_schema_path):
     schema = CollectionMetadata([reddit], "csv")
     schema.to_file(reddit_schema_path, "reddit")
 
-pums_schema_path = os.path.join(root_url,"datasets", "PUMS_row.yaml")
+pums_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
 pums_large_schema_path = os.path.join(root_url,"datasets", "PUMS_large.yaml")
-pums_pid_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
+pums_pid_schema_path = os.path.join(root_url,"datasets", "PUMS_pid.yaml")
 
 
 @pytest.fixture(scope="session")

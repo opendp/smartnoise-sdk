@@ -21,7 +21,7 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 meta = CollectionMetadata.from_file(meta_path)
 meta["PUMS.PUMS"].censor_dims = False
 
-pums_schema_path = os.path.join("datasets", "PUMS_row.yaml")
+pums_schema_path = os.path.join("datasets", "PUMS.yaml")
 
 
 class TestBaseTypes:

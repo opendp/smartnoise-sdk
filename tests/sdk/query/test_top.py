@@ -14,12 +14,12 @@ from opendp.smartnoise.sql.parse import QueryParser
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
-meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_row.yaml"))
+meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
 csv_path = '/Users/joshuaallen/Source/dp-test-datasets/data/PUMS_california_demographics_1000/data.csv'
 
-pums_schema_path = os.path.join("datasets", "PUMS_row.yaml")
+pums_schema_path = os.path.join("datasets", "PUMS.yaml")
 
 
 class TestTopAndLimit:

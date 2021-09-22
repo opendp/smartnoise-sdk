@@ -9,8 +9,8 @@ import pandas as pd
 from opendp.smartnoise.metadata.collection import CollectionMetadata
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
-meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
-csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
+meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
+csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 pums = pd.read_csv(csv_path)
 privacy = Privacy(epsilon=1.0)
 
