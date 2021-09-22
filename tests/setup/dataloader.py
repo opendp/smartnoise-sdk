@@ -6,6 +6,7 @@ from opendp.smartnoise.sql.privacy import Privacy
 import sklearn.datasets
 import pandas as pd
 import keyring
+import copy
 
 def _download_file(url, local_file):
     try:
@@ -65,9 +66,12 @@ def find_ngrams(input_list, n):
 
 pums_csv_path = os.path.join(root_url,"datasets", "PUMS.csv")
 pums_pid_csv_path = os.path.join(root_url,"datasets", "PUMS_pid.csv")
-if not os.path.exists(pums_csv_path) or not os.path.exists(pums_pid_csv_path):
+pums_large_csv_path = os.path.join(root_url,"datasets", "PUMS_large.csv")
+if not os.path.exists(pums_csv_path) or not os.path.exists(pums_pid_csv_path) or not os.path.exists(pums_large_csv_path):
     pums_url = "https://raw.githubusercontent.com/opendifferentialprivacy/dp-test-datasets/master/data/PUMS_california_demographics_1000/data.csv"
+    pums_large_url = "https://raw.githubusercontent.com/opendifferentialprivacy/dp-test-datasets/master/data/PUMS_california_demographics/data.csv"
     _download_file(pums_url, pums_csv_path)
+    _download_file(pums_large_url, pums_large_csv_path)
     df = pd.read_csv(pums_csv_path)
     df_pid = df.assign(pid = [i for i in range(1, 1001)])
     df_pid.to_csv(pums_pid_csv_path, index=False)
@@ -167,9 +171,9 @@ class TestDbCollection:
     # Automatically connects to databases listed in connections-unit.yml
     def __init__(self):
         self.metadata = {
-            'PUMS': pums_schema_path,
-            'PUMS_large': pums_large_schema_path,
-            'PUMS_pid': pums_pid_schema_path
+            'PUMS': CollectionMetadata.from_file(pums_schema_path),
+            'PUMS_large': CollectionMetadata.from_file(pums_large_schema_path),
+            'PUMS_pid': CollectionMetadata.from_file(pums_pid_schema_path)
         }
         self.engines = {}
         home = os.path.expanduser("~")
@@ -209,12 +213,30 @@ class TestDbCollection:
                 connected = "(connected)" if database in eng.connections else ""
                 description += f"\t{database} -> {dbdest} {connected}\n"
         return description
-    def create_private_readers(self, *ignore, metadata=None, privacy, database, engine=None, **kwargs):
+    def create_private_readers(self, *ignore, metadata=None, privacy, database, engine=None, overrides={}, **kwargs):
         readers = []
         if metadata is None and database in self.metadata:
             metadata = self.metadata[database]
         if metadata is None:
             print(f"No metadata available for {database}")
+            return []
+        if isinstance(metadata, str):
+            metadata = CollectionMetadata.from_file(metadata)
+        if len(overrides) > 0:
+            # make a copy
+            metadata = copy.deepcopy(metadata)
+        table_name = list(metadata.m_tables)[0]
+        table = metadata.m_tables[table_name]
+        for propname in overrides:
+            propval = overrides[propname]
+            if propname == 'censor_dims':
+                table.censor_dims = propval
+            elif propname == 'clamp_counts':
+                table.clamp_counts = propval
+            elif propname == 'max_ids':
+                table.max_ids = propval
+            else:
+                pass
         if engine is not None:
             engines = [engine]
         else:

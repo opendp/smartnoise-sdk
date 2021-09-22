@@ -35,10 +35,10 @@ class TestBaseTypes:
 
     def test_queries(self, test_databases):
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING income > 100000"
-        privacy = Privacy(10.0, 10E-3)
-        readers = test_databases.create_private_readers(privacy=privacy, database='PUMS')
+        privacy = Privacy(10.0, 0.1)
+        readers = test_databases.create_private_readers(privacy=privacy, database='PUMS', overrides={'censor_dims': False})
         for reader in readers:
-            res = [len(self.reader.execute(query)) for i in range(5)]
+            res = [len(reader.execute(query)) for i in range(5)]
             assert np.mean(res) < 115 and np.mean(res) > 10 # actual is 14, but noise is huge
 
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING sex = 1"
