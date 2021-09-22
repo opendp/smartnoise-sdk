@@ -1,6 +1,7 @@
 import os
 import subprocess
 import copy
+from opendp.smartnoise.sql.privacy import Privacy
 import pytest
 
 import pandas as pd
@@ -13,8 +14,12 @@ from opendp.smartnoise.sql.parse import QueryParser
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
-meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
+meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_row.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
+
+csv_path = '/Users/joshuaallen/Source/dp-test-datasets/data/PUMS_california_demographics_1000/data.csv'
+
+pums_schema_path = os.path.join("datasets", "PUMS_row.yaml")
 
 
 class TestTopAndLimit:
@@ -22,15 +27,29 @@ class TestTopAndLimit:
         meta = CollectionMetadata.from_file(meta_path)
         meta["PUMS.PUMS"].censor_dims = False
         df = pd.read_csv(csv_path)
+        print(df)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, 10.0, 10E-3)
+        private_reader = PrivateReader(reader, meta, 10.0, 0.1)
         cls.reader = private_reader
 
-    def test_queries(self):
-        reader = self.reader
-        
+    def test_queries(self, test_databases):
         query = 'SELECT TOP 20 age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married ORDER BY married, age DESC'
+        #query = 'SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY race'
+        privacy = Privacy(10.0, 0.1)
+        readers = test_databases.create_private_readers(metadata=pums_schema_path, privacy=privacy, database='PUMS')
+        for reader in readers:
+            print("----")
+            print(reader.reader)
+            res = reader.execute_df(query)
+            #res = reader.reader.execute('SELECT COUNT(*)')
+            print(res)
+            #assert len(res) == 21
+
+        reader = self.reader
+        print("~~~~~")
+        print(reader.reader)
         res = reader.execute(query)
+        print(res)
         assert len(res) == 21
 
         query = 'SELECT age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married ORDER BY married, age DESC LIMIT 10'

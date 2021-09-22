@@ -58,10 +58,14 @@ def _download_file(url, local_file):
         from urllib.request import urlretrieve
     urlretrieve(url, local_file)
 
-pums_1000_dataset_path = os.path.join(root_url,"datasets", "evaluation", "PUMS_1000.csv")
-if not os.path.exists(pums_1000_dataset_path):
+pums_csv_path = os.path.join(root_url,"datasets", "PUMS.csv")
+pums_pid_csv_path = os.path.join(root_url,"datasets", "PUMS_pid.csv")
+if not os.path.exists(pums_csv_path) or not os.path.exists(pums_pid_csv_path):
     pums_url = "https://raw.githubusercontent.com/opendifferentialprivacy/dp-test-datasets/master/data/PUMS_california_demographics_1000/data.csv"
-    _download_file(pums_url, pums_1000_dataset_path)
+    _download_file(pums_url, pums_csv_path)
+    df = pd.read_csv(pums_csv_path)
+    df_pid = df.assign(pid = [i for i in range(1, 1001)])
+    df_pid.to_csv(pums_pid_csv_path)
 
 reddit_dataset_path = os.path.join(root_url,"datasets", "reddit.csv")
 if not os.path.exists(reddit_dataset_path):
@@ -100,6 +104,8 @@ if not os.path.exists(reddit_schema_path):
 
 pums_schema_path = os.path.join(root_url,"datasets", "PUMS_row.yaml")
 pums_large_schema_path = os.path.join(root_url,"datasets", "PUMS_large.yaml")
+pums_pid_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
+
 
 @pytest.fixture(scope="session")
 def client():
@@ -116,7 +122,8 @@ class TestDbEngine:
     def __init__(self, engine, user, host, port, databases):
         self.metadata = {
             'PUMS': pums_schema_path,
-            'PUMS_large': pums_large_schema_path
+            'PUMS_large': pums_large_schema_path,
+            'PUMS_pid': pums_pid_schema_path
         }
         self.engine = engine
         self.user = user
@@ -148,16 +155,17 @@ class TestDbEngine:
                 import psycopg2
                 self.connections[database] = psycopg2.connect(host=host, port=port, user=user, password=password, database=dbname)
             except:
-                print("Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
+                print(f"Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
         elif self.engine.lower() == "pandas":
-            self.connections['PUMS'] = pd.read_csv(pums_1000_dataset_path)
+            self.connections['PUMS'] = pd.read_csv(pums_csv_path)
+            print(self.connections['PUMS'])
         elif self.engine.lower() == "sqlserver":
             try:
                 import pyodbc
                 dsn = f"Driver={{ODBC Driver 17 for SQL Server}};Server={host},{port};UID={user};Database={dbname};PWD={password}"
                 self.connections[database] = pyodbc.connect(dsn)
             except:
-                print("Unable to connect to SQL Server database {database}.  Ensure connection info is correct and pyodbc is installed.")
+                print(f"Unable to connect to SQL Server database {database}.  Ensure connection info is correct and pyodbc is installed.")
     def create_private_reader(self, *ignore, metadata, privacy, database, **kwargs):
         if database not in self.connections:
             return None
@@ -220,9 +228,12 @@ class TestDbCollection:
                 readers.append(reader)
         return readers
 
+dbcol = TestDbCollection()
+print(dbcol)
+
 @pytest.fixture(scope="module")
-def get_test_databases():
-    return TestDbCollection()
+def test_databases():
+    return dbcol
 
 
 def test_client(client):
