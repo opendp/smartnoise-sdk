@@ -36,12 +36,15 @@ class TestTopAndLimit:
         query = 'SELECT TOP 20 age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married ORDER BY married, age DESC'
         #query = 'SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY race'
         privacy = Privacy(10.0, 0.1)
-        readers = test_databases.create_private_readers(metadata=pums_schema_path, privacy=privacy, database='PUMS')
+        tdb = test_databases
+        print(tdb.engines['pandas'].connections['PUMS_pid'])
+        readers = tdb.create_private_readers(privacy=privacy, database='PUMS_pid')
+
         for reader in readers:
-            print("----")
             print(reader.reader)
             res = reader.execute_df(query)
-            #res = reader.reader.execute('SELECT COUNT(*)')
+            print(res)
+            res = reader.reader.execute('SELECT COUNT(*)')
             print(res)
             #assert len(res) == 21
 
