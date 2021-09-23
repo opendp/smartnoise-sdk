@@ -27,7 +27,6 @@ class TestTopAndLimit:
         meta = CollectionMetadata.from_file(meta_path)
         meta["PUMS.PUMS"].censor_dims = False
         df = pd.read_csv(csv_path)
-        print(df)
         reader = PandasReader(df, meta)
         private_reader = PrivateReader(reader, meta, 10.0, 0.1)
         cls.reader = private_reader
@@ -37,8 +36,7 @@ class TestTopAndLimit:
         #query = 'SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY race'
         privacy = Privacy(10.0, 0.1)
         tdb = test_databases
-        print(tdb.engines['pandas'].connections['PUMS_pid'])
-        readers = tdb.create_private_readers(privacy=privacy, database='PUMS_pid', overrides={'censor_dims': False})
+        readers = tdb.get_private_readers(privacy=privacy, database='PUMS_pid', overrides={'censor_dims': False})
 
         for reader in readers:
             res = reader.execute(query)

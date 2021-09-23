@@ -1,7 +1,9 @@
 import pytest
-import pandas as pd
+import os
+from opendp.smartnoise.client import _get_client
+from opendp.smartnoise.client.restclient.models.secret import Secret
 
-from .setup.dataloader import TestDbCollection, _get_client
+DATAVERSE_TOKEN_ENV_VAR = "SMARTNOISE_DATAVERSE_TEST_TOKEN"
 
 @pytest.fixture(scope="session")
 def client():
@@ -12,13 +14,16 @@ def client():
                                  value=os.environ[DATAVERSE_TOKEN_ENV_VAR]))
     return client
 
+from .setup.dataloader import TestDbCollection, download_data_files
+
+download_data_files()
+
 dbcol = TestDbCollection()
 print(dbcol)
 
 @pytest.fixture(scope="module")
 def test_databases():
     return dbcol
-
 
 def test_client(client):
     pass

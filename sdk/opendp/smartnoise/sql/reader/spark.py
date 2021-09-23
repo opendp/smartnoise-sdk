@@ -34,6 +34,13 @@ class SparkSerializer(Serializer):
         for b in [n for n in query.find_nodes(Literal) if isinstance(n.value, bool)]:
             b.text = "'True'" if b.value else "'False'"
 
+        for t in query.xpath("//Table"):
+            if "." in t.name and hasattr(query, 'compare'):
+                search_path = query.compare.search_path
+                if len(search_path) > 0:
+                    schema = search_path[0]
+                    t.name = t.name.replace(f"{schema}.", "")
+
         return str(query)
 
 

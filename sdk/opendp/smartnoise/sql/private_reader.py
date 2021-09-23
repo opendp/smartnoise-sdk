@@ -204,7 +204,9 @@ class PrivateReader(Reader):
 
         self._refresh_options()
         query = self.rewriter.query(query)
+        query.compare = self.reader.compare
         subquery = query.source.relations[0].primary.query
+        subquery.compare = self.reader.compare
         return (subquery, query)
 
     def _get_reader(self, query_ast):
