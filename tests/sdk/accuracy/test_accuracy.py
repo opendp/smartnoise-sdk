@@ -127,14 +127,12 @@ class TestExecution:
         assert(len(df.columns) == 5)
         assert(len(acc99.columns) == 5)
         assert(len(acc95.columns) == 5)
-    def test_spark_accuracy(self):
-        spark = SparkSession.builder.getOrCreate()
-        pums = spark.read.load(csv_path, format="csv", sep=",",inferSchema="true", header="true")
-        query_modified = query.replace("PUMS.PUMS", "PUMS")
-        pums.createOrReplaceTempView("PUMS")
-        priv = PrivateReader.from_connection(spark, metadata=meta, privacy=privacy)
-        priv.reader.compare.search_path = ["PUMS"]
-        res = priv.execute_with_accuracy(query_modified)
+    def test_spark_accuracy(self, test_databases):
+        print(test_databases)
+        priv = test_databases.get_private_reader(privacy=privacy, database="PUMS_pid", engine="spark")
+        if priv is None:
+            return # TEST_SPARK not set
+        res = priv.execute_with_accuracy(query)
         row_count = 0
         for row, accuracies in res.collect():
             row_count += 1

@@ -1,11 +1,13 @@
 import os
 import subprocess
 import sys
+from attr import has
 import sklearn.datasets
 import pandas as pd
 import keyring
 import copy
 import yaml
+import random
 
 from opendp.smartnoise.sql import PrivateReader
 from opendp.smartnoise.metadata import CollectionMetadata
@@ -16,10 +18,13 @@ root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).d
 pums_csv_path = os.path.join(root_url,"datasets", "PUMS.csv")
 pums_pid_csv_path = os.path.join(root_url,"datasets", "PUMS_pid.csv")
 pums_large_csv_path = os.path.join(root_url,"datasets", "PUMS_large.csv")
+pums_dup_csv_path = os.path.join(root_url,"datasets", "PUMS_dup.csv")
 
 pums_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
 pums_large_schema_path = os.path.join(root_url,"datasets", "PUMS_large.yaml")
 pums_pid_schema_path = os.path.join(root_url,"datasets", "PUMS_pid.yaml")
+pums_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
+pums_dup_schema_path = os.path.join(root_url,"datasets", "PUMS_dup.yaml")
 
 
 def _download_file(url, local_file):
@@ -59,6 +64,23 @@ def download_data_files():
         df = pd.read_csv(pums_csv_path)
         df_pid = df.assign(pid = [i for i in range(1, 1001)])
         df_pid.to_csv(pums_pid_csv_path, index=False)
+
+    if not os.path.exists(pums_dup_csv_path):
+        random.seed(1011)
+        df_pid = pd.read_csv(pums_pid_csv_path)
+        new_records = []
+        for _ in range(2):
+            for idx, row in df_pid.iterrows():
+                if row['sex'] == 1.0:
+                    p = 0.22
+                else:
+                    p = 0.56
+                if random.random() < p:
+                    new_records.append(row)
+        for row in new_records:
+            df_pid = df_pid.append(row)
+        df_pid = df_pid.astype(int)
+        df_pid.to_csv(pums_dup_csv_path, index=False)
 
     reddit_dataset_path = os.path.join(root_url,"datasets", "reddit.csv")
     if not os.path.exists(reddit_dataset_path):
@@ -104,9 +126,9 @@ class TestDbEngine:
         self.port = port
         if databases == {}:
             if self.engine.lower() == "pandas":
-                databases={'PUMS': 'PUMS', 'PUMS_pid': 'PUMS_pid'}
+                databases={'PUMS': 'PUMS', 'PUMS_pid': 'PUMS_pid', 'PUMS_dup': 'PUMS_dup'}
             elif self.engine.lower() == "spark":
-                databases = {'PUMS': 'PUMS', 'PUMS_pid': 'PUMS_pid', 'PUMS_large': 'PUMS_large'}
+                databases = {'PUMS': 'PUMS', 'PUMS_pid': 'PUMS_pid', 'PUMS_dup': 'PUMS_dup', 'PUMS_large': 'PUMS_large'}
         self.databases = databases
         env_passwd = engine.upper() + "_" + "PASSWORD"
         password = os.environ.get(env_passwd)
@@ -137,6 +159,7 @@ class TestDbEngine:
         elif self.engine.lower() == "pandas":
             self.connections['PUMS'] = pd.read_csv(pums_csv_path)
             self.connections['PUMS_pid'] = pd.read_csv(pums_pid_csv_path)
+            self.connections['PUMS_dup'] = pd.read_csv(pums_dup_csv_path)
         elif self.engine.lower() == "sqlserver":
             try:
                 import pyodbc
@@ -148,14 +171,18 @@ class TestDbEngine:
             try:
                 from pyspark.sql import SparkSession
                 spark = SparkSession.builder.getOrCreate()
-                pums = spark.read.load(pums_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                pums.createOrReplaceTempView("PUMS")
                 pums_pid = spark.read.load(pums_pid_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                pums_pid.createOrReplaceTempView("PUMS_pid")
+                pums_pid.createOrReplaceTempView("PUMS") # use same table for PUMS and PUMS_pid
+                pums_dup = spark.read.load(pums_dup_csv_path, format="csv", sep=",",inferSchema="true", header="true")
+                pums_dup.createOrReplaceTempView("PUMS_dup")
                 pums_large = spark.read.load(pums_large_csv_path, format="csv", sep=",",inferSchema="true", header="true")
+                colnames = list(pums_large.columns)
+                colnames[0] = "PersonID"
+                pums_large = pums_large.toDF(*colnames)
                 pums_large.createOrReplaceTempView("PUMS_large")
                 self.connections['PUMS'] = spark
                 self.connections['PUMS_pid'] = spark
+                self.connections['PUMS_dup'] = spark
                 self.connections['PUMS_large'] = spark
             except:
                 print("Unable to connect to Spark test databases.  Make sure pyspark is installed.")
@@ -178,7 +205,8 @@ class TestDbCollection:
         self.metadata = {
             'PUMS': CollectionMetadata.from_file(pums_schema_path),
             'PUMS_large': CollectionMetadata.from_file(pums_large_schema_path),
-            'PUMS_pid': CollectionMetadata.from_file(pums_pid_schema_path)
+            'PUMS_pid': CollectionMetadata.from_file(pums_pid_schema_path),
+            'PUMS_dup': CollectionMetadata.from_file(pums_dup_schema_path)
         }
         self.engines = {}
         home = os.path.expanduser("~")
@@ -246,11 +274,18 @@ class TestDbCollection:
         else:
             engines = [eng for eng in self.engines]
         for engine in engines:
-            eng = self.engines[engine]
-            reader = eng.get_private_reader(metadata=metadata, privacy=privacy, database=database)
-            if reader is not None:
-                readers.append(reader)
+            if engine in self.engines:
+                eng = self.engines[engine]
+                reader = eng.get_private_reader(metadata=metadata, privacy=privacy, database=database)
+                if reader is not None:
+                    readers.append(reader)
         return readers
     def get_private_reader(self, *ignore, metadata=None, privacy, database, engine, overrides={}, **kwargs):
         readers = self.get_private_readers(metadata=metadata, privacy=privacy, database=database, engine=engine, overrides=overrides)
         return None if len(readers) == 0 else readers[0]
+    def to_tuples(self, rowset):
+        if hasattr(rowset, 'toLocalIterator'): # it's RDD
+            colnames = rowset.columns
+            return [colnames] + [[c for c in r] for r in rowset.toLocalIterator()]
+        else:
+            return rowset
