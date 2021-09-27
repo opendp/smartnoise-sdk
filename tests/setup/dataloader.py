@@ -136,8 +136,11 @@ class TestDbEngine:
             self.password = password
         else:
             conn = f"{engine}://{host}:{port}"
-            password = keyring.get_password(conn, user)
-            self.password = password
+            try:
+                password = keyring.get_password(conn, user)
+                self.password = password
+            except:
+                self.password = ""
         self.connections = {}
         for database in self.databases:
             self.connect(database)
@@ -154,6 +157,7 @@ class TestDbEngine:
             try:
                 import psycopg2
                 self.connections[database] = psycopg2.connect(host=host, port=port, user=user, password=password, database=dbname)
+                print(f'Connected {database} to {dbname}')
             except:
                 print(f"Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
         elif self.engine.lower() == "pandas":
