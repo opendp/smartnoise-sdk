@@ -12,6 +12,7 @@ from .reader.presto import PrestoReader
 from .reader.postgres import PostgresReader
 from .reader.sql_server import SqlServerReader
 from .reader.spark import SparkReader
+from .reader.sqlalchemy import SQLAlchemyReader
 
 __all__ = [
     "PandasReader",
@@ -20,6 +21,7 @@ __all__ = [
     "SqlServerReader",
     "SparkReader",
     "Rewriter",
+    "SQLAlchemyReader",
     "QueryParser",
     "execute_private_query",
 ]

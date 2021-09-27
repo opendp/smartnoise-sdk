@@ -22,6 +22,11 @@ class Probe:
         ):
             return "postgres"
         if (
+                conn_mod == 'sqlalchemy.engine.base' and
+                conn_class == 'Connection'
+        ):
+            return "sqlalchemy"
+        if (
             conn_mod == 'pyodbc' and
             conn_class == 'Connection'
         ):
