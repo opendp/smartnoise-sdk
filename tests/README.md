@@ -32,6 +32,25 @@ test_databases = TestDbCollection()
 print(test_databases)
 ```
 
+From the command line, you can get the same status by issuing `python tests/setup/download.py` from a command prompt in the repository root.  Output will look like this.  If there are problems connecting to any of the configured test databases, these will print an error and display without the "connected" status:
+
+```
+None@pandas://None:None
+	PUMS -> PUMS (connected)
+	PUMS_pid -> PUMS_pid (connected)
+	PUMS_dup -> PUMS_dup (connected)
+postgres@postgres://localhost:5432
+	PUMS -> pums (connected)
+	PUMS_large -> pums (connected)
+	PUMS_pid -> pums_pid (connected)
+	PUMS_dup -> pums_pid (connected)
+sa@sqlserver://tcp:10.0.0.199:1433
+	PUMS -> pums (connected)
+	PUMS_large -> pums (connected)
+	PUMS_pid -> pums_pid (connected)
+	PUMS_dup -> pums_pid (connected)
+```
+
 The current pre-cached datasets are:
 * `PUMS`: The 1000-row sample of PUMS, using `row_privacy`.  When querying, use `PUMS.PUMS` as the table name.
 * `PUMS_pid`: The 1000-row sample of PUMS, with an additional column, `pid` for a person primary key.  Does not use `row_privacy`.  When querying, use `PUMS.PUMS` as the table name.
