@@ -1,10 +1,7 @@
 import os
 import subprocess
-import sys
-from attr import has
 import sklearn.datasets
 import pandas as pd
-import keyring
 import copy
 import yaml
 import random
@@ -137,6 +134,7 @@ class TestDbEngine:
         else:
             conn = f"{engine}://{host}:{port}"
             try:
+                import keyring
                 password = keyring.get_password(conn, user)
                 self.password = password
             except:
@@ -290,6 +288,9 @@ class TestDbCollection:
     def to_tuples(self, rowset):
         if hasattr(rowset, 'toLocalIterator'): # it's RDD
             colnames = rowset.columns
-            return [colnames] + [[c for c in r] for r in rowset.toLocalIterator()]
+            try:
+                return [colnames] + [[c for c in r] for r in rowset.toLocalIterator()]
+            except:
+                return [colnames]
         else:
             return rowset

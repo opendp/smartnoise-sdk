@@ -17,7 +17,8 @@ class SparkReader(SqlReader):
     def execute(self, query, *ignore, accuracy:bool=False):
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
-        return self.api.sql(query)
+        res = self.api.sql(query)
+        return res
 
     def _to_df(rows):
         return rows

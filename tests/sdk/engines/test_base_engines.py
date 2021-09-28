@@ -114,4 +114,3 @@ class TestWithoutConn:
         assert(isinstance(reader.compare, PrestoNameCompare))
         assert(isinstance(reader.serializer, Serializer))
         assert(isinstance(reader.serializer, PrestoSerializer))
-

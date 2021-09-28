@@ -11,6 +11,8 @@ from opendp.smartnoise.metadata import CollectionMetadata
 from opendp.smartnoise.sql import PrivateReader, PandasReader
 from opendp.smartnoise.sql.parse import QueryParser
 
+from opendp.smartnoise.sql.privacy import Privacy
+
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
@@ -70,30 +72,45 @@ class TestQuery:
         private_reader = PrivateReader(reader, schema, 4.0)
         rs = private_reader.execute_df("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs['c'][0] > rs['c'][1])
-    def test_no_tau(self):
+    def test_no_tau(self, test_databases):
         # should never drop rows
-        reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 4.0)
-        for i in range(10):
-            rs = private_reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
-            assert(len(rs['c']) == 1)
-    def test_no_tau_noisy(self):
+        privacy = Privacy(epsilon=4.0)
+        readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
+        assert(len(readers) > 0)
+        for reader in readers:
+            if reader.engine == "spark":
+                continue
+            for _ in range(10):
+                rs = reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
+                assert(len(rs['c']) == 1)
+    def test_no_tau_noisy(self, test_databases):
         # should never drop rows
-        reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 0.01)
-        for i in range(10):
-            rs = private_reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
-            assert(len(rs['c']) == 1)
-    def test_yes_tau(self):
+        privacy = Privacy(epsilon=4.0)
+        readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
+        assert(len(readers) > 0)
+        for reader in readers:
+            if reader.engine == "spark":
+                continue
+            for i in range(10):
+                rs = reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 90 AND educ = '8'")
+                assert(len(rs['c']) == 1)
+    def test_yes_tau(self, test_databases):
         # should usually drop some rows
-        reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 1.0, 1/10000)
-        lengths = []
-        for i in range(10):
-            rs = private_reader.execute_df("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 80 GROUP BY educ")
-            lengths.append(len(rs['c']))
-        l = lengths[0]
-        assert(any([l != ll for ll in lengths]))
+        privacy = Privacy(epsilon=1.0, delta=1/1000)
+        readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
+        assert(len(readers) > 0)
+        for reader in readers:
+            l = -1
+            passed = False
+            for _ in range(10):
+                rs = test_databases.to_tuples(reader.execute("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 80 GROUP BY educ"))
+                if l < 0:
+                    l = len(rs)
+                else:
+                    if len(rs) != l:
+                        passed = True
+                        break
+            assert(passed)
     def test_count_no_rows_exact_typed(self):
         reader = PandasReader(df, schema)
         query = QueryParser(schema).queries("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100")[0]
@@ -182,4 +199,3 @@ class TestQuery:
             reader = PandasReader(schema, schema)
         with pytest.raises(Exception):
             reader = PandasReader(df, df)
-

@@ -38,7 +38,7 @@ class TestBaseTypes:
         privacy = Privacy(10.0, 0.1)
         readers = test_databases.get_private_readers(privacy=privacy, database='PUMS', overrides={'censor_dims': False})
         for reader in readers:
-            res = [len(reader.execute(query)) for i in range(5)]
+            res = [len(test_databases.to_tuples(reader.execute(query))) for i in range(5)]
             assert np.mean(res) < 115 and np.mean(res) > 10 # actual is 14, but noise is huge
 
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING sex = 1"

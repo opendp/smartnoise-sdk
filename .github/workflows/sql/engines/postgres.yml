@@ -1,5 +1,5 @@
 name: PostgreSQL Integration Tests
-on: push
+on: pull_request
 jobs:
   container-job:
     runs-on: ubuntu-latest
@@ -70,13 +70,15 @@ jobs:
       - name: Check database connections test fixture
         shell: bash -l {0}
         run: |
-          source pass.sh
           pip install psycopg2
           mkdir ~/.smartnoise
           cp tests/sdk/engines/postgres/connections-unit.yaml ~/.smartnoise
+          source pass.sh
           python tests/setup/download.py
-      - name: Run unit tests
+      - name: Test SDK
         shell: bash -l {0}
         run: |
           source pass.sh
-          python -m pytest tests/sdk/engines/test_db_count.py
+          conda install pytest
+          export SKIP_PANDAS=1
+          pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml

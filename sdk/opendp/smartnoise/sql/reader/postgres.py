@@ -14,8 +14,6 @@ class PostgresReader(SqlReader):
 
     def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
-        import psycopg2
-        self.api = psycopg2
 
         self.conn = None
         if conn is not None:
@@ -32,6 +30,11 @@ class PostgresReader(SqlReader):
                     password = os.environ["POSTGRES_PASSWORD"]
             self.password = password
             self._update_connection_string()
+            try:
+                import psycopg2
+                self.api = psycopg2
+            except:
+                pass
 
     def execute(self, query, *ignore, accuracy:bool=False):
         if not isinstance(query, str):

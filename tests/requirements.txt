@@ -2,7 +2,6 @@ pytest
 pyyaml
 pandasql
 mlflow
-connexion
 sklearn
 matplotlib
 numpy==1.19.5
@@ -13,5 +12,3 @@ gym
 flake8
 diffprivlib
 graphviz
-keyring
-pyspark

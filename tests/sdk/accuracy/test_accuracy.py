@@ -1,14 +1,13 @@
 import os
 import subprocess
 from opendp.smartnoise.sql._mechanisms.accuracy import Accuracy
-from pyspark.sql import SparkSession
 import numpy as np
 import math
 
 import pandas as pd
 
 from opendp.smartnoise.metadata import CollectionMetadata
-from opendp.smartnoise.sql import PrivateReader, SqlReader
+from opendp.smartnoise.sql import PrivateReader
 from opendp.smartnoise.sql.privacy import Privacy
 from opendp.smartnoise.sql.parse import QueryParser
 
@@ -105,30 +104,41 @@ class TestAccuracyDetect:
         assert(acc.properties[4]['statistic'] == 'count')
 
 class TestExecution:
-    def test_no_accuracy(self):
-        res = priv.execute(query)
-        assert(len(res) == 3)
-        assert(all([len(r) == 5 for r in res]))
-    def test_accuracy(self):
-        res = priv.execute_with_accuracy(query)
-        assert(len(res) == 3)
-        for row, accuracy in res:
-            assert(len(row) == 5)
-            assert(len(accuracy) == 2)
-            acc99, acc95 = accuracy
-            assert(all([a99 > a95 for a99, a95 in zip(acc99, acc95)]))
-    def test_pandas_df_accuracy(self):
-        res = priv.execute_with_accuracy_df(query)
-        df, accuracies = res
-        acc99, acc95 = accuracies
-        assert(len(df) == 2)
-        assert(len(acc99) == 2)
-        assert(len(acc95) == 2)
-        assert(len(df.columns) == 5)
-        assert(len(acc99.columns) == 5)
-        assert(len(acc95.columns) == 5)
+    def test_no_accuracy(self, test_databases):
+        readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
+        assert(len(readers) > 0)
+        for reader in readers:
+            res = test_databases.to_tuples(reader.execute(query))
+            assert(len(res) == 3)
+            assert(all([len(r) == 5 for r in res]))
+    def test_accuracy(self, test_databases):
+        readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
+        assert(len(readers) > 0)
+        for reader in readers:
+            if reader.engine == "spark":
+                continue
+            res = reader.execute_with_accuracy(query)
+            assert(len(res) == 3)
+            for row, accuracy in res:
+                assert(len(row) == 5)
+                assert(len(accuracy) == 2)
+                acc99, acc95 = accuracy
+                assert(all([a99 > a95 for a99, a95 in zip(acc99, acc95)]))
+    def test_pandas_df_accuracy(self, test_databases):
+        reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy)
+        if reader is None:
+            return # SKIP_PANDAS
+        else:
+            res = reader.execute_with_accuracy_df(query)
+            df, accuracies = res
+            acc99, acc95 = accuracies
+            assert(len(df) == 2)
+            assert(len(acc99) == 2)
+            assert(len(acc95) == 2)
+            assert(len(df.columns) == 5)
+            assert(len(acc99.columns) == 5)
+            assert(len(acc95.columns) == 5)
     def test_spark_accuracy(self, test_databases):
-        print(test_databases)
         priv = test_databases.get_private_reader(privacy=privacy, database="PUMS_pid", engine="spark")
         if priv is None:
             return # TEST_SPARK not set
@@ -141,5 +151,4 @@ class TestExecution:
             assert(len(acc99) == 5)
             assert(len(acc95) == 5)
         assert(row_count == 2) # PipelineRDD doesn't return column names
-
 

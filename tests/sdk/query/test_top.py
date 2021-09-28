@@ -17,8 +17,6 @@ git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" "
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
-csv_path = '/Users/joshuaallen/Source/dp-test-datasets/data/PUMS_california_demographics_1000/data.csv'
-
 pums_schema_path = os.path.join("datasets", "PUMS.yaml")
 
 
@@ -39,7 +37,9 @@ class TestTopAndLimit:
         readers = tdb.get_private_readers(privacy=privacy, database='PUMS_pid', overrides={'censor_dims': False})
 
         for reader in readers:
-            res = reader.execute(query)
+            if reader.engine == "spark":
+                continue
+            res = test_databases.to_tuples(reader.execute(query))
             assert len(res) == 21
 
         reader = self.reader
