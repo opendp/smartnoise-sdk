@@ -1,6 +1,7 @@
 import os
 import subprocess
 import copy
+from opendp.smartnoise.sql.privacy import Privacy
 import pytest
 import numpy as np
 
@@ -20,6 +21,8 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 meta = CollectionMetadata.from_file(meta_path)
 meta["PUMS.PUMS"].censor_dims = False
 
+pums_schema_path = os.path.join("datasets", "PUMS.yaml")
+
 
 class TestBaseTypes:
     def setup_class(cls):
@@ -30,11 +33,12 @@ class TestBaseTypes:
         private_reader = PrivateReader(reader, meta, 10.0, 10E-3)
         cls.reader = private_reader
 
-    def test_queries(self, reader_factory):
+    def test_queries(self, test_databases):
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING income > 100000"
-        for factory in reader_factory:
-            reader = factory.create_private(meta, 10.0, 10E-3)
-            res = [len(self.reader.execute(query)) for i in range(5)]
+        privacy = Privacy(10.0, 0.1)
+        readers = test_databases.get_private_readers(privacy=privacy, database='PUMS', overrides={'censor_dims': False})
+        for reader in readers:
+            res = [len(test_databases.to_tuples(reader.execute(query))) for i in range(5)]
             assert np.mean(res) < 115 and np.mean(res) > 10 # actual is 14, but noise is huge
 
         query = "SELECT age, sex, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, sex HAVING sex = 1"

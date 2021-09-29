@@ -28,7 +28,7 @@ Note that the other validate test suite does a cumulative test pass using more
 """
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
-meta_path = join(git_root_dir, join("datasets", "PUMS.yaml"))
+meta_path = join(git_root_dir, join("datasets", "PUMS_pid.yaml"))
 
 dir_name = dirname(__file__)
 testpath = join(dir_name, "queries") + "/"

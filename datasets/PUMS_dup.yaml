@@ -1,7 +1,7 @@
 Database:
   PUMS:
-    PUMS:
-      row_privacy: True
+    PUMS_dup:
+      max_ids: 1
       rows: 1000
       age:
         type: int
@@ -19,3 +19,6 @@ Database:
         upper: 500000
       married:
         type: string
+      pid:
+        type: int
+        private_id: True

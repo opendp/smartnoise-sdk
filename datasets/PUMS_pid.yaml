@@ -1,7 +1,6 @@
 Database:
   PUMS:
     PUMS:
-      row_privacy: True
       rows: 1000
       age:
         type: int
@@ -21,3 +20,4 @@ Database:
         type: string
       pid:
         type: int
+        private_id: True

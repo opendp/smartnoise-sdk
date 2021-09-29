@@ -1,6 +1,7 @@
 import os
 import subprocess
 import copy
+from opendp.smartnoise.sql.privacy import Privacy
 import pytest
 
 import pandas as pd
@@ -16,6 +17,8 @@ git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" "
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
+pums_schema_path = os.path.join("datasets", "PUMS.yaml")
+
 
 class TestTopAndLimit:
     def setup_class(cls):
@@ -23,13 +26,23 @@ class TestTopAndLimit:
         meta["PUMS.PUMS"].censor_dims = False
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, 10.0, 10E-3)
+        private_reader = PrivateReader(reader, meta, 10.0, 0.1)
         cls.reader = private_reader
 
-    def test_queries(self):
-        reader = self.reader
-        
+    def test_queries(self, test_databases):
         query = 'SELECT TOP 20 age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married ORDER BY married, age DESC'
+        #query = 'SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY race'
+        privacy = Privacy(10.0, 0.1)
+        tdb = test_databases
+        readers = tdb.get_private_readers(privacy=privacy, database='PUMS_pid', overrides={'censor_dims': False})
+
+        for reader in readers:
+            if reader.engine == "spark":
+                continue
+            res = test_databases.to_tuples(reader.execute(query))
+            assert len(res) == 21
+
+        reader = self.reader
         res = reader.execute(query)
         assert len(res) == 21
 

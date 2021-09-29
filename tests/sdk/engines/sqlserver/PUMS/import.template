@@ -1,0 +1,52 @@
+USE PUMS
+GO
+
+BULK INSERT PUMS.PUMS
+    FROM '{current}\PUMS.csv'
+    WITH
+    (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',  --CSV field delimiter
+    ROWTERMINATOR = '\n',   --Use to shift the control to next row
+    ERRORFILE = '{current}\PUMS.log',
+    TABLOCK
+    )
+GO
+
+BULK INSERT PUMS.PUMS_large
+    FROM '{current}\PUMS_large.csv'
+    WITH
+    (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',  --CSV field delimiter
+    ROWTERMINATOR = '\n',   --Use to shift the control to next row
+    ERRORFILE = '{current}\PUMS_large.log',
+    TABLOCK
+    )
+GO
+
+USE PUMS_pid
+GO
+BULK INSERT PUMS.PUMS
+    FROM '{current}\PUMS_pid.csv'
+    WITH
+    (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',  --CSV field delimiter
+    ROWTERMINATOR = '\n',   --Use to shift the control to next row
+    ERRORFILE = '{current}\PUMS_pid.log',
+    TABLOCK
+    )
+GO
+
+BULK INSERT PUMS.PUMS_dup
+    FROM '{current}\PUMS_dup.csv'
+    WITH
+    (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',  --CSV field delimiter
+    ROWTERMINATOR = '\n',   --Use to shift the control to next row
+    ERRORFILE = '{current}\PUMS_dup.log',
+    TABLOCK
+    )
+GO

@@ -1,0 +1,84 @@
+name: PostgreSQL Integration Tests
+on: pull_request
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
+      max-parallel: 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generate random password
+        shell: bash -l {0}
+        run: |
+          export RANDPASS=pgpass$RANDOM
+          echo "export PGPASSWORD=$RANDPASS" >> pass.sh
+          echo "export POSTGRES_PASSWORD=$RANDPASS" >> pass.sh
+      - name: Install postgres
+        shell: bash -l {0}
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes install postgresql-client postgresql
+          sudo service postgresql start
+      - name: Set up miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          auto-update-conda: true
+          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
+      - name: Configure postgres password
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          sudo -u postgres psql -U postgres -d postgres -c "alter user postgres with password '$PGPASSWORD';"
+      - name: Upgrade pip
+        shell: bash -l {0}
+        run: |
+          conda install pip
+          conda update pip
+      - name: Setup SDK
+        shell: bash -l {0}
+        run: |
+          pip install --no-cache-dir -r tests/requirements.txt
+          pip install --no-cache-dir  ./sdk
+      - name: Download test datasets
+        shell: bash -l {0}
+        run: |
+          python tests/setup/download.py
+      - name: Install PUMS
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          echo $PGPASSWORD
+          cd tests/sdk/engines/postgres/PUMS
+          source install.sh
+        env:
+          POSTGRES_HOST: localhost
+      - name: Verify database counts
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums.pums"
+          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums.pums_large"
+          psql -U postgres -h $POSTGRES_HOST -d pums_pid -c "select count(*) FROM pums.pums"
+          psql -U postgres -h $POSTGRES_HOST -d pums_pid -c "select count(*) FROM pums.pums_dup"
+        env:
+          POSTGRES_HOST: localhost
+      - name: Check database connections test fixture
+        shell: bash -l {0}
+        run: |
+          pip install psycopg2
+          mkdir ~/.smartnoise
+          cp tests/sdk/engines/postgres/connections-unit.yaml ~/.smartnoise
+          source pass.sh
+          python tests/setup/download.py
+      - name: Test SDK
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          conda install pytest
+          export SKIP_PANDAS=1
+          pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml

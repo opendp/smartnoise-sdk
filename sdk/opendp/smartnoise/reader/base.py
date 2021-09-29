@@ -6,7 +6,7 @@ class Reader:
 
     @property
     def engine(self):
-        return self.ENGINE
+        return self.ENGINE.lower() if self.ENGINE else None
 
     def execute(self, query, *ignore, accuracy: bool = False):
         raise NotImplementedError("Execute must be implemented on the inherited class")
