@@ -267,7 +267,7 @@ class DPCTGAN(CTGANSynthesizer):
                     perm = np.arange(self._batch_size)
                     np.random.shuffle(perm)
                     real = self._data_sampler.sample_data(
-                        self.batch_size, col[perm], opt[perm])
+                        self._batch_size, col[perm], opt[perm])
                     c2 = c1[perm]
 
                 fake = self._generator(fakez)
