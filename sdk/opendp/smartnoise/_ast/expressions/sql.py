@@ -75,7 +75,7 @@ class AggFunction(SqlExpr):
             return self.expression.type()
         elif self.name == "MAX":
             return self.expression.type()
-        elif self.name in ["VAR", "VARIANCE", "AVG", "STD", "STDDEV"]:
+        elif self.name in ["VAR", "VARIANCE", "AVG", "STD", "STDDEV", "STDEV"]:
             return "float"
         else:
             return "unknown"
