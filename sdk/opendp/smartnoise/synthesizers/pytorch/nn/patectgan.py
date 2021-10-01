@@ -37,9 +37,9 @@ class Discriminator(Module):
         self.seq = Sequential(*seq)
 
     def dragan_penalty(self, real_data, device='cpu', pac=10, lambda_=10):
-        alpha = torch.rand(real_data.shape[0], 1, device=device).expand(real_data.shape)
+        alpha = torch.rand(real_data.shape[0], 1, device=device).expand(real_data.shape[0])
         delta = torch.normal(
-            mean=0.0, std=pac, size=real_data.shape, device=device
+            mean=0.0, std=pac, size=real_data.shape[0], device=device
         )  # 0.5 * real_data.std() * torch.rand(real_data.shape)
         x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + delta), requires_grad=True)
 
