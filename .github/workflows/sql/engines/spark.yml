@@ -24,19 +24,7 @@ jobs:
       run: |
         conda install pip
         conda update pip
-    # - name: Install cython and pandas
-    #   shell: bash -l {0}
-    #   run: |
-    #     pip install --no-cache-dir cython
-    #     pip install --no-cache-dir numpy
-    #     pip install --no-cache-dir pandas
-    # - name: Get development headers
-    #   shell: bash -l {0}
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get -yq upgrade
-    #     sudo apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev openjdk-11-jre-headless
-    - name: Get development headers
+    - name: Install Java
       shell: bash -l {0}
       run: |
         sudo apt-get update

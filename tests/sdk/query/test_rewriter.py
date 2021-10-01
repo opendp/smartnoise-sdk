@@ -28,7 +28,6 @@ metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
 class TestRewrite:
     def test_all_good_queries(self):
         for goodpath in good_files:
-            print(goodpath)
             gqt = GoodQueryTester(goodpath)
             gqt.runRewrite()
 
@@ -47,7 +46,6 @@ class GoodQueryTester:
     def runRewrite(self):
         qb = QueryParser(metadata).queries(self.queryBatch)
         for q in qb:
-            print(q)
             new_q = Rewriter(metadata).query(q)
             assert q.has_symbols()
             assert new_q.has_symbols()
