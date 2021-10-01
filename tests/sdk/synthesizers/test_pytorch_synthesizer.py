@@ -49,7 +49,7 @@ class TestPytorchDPSynthesizer_DPCTGAN:
 
     def test_fit(self):
         self.dpctgan.fit(df, categorical_columns=['sex','educ','race','married'])
-        assert self.dpctgan.gan.generator
+        assert self.dpctgan.gan._generator
 
     def test_sample(self):
         self.dpctgan.fit(df, categorical_columns=['sex','educ','race','married'])
@@ -63,7 +63,7 @@ class TestPytorchDPSynthesizer_PATECTGAN:
 
     def test_fit(self):
         self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
-        assert self.patectgan.gan.generator
+        assert self.patectgan.gan._generator
 
     def test_sample(self):
         self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
@@ -77,7 +77,7 @@ class TestPytorchDPSynthesizer_PATECTDRAGAN:
 
     def test_fit(self):
         self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
-        assert self.patectgan.gan.generator
+        assert self.patectgan.gan._generator
 
     def test_sample(self):
         self.patectgan.fit(df, categorical_columns=['sex','educ','race','married'])
