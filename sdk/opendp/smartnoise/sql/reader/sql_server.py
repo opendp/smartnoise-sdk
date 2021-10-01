@@ -18,12 +18,8 @@ class SqlServerReader(SqlReader):
 
     ENGINE = Engine.SQL_SERVER
 
-    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None):
+    def __init__(self, host=None, database=None, user=None, password=None, port=None, conn=None, **kwargs):
         super().__init__(self.ENGINE)
-        import pyodbc
-
-        # this reader would break in the module code as is
-        self.api = pyodbc
 
         if conn is not None:
             self.conn = conn
@@ -33,13 +29,20 @@ class SqlServerReader(SqlReader):
             self.database = database
             self.user = user
             self.port = port
+            try:
+                import pyodbc
 
-            if password is None:
-                if "SA_PASSWORD" in os.environ:
-                    password = os.environ["SA_PASSWORD"]
-            self.password = password
+                # this reader would break in the module code as is
+                self.api = pyodbc
 
-            self.update_connection_string()
+                if password is None:
+                    if "SA_PASSWORD" in os.environ:
+                        password = os.environ["SA_PASSWORD"]
+                self.password = password
+
+                self.update_connection_string()
+            except:
+                pass
 
     def execute(self, query, *ignore, accuracy:bool=False):
         if not isinstance(query, str):

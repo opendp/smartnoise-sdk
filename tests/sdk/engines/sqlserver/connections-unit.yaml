@@ -1,0 +1,8 @@
+sqlserver:
+  host: localhost
+  port: 1433
+  user: sa
+  databases:
+    NameTests: nametests
+    PUMS: PUMS
+    PUMS_large: PUMS_LARGE

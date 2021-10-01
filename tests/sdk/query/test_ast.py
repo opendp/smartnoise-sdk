@@ -45,7 +45,6 @@ class TestAst:
         err.match("^Lexer error")
     def test_all_good_queries(self):
         for goodpath in good_files:
-            print(goodpath)
             gqt = GoodQueryTester(goodpath)
             gqt.runParse()
             gqt.runBuild()
@@ -66,7 +65,6 @@ class GoodQueryTester:
             self.walk_children(n)
     def runParse(self):
         for query in self.queries:
-            print(query)
             QueryParser().parse_only(query)
     def runBuild(self):
         for query in self.queries:
@@ -89,7 +87,6 @@ class BadQueryTester:
         self.queries = [q.strip() for q in queryLines.split(";") if q.strip() != ""]
     def runParse(self, exc):
         for query in self.queries:
-            print(query)
             failed = False
             try:
                 QueryParser().parse_only(query)

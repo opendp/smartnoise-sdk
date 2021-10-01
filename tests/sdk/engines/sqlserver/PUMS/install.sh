@@ -1,16 +1,15 @@
 # set DATA to location of dp-test-datasets/data/
 DATASETS=../../../../../datasets/
-PUMS=${DATASETS}PUMS.csv
-PUMS_LARGE=${DATASETS}PUMS_large.csv
+sqlcmd -S localhost -P ${SA_PASSWORD} -U sa -i pums.sql
+PUMS=${DATA}PUMS_california_demographics_1000/data.csv
+PUMS_LARGE=${DATA}PUMS_california_demographics/data.csv
 PUMS_PID=${DATASETS}PUMS_pid.csv
 PUMS_DUP=${DATASETS}PUMS_dup.csv
 tail -n +2 $PUMS > PUMS.csv
 tail -n +2 $PUMS_LARGE > PUMS_large.csv
 tail -n +2 $PUMS_PID > PUMS_pid.csv
-tail -n +2 $PUMS_DUP > PUMS_dup.csv
-ls -l
-psql -h localhost -U postgres < pums.sql
-echo "Done!"
+tail -n +2 $PUMS_DUP > PUMS_large.csv
+psql -h $POSTGRES_HOST -U postgres < pums.sql
 rm PUMS.csv
 rm PUMS_pid.csv
 rm PUMS_dup.csv

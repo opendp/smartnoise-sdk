@@ -53,7 +53,7 @@ queries = [
     ]
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
-meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
+meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
 metadata = CollectionMetadata.from_file(meta_path)
 
 def test_rewriting():

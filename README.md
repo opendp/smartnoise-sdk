@@ -5,7 +5,7 @@
 ## SmartNoise System: Tools for Differential Privacy
 
 
-<br />Please see the accompanying [SmartNoise Documentation](https://docs.opendp.org/en/latest/smartnoise/), [SmartNoise Core repository](https://github.com/opendp/smartnoise-core) and [SmartNoise Samples repository](https://github.com/opendp/smartnoise-samples) for this system. 
+<br />Please see the accompanying [SmartNoise Documentation](https://docs.smartnoise.org/en/latest/index.html), [SmartNoise Core repository](https://github.com/opendp/smartnoise-core) and [SmartNoise Samples repository](https://github.com/opendp/smartnoise-samples) for this system. 
 
 
 ##
@@ -36,10 +36,8 @@ The system's SmartNoise Core library can be installed from PyPi:
 > pip install opendp-smartnoise
 
 ## Documentation
-Documentation for SDK functionality: [here](https://opendp.github.io/smartnoise-samples/docs/api/system/)
+Documentation for SDK functionality: [here](https://docs.smartnoise.org/en/latest/index.html)
 
-### Experimental
-None
 
 ## Getting started
 ### venv setup
