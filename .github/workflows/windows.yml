@@ -1,0 +1,16 @@
+name: Windows CI
+on:  [workflow_dispatch]
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: pip install
+        shell: cmd
+        run: |
+          pip install --no-cache-dir -r tests\requirements.txt
+          pip install --no-cache-dir .\sdk
+      - name: Unit tests
+        shell: cmd
+        run: |
+          python -m pytest tests\sdk
