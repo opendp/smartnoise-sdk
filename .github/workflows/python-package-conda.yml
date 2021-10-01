@@ -62,6 +62,6 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install pytest
-        pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
+        pytest tests/sdk -s --junitxml=./TEST-TEST.xml
 
         
