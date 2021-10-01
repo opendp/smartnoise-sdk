@@ -1,13 +1,10 @@
-import warnings
 import math
 import numpy as np
-import pandas as pd
 import torch
-from packaging import version
 from torch import optim
 from torch import nn
 import torch.utils.data
-from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, functional, Sigmoid
+from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
 from torch.autograd import Variable
 
 from ctgan.data_sampler import DataSampler
@@ -15,6 +12,7 @@ from ctgan.data_transformer import DataTransformer
 from ctgan.synthesizers import CTGANSynthesizer
 
 from .privacy_utils import weights_init, pate, moments_acc
+
 
 class Discriminator(Module):
 
@@ -27,7 +25,7 @@ class Discriminator(Module):
         #  print ('now dim is {}'.format(dim))
         self.pac = pac
         self.pacdim = dim
-        
+
         seq = []
         for item in list(discriminator_dim):
             seq += [Linear(dim, item), LeakyReLU(0.2), Dropout(0.5)]
@@ -41,7 +39,7 @@ class Discriminator(Module):
     def dragan_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
         alpha = torch.rand(real_data.shape[0], 1, device=device).expand(real_data.shape)
         delta = torch.normal(
-            mean=0.0, std=c, size=real_data.shape, device=device
+            mean=0.0, std=pac, size=real_data.shape, device=device
         )  # 0.5 * real_data.std() * torch.rand(real_data.shape)
         x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + delta), requires_grad=True)
 
@@ -62,6 +60,7 @@ class Discriminator(Module):
     def forward(self, input):
         assert input.size()[0] % self.pac == 0
         return self.seq(input.view(-1, self.pacdim))
+
 
 class Residual(Module):
 
@@ -93,6 +92,7 @@ class Generator(Module):
     def forward(self, input):
         data = self.seq(input)
         return data
+
 
 class PATECTGAN(CTGANSynthesizer):
 
@@ -228,7 +228,10 @@ class PATECTGAN(CTGANSynthesizer):
         
         optimizer_s = optim.Adam(student_disc.parameters(), lr=2e-4, betas=(0.5, 0.9))
         optimizer_t = [
-            optim.Adam(teacher_disc[i].parameters(), lr=self._discriminator_lr, betas=(0.5, 0.9), weight_decay=self._discriminator_decay)
+            optim.Adam(
+                teacher_disc[i].parameters(), lr=self._discriminator_lr, 
+                betas=(0.5, 0.9), weight_decay=self._discriminator_decay
+            )
             for i in range(self.num_teachers)
         ]
 
@@ -372,8 +375,6 @@ class PATECTGAN(CTGANSynthesizer):
                 # print ('iterator {i}, student discriminator loss is {j}'.format(i=t_3, j=loss_s))
 
             # train generator
-
-
             fakez = torch.normal(mean=mean, std=std)
             condvec = self.cond_generator.sample_condvec(self._batch_size)
 

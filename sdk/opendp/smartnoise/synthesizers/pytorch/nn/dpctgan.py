@@ -1,13 +1,9 @@
-import warnings
-
 import numpy as np
-import pandas as pd
 import torch
-from packaging import version
 from torch import optim
 from torch import nn
 import torch.utils.data
-from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, functional, Sigmoid
+from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
 
 import opacus
 
@@ -15,8 +11,8 @@ from ctgan.data_sampler import DataSampler
 from ctgan.data_transformer import DataTransformer
 from ctgan.synthesizers import CTGANSynthesizer
 
-class Discriminator(Module):
 
+class Discriminator(Module):
     def __init__(self, input_dim, discriminator_dim, loss, pac=10):
         super(Discriminator, self).__init__()
         torch.cuda.manual_seed(0)
@@ -26,7 +22,7 @@ class Discriminator(Module):
         #  print ('now dim is {}'.format(dim))
         self.pac = pac
         self.pacdim = dim
-        
+
         seq = []
         for item in list(discriminator_dim):
             seq += [Linear(dim, item), LeakyReLU(0.2), Dropout(0.5)]
@@ -62,8 +58,8 @@ class Discriminator(Module):
         assert input.size()[0] % self.pac == 0
         return self.seq(input.view(-1, self.pacdim))
 
-class Residual(Module):
 
+class Residual(Module):
     def __init__(self, i, o):
         super(Residual, self).__init__()
         self.fc = Linear(i, o)
@@ -93,6 +89,7 @@ class Generator(Module):
         data = self.seq(input)
         return data
 
+
 # custom for calcuate grad_sample for multiple loss.backward()
 def _custom_create_or_extend_grad_sample(
     param: torch.Tensor, grad_sample: torch.Tensor, batch_dim: int
@@ -110,6 +107,7 @@ def _custom_create_or_extend_grad_sample(
         # param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
     else:
         param.grad_sample = grad_sample
+
 
 class DPCTGAN(CTGANSynthesizer):
 
