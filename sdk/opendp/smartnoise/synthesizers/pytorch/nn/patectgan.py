@@ -96,20 +96,20 @@ class Generator(Module):
 
 class PATECTGAN(CTGANSynthesizer):
 
-    def __init__(self, 
-                 embedding_dim=128, 
-                 generator_dim=(256, 256), 
+    def __init__(self,
+                 embedding_dim=128,
+                 generator_dim=(256, 256),
                  discriminator_dim=(256, 256),
-                 generator_lr=2e-4, 
-                 generator_decay=1e-6, 
+                 generator_lr=2e-4,
+                 generator_decay=1e-6,
                  discriminator_lr=2e-4,
-                 discriminator_decay=1e-6, 
-                 batch_size=500, 
+                 discriminator_decay=1e-6,
+                 batch_size=500,
                  discriminator_steps=1,
-                 log_frequency=True, 
-                 verbose=False, 
-                 epochs=300, 
-                 pac=10, 
+                 log_frequency=True,
+                 verbose=False,
+                 epochs=300,
+                 pac=10,
                  cuda=True,
                  epsilon=1,
                  binary=False,
@@ -141,10 +141,10 @@ class PATECTGAN(CTGANSynthesizer):
         self._epochs = epochs
         self.pac = pac
         self.epsilon = epsilon
-        
+
         self.verbose = verbose
         self.loss = loss
-        
+
         # PATE params
         self.regularization = regularization if self.loss != "wasserstein" else "dragan"
         self.teacher_iters = teacher_iters
@@ -156,7 +156,7 @@ class PATECTGAN(CTGANSynthesizer):
         self.noise_multiplier = noise_multiplier
         self.moments_order = moments_order
         self.delta = delta
-        
+
         if not cuda or not torch.cuda.is_available():
             device = 'cpu'
         elif isinstance(cuda, str):
@@ -165,11 +165,11 @@ class PATECTGAN(CTGANSynthesizer):
             device = 'cuda'
 
         self._device = torch.device(device)
-            
+
     def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
         if update_epsilon:
             self.epsilon = update_epsilon
-            
+
         sample_per_teacher = (
             self.sample_per_teacher if self.sample_per_teacher < len(data) else 1000
         )
@@ -177,20 +177,20 @@ class PATECTGAN(CTGANSynthesizer):
 
         self._transformer = DataTransformer()
         self._transformer.fit(data, discrete_columns=categorical_columns)
-        
+
         train_data = self._transformer.transform(data)
 
         data_partitions = np.array_split(train_data, self.num_teachers)
 
         data_dim = self._transformer.output_dimensions
-        
+
         self.cond_generator = DataSampler(
-            train_data, 
+            train_data,
             self._transformer.output_info_list,
             self._log_frequency)
-        
+
         # create conditional generator for each teacher model
-        
+
         # Note: Previously, there existed a ConditionalGenerator object in CTGAN
         # - that functionality has been subsumed by DataSampler, but switch is
         # essentially 1 for 1
@@ -198,7 +198,7 @@ class PATECTGAN(CTGANSynthesizer):
             DataSampler(d, self._transformer.output_info_list, self._log_frequency)
             for d in data_partitions
         ]
-        
+
         self._generator = Generator(
             self._embedding_dim + self.cond_generator.dim_cond_vec(),
             self._generator_dim,
@@ -208,10 +208,10 @@ class PATECTGAN(CTGANSynthesizer):
         discriminator = Discriminator(
             data_dim + self.cond_generator.dim_cond_vec(),
             self._discriminator_dim,
-            self.loss, 
+            self.loss,
             self.pac
         ).to(self._device)
-        
+
         student_disc = discriminator
         student_disc.apply(weights_init)
 
@@ -220,16 +220,16 @@ class PATECTGAN(CTGANSynthesizer):
             teacher_disc[i].apply(weights_init)
 
         optimizerG = optim.Adam(
-            self._generator.parameters(), 
+            self._generator.parameters(),
             lr=self._generator_lr,
-            betas=(0.5, 0.9), 
+            betas=(0.5, 0.9),
             weight_decay=self._generator_decay
         )
-        
+
         optimizer_s = optim.Adam(student_disc.parameters(), lr=2e-4, betas=(0.5, 0.9))
         optimizer_t = [
             optim.Adam(
-                teacher_disc[i].parameters(), lr=self._discriminator_lr, 
+                teacher_disc[i].parameters(), lr=self._discriminator_lr,
                 betas=(0.5, 0.9), weight_decay=self._discriminator_decay
             )
             for i in range(self.num_teachers)
@@ -245,12 +245,12 @@ class PATECTGAN(CTGANSynthesizer):
 
         real_label = 1
         fake_label = 0
-        
+
         criterion = nn.BCELoss() if (self.loss == "cross_entropy") else self.w_loss
 
         if self.verbose:
             print("using loss {} and regularization {}".format(self.loss, self.regularization))
-        
+
         while eps < self.epsilon:
             # train teacher discriminators
             for t_2 in range(self.teacher_iters):
@@ -423,7 +423,7 @@ class PATECTGAN(CTGANSynthesizer):
                         eps, loss_g.detach().cpu(), loss_s.detach().cpu()
                     )
                 )
-    
+
     def w_loss(self, output, labels):
         vals = torch.cat([labels[None, :], output[None, :]], axis=1)
         ordered = vals[vals[:, 0].sort()[1]]
@@ -432,7 +432,7 @@ class PATECTGAN(CTGANSynthesizer):
         true_score = torch.cat(data_list[1:], axis=0)[:, 1]
         w_loss = -(torch.mean(true_score) - torch.mean(fake_score))
         return w_loss
-    
+
     def generate(self, n, condition_column=None, condition_value=None):
         """
         TODO: Add condition_column support from CTGAN
@@ -448,7 +448,7 @@ class PATECTGAN(CTGANSynthesizer):
             fakez = torch.normal(mean=mean, std=std).to(self._device)
 
             condvec = self.cond_generator.sample_original_condvec(self._batch_size)
-            
+
             if condvec is None:
                 pass
             else:
@@ -462,5 +462,5 @@ class PATECTGAN(CTGANSynthesizer):
 
         data = np.concatenate(data, axis=0)
         data = data[:n]
-        
+
         return self._transformer.inverse_transform(data)

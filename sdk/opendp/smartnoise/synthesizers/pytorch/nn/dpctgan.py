@@ -111,20 +111,20 @@ def _custom_create_or_extend_grad_sample(
 
 class DPCTGAN(CTGANSynthesizer):
 
-    def __init__(self, 
-                 embedding_dim=128, 
-                 generator_dim=(256, 256), 
+    def __init__(self,
+                 embedding_dim=128,
+                 generator_dim=(256, 256),
                  discriminator_dim=(256, 256),
-                 generator_lr=2e-4, 
-                 generator_decay=1e-6, 
+                 generator_lr=2e-4,
+                 generator_decay=1e-6,
                  discriminator_lr=2e-4,
-                 discriminator_decay=1e-6, 
-                 batch_size=500, 
+                 discriminator_decay=1e-6,
+                 batch_size=500,
                  discriminator_steps=1,
-                 log_frequency=True, 
-                 verbose=True, 
-                 epochs=300, 
-                 pac=10, 
+                 log_frequency=True,
+                 verbose=True,
+                 epochs=300,
+                 pac=10,
                  cuda=True,
                  disabled_dp=False,
                  target_delta=None,
@@ -150,7 +150,7 @@ class DPCTGAN(CTGANSynthesizer):
         self._verbose = verbose
         self._epochs = epochs
         self.pac = pac
-        
+
         # opacus parameters
         self.sigma = sigma
         self.disabled_dp = disabled_dp
@@ -176,24 +176,24 @@ class DPCTGAN(CTGANSynthesizer):
         self._transformer = None
         self._data_sampler = None
         self._generator = None
-        
+
         if self.loss != "cross_entropy":
             # Monkeypatches the _create_or_extend_grad_sample function when calling opacus
             opacus.supported_layers_grad_samplers._create_or_extend_grad_sample = (
                 _custom_create_or_extend_grad_sample
             )
-            
+
     def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
         if update_epsilon:
             self.epsilon = update_epsilon
 
         self._transformer = DataTransformer()
         self._transformer.fit(data, discrete_columns=categorical_columns)
-        
+
         train_data = self._transformer.transform(data)
 
         self._data_sampler = DataSampler(
-            train_data, 
+            train_data,
             self._transformer.output_info_list,
             self._log_frequency)
 
@@ -208,19 +208,19 @@ class DPCTGAN(CTGANSynthesizer):
         discriminator = Discriminator(
             data_dim + self._data_sampler.dim_cond_vec(),
             self._discriminator_dim,
-            self.loss, 
+            self.loss,
             self.pac
         ).to(self._device)
 
         optimizerG = optim.Adam(
-            self._generator.parameters(), 
+            self._generator.parameters(),
             lr=self._generator_lr,
-            betas=(0.5, 0.9), 
+            betas=(0.5, 0.9),
             weight_decay=self._generator_decay
         )
         optimizerD = optim.Adam(
-            discriminator.parameters(), 
-            lr=self._discriminator_lr, 
+            discriminator.parameters(),
+            lr=self._discriminator_lr,
             betas=(0.5, 0.9),
             weight_decay=self._discriminator_decay
         )
@@ -429,7 +429,7 @@ class DPCTGAN(CTGANSynthesizer):
             fakez = torch.normal(mean=mean, std=std).to(self._device)
 
             condvec = self._data_sampler.sample_original_condvec(self._batch_size)
-            
+
             if condvec is None:
                 pass
             else:
@@ -443,5 +443,5 @@ class DPCTGAN(CTGANSynthesizer):
 
         data = np.concatenate(data, axis=0)
         data = data[:n]
-        
+
         return self._transformer.inverse_transform(data)
