@@ -36,7 +36,7 @@ class Discriminator(Module):
             seq += [Sigmoid()]
         self.seq = Sequential(*seq)
 
-    def dragan_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
+    def dragan_penalty(self, real_data, device='cpu', pac=10, lambda_=10):
         alpha = torch.rand(real_data.shape[0], 1, device=device).expand(real_data.shape)
         delta = torch.normal(
             mean=0.0, std=pac, size=real_data.shape, device=device
@@ -330,7 +330,7 @@ class PATECTGAN(CTGANSynthesizer):
                     perm = np.arange(self._batch_size)
                     np.random.shuffle(perm)
                     real = data_sampler.sample_data(
-                        self.batch_size, col[perm], opt[perm])
+                        self._batch_size, col[perm], opt[perm])
                     c2 = c1[perm]
 
                 fake = self._generator(fakez)
