@@ -56,7 +56,8 @@ class DPcovariance:
             self.globalEps = check_global_epsilon(global_eps)
             self.epsilon = distribute_epsilon(self.globalEps, n_calcs=output_length)
             self.accuracyVals = laplace_get_accuracy(self.sens, self.epsilon, self.alpha)
-        # Option 4: Enter an accuracy value instead of an epsilon, and calculate individual epsilons with this accuracy.
+        # Option 4: Enter an accuracy value instead of an epsilon, and calculate
+        # individual epsilons with this accuracy.
         elif accuracy is not None:
             self.accuracy = check_accuracy(accuracy)
             self.epsilon = laplace_get_epsilon(self.sens, self.accuracy, self.alpha)
@@ -151,7 +152,8 @@ def cov_method_lin_reg(release, num_rows, x_names, y_name, intercept=False):
         feature names, and a target name; and returns a DP linear regression model
 
         Args:
-            release (Dataframe): differentially privately released covariance matrix that will be used to make the linear regression
+            release (Dataframe): differentially privately released covariance matrix that will be used to
+                make the linear regression
             num_rows (int): the number of rows in the original data
             x_names (list): list of names of the features (i.e. independent variables) to use
             y_name (string): name of the target (i.e. dependent variable) to use
@@ -328,9 +330,9 @@ def censor(value, low, high):
         return value
 
 
-def censor_data_1D(x, l, h):
+def censor_data_1D(x, ll, h):
     def scale(v):
-        return censor(v, l, h)
+        return censor(v, ll, h)
 
     return x.apply(scale)
 
@@ -374,8 +376,8 @@ def amsweep(g, m):
             h = np.linalg.inv(g)  # inverse of g
             h = np.negative(h)  # negate the sign of all elements
         else:
-            k = np.where(m == True)[0]  # indices where m is True
-            kcompl = np.where(m == False)[0]  # indices where m is False
+            k = np.where(m)[0]  # indices where m is True
+            kcompl = np.where(m is False)[0]  # indices where m is False
 
             # separate the elements of g
             # make the type np.matrix so that dimensions are preserved correctly
@@ -387,7 +389,7 @@ def amsweep(g, m):
             # use a try-except to get the inverse of g11
             try:
                 h11a = np.linalg.inv(g11)  # try to get the regular inverse
-            except:  # should have LinAlgError (not defined error)
+            except BaseException:  # should have LinAlgError (not defined error)
                 h11a = np.linalg.pinv(g11)
             h11 = np.negative(h11a)
 

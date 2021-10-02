@@ -1,7 +1,6 @@
 import pandas as pd
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
+from sklearn.base import RegressorMixin, MultiOutputMixin
 from sklearn.linear_model.base import LinearModel
-from sklearn.utils import check_array, check_X_y
 from .dp_covariance import DPcovariance
 
 
@@ -81,7 +80,6 @@ class DPLinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         """
         data = pd.concat((X, y), axis=1)
         n = data.shape[0]
-        m = data.shape[1]
 
         cols = list(X.columns.values) + list(y.columns.values)
 

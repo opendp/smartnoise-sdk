@@ -126,6 +126,7 @@ reddit.yaml
 clean_askreddit.csv
 askreddit.csv.zip
 PUMS.csv
+PUMS_1000.csv
 PUMS_pid.csv
 PUMS_large.csv
 PUMS_dup.csv

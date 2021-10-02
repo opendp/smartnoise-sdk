@@ -1,4 +1,4 @@
 wheel:
 	poetry build
-setup: dist/*-`poetry version -s`.tar.gz
+setup: wheel
 	tar -xvf dist/*-`poetry version -s`.tar.gz -O '*/setup.py' > setup.py
