@@ -4,27 +4,25 @@ from .rand import normal as rand_normal
 from .base import AdditiveNoiseMechanism
 from scipy.stats import norm
 from snsql.report import Result, Interval, Intervals
-from opendp.smartnoise.core import core_library
-
+from opendp.mod import enable_features
+from opendp.meas import make_base_gaussian
 
 class Gaussian(AdditiveNoiseMechanism):
     def __init__(self, epsilon, delta=1.0e-16, sensitivity=1.0, max_contrib=1):
         super().__init__(epsilon, delta, sensitivity, max_contrib)
+        self.epsilon = epsilon
+        self.delta = delta
+        self.sensitivity = sensitivity
         self.sd = (
             float(sensitivity) * max_contrib * math.sqrt(2.0 * math.log(1.25 / delta)) / epsilon
         )
 
     def release(self, vals, compute_accuracy=False, bootstrap=False):
-        reported_vals = [
-            core_library.gaussian_mechanism(
-                float(v),
-                float(self.eps),
-                float(self.delta),
-                float(self.sensitivity) * self.max_contrib,
-                False,
-            )
-            for v in vals
-        ]
+        sd = float(self.sensitivity) * self.max_contrib * math.sqrt(2.0 * math.log(1.25 / self.delta)) / self.epsilon
+        enable_features('floating-point')
+        enable_features('contrib')
+        meas = make_base_gaussian(sd)
+        reported_vals = [meas(float(v)) for v in vals]
         mechanism = "Gaussian"
         statistic = "additive_noise"
         source = None
