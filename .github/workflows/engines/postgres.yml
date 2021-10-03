@@ -1,5 +1,12 @@
 name: PostgreSQL Integration Tests
-on: pull_request
+on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
+  workflow_dispatch:
+
 jobs:
   container-job:
     runs-on: ubuntu-latest
@@ -42,18 +49,21 @@ jobs:
       - name: Setup SDK
         shell: bash -l {0}
         run: |
+          cd sql
           pip install --no-cache-dir -r tests/requirements.txt
-          pip install --no-cache-dir  ./sdk
+          pip install --no-cache-dir  .
+          pip install --no-cache-dir opendp-smartnoise-core # temporary
       - name: Download test datasets
         shell: bash -l {0}
         run: |
+          cd sql
           python tests/setup/download.py
       - name: Install PUMS
         shell: bash -l {0}
         run: |
           source pass.sh
-          echo $PGPASSWORD
-          cd tests/sdk/engines/postgres/PUMS
+          cd sql
+          cd tests/engines/postgres/PUMS
           source install.sh
         env:
           POSTGRES_HOST: localhost
@@ -71,14 +81,15 @@ jobs:
         shell: bash -l {0}
         run: |
           pip install psycopg2
-          mkdir ~/.smartnoise
-          cp tests/sdk/engines/postgres/connections-unit.yaml ~/.smartnoise
           source pass.sh
+          cd sql
+          mkdir ~/.smartnoise
+          cp tests/engines/postgres/connections-unit.yaml ~/.smartnoise
           python tests/setup/download.py
       - name: Test SDK
         shell: bash -l {0}
         run: |
           source pass.sh
-          conda install pytest
+          cd sql
           export SKIP_PANDAS=1
-          pytest tests/sdk -s -m "not torch"  --junitxml=./TEST-TEST.xml
+          pytest tests

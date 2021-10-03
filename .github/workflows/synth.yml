@@ -1,6 +1,12 @@
 name: SmartNoise SQL Gate
 
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+    paths:
+      - 'synth/tests/**'
+      - 'synth/snsynth/**'
+      - 'synth/pyproject.toml'
+  workflow_dispatch:
 
 jobs:
   build-linux:
