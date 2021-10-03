@@ -59,9 +59,9 @@ pip install opendp-smartnoise
 import sklearn.datasets
 import pandas as pd
 
-from opendp.smartnoise.sql import execute_private_query, PandasReader
-from opendp.smartnoise.metadata import CollectionMetadata
-from opendp.smartnoise.metadata.collection import Table, Float
+from snsql.sql import execute_private_query, PandasReader
+from snsql.metadata import CollectionMetadata
+from snsql.metadata.collection import Table, Float
 
 sklearn_dataset = sklearn.datasets.load_iris()
 sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)

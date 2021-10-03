@@ -103,6 +103,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# poetry
+poetry.lock
+
 # mlflow
 mlruns
 result.json
