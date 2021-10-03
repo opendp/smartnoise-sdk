@@ -1,7 +1,7 @@
-from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.metrics._metrics import Metrics
+from sneval.privacyalgorithm._base import PrivacyAlgorithm
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._eval_params import EvaluatorParams
+from sneval.metrics._metrics import Metrics
 from abc import ABC, abstractmethod
 
 

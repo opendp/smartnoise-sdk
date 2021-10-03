@@ -1,5 +1,5 @@
-from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.smartnoise.evaluation.metrics._benchmark_metrics import BenchmarkMetrics
+from sneval.params._benchmark_params import BenchmarkParams
+from sneval.metrics._benchmark_metrics import BenchmarkMetrics
 from abc import ABC, abstractmethod
 
 

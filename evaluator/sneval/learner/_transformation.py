@@ -1,12 +1,12 @@
 import random
-from opendp.smartnoise._ast.tokens import *
-from opendp.smartnoise._ast.expression import *
-from opendp.smartnoise._ast import tokens
-from opendp.smartnoise._ast.expressions import *
-from opendp.smartnoise.sql import PandasReader, PrivateReader
+from snsql._ast.tokens import *
+from snsql._ast.expression import *
+from snsql._ast import tokens
+from snsql._ast.expressions import *
+from snsql.sql import PandasReader, PrivateReader
 
-# from opendp.smartnoise.sql.private_reader import PrivateReaderOptions
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
+# from snsql.sql.private_reader import PrivateReaderOptions
+from sneval.params._learner_params import LearnerParams
 
 
 def set_parent(s):

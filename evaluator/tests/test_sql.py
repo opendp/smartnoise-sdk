@@ -1,16 +1,16 @@
 import logging
 test_logger = logging.getLogger("sql-test-logger")
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
-from opendp.smartnoise.evaluation.report._report import Report
-from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.smartnoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
-from opendp.smartnoise.evaluation.metrics._metrics import Metrics
-from opendp.smartnoise.sql import PandasReader
-from opendp.smartnoise.metadata.collection import *
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._eval_params import EvaluatorParams
+from sneval.params._benchmark_params import BenchmarkParams
+from sneval.params._dataset_params import DatasetParams
+from sneval.report._report import Report
+from sneval.privacyalgorithm._base import PrivacyAlgorithm
+from sneval.evaluator._dp_evaluator import DPEvaluator
+from sneval.benchmarking._dp_benchmark import DPBenchmarking
+from sneval.metrics._metrics import Metrics
+from snsql.sql import PandasReader
+from snsql.metadata.collection import *
 from dp_singleton_query import DPSingletonQuery
 import pytest
 import pandas as pd

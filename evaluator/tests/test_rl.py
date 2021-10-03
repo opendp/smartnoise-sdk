@@ -5,9 +5,9 @@ import numpy as np
 import os
 import pandas as pd
 
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.learner.q_learning import QLearning
-from opendp.smartnoise.evaluation.learner.util import generate_query
+from sneval.params._learner_params import LearnerParams
+from sneval.learner.q_learning import QLearning
+from sneval.learner.util import generate_query
 
 test_logger = logging.getLogger("test-logger")
 

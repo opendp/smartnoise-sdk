@@ -1,5 +1,5 @@
-from opendp.smartnoise.evaluation.metrics._metrics import Metrics
-from opendp.smartnoise.evaluation.params._halton_params import HaltonParams
+from sneval.metrics._metrics import Metrics
+from sneval.params._halton_params import HaltonParams
 from abc import ABC, abstractmethod
 
 

@@ -3,8 +3,8 @@ import pandas as pd
 import copy
 import csv
 import os
-from opendp.smartnoise.metadata.collection import *
-from opendp.smartnoise.evaluation.learner._generate import Grammar
+from snsql.metadata.collection import *
+from sneval.learner._generate import Grammar
 
 
 def create_simulated_dataset(dataset_size, file_name):

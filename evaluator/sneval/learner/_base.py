@@ -1,6 +1,6 @@
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.metrics._metrics import Metrics
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._learner_params import LearnerParams
+from sneval.metrics._metrics import Metrics
 
 
 class Learner(ABC):

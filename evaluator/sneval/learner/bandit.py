@@ -2,20 +2,20 @@ import os
 import numpy as np
 import pandas as pd
 
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.learner.util import (
+from sneval.params._learner_params import LearnerParams
+from sneval.learner.util import (
     create_simulated_dataset,
     generate_neighbors,
     generate_query,
     write_to_csv,
 )
 
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
-from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.smartnoise.sql import PandasReader
+from sneval.params._learner_params import LearnerParams
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._eval_params import EvaluatorParams
+from sneval.params._dataset_params import DatasetParams
+from sneval.evaluator._dp_evaluator import DPEvaluator
+from snsql.sql import PandasReader
 from dp_singleton_query import DPSingletonQuery
 
 

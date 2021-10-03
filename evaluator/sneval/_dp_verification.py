@@ -5,9 +5,9 @@ import math
 import copy
 import os
 from scipy import stats
-import opendp.smartnoise.evaluation._aggregation as agg
-import opendp.smartnoise.evaluation._exploration as exp
-from opendp.smartnoise.metadata.collection import *
+import sneval._aggregation as agg
+import sneval._exploration as exp
+from snsql.metadata.collection import *
 
 
 class DPVerification:

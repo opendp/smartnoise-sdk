@@ -7,8 +7,8 @@ import json
 import sys
 import os
 
-from opendp.smartnoise.sql import PandasReader, PrivateReader
-from opendp.smartnoise.sql._mechanisms.gaussian import Gaussian
+from snsql.sql import PandasReader, PrivateReader
+from snsql.sql._mechanisms.gaussian import Gaussian
 from pandasql import sqldf
 
 

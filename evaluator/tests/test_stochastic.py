@@ -8,9 +8,9 @@ import sys
 import subprocess
 import os
 import pytest
-from opendp.smartnoise.evaluation._dp_verification import DPVerification
-from opendp.smartnoise.evaluation._exploration import Exploration
-from opendp.smartnoise.evaluation._aggregation import Aggregation
+from sneval._dp_verification import DPVerification
+from sneval._exploration import Exploration
+from sneval._aggregation import Aggregation
 
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 dv = DPVerification(dataset_size=1000, csv_path=os.path.join(root_url,"datasets"))

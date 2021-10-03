@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import copy
 from statsmodels.tools import sequences
-from opendp.smartnoise.metadata.collection import *
+from snsql.metadata.collection import *
 
 
 class Exploration:

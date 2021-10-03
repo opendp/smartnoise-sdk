@@ -39,12 +39,12 @@ A sample PrivacyAlgorithm interface is implemented [here](https://github.com/ope
 
 #### Input
 ```python
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.report._report import Report
-from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.smartnoise.evaluation.metrics._metrics import Metrics
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._eval_params import EvaluatorParams
+from sneval.report._report import Report
+from sneval.privacyalgorithm._base import PrivacyAlgorithm
+from sneval.evaluator._dp_evaluator import DPEvaluator
+from sneval.metrics._metrics import Metrics
 from dp_lib import DPSampleLibrary
 from dp_algorithm import DPSample
 import pandas as pd
@@ -90,14 +90,14 @@ This [unit test](https://github.com/opendp/smartnoise-sdk/blob/060ead584360f6e8c
 
 #### Input
 ```python
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.smartnoise.evaluation.report._report import Report
-from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.smartnoise.evaluation.benchmarking._dp_benchmark import DPBenchmarking
-from opendp.smartnoise.evaluation.metrics._metrics import Metrics
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._eval_params import EvaluatorParams
+from sneval.params._benchmark_params import BenchmarkParams
+from sneval.report._report import Report
+from sneval.privacyalgorithm._base import PrivacyAlgorithm
+from sneval.evaluator._dp_evaluator import DPEvaluator
+from sneval.benchmarking._dp_benchmark import DPBenchmarking
+from sneval.metrics._metrics import Metrics
 from dp_lib import DPSampleLibrary
 from dp_algorithm import DPSample
 import pandas as pd

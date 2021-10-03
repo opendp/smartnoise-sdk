@@ -2,14 +2,14 @@ import numpy as np
 import pandas as pd
 import csv
 import logging
-from opendp.smartnoise.evaluation.params._learner_params import LearnerParams
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
-from opendp.smartnoise.evaluation.learner._dp_env import DPEnv
-from opendp.smartnoise.evaluation.learner._generate import Grammar
-from opendp.smartnoise.evaluation.learner._computeactions import compute_action
-from opendp.smartnoise.evaluation.learner.util import (
+from sneval.params._learner_params import LearnerParams
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._eval_params import EvaluatorParams
+from sneval.params._dataset_params import DatasetParams
+from sneval.learner._dp_env import DPEnv
+from sneval.learner._generate import Grammar
+from sneval.learner._computeactions import compute_action
+from sneval.learner.util import (
     create_simulated_dataset,
     generate_neighbors,
     generate_query,

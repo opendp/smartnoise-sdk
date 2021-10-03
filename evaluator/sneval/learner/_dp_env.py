@@ -8,14 +8,14 @@ import random
 import copy
 import math
 import logging
-from opendp.smartnoise.sql import PandasReader, PrivateReader
-from opendp.smartnoise.evaluation._dp_verification import DPVerification
-import opendp.smartnoise.evaluation._exploration as exp
-from opendp.smartnoise.evaluation.learner._transformation import *
-from opendp.smartnoise.evaluation.learner._computeactions import compute_action
-from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
-from opendp.smartnoise.evaluation.learner.util import create_simulated_dataset, generate_neighbors
-from opendp.smartnoise.metadata.collection import *
+from snsql.sql import PandasReader, PrivateReader
+from sneval._dp_verification import DPVerification
+import sneval._exploration as exp
+from sneval.learner._transformation import *
+from sneval.learner._computeactions import compute_action
+from sneval.evaluator._dp_evaluator import DPEvaluator
+from sneval.learner.util import create_simulated_dataset, generate_neighbors
+from snsql.metadata.collection import *
 from dp_singleton_query import DPSingletonQuery
 
 

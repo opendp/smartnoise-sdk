@@ -1,12 +1,12 @@
-from opendp.smartnoise.evaluation.privacyalgorithm._base import PrivacyAlgorithm
-from opendp.smartnoise.evaluation.params._dataset_params import DatasetParams
-from opendp.smartnoise.evaluation.params._privacy_params import PrivacyParams
-from opendp.smartnoise.evaluation.params._eval_params import EvaluatorParams
-from opendp.smartnoise.evaluation.params._benchmark_params import BenchmarkParams
-from opendp.smartnoise.evaluation.metrics._metrics import Metrics
-from opendp.smartnoise.evaluation.metrics._benchmark_metrics import BenchmarkMetrics
-from opendp.smartnoise.evaluation.benchmarking._base import Benchmarking
-from opendp.smartnoise.evaluation.evaluator._dp_evaluator import DPEvaluator
+from sneval.privacyalgorithm._base import PrivacyAlgorithm
+from sneval.params._dataset_params import DatasetParams
+from sneval.params._privacy_params import PrivacyParams
+from sneval.params._eval_params import EvaluatorParams
+from sneval.params._benchmark_params import BenchmarkParams
+from sneval.metrics._metrics import Metrics
+from sneval.metrics._benchmark_metrics import BenchmarkMetrics
+from sneval.benchmarking._base import Benchmarking
+from sneval.evaluator._dp_evaluator import DPEvaluator
 
 
 class DPBenchmarking(Benchmarking):
