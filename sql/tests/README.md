@@ -1,10 +1,10 @@
 # Running Unit Tests
 
-To run unit tests, use a terminal at the root of the repository:
+To run unit tests, use a terminal at the root of the project you are working on (sql, synth, or evaluator):
 
 ```bash
 pip install -r tests/requirements.txt
-python -m pytest tests/sdk
+pytest tests
 ```
 
 # Writing Unit Tests
