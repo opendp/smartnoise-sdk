@@ -19,23 +19,41 @@ SmartNoise is intended for scenarios where the analyst is trusted by the data ow
 pip install smartnoise-sql
 ```
 
-## Using
+## Querying a Pandas DataFrame
+
+Use the `from_df` method to create a private reader that can issue queries against a pandas dataframe.
 
 ```python
 import snsql
 from snsql import Privacy
 import pandas as pd
+privacy = Privacy(epsilon=1.0, delta=0.01)
 
 csv_path = 'PUMS.csv'
 meta_path = 'PUMS.yaml'
 
-data = pd.read_csv(csv_path)
-privacy = Privacy(epsilon=1.0, delta=0.01)
-reader = snsql.from_connection(data, privacy=privacy, metadata=meta_path)
+pums = pd.read_csv(csv_path)
+reader = snsql.from_df(pums, privacy=privacy, metadata=meta_path)
 
 result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex')
+```
 
-print(result)
+## Querying a SQL Database
+
+Use `from_connection` to wrap an existing database connection.
+
+```python
+import snsql
+from snsql import Privacy
+import psycopg2
+
+privacy = Privacy(epsilon=1.0, delta=0.01)
+meta_path = 'PUMS.yaml'
+
+pumsdb = psycopg2.connect(user='postgres', host='localhost', database='PUMS')
+reader = snsql.from_connection(pumsdb, privacy=privacy, metadata=meta_path)
+
+result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex')
 ```
 
 ## Communication

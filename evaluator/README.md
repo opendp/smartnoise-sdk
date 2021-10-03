@@ -4,6 +4,7 @@
 
 ## SmartNoise Stochastic Evaluator
 
+Tests differential privacy algorithms for privacy, accuracy, and bias.  Privacy tests are based on the method described in [section 5.3 of this paper](https://arxiv.org/pdf/1909.01917.pdf).
 
 ## Installation
 
