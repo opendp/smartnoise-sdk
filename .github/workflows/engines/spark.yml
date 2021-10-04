@@ -30,7 +30,7 @@ jobs:
       run: |
         conda install pip
         conda update pip
-    - name: Install JDK
+    - name: Install Java
       shell: bash -l {0}
       run: |
         sudo apt-get update
