@@ -48,7 +48,6 @@ metadata.compare = PostgresNameCompare()
 class TestValidate:
     def test_all_good_queries(self):
         for goodpath in good_files:
-            print(goodpath)
             gqt = GoodQueryTester(goodpath)
             gqt.runValidate()
     def test_all_bad_queries(self):
@@ -66,7 +65,6 @@ class GoodQueryTester:
 
     def runValidate(self):
         for qs in self.queries:
-            print(qs)
             q = QueryParser(metadata).query(qs)
             Validate().validateQuery(q, metadata)
 
@@ -80,7 +78,6 @@ class BadQueryTester:
 
     def runValidate(self):
         for qs in self.queries:
-            print(qs)
             q = QueryParser(metadata).query(qs)
             self.validateSingle(q)
 
