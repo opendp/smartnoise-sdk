@@ -1,0 +1,7 @@
+pytest
+pyyaml
+pandasql
+sklearn
+matplotlib
+numpy
+graphviz

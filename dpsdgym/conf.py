@@ -5,10 +5,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
-from opendp.smartnoise.synthesizers.mwem import MWEMSynthesizer
-from opendp.smartnoise.synthesizers.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
-from opendp.smartnoise.synthesizers.preprocessors.preprocessing import GeneralTransformer
-from opendp.smartnoise.synthesizers.pytorch.nn import DPGAN, PATEGAN, DPCTGAN, PATECTGAN
+from snsynth.mwem import MWEMSynthesizer
+from snsynth.pytorch.pytorch_synthesizer import PytorchDPSynthesizer
+from snsynth.preprocessors.preprocessing import GeneralTransformer
+from snsynth.pytorch.nn import DPGAN, PATEGAN, DPCTGAN, PATECTGAN
 
 from diffprivlib.models import LogisticRegression as DPLR
 from diffprivlib.models import GaussianNB as DPGNB

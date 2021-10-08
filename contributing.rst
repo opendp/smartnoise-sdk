@@ -1,50 +1,37 @@
 Contributing to SmartNoise
 =============================
-Contributions to SmartNoise are welcome from all members of the community. This document is here to simplify the onboarding experience for contributors, contributions to this document are also welcome.
+Contributions to SmartNoise are welcome. This document is here to simplify the onboarding experience for contributors, contributions to this document are also welcome.
 
 System requirements
 =============================
 SmartNoise-sdk is python based. The initial setup will require a python
-environment, ideally isolated with conda or venv. Below we have a conda based example for setting up the SDK requirements
+environment, ideally isolated with conda or venv. Below we have a conda based example for making changes to smartnoise-sql.
 
 .. code-block:: bash
 
-    create a conda environment: conda create -n smartnoise python
+    conda create -n smartnoise python=3.8
     conda activate smartnoise
     git clone https://github.com/opendp/smartnoise-sdk.git
     cd smartnoise-sdk
-    conda install -c anaconda sqlite
-    python -m pip install -e sdk/
+    # switch to the project you want to work on
+    # can be sql, synth, or evaluator
+    cd sql
+    python -m pip install -e .
     python -m pip install -r tests/requirements.txt
-
-To run the unit tests, we will need to copy the wheel files from smartnoise.core into your cloned repository.  This is because we installed the cloned repository in --editable mode, so all files for the smartnoise namespace (including smartnoise.core) will be searched from our cloned repository.  First, find the wheel location where smartnoise.core has been installed:
-
-.. code-block:: bash
-
-    pip show opendp-smartnoise-core
-
-This will show a path, for example Location: /Users/youraccount/miniconda3/lib/python3.7/site-packages
-
-Use this path to copy the files from opendp/smartnoise/core:
-
-.. code-block:: bash
-
-    mkdir sdk/opendp/smartnoise/core
-    cp -R /Users/youraccount/miniconda3/lib/python3.7/site-packages/opendp/smartnoise/core sdk/opendp/smartnoise/core
 
 Verifying your SDK installation is running:
 
 .. code-block:: bash
 
-    pytest tests/sdk
+    pytest tests
 
-The sdk tests should pass if not, please check github issues for known build failures and report a new issue if not recorded.
+The tests should all pass. If not, please check github issues for known build failures and report a new issue if not recorded.
 
 Adding new tests
 ===============================
-Testing against new datasets is common since most functionality can only be evaluated with certain datasets. The general practice around
-new datasets is to auto download them in conftest.py. If the amount grows too large it would be worth wrapping the idempotent download in fixtures. We will leave that as a possible contribution for now.
-Tests for the SDK should be quick. If not, pleaes mark the test with @pytest.mark.slow.
+Add unit tests under the :code:`tests/` folder of the project you're working on.  Several test datasets will be downloaded automatically, and made available in the :code:`datasets/` folder of the repository root, as well as via database connections (when installed).  For more information, see the `datasets README
+<sql/tests/README.md>`_
+. Tests for the SDK should be quick. If not, please mark the test with @pytest.mark.slow.
 
 There are existing datasets found in datasets/,
 we tend to use the git relative path for access. As you can see below, the metadata tends to be in
@@ -69,9 +56,9 @@ If you will be making regular contributions, or need to participate in code revi
     git checkout -b branchname
     git push -u origin branchname
 
-Branches should be scoped tightly to work that can be delivered and reviewed in a manageable amount of time.  Feature branches should align with only one pull request, and should be deleted after the PR is approved and merged.  Larger or more open-ended work items should be broken into more scoped pull requests, with one feature branch per pull request.  Naming should be moderately descriptive (e.g. `bugfix_double_spend`) but can be short.
+Branches should be scoped tightly to work that can be delivered and reviewed in a manageable amount of time.  Feature branches should align with only one pull request, and should be deleted after the PR is approved and merged.  Larger or more open-ended work items should be broken into more scoped pull requests, with one feature branch per pull request.  Naming should be moderately descriptive (e.g. :code:`bugfix_double_spend`) but can be short.
 
-From your new feature branch, make all of your changes.  You can check in changes and use `git push` to periodically synchronize local changes with the feature branch in GitHub.
+From your new feature branch, make all of your changes.  You can check in changes and use :code:`git push` to periodically synchronize local changes with the feature branch in GitHub.
 
 If other patches or feature branches have been merged to main while you are working, your branch may be out of sync with main.  This is usually not a risk with small patches, but is more likely as development takes longer.
 
@@ -88,11 +75,14 @@ You will need to make sure your branch includes latest changes to main before su
 
 If there are no changes that conflict with your branch, the merge will automatically succeed, and you can check it in, push, and move on to the pull request.  If there are merge conflicts, you will need to review and resolve the conflicts first.  Visual Studio Code has nice support for reviewing merge conflicts.
 
-When the patch or feature is ready to submit, run the unit tests to make sure there are no regressions:
+When the patch or feature is ready to submit, run the unit tests again to make sure there are no regressions.  From the project folder:
 
 .. code-block:: bash
 
-    pytest tests/sdk
+    pytest tests
+
+You only need to run the unit tests for the project you've changed (sql, synth, or evaluator).  You can also run many of the CI tests locally to make sure the pull request gates are passing.  For more information, see the `Continuous Integration README
+<.github/workflows/README.md>`_
 
 Fix any regressions before creating a pull request.  Make sure that GitHub has the latest copy of your local changes:
 
@@ -108,13 +98,13 @@ To create the pull request, use your Web browser to navigate to the "pull reques
 
 Assign the pull request to someone on the development team for code review.  Once the pull request is submitted, some automated integration tests will run to check for regressions.  These tests can take several minutes to complete, and results will be shown in the "Automation" tab.
 
-If there are comments or questions during code review, they will be shown in-line on the PR review page.  Code changes updates to the PR can be added automatically by changing the code in your local branch and runnning `git push` to move commits into the open pull request.  Pushing new commits into the pull request will trigger the integration tests to run again.
+If there are comments or questions during code review, they will be shown in-line on the PR review page.  Code changes updates to the PR can be added automatically by changing the code in your local branch and running :code:`git push` to move commits into the open pull request.  Pushing new commits into the pull request will trigger the integration tests to run again.
 
-When the PR has been approved, an approver will merge it into main.  After the code is merged to main, you can delete the feature branch.
+When the PR has been approved, you will be able to merge it into main.  After the code is merged to main, you can delete the feature branch.
 
 Contributing from a fork:
 =========================
 
-If you are submitting a one-time patch or feature, you can submit a pull request from your own fork.  Create and test your patch as above.  When it's time to submit the pull request, navigate your Web browser to the GitHub page for your fork, and go to the "pull requests" tab.  You will have the option to create a new pull request, and GitHub should automatically select base: opendp/smartnoise-sdk/main for the destination, and your fork and branch as the source. 
+If you are submitting a one-time patch or feature, you can submit a pull request from your own fork.  Create and test your patch as above.  When it's time to submit the pull request, navigate your Web browser to the GitHub page for your fork, and go to the "pull requests" tab.  You will have the option to create a new pull request, and GitHub should automatically select base: :code:`opendp/smartnoise-sdk/main` for the destination, and your fork and branch as the source. 
 
 .. image:: images/doc/PR_from_fork.png
