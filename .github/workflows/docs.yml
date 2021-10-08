@@ -1,6 +1,15 @@
 name: Test Documentation Build
 
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
+      - 'synth/tests/**'
+      - 'synth/snsynth/**'
+      - 'synth/pyproject.toml'
+  workflow_dispatch:
 
 jobs:
   build-linux:

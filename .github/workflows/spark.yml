@@ -1,4 +1,4 @@
-name: SmartNoise SQL on Spark Unit Tests
+name: SQL on Spark
 
 on:
   pull_request:
