@@ -1,4 +1,4 @@
-name: SmartNoise SQL Gate
+name: Synthesizers
 
 on:
   pull_request:

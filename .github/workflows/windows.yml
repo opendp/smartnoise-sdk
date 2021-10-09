@@ -1,5 +1,12 @@
-name: Windows CI
-on:  [workflow_dispatch]
+name: SQL on Pandas on Windows
+on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
+  workflow_dispatch:
+  
 jobs:
   build:
     runs-on: windows-2019
