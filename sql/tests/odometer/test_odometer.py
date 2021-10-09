@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 
-from snsql.metadata.collection import CollectionMetadata
+from snsql.metadata import Metadata
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
@@ -15,7 +15,7 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 pums = pd.read_csv(csv_path)
 privacy = Privacy(epsilon=1.0)
 
-meta_obj = CollectionMetadata.from_(meta_path)
+meta_obj = Metadata.from_(meta_path)
 
 class TestOdometer:
     def test_count_pid_query(self):
@@ -124,7 +124,6 @@ class TestOdometer:
         eps, delt = odo.spent
         assert(np.isclose(eps, 8.2519))
         assert(np.isclose(delt, 0.2596633))
-
 
 class TestMultiplier:
     def test_count_pid_query(self):

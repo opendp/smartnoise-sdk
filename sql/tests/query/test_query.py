@@ -7,8 +7,9 @@ import pandas as pd
 from pandasql import sqldf
 import math
 
-from snsql.metadata import CollectionMetadata
-from snsql.sql import PrivateReader, PandasReader
+from snsql.metadata import Metadata
+from snsql.sql import PrivateReader
+from snsql.sql.reader.pandas import PandasReader
 from snsql.sql.parse import QueryParser
 
 from snsql.sql.privacy import Privacy
@@ -18,7 +19,7 @@ git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" "
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 
-schema = CollectionMetadata.from_file(meta_path)
+schema = Metadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
 #   Unit tests
@@ -178,24 +179,3 @@ class TestQuery:
                     assert(private_reader._options.max_contrib == d)
                     r = private_reader._execute_ast(q)
                     assert(math.isclose(private_reader.tau, gaus_rho, rel_tol=0.03, abs_tol=2))
-    def test_legacy_params_private_reader(self):
-        reader = PandasReader(df, schema)
-        # params swapped
-        with pytest.warns(Warning):
-            private_reader = PrivateReader(schema, reader, 1.0)
-        assert(isinstance(private_reader.reader, PandasReader))
-        # doubled up params of wrong type should fail
-        with pytest.raises(Exception):
-            private_reader = PrivateReader(schema, schema, 1.0)
-        with pytest.raises(Exception):
-            private_reader = PrivateReader(reader, reader, 1.0)
-    def test_legacy_params_pandas_reader(self):
-        # params swapped
-        with pytest.warns(Warning):
-            reader = PandasReader(schema, df)
-        assert("metadata.collection.CollectionMetadata" in str(type(reader.metadata)))
-        # doubled up params of wrong type should fail
-        with pytest.raises(Exception):
-            reader = PandasReader(schema, schema)
-        with pytest.raises(Exception):
-            reader = PandasReader(df, df)

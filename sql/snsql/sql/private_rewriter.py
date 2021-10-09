@@ -1,6 +1,7 @@
-import importlib
 import random
 import string
+
+from snsql.metadata import Metadata
 
 from .parse import QueryParser
 
@@ -51,8 +52,7 @@ class Rewriter:
 
     def __init__(self, metadata):
         self.options = RewriterOptions()
-        class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-        self.metadata = class_.from_(metadata)
+        self.metadata = Metadata.from_(metadata)
 
     def calculate_avg(self, exp, scope):
         """

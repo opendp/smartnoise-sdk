@@ -3,16 +3,16 @@ import math
 from opendp.trans import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
-from opendp.meas import make_base_gaussian
+from opendp.meas import make_base_laplace
 
-class Gaussian(AdditiveNoiseMechanism):
+class Laplace(AdditiveNoiseMechanism):
     def __init__(
-            self, epsilon, *ignore, delta, sensitivity=None, max_contrib=1, upper=None, lower=None, **kwargs
+            self, epsilon, *ignore, delta=0.0, sensitivity=None, max_contrib=1, upper=None, lower=None, **kwargs
         ):
         super().__init__(
                 epsilon,
-                mechanism=Mechanism.gaussian,
-                delta=delta,
+                mechanism=Mechanism.laplace,
+                delta=0.0,
                 sensitivity=sensitivity,
                 max_contrib=max_contrib,
                 upper=upper,
@@ -28,9 +28,7 @@ class Gaussian(AdditiveNoiseMechanism):
         bounds = (float(lower), float(upper))
         sensitivity = upper - lower
         if sensitivity > 1000:
-            self.scale = (
-            float(sensitivity) * max_contrib * math.sqrt(2.0 * math.log(1.25 / self.delta)) / self.epsilon
-        )
+            self.scale = (float(sensitivity) * max_contrib) / self.epsilon
         else:
             enable_features('floating-point', 'contrib')
             bounded_sum = (
@@ -38,12 +36,12 @@ class Gaussian(AdditiveNoiseMechanism):
                 make_bounded_sum(bounds=bounds)
             )
             discovered_scale = binary_search_param(
-                lambda s: bounded_sum >> make_base_gaussian(scale=s),
+                lambda s: bounded_sum >> make_base_laplace(scale=s),
                 d_in=max_contrib,
-                d_out=(self.epsilon, self.delta))
+                d_out=(self.epsilon))
             self.scale = discovered_scale
     def release(self, vals):
         enable_features('floating-point', 'contrib')
-        meas = make_base_gaussian(self.scale)
+        meas = make_base_laplace(self.scale)
         vals = [meas(float(v)) for v in vals]
         return vals

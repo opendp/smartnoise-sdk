@@ -1,5 +1,5 @@
 import pytest
-from snsql.metadata import CollectionMetadata
+from snsql.metadata import Metadata
 from snsql.sql.parse import QueryParser
 
 from os import listdir
@@ -9,7 +9,7 @@ from os.path import isfile, join, dirname
 dir_name = dirname(__file__)
 testpath = join(dir_name, "queries") + "/"
 
-metadata = CollectionMetadata.from_file(join(dir_name, "TestDB.yaml"))
+metadata = Metadata.from_file(join(dir_name, "TestDB.yaml"))
 
 other_dirs = [f for f in listdir(testpath) if not isfile(join(testpath, f)) and f != "parse" ]
 

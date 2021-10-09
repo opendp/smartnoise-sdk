@@ -61,12 +61,12 @@ These overrides should be used with caution, because they may affect privacy if 
 * `upper`: Valid on numeric columns.  Specifies the upper bound for values in this column.
 * `cardinality`: Integer.  This is an optional hint, valid on columns intended to be used as categories or keys in a GROUP BY. Specifies the approximate number of distinct keys in this column.
 
-## CollectionMetadata
+## Metadata
 
-The `CollectionMetadata` object is the in-memory metadata that gets loaded from storage.  It is supplied to `PrivateReader` to control query processing.  It is intended for read-only use.  To change properties in this object, change the underlying metadata file or database.
+The `Metadata` object is the in-memory metadata that gets loaded from storage.  It is supplied to `PrivateReader` to control query processing.  It is intended for read-only use.  To change properties in this object, change the underlying metadata file or database.
 
 ```python
-database = CollectionMetadata.from_file("PUMS.yaml")
+database = Metadata.from_file("PUMS.yaml")
 for table in database:
     for column in table:
         if column.is_key:

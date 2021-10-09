@@ -1,6 +1,6 @@
 import os
 import subprocess
-from snsql.metadata import CollectionMetadata
+from snsql.metadata import Metadata
 from snsql.sql.private_rewriter import Rewriter
 from snsql.sql.parse import QueryParser
 
@@ -54,7 +54,7 @@ queries = [
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
-metadata = CollectionMetadata.from_file(meta_path)
+metadata = Metadata.from_file(meta_path)
 
 def test_rewriting():
     for query in queries:

@@ -1,9 +1,9 @@
-import importlib
 import logging
-import warnings
 import math
 import numpy as np
+from snsql.metadata import Metadata
 from snsql.sql._mechanisms.accuracy import Accuracy
+from snsql.sql._mechanisms.laplace import Laplace
 from snsql.sql.odometer import Odometer
 from snsql.sql.privacy import Privacy
 
@@ -17,7 +17,7 @@ from snsql._ast.ast import Query, Top
 from snsql._ast.expressions import sql as ast
 from snsql.reader import Reader
 
-from ._mechanisms.gaussian import Gaussian
+from ._mechanisms import *
 
 module_logger = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ class PrivateReader(Reader):
     
     .. code-block:: python
 
-        meta = 'datasets/PUMS.yaml'
         conn = pyodbc.connect(dsn)
+        meta = 'datasets/PUMS.yaml'
         privacy = Privacy(epsilon=0.1, delta=1/10000)
         reader = PrivateReader.from_connection(conn, metadata=meta, privacy=privacy)
 
@@ -42,9 +42,9 @@ class PrivateReader(Reader):
 
     .. code-block:: python
 
-        meta = 'datasets/PUMS.yaml'
         csv = 'datasets/PUMS.csv'
         pums = pd.read_csv(csv)
+        meta = 'datasets/PUMS.yaml'
 
         privacy = Privacy(epsilon=0.1, delta=1/10000)
         reader = PrivateReader.from_connection(pums, metadata=meta, privacy=privacy)
@@ -52,7 +52,6 @@ class PrivateReader(Reader):
         result = reader.execute('SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
 
     """
-
 
     def __init__(
         self,
@@ -66,32 +65,17 @@ class PrivateReader(Reader):
     ):
         """Create a new private reader.
 
-            :param metadata: The CollectionMetadata object with information about all tables referenced in this query
+            :param metadata: The Metadata object with information about all tables referenced in this query
             :param reader: The data reader to wrap, such as a SqlServerReader, PandasReader, or SparkReader
                 The PrivateReader intercepts queries to the underlying reader and ensures differential privacy.
             :param epsilon_per_column: The privacy budget to spend for each column in the query
             :param delta: The delta privacy parameter
         """
-        # check for old calling convention
-        if isinstance(metadata, Reader):
-            warnings.warn(
-                "[reader] API has changed to pass (reader, metadata).  Please update code to pass reader first and metadata second.  This will be a breaking change in future versions.",
-                Warning,
-            )
-            tmp = reader
-            reader = metadata
-            metadata = tmp
-
         if isinstance(reader, Reader):
             self.reader = reader
         else:
             raise ValueError("Parameter reader must be of type Reader")
-
-        # we can replace this when we remove
-        # CollectionMetadata from the root __init__
-        class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-        self.metadata = class_.from_(metadata)
-
+        self.metadata = Metadata.from_(metadata)
         self.rewriter = Rewriter(metadata)
         self._options = PrivateReaderOptions()
 
@@ -246,7 +230,7 @@ class PrivateReader(Reader):
                 "Query is attempting to query an unbounded column that isn't part of the grouping key"
             )
         mechs = [
-            Gaussian(self.privacy.epsilon, self.privacy.delta, s, max_contrib) if s is not None else None
+            Laplace(self.privacy.epsilon, delta=self.privacy.delta, sensitivity=s, max_contrib=max_contrib) if s is not None else None
             for s in sens
         ]
         return mechs
@@ -343,7 +327,7 @@ class PrivateReader(Reader):
                     row[idx] = 0.0
             # call all mechanisms to add noise
             out_row = [
-                noise.release([v]).values[0] if noise is not None else v
+                noise.release([v])[0] if noise is not None else v
                 for noise, v in zip(mechs, row)
             ]
             # clamp counts to be non-negative

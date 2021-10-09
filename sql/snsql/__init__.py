@@ -9,4 +9,4 @@ def from_df(conn, *ignore, privacy, metadata, engine='pandas', **kwargs):
 def from_connection(conn, *ignore, privacy, metadata, engine=None, **kwargs):
     return PrivateReader.from_connection(conn, privacy=privacy, metadata=metadata, engine=engine)
 
-__all__ = [Privacy, from_df, from_connection]
+__all__ = ['Privacy', 'from_df', 'from_connection']

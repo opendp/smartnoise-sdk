@@ -1,4 +1,4 @@
-from snsql.metadata.collection import *
+from snsql.metadata import *
 import copy
 
 class TestDSMetadataLiteral:
@@ -12,6 +12,6 @@ class TestDSMetadataLiteral:
 
         table2 = copy.copy(table1)
         table2.name = "d2"
-        x = CollectionMetadata([table1],"csv")
-        y = CollectionMetadata([table2],"csv")
+        x = Metadata([table1],"csv")
+        y = Metadata([table2],"csv")
         assert(x["dbo.d1"].name != y["dbo.d2"].name)

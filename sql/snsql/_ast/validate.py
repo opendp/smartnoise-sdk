@@ -1,5 +1,5 @@
-import importlib
 from .ast import *
+from snsql.metadata import Metadata
 
 
 class Validate(object):
@@ -33,8 +33,7 @@ class QueryConstraints:
         self.query = query
 
         if metadata:
-            class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-            self.metadata = class_.from_(metadata)
+            self.metadata = Metadata.from_(metadata)
         else:
             self.metadata = metadata
 

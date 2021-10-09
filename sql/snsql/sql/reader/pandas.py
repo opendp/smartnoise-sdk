@@ -1,4 +1,6 @@
 import importlib
+
+#from snsql.metadata import Metadata
 from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
 import copy
@@ -17,20 +19,11 @@ class PandasReader(SqlReader):
             raise ValueError("Load without metadata is not yet implemented")
         if df is None:
             raise ValueError("Pass in a Pandas dataframe")
-        # using string here, because we don't want to import .metadata due to circular reference
-        if "metadata.collection.CollectionMetadata" in str(type(df)):
-            warnings.warn(
-                "[df] API has changed to pass (df, metadata).  Please update code to pass df first and metadata second.  This will be a breaking change in future versions.",
-                Warning,
-            )
-            tmp = df
-            df = metadata
-            metadata = tmp
         self.df = df
 
         # we can replace this when we remove
-        # CollectionMetadata from the root __init__
-        class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
+        # Metadata from pandas cleaning
+        class_ = getattr(importlib.import_module("snsql.metadata"), "Metadata")
         metadata = class_.from_(metadata)
 
         self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
@@ -92,7 +85,7 @@ class PandasReader(SqlReader):
             key = "primary_key"
             self.df[key] = range(len(self.df))
 
-            from snsql.metadata.collection import Int
+            from snsql.metadata import Int
 
             metadata.m_tables[table_name].m_columns[key] = Int(
                 key, minval=0, maxval=len(self.df), is_key=True

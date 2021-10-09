@@ -9,7 +9,7 @@ import os
 import subprocess
 import pandas as pd
 
-from snsql.metadata import CollectionMetadata
+from snsql.metadata import Metadata
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -30,7 +30,7 @@ class TestFromConnWithEngine:
         assert(isinstance(reader.serializer, PostgresSerializer))
     def test_pandas(self):
         engine = "pandas"
-        meta = CollectionMetadata.from_file(meta_path)
+        meta = Metadata.from_file(meta_path)
         df = pd.read_csv(csv_path)
         reader = SqlReader.from_connection(df, engine, metadata=meta)
         assert(isinstance(reader, SqlReader))
@@ -79,7 +79,7 @@ class TestWithoutConn:
         assert(isinstance(reader.serializer, PostgresSerializer))
     def test_pandas(self):
         engine = "pandas"
-        meta = CollectionMetadata.from_file(meta_path)
+        meta = Metadata.from_file(meta_path)
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
         assert(isinstance(reader, SqlReader))

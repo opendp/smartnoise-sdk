@@ -1,6 +1,6 @@
 import io
 import pytest
-from snsql.metadata.collection import CollectionMetadata
+from snsql.metadata import Metadata
 
 class TestMetaBounds:
     def test_meta_from_string(self):
@@ -18,7 +18,7 @@ class TestMetaBounds:
         sample_max_ids: true
 engine: pandas"""
         file = io.StringIO(meta_good)
-        c = CollectionMetadata.from_file(file)
+        c = Metadata.from_file(file)
     def test_meta_bad_float(self):
         meta_bad_float = """col:
     ? ''
@@ -34,7 +34,7 @@ engine: pandas"""
         sample_max_ids: true
 engine: pandas"""
         file = io.StringIO(meta_bad_float)
-        c = CollectionMetadata.from_file(file)
+        c = Metadata.from_file(file)
         assert(c["table"]["duration"].unbounded)
     def test_meta_bad_int(self):
         meta_bad_float = """col:
@@ -51,7 +51,7 @@ engine: pandas"""
         sample_max_ids: true
 engine: pandas"""
         file = io.StringIO(meta_bad_float)
-        c = CollectionMetadata.from_file(file)
+        c = Metadata.from_file(file)
         assert(c["table"]["events"].unbounded)
 
 

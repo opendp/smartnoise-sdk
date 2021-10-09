@@ -6,7 +6,7 @@ from snsql.sql.reader.pandas import PandasReader
 import pandas as pd
 
 
-from snsql.metadata.collection import CollectionMetadata
+from snsql.metadata import Metadata
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
@@ -16,7 +16,7 @@ privacy = Privacy(epsilon=1.0)
 
 class TestMetadataLoadFrom:
     def test_load_from_path(self):
-        meta = CollectionMetadata.from_(meta_path)
+        meta = Metadata.from_(meta_path)
         p = meta['PUMS.PUMS']
     def test_load_from_private_reader_path_connect(self):
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_path)

@@ -7,8 +7,8 @@ import yaml
 import random
 
 from snsql.sql import PrivateReader
-from snsql.metadata import CollectionMetadata
-from snsql.metadata.collection import Table, Float, String
+from snsql.metadata import Metadata
+from snsql.metadata import Table, Float, String
 
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -50,7 +50,7 @@ def download_data_files():
                     Float("petal length (cm)", 1, 7),
                     Float("petal width (cm)", 0, 3)
         ], 150)
-        schema = CollectionMetadata([iris], "csv")
+        schema = Metadata([iris], "csv")
         schema.to_file(iris_schema_path, "iris")
 
     if not os.path.exists(pums_csv_path) or not os.path.exists(pums_pid_csv_path) or not os.path.exists(pums_large_csv_path):
@@ -111,7 +111,7 @@ def download_data_files():
                     String("author", card=10000, is_key=True),
                     String("ngram", card=10000)
         ], 500000, None, False, max_ids=500)
-        schema = CollectionMetadata([reddit], "csv")
+        schema = Metadata([reddit], "csv")
         schema.to_file(reddit_schema_path, "reddit")
 
 class TestDbEngine:
@@ -205,10 +205,10 @@ class TestDbCollection:
     # Automatically connects to databases listed in connections-unit.yaml
     def __init__(self):
         self.metadata = {
-            'PUMS': CollectionMetadata.from_file(pums_schema_path),
-            'PUMS_large': CollectionMetadata.from_file(pums_large_schema_path),
-            'PUMS_pid': CollectionMetadata.from_file(pums_pid_schema_path),
-            'PUMS_dup': CollectionMetadata.from_file(pums_dup_schema_path)
+            'PUMS': Metadata.from_file(pums_schema_path),
+            'PUMS_large': Metadata.from_file(pums_large_schema_path),
+            'PUMS_pid': Metadata.from_file(pums_pid_schema_path),
+            'PUMS_dup': Metadata.from_file(pums_dup_schema_path)
         }
         self.engines = {}
         home = os.path.expanduser("~")
@@ -254,7 +254,7 @@ class TestDbCollection:
             print(f"No metadata available for {database}")
             return []
         if isinstance(metadata, str):
-            metadata = CollectionMetadata.from_file(metadata)
+            metadata = Metadata.from_file(metadata)
         if len(overrides) > 0:
             # make a copy
             metadata = copy.deepcopy(metadata)

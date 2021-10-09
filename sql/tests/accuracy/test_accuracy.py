@@ -6,7 +6,7 @@ import math
 
 import pandas as pd
 
-from snsql.metadata import CollectionMetadata
+from snsql.metadata import Metadata
 from snsql.sql import PrivateReader
 from snsql.sql.privacy import Privacy
 from snsql.sql.parse import QueryParser
@@ -15,7 +15,7 @@ git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" "
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 
-meta = CollectionMetadata.from_file(meta_path)
+meta = Metadata.from_file(meta_path)
 pums = pd.read_csv(csv_path)
 query = 'SELECT AVG(age), STD(age), VAR(age), SUM(age), COUNT(age) FROM PUMS.PUMS GROUP BY sex'
 q = QueryParser(meta).query(query)

@@ -1,11 +1,11 @@
 from os.path import dirname, join
 
-from snsql.metadata import CollectionMetadata
+from snsql.metadata import Metadata
 from snsql.sql.parse import QueryParser
 
 dir_name = dirname(__file__)
 
-metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
+metadata = Metadata.from_file(join(dir_name, "Devices.yaml"))
 
 def qp(query_string):
     return QueryParser().query(query_string)

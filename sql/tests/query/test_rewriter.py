@@ -1,8 +1,8 @@
 from os import listdir
 from os.path import isfile, join, dirname
 
-from snsql.metadata import CollectionMetadata
-from snsql.sql import Rewriter
+from snsql.metadata import Metadata
+from snsql.sql.private_rewriter import Rewriter
 from snsql.sql.parse import QueryParser
 
 
@@ -19,7 +19,7 @@ for d in other_dirs:
     other_files = [join(testpath + d + "/", f) for f in listdir(testpath + d) if isfile(join(testpath + d, f))]
     good_files.extend(other_files)
 
-metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
+metadata = Metadata.from_file(join(dir_name, "Devices.yaml"))
 
 
 #
