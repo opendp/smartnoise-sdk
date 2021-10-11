@@ -34,7 +34,7 @@ class TestQUAIL:
 
         def QuailSynth(epsilon):
             return PytorchDPSynthesizer(epsilon=epsilon, preprocessor=None,
-                            gan=PATECTGAN(loss='cross_entropy', batch_size=50, pack=1, sigma=5.0))
+                            gan=PATECTGAN(loss='cross_entropy', batch_size=50, pac=1))
 
         self.quail = QUAILSynthesizer(3.0, QuailSynth, QuailClassifier, 'married', eps_split=0.8)
 

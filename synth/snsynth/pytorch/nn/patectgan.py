@@ -1,35 +1,33 @@
 import math
 import numpy as np
-
 import torch
-from torch import nn
-
 from torch import optim
+from torch import nn
 import torch.utils.data
-from torch.nn import Dropout, LeakyReLU, Linear, Module, Sequential, Sigmoid
+from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
 from torch.autograd import Variable
 
-from ctgan.transformer import DataTransformer
-from ctgan.conditional import ConditionalGenerator
-from ctgan.models import Generator
-from ctgan.sampler import Sampler
-from ctgan import CTGANSynthesizer
+from ctgan.data_sampler import DataSampler
+from ctgan.data_transformer import DataTransformer
+from ctgan.synthesizers import CTGANSynthesizer
 
 from .privacy_utils import weights_init, pate, moments_acc
 
 
 class Discriminator(Module):
 
-    def __init__(self, input_dim, dis_dims, loss, pack):
+    def __init__(self, input_dim, discriminator_dim, loss, pac=10):
         super(Discriminator, self).__init__()
         torch.cuda.manual_seed(0)
         torch.manual_seed(0)
 
-        dim = input_dim * pack
-        self.pack = pack
-        self.packdim = dim
+        dim = input_dim * pac
+        #  print ('now dim is {}'.format(dim))
+        self.pac = pac
+        self.pacdim = dim
+
         seq = []
-        for item in list(dis_dims):
+        for item in list(discriminator_dim):
             seq += [Linear(dim, item), LeakyReLU(0.2), Dropout(0.5)]
             dim = item
 
@@ -38,16 +36,14 @@ class Discriminator(Module):
             seq += [Sigmoid()]
         self.seq = Sequential(*seq)
 
-    def forward(self, input):
-        assert input.size()[0] % self.pack == 0
-        return self.seq(input.view(-1, self.packdim))
-
-    def dragan_penalty(self, real_data, device="cpu", c=10, lambda_=10):
-        alpha = torch.rand(real_data.shape[0], 1, device=device).expand(real_data.shape)
+    def dragan_penalty(self, real_data, device='cpu', pac=10, lambda_=10):
+        # real_data = torch.from_numpy(real_data).to(device)
+        alpha = torch.rand(real_data.shape[0], 1, device=device).squeeze().expand(real_data.shape[0])
         delta = torch.normal(
-            mean=0.0, std=c, size=real_data.shape, device=device
+            mean=0.0, std=float(pac), size=real_data.shape, device=device
         )  # 0.5 * real_data.std() * torch.rand(real_data.shape)
-        x_hat = Variable(alpha * real_data + (1 - alpha) * (real_data + delta), requires_grad=True)
+        
+        x_hat = Variable((alpha * real_data.T + (1 - alpha) * (real_data + delta).T).T, requires_grad=True)
 
         pred_hat = self(x_hat.float())
 
@@ -63,60 +59,114 @@ class Discriminator(Module):
 
         return dragan_penalty
 
+    def forward(self, input):
+        assert input.size()[0] % self.pac == 0
+        return self.seq(input.view(-1, self.pacdim))
+
+
+class Residual(Module):
+
+    def __init__(self, i, o):
+        super(Residual, self).__init__()
+        self.fc = Linear(i, o)
+        self.bn = BatchNorm1d(o)
+        self.relu = ReLU()
+
+    def forward(self, input):
+        out = self.fc(input)
+        out = self.bn(out)
+        out = self.relu(out)
+        return torch.cat([out, input], dim=1)
+
+
+class Generator(Module):
+
+    def __init__(self, embedding_dim, generator_dim, data_dim):
+        super(Generator, self).__init__()
+        dim = embedding_dim
+        seq = []
+        for item in list(generator_dim):
+            seq += [Residual(dim, item)]
+            dim += item
+        seq.append(Linear(dim, data_dim))
+        self.seq = Sequential(*seq)
+
+    def forward(self, input):
+        data = self.seq(input)
+        return data
+
 
 class PATECTGAN(CTGANSynthesizer):
-    def __init__(
-        self,
-        embedding_dim=128,
-        gen_dim=(256, 256),
-        dis_dim=(256, 256),
-        l2scale=1e-6,
-        epochs=300,
-        pack=1,
-        log_frequency=True,
-        disabled_dp=False,
-        target_delta=None,
-        sigma=5,
-        max_per_sample_grad_norm=1.0,
-        verbose=False,
-        loss="cross_entropy",  # losses supported: 'cross_entropy', 'wasserstein'
-        regularization=None,  # regularizations supported: 'dragan'
-        binary=False,
-        batch_size=500,
-        teacher_iters=5,
-        student_iters=5,
-        sample_per_teacher=1000,
-        epsilon=8.0,
-        delta=1e-5,
-        noise_multiplier=1e-3,
-        moments_order=100,
-    ):
 
-        # CTGAN model specifi3c parameters
-        self.embedding_dim = embedding_dim
-        self.gen_dim = gen_dim
-        self.dis_dim = dis_dim
-        self.l2scale = l2scale
-        self.batch_size = batch_size
-        self.epochs = epochs
-        self.pack = pack
-        self.log_frequency = log_frequency
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    def __init__(self,
+                 embedding_dim=128,
+                 generator_dim=(256, 256),
+                 discriminator_dim=(256, 256),
+                 generator_lr=2e-4,
+                 generator_decay=1e-6,
+                 discriminator_lr=2e-4,
+                 discriminator_decay=1e-6,
+                 batch_size=500,
+                 discriminator_steps=1,
+                 log_frequency=True,
+                 verbose=False,
+                 epochs=300,
+                 pac=1,
+                 cuda=True,
+                 epsilon=1,
+                 binary=False,
+                 regularization=None,
+                 loss="cross_entropy",
+                 teacher_iters=5,
+                 student_iters=5,
+                 sample_per_teacher=1000,
+                 delta=1e-5,
+                 noise_multiplier=1e-3,
+                 moments_order=100
+                 ):
+
+        assert batch_size % 2 == 0
+
+        self._embedding_dim = embedding_dim
+        self._generator_dim = generator_dim
+        self._discriminator_dim = discriminator_dim
+
+        self._generator_lr = generator_lr
+        self._generator_decay = generator_decay
+        self._discriminator_lr = discriminator_lr
+        self._discriminator_decay = discriminator_decay
+
+        self._batch_size = batch_size
+        self._discriminator_steps = discriminator_steps
+        self._log_frequency = log_frequency
+        self._verbose = verbose
+        self._epochs = epochs
+        self.pac = pac
+        self.epsilon = epsilon
+
         self.verbose = verbose
         self.loss = loss
+
+        # PATE params
         self.regularization = regularization if self.loss != "wasserstein" else "dragan"
+        self.teacher_iters = teacher_iters
+        self.student_iters = student_iters
+        self.pd_cols = None
+        self.pd_index = None
+        self.binary = binary
         self.sample_per_teacher = sample_per_teacher
         self.noise_multiplier = noise_multiplier
         self.moments_order = moments_order
-
-        self.binary = binary
-        self.batch_size = batch_size
-        self.teacher_iters = teacher_iters
-        self.student_iters = student_iters
-        self.epsilon = epsilon
         self.delta = delta
-        self.pd_cols = None
-        self.pd_index = None
+
+        if not cuda or not torch.cuda.is_available():
+            device = 'cpu'
+        elif isinstance(cuda, str):
+            device = cuda
+        else:
+            device = 'cuda'
+
+        self._device = torch.device(device)
 
     def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
         if update_epsilon:
@@ -126,30 +176,43 @@ class PATECTGAN(CTGANSynthesizer):
             self.sample_per_teacher if self.sample_per_teacher < len(data) else 1000
         )
         self.num_teachers = int(len(data) / sample_per_teacher) + 1
-        self.transformer = DataTransformer()
-        self.transformer.fit(data, discrete_columns=categorical_columns)
-        data = self.transformer.transform(data)
-        data_partitions = np.array_split(data, self.num_teachers)
 
-        data_dim = self.transformer.output_dimensions
+        self._transformer = DataTransformer()
+        self._transformer.fit(data, discrete_columns=categorical_columns)
 
-        self.cond_generator = ConditionalGenerator(
-            data, self.transformer.output_info, self.log_frequency
-        )
+        train_data = self._transformer.transform(data)
+
+        data_partitions = np.array_split(train_data, self.num_teachers)
+
+        data_dim = self._transformer.output_dimensions
+
+        self.cond_generator = DataSampler(
+            train_data,
+            self._transformer.output_info_list,
+            self._log_frequency)
 
         # create conditional generator for each teacher model
+
+        # Note: Previously, there existed a ConditionalGenerator object in CTGAN
+        # - that functionality has been subsumed by DataSampler, but switch is
+        # essentially 1 for 1
         cond_generator = [
-            ConditionalGenerator(d, self.transformer.output_info, self.log_frequency)
+            DataSampler(d, self._transformer.output_info_list, self._log_frequency)
             for d in data_partitions
         ]
 
-        self.generator = Generator(
-            self.embedding_dim + self.cond_generator.n_opt, self.gen_dim, data_dim
-        ).to(self.device)
+        self._generator = Generator(
+            self._embedding_dim + self.cond_generator.dim_cond_vec(),
+            self._generator_dim,
+            data_dim
+        ).to(self._device)
 
         discriminator = Discriminator(
-            data_dim + self.cond_generator.n_opt, self.dis_dim, self.loss, self.pack
-        ).to(self.device)
+            data_dim + self.cond_generator.dim_cond_vec(),
+            self._discriminator_dim,
+            self.loss,
+            self.pac
+        ).to(self._device)
 
         student_disc = discriminator
         student_disc.apply(weights_init)
@@ -158,21 +221,28 @@ class PATECTGAN(CTGANSynthesizer):
         for i in range(self.num_teachers):
             teacher_disc[i].apply(weights_init)
 
-        optimizer_g = optim.Adam(
-            self.generator.parameters(), lr=2e-4, betas=(0.5, 0.9), weight_decay=self.l2scale
+        optimizerG = optim.Adam(
+            self._generator.parameters(),
+            lr=self._generator_lr,
+            betas=(0.5, 0.9),
+            weight_decay=self._generator_decay
         )
+
         optimizer_s = optim.Adam(student_disc.parameters(), lr=2e-4, betas=(0.5, 0.9))
         optimizer_t = [
-            optim.Adam(teacher_disc[i].parameters(), lr=2e-4, betas=(0.5, 0.9))
+            optim.Adam(
+                teacher_disc[i].parameters(), lr=self._discriminator_lr,
+                betas=(0.5, 0.9), weight_decay=self._discriminator_decay
+            )
             for i in range(self.num_teachers)
         ]
 
         noise_multiplier = self.noise_multiplier
-        alphas = torch.tensor([0.0 for i in range(self.moments_order)], device=self.device)
-        l_list = 1 + torch.tensor(range(self.moments_order), device=self.device)
+        alphas = torch.tensor([0.0 for i in range(self.moments_order)], device=self._device)
+        l_list = 1 + torch.tensor(range(self.moments_order), device=self._device)
         eps = 0
 
-        mean = torch.zeros(self.batch_size, self.embedding_dim, device=self.device)
+        mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
         std = mean + 1
 
         real_label = 1
@@ -188,28 +258,28 @@ class PATECTGAN(CTGANSynthesizer):
             for t_2 in range(self.teacher_iters):
                 for i in range(self.num_teachers):
                     partition_data = data_partitions[i]
-                    data_sampler = Sampler(partition_data, self.transformer.output_info)
-                    fakez = torch.normal(mean, std=std).to(self.device)
+                    data_sampler = DataSampler(partition_data, self._transformer.output_info_list, self._log_frequency)
+                    fakez = torch.normal(mean, std=std).to(self._device)
 
-                    condvec = cond_generator[i].sample(self.batch_size)
+                    condvec = cond_generator[i].sample_condvec(self._batch_size)
 
                     if condvec is None:
                         c1, m1, col, opt = None, None, None, None
-                        real = data_sampler.sample(self.batch_size, col, opt)
+                        real = data_sampler.sample_data(self._batch_size, col, opt)
                     else:
                         c1, m1, col, opt = condvec
-                        c1 = torch.from_numpy(c1).to(self.device)
-                        m1 = torch.from_numpy(m1).to(self.device)
+                        c1 = torch.from_numpy(c1).to(self._device)
+                        m1 = torch.from_numpy(m1).to(self._device)
                         fakez = torch.cat([fakez, c1], dim=1)
-                        perm = np.arange(self.batch_size)
+                        perm = np.arange(self._batch_size)
                         np.random.shuffle(perm)
-                        real = data_sampler.sample(self.batch_size, col[perm], opt[perm])
+                        real = data_sampler.sample_data(self._batch_size, col[perm], opt[perm])
                         c2 = c1[perm]
 
-                    fake = self.generator(fakez)
+                    fake = self._generator(fakez)
                     fakeact = self._apply_activate(fake)
 
-                    real = torch.from_numpy(real.astype("float32")).to(self.device)
+                    real = torch.from_numpy(real.astype("float32")).to(self._device)
 
                     if c1 is not None:
                         fake_cat = torch.cat([fakeact, c1], dim=1)
@@ -222,16 +292,16 @@ class PATECTGAN(CTGANSynthesizer):
 
                     y_all = torch.cat([teacher_disc[i](fake_cat), teacher_disc[i](real_cat)])
                     label_fake = torch.full(
-                        (int(self.batch_size / self.pack), 1),
+                        (int(self._batch_size / self.pac), 1),
                         fake_label,
                         dtype=torch.float,
-                        device=self.device,
+                        device=self._device,
                     )
                     label_true = torch.full(
-                        (int(self.batch_size / self.pack), 1),
+                        (int(self._batch_size / self.pac), 1),
                         real_label,
                         dtype=torch.float,
-                        device=self.device,
+                        device=self._device,
                     )
                     labels = torch.cat([label_fake, label_true])
 
@@ -239,53 +309,56 @@ class PATECTGAN(CTGANSynthesizer):
                     error_d.backward()
 
                     if self.regularization == "dragan":
-                        pen = teacher_disc[i].dragan_penalty(real_cat, device=self.device)
+                        pen = teacher_disc[i].dragan_penalty(real_cat, device=self._device)
                         pen.backward(retain_graph=True)
 
                     optimizer_t[i].step()
-
+            ###
             # train student discriminator
             for t_3 in range(self.student_iters):
-                data_sampler = Sampler(data, self.transformer.output_info)
-                fakez = torch.normal(mean, std=std)
+                data_sampler = DataSampler(train_data, self._transformer.output_info_list, self._log_frequency)
+                fakez = torch.normal(mean=mean, std=std)
 
-                condvec = self.cond_generator.sample(self.batch_size)
+                condvec = self.cond_generator.sample_condvec(self._batch_size)
 
                 if condvec is None:
                     c1, m1, col, opt = None, None, None, None
-                    real = data_sampler.sample(self.batch_size, col, opt)
+                    real = data_sampler.sample_data(self._batch_size, col, opt)
                 else:
                     c1, m1, col, opt = condvec
-                    c1 = torch.from_numpy(c1).to(self.device)
-                    m1 = torch.from_numpy(m1).to(self.device)
+                    c1 = torch.from_numpy(c1).to(self._device)
+                    m1 = torch.from_numpy(m1).to(self._device)
                     fakez = torch.cat([fakez, c1], dim=1)
 
-                    perm = np.arange(self.batch_size)
+                    perm = np.arange(self._batch_size)
                     np.random.shuffle(perm)
-                    real = data_sampler.sample(self.batch_size, col[perm], opt[perm])
+                    real = data_sampler.sample_data(
+                        self._batch_size, col[perm], opt[perm])
                     c2 = c1[perm]
 
-                fake = self.generator(fakez)
+                fake = self._generator(fakez)
                 fakeact = self._apply_activate(fake)
 
                 if c1 is not None:
                     fake_cat = torch.cat([fakeact, c1], dim=1)
                 else:
-                    fake_cat = fake
+                    fake_cat = fakeact
 
                 fake_data = fake_cat
+
+                ###
                 predictions, votes = pate(
-                    fake_data, teacher_disc, noise_multiplier, device=self.device
+                    fake_data, teacher_disc, noise_multiplier, device=self._device
                 )
 
                 output = student_disc(fake_data.detach())
 
                 # update moments accountant
                 alphas = alphas + moments_acc(
-                    self.num_teachers, votes, noise_multiplier, l_list, device=self.device
+                    self.num_teachers, votes, noise_multiplier, l_list, device=self._device
                 )
 
-                loss_s = criterion(output.squeeze(), predictions.float().to(self.device).squeeze())
+                loss_s = criterion(output.squeeze(), predictions.float().to(self._device).squeeze())
 
                 optimizer_s.zero_grad()
                 loss_s.backward()
@@ -297,26 +370,26 @@ class PATECTGAN(CTGANSynthesizer):
                         ordered, predictions.shape[0] - int(predictions.sum().item())
                     )
                     synth_cat = torch.cat(data_list[1:], axis=0)[:, 1:]
-                    pen = student_disc.dragan_penalty(synth_cat, device=self.device)
+                    pen = student_disc.dragan_penalty(synth_cat, device=self._device)
                     pen.backward(retain_graph=True)
 
                 optimizer_s.step()
 
-            # print ('iterator {i}, student discriminator loss is {j}'.format(i=t_3, j=loss_s))
+                # print ('iterator {i}, student discriminator loss is {j}'.format(i=t_3, j=loss_s))
 
             # train generator
             fakez = torch.normal(mean=mean, std=std)
-            condvec = self.cond_generator.sample(self.batch_size)
+            condvec = self.cond_generator.sample_condvec(self._batch_size)
 
             if condvec is None:
                 c1, m1, col, opt = None, None, None, None
             else:
                 c1, m1, col, opt = condvec
-                c1 = torch.from_numpy(c1).to(self.device)
-                m1 = torch.from_numpy(m1).to(self.device)
+                c1 = torch.from_numpy(c1).to(self._device)
+                m1 = torch.from_numpy(m1).to(self._device)
                 fakez = torch.cat([fakez, c1], dim=1)
 
-            fake = self.generator(fakez)
+            fake = self._generator(fakez)
             fakeact = self._apply_activate(fake)
 
             if c1 is not None:
@@ -331,19 +404,19 @@ class PATECTGAN(CTGANSynthesizer):
 
             if self.loss == "cross_entropy":
                 label_g = torch.full(
-                    (int(self.batch_size / self.pack), 1),
+                    (int(self._batch_size / self.pac), 1),
                     real_label,
                     dtype=torch.float,
-                    device=self.device,
+                    device=self._device,
                 )
                 loss_g = criterion(y_fake.squeeze(), label_g.float().squeeze())
                 loss_g = loss_g + cross_entropy
             else:
                 loss_g = -torch.mean(y_fake) + cross_entropy
 
-            optimizer_g.zero_grad()
+            optimizerG.zero_grad()
             loss_g.backward()
-            optimizer_g.step()
+            optimizerG.step()
 
             eps = min((alphas - math.log(self.delta)) / l_list)
 
@@ -363,33 +436,34 @@ class PATECTGAN(CTGANSynthesizer):
         w_loss = -(torch.mean(true_score) - torch.mean(fake_score))
         return w_loss
 
-    def generate(self, n):
-        self.generator.eval()
+    def generate(self, n, condition_column=None, condition_value=None):
+        """
+        TODO: Add condition_column support from CTGAN
+        """
+        self._generator.eval()
 
-        steps = n // self.batch_size + 1
-
+        # output_info = self._transformer.output_info
+        steps = n // self._batch_size + 1
         data = []
-
         for i in range(steps):
-            mean = torch.zeros(self.batch_size, self.embedding_dim)
+            mean = torch.zeros(self._batch_size, self._embedding_dim)
             std = mean + 1
-            fakez = torch.normal(mean=mean, std=std).to(self.device)
+            fakez = torch.normal(mean=mean, std=std).to(self._device)
 
-            condvec = self.cond_generator.sample_zero(self.batch_size)
+            condvec = self.cond_generator.sample_original_condvec(self._batch_size)
+
             if condvec is None:
                 pass
             else:
                 c1 = condvec
-                c1 = torch.from_numpy(c1).to(self.device)
+                c1 = torch.from_numpy(c1).to(self._device)
                 fakez = torch.cat([fakez, c1], dim=1)
 
-            fake = self.generator(fakez)
+            fake = self._generator(fakez)
             fakeact = self._apply_activate(fake)
             data.append(fakeact.detach().cpu().numpy())
 
         data = np.concatenate(data, axis=0)
         data = data[:n]
 
-        generated_data = self.transformer.inverse_transform(data, None)
-
-        return generated_data
+        return self._transformer.inverse_transform(data)

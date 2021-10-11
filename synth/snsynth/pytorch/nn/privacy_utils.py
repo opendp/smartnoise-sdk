@@ -17,6 +17,8 @@ def pate(data, teachers, lap_scale, device="cpu"):
     for i in range(num_teachers):
         output = teachers[i](data)
         pred = (output > 0.5).type(torch.Tensor).squeeze().to(device)
+        # print(pred.shape)
+        # print(labels[i].shape)
         labels[i] = pred
 
     votes = torch.sum(labels, dim=0).unsqueeze(1).type(torch.DoubleTensor).to(device)
