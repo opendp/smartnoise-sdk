@@ -42,7 +42,6 @@ class Discriminator(Module):
         delta = torch.normal(
             mean=0.0, std=float(pac), size=real_data.shape, device=device
         )  # 0.5 * real_data.std() * torch.rand(real_data.shape)
-        
         x_hat = Variable((alpha * real_data.T + (1 - alpha) * (real_data + delta).T).T, requires_grad=True)
 
         pred_hat = self(x_hat.float())

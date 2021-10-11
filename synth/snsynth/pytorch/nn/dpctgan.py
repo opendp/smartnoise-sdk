@@ -445,3 +445,4 @@ class DPCTGAN(CTGANSynthesizer):
         data = data[:n]
 
         return self._transformer.inverse_transform(data)
+        
