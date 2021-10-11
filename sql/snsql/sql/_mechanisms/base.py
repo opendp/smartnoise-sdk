@@ -42,6 +42,9 @@ class AdditiveNoiseMechanism:
             self.upper = sensitivity
     def _compute_noise_scale(self):
         raise NotImplementedError("Implement _compute_noise_scale in inherited class")
+    @property
+    def threshold(self):
+        raise NotImplementedError(f"Threshold not implemented for {self.mechanism}")
     def release(self, vals):
         """
         Adds noise and releases values.

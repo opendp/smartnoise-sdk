@@ -4,6 +4,7 @@ from opendp.trans import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.meas import make_base_geometric
+from scipy.stats import geom
 
 class Geometric(AdditiveNoiseMechanism):
     def __init__(
@@ -42,3 +43,12 @@ class Geometric(AdditiveNoiseMechanism):
         meas = make_base_geometric(self.scale)
         vals = [meas(int(v)) for v in vals]
         return vals
+    def accuracy(self, alpha):
+        percentile = 1 - alpha
+        prob = math.exp(-1/self.scale)
+        pct = (1 - prob)/(1 + prob)
+        n = 0
+        while pct < percentile:
+            n += 1
+            pct += 2 * (1 - prob)/(1 + prob) * (prob ** abs(n))
+        return n

@@ -260,6 +260,14 @@ class Rewriter:
                 for ne in query.select.namedExpressions
             ]
         select = Select(None, select)
+        if not child_scope.expressions:
+            # nothing is selected, may be lone COUNT(*)
+            if len(select.namedExpressions) == 1:
+                expr = select.namedExpressions[0].expression
+                if isinstance(expr, AggFunction) and expr.name == 'COUNT' and isinstance(expr.expression, AllColumns):
+                    table = expr.expression.table
+                    alias = '*' if table is None else '*_' + str(table)
+                    child_scope.push_name(AllColumns(), alias)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
         return subquery
 
@@ -340,7 +348,13 @@ class Scope:
     def select(self, quantifier=None):
         return Select(
             quantifier,
-            [NamedExpression(Identifier(str(name)), self.expressions[name]) for name in self.expressions.keys()],
+            [
+                NamedExpression(
+                    Identifier(str(name)) if not str(name).startswith('*') else None, 
+                    self.expressions[name]
+                ) 
+                for name in self.expressions.keys()
+            ],
         )
 
     def push_name(self, expression, proposed=None):

@@ -138,6 +138,7 @@ class TestDbEngine:
                 password = keyring.get_password(conn, user)
                 self.password = password
             except:
+                print(f"No password for engine {conn}")
                 self.password = ""
         self.connections = {}
         for database in self.databases:
@@ -155,18 +156,20 @@ class TestDbEngine:
             try:
                 import psycopg2
                 self.connections[database] = psycopg2.connect(host=host, port=port, user=user, password=password, database=dbname)
-                print(f'Connected {database} to {dbname}')
+                print(f'Postgres: Connected {database} to {dbname}')
             except:
                 print(f"Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
         elif self.engine.lower() == "pandas":
             self.connections['PUMS'] = pd.read_csv(pums_csv_path)
             self.connections['PUMS_pid'] = pd.read_csv(pums_pid_csv_path)
             self.connections['PUMS_dup'] = pd.read_csv(pums_dup_csv_path)
+            print(f'Pandas: Connected to 3 databases')
         elif self.engine.lower() == "sqlserver":
             try:
                 import pyodbc
                 dsn = f"Driver={{ODBC Driver 17 for SQL Server}};Server={host},{port};UID={user};Database={dbname};PWD={password}"
                 self.connections[database] = pyodbc.connect(dsn)
+                print(f'SQL Server: Connected {database} to {dbname}')
             except:
                 print(f"Unable to connect to SQL Server database {database}.  Ensure connection info is correct and pyodbc is installed.")
         elif self.engine.lower() == "spark":
@@ -186,6 +189,7 @@ class TestDbEngine:
                 self.connections['PUMS_pid'] = spark
                 self.connections['PUMS_dup'] = spark
                 self.connections['PUMS_large'] = spark
+                print(f'Spark: Connected to 4 databases')
             except:
                 print("Unable to connect to Spark test databases.  Make sure pyspark is installed.")
         else:

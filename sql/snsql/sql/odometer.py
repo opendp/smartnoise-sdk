@@ -40,7 +40,7 @@ class OdometerHeterogeneous:
     Theorem 3.5
     https://arxiv.org/pdf/1311.0776.pdf
     """
-    def __init__(self, privacy: Privacy = None):
+    def __init__(self, privacy: Privacy):
         self.steps = []
         self.privacy = privacy
         self.tol = None
@@ -48,11 +48,13 @@ class OdometerHeterogeneous:
             if not self.privacy.delta:
                 self.privacy.delta = 0.0
             self.tol = self.privacy.delta / 2
+        if self.tol == 0.0:
+            self.tol = 10E-16
     def spend(self, privacy: Privacy = None):
         if privacy:
             if not self.tol:
                 self.tol = privacy.delta / 2
-            if self.tol > privacy.delta:
+            if self.tol > privacy.delta and privacy.delta != 0.0:
                 self.tol = privacy.delta
             self.steps.append((privacy.epsilon, privacy.delta))
         elif self.privacy:
@@ -66,12 +68,18 @@ class OdometerHeterogeneous:
         return len(self.steps)
     @property
     def spent(self):
-        k = len(self.steps)
+        if self.steps == []:
+            return (0.0, 0.0)
+
+        # delta
+        delta = 1 - (1 - self.tol) * np.prod([(1 - delta) for _, delta in self.steps])
+
+        # epsilon
         basic = np.sum([eps for eps, _ in self.steps])
         optimal_left_side = np.sum([((np.exp(eps) - 1) * eps) / ((np.exp(eps) + 1)) for eps, _ in self.steps])
         sq = np.sum([eps * eps for eps, _ in self.steps])
         sqsq = np.sum([2 * eps * eps for eps, _ in self.steps])
         optimal_a = optimal_left_side + np.sqrt(sqsq * np.log(np.exp(1) + (np.sqrt(sq)/self.tol)))
         optimal_b = optimal_left_side + np.sqrt(sqsq * np.log(1/self.tol))
-        delta = 1 - (1 - self.tol) * np.prod([(1 - delta) for _, delta in self.steps])
+        
         return tuple([min(basic, optimal_a, optimal_b), delta])

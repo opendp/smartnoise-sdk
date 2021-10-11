@@ -4,6 +4,7 @@ from opendp.trans import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.meas import make_base_gaussian
+from scipy.stats import norm
 
 class Gaussian(AdditiveNoiseMechanism):
     def __init__(
@@ -18,6 +19,8 @@ class Gaussian(AdditiveNoiseMechanism):
                 upper=upper,
                 lower=lower
             )
+        if delta <= 0.0:
+            raise ValueError("Gaussian mechanism delta must be greater than 0.0")
         self._compute_noise_scale()
     def _compute_noise_scale(self):
         if self.scale is not None:
@@ -42,8 +45,31 @@ class Gaussian(AdditiveNoiseMechanism):
                 d_in=max_contrib,
                 d_out=(self.epsilon, self.delta))
             self.scale = discovered_scale
+    @property
+    def threshold(self):
+        max_contrib = self.max_contrib
+        delta = self.delta
+        epsilon = self.epsilon
+        if delta == 0.0:
+            return "censor_dims requires delta to be > 0.0  Try delta=1/n*sqrt(n) where n is the number of individuals"
+        thresh_scale = math.sqrt(max_contrib) * (
+            (
+                math.sqrt(math.log(1 / delta))
+                + math.sqrt(math.log(1 / delta) + epsilon)
+            )
+        / (math.sqrt(2) * epsilon)
+        )
+        thresh = 1 + thresh_scale * math.sqrt(
+            2 * math.log(max_contrib / math.sqrt(2 * math.pi * delta))
+        )
+        return thresh
     def release(self, vals):
         enable_features('floating-point', 'contrib')
         meas = make_base_gaussian(self.scale)
         vals = [meas(float(v)) for v in vals]
         return vals
+    def accuracy(self, alpha):
+        percentile = 1 - alpha
+        right = (1.0 + percentile) / 2
+        return norm.ppf(right, loc=0.0, scale=self.scale)
+        

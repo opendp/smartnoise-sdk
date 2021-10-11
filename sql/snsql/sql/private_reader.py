@@ -1,10 +1,11 @@
 import logging
 import math
+from antlr4.atn.Transition import EpsilonTransition
 import numpy as np
 from snsql.metadata import Metadata
 from snsql.sql._mechanisms.accuracy import Accuracy
 from snsql.sql._mechanisms.laplace import Laplace
-from snsql.sql.odometer import Odometer
+from snsql.sql.odometer import Odometer, OdometerHeterogeneous
 from snsql.sql.privacy import Privacy
 
 from snsql.sql.reader.base import SqlReader
@@ -84,10 +85,7 @@ class PrivateReader(Reader):
         else:
             self.privacy = Privacy(epsilon=epsilon_per_column, delta=delta)
         
-        self.odometer = Odometer(self.privacy)
-
-        self._cached_exact = None
-        self._cached_ast = None
+        self.odometer = OdometerHeterogeneous(self.privacy)
 
         self._refresh_options()
 
@@ -150,9 +148,13 @@ class PrivateReader(Reader):
     def get_privacy_cost(self, query_string):
         """Estimates the epsilon and delta cost for running the given query.
         """
-        odo = Odometer(self.privacy)
-        k = self.get_budget_multiplier(query_string)
-        odo.spend(k)
+        odo = OdometerHeterogeneous(self.privacy)
+        self._refresh_options()
+        subquery, _ = self._rewrite(query_string)
+        mechs = self._get_mechanisms(subquery)
+        for mech in mechs:
+            if mech:
+                odo.spend(Privacy(epsilon=mech.epsilon, delta=mech.delta))
         return odo.spent
 
     def parse_query_string(self, query_string) -> Query:
@@ -205,13 +207,11 @@ class PrivateReader(Reader):
         else:
             return self.reader
 
-    def _get_mechanisms(self, subquery: Query):
+    def _get_mechanisms(self, subquery: Query, kc_pos=None):
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
 
         syms = subquery.all_symbols()
-
-        # list of sensitivities in column order
-        sens = [s[1].sensitivity() for s in syms]
+        cols = [(s[1].sensitivity(), s[1].type(), s[1].is_count) for s in syms]
 
         # set sensitivity to None if the column is a grouping key
         if subquery.agg is not None:
@@ -222,18 +222,31 @@ class PrivateReader(Reader):
         else:
             group_keys = []
         is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
-        for idx in range(len(sens)):
-            if is_group_key[idx]:
-                sens[idx] = None
-        if any([s is np.inf for s in sens]):
+
+        cols = zip(is_group_key, cols)
+        cols = [(None if gk else s, t, c) for gk, (s, t, c) in cols]
+        if any([s is np.inf for s, _, _ in cols]):
             raise ValueError(
                 "Query is attempting to query an unbounded column that isn't part of the grouping key"
             )
-        mechs = [
-            Laplace(self.privacy.epsilon, delta=self.privacy.delta, sensitivity=s, max_contrib=max_contrib) if s is not None else None
-            for s in sens
-        ]
+        mechanisms = self.privacy.mechanisms
+        epsilon = self.privacy.epsilon
+        delta = self.privacy.delta
+        mechs = []
+        for idx in range(len(cols)):
+            sensitivity, t, is_count = cols[idx]
+            mech = None
+            if t in ['int', 'float'] and sensitivity is not None:
+                stat = 'count' if is_count else 'sum'
+                if kc_pos is not None and idx == kc_pos:
+                    stat = 'threshold'
+                mech_class = mechanisms.get_mechanism(sensitivity, stat, t)
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                if kc_pos is not None and idx == kc_pos:
+                    mech.delta = delta
+            mechs.append(mech)
         return mechs
+
     def execute_with_accuracy(self, query_string:str):
         return self.execute(query_string, accuracy=True)
 
@@ -256,27 +269,15 @@ class PrivateReader(Reader):
         query = self.parse_query_string(query_string)
         return self._execute_ast(query, accuracy=accuracy)
 
-    def _execute_ast(self, query, *ignore, accuracy:bool=False, cache_exact=False):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
         subquery, query = self._rewrite_ast(query)
-        max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
 
         _accuracy = None
         if accuracy:
             _accuracy = Accuracy(query, subquery, self.privacy)
-
-        thresh_scale = math.sqrt(max_contrib) * (
-            (
-                math.sqrt(math.log(1 / self.privacy.delta))
-                + math.sqrt(math.log(1 / self.privacy.delta) + self.privacy.epsilon)
-            )
-            / (math.sqrt(2) * self.privacy.epsilon)
-        )
-        self.tau = 1 + thresh_scale * math.sqrt(
-            2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.privacy.delta))
-        )
 
         syms = subquery.all_symbols()
         source_col_names = [s[0] for s in syms]
@@ -291,29 +292,13 @@ class PrivateReader(Reader):
                 kc_pos = idx
 
         # get a list of mechanisms in column order
-        mechs = self._get_mechanisms(subquery)
+        mechs = self._get_mechanisms(subquery, kc_pos)
 
-        # execute the subquery against the backend and load in tuples
-        if cache_exact:
-            # we only execute the exact query once
-            if self._cached_exact is not None:
-                if subquery == self._cached_ast:
-                    db_rs = self._cached_exact
-                    _accuracy = self._cached_accuracy
-                else:
-                    raise ValueError(
-                        "Cannot run different query against cached result.  "
-                        "Make a new PrivateReader or else clear the cache with cache = False"
-                    )
-            else:
-                db_rs = self._get_reader(subquery)._execute_ast(subquery)
-                self._cached_exact = list(db_rs)
-                self._cached_ast = subquery
-                self._cached_accuracy = _accuracy
-        else:
-            self._cached_exact = None
-            self._cached_ast = None
-            db_rs = self._get_reader(subquery)._execute_ast(subquery)
+        if kc_pos is not None:
+            thresh_mech = mechs[kc_pos]
+            self.tau = thresh_mech.threshold
+
+        db_rs = self._get_reader(subquery)._execute_ast(subquery)
 
         clamp_counts = self._options.clamp_counts
 
@@ -347,8 +332,9 @@ class PrivateReader(Reader):
             out = map(process_row, db_rs[1:])
 
         # censor infrequent dimensions
-        if subquery.agg is not None and self._options.censor_dims:
-            if kc_pos == None:
+        # if subquery.agg is not None and self._options.censor_dims:
+        if self._options.censor_dims:
+            if kc_pos is None:
                 raise ValueError("Query needs a key count column to censor dimensions")
             if hasattr(out, "filter"):
                 # it's an RDD
@@ -481,7 +467,9 @@ class PrivateReader(Reader):
                 out = map(drop_accuracy, out)
 
         # increment odometer
-        self.odometer.spend(len([m for m in mechs if m]))
+        for mech in mechs:
+            if mech:
+                self.odometer.spend(Privacy(epsilon=mech.epsilon, delta=mech.delta))
 
         # output it
         if accuracy == False and hasattr(out, "toDF"):
@@ -497,8 +485,8 @@ class PrivateReader(Reader):
             out_rows = row0 + list(out)
             return out_rows
 
-    def _execute_ast_df(self, query, cache_exact=False):
-        return self._to_df(self._execute_ast(query, cache_exact=cache_exact))
+    def _execute_ast_df(self, query):
+        return self._to_df(self._execute_ast(query))
 
 
 class PrivateReaderOptions:

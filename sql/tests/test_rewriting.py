@@ -28,9 +28,9 @@ queries = [
         "SELECT age, SUM(income) AS sum_income FROM PUMS.PUMS GROUP BY age HAVING age > 5 AND COUNT(*) > 7 OR NOT ( age < 5)",
         "SELECT age, sex, SUM(income) AS sum_income FROM PUMS.PUMS GROUP BY age, sex ORDER BY age, sum_income, sex DESC LIMIT 10",
         "SELECT COUNT(*) AS count_all, SUM(income) AS sum_income, AVG(income) AS avg_income, VARIANCE(income) AS var_income, STDDEV(income) AS stddev_income FROM PUMS.PUMS",
-        "SELECT (VAR(educ)) AS my_var, married FROM PUMS.PUMS GROUP BY married",
-        "SELECT age, sex, SUM(income) AS my_sum, SUM(educ) AS sum_educ FROM PUMS.PUMS GROUP BY age, sex HAVING NOT ( sex = True ) ORDER BY my_sum, sex DESC LIMIT 10",
-        "SELECT married, SUM(income) AS my_sum, SUM(educ) AS sum_educ FROM PUMS.PUMS GROUP BY married HAVING married",
+        "SELECT (VAR(age)) AS my_var, married FROM PUMS.PUMS GROUP BY married",
+        "SELECT age, sex, SUM(income) AS my_sum, SUM(age) AS sum_age FROM PUMS.PUMS GROUP BY age, sex HAVING NOT ( sex = True ) ORDER BY my_sum, sex DESC LIMIT 10",
+        "SELECT married, SUM(income) AS my_sum, SUM(age) AS sum_age FROM PUMS.PUMS GROUP BY married HAVING married",
         "SELECT SUM(age) FROM PUMS.PUMS",
         "SELECT COUNT(*), VAR(age) AS var_age FROM PUMS.PUMS",
         "SELECT married, educ, income, AVG(age) FROM PUMS.PUMS GROUP BY married, educ, income",
@@ -55,6 +55,8 @@ queries = [
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
 metadata = Metadata.from_file(meta_path)
+
+metadata['PUMS.PUMS']['']
 
 def test_rewriting():
     for query in queries:

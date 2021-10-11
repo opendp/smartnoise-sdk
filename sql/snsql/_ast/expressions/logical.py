@@ -317,7 +317,7 @@ class IIFFunction(SqlExpr):
 def parse_bool(v):
     if isinstance(v, bool):
         return v
-    elif isinstance(v, (int, float, np.int)):
+    elif isinstance(v, (int, float)):
         if float(v) == 0.0:
             return False
         elif float(v) == 1.0:

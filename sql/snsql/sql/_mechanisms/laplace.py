@@ -4,6 +4,7 @@ from opendp.trans import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.meas import make_base_laplace
+from scipy.stats import laplace
 
 class Laplace(AdditiveNoiseMechanism):
     def __init__(
@@ -12,7 +13,7 @@ class Laplace(AdditiveNoiseMechanism):
         super().__init__(
                 epsilon,
                 mechanism=Mechanism.laplace,
-                delta=0.0,
+                delta=0.0,  # ignored unless thresholding
                 sensitivity=sensitivity,
                 max_contrib=max_contrib,
                 upper=upper,
@@ -40,8 +41,22 @@ class Laplace(AdditiveNoiseMechanism):
                 d_in=max_contrib,
                 d_out=(self.epsilon))
             self.scale = discovered_scale
+    @property
+    def threshold(self):
+        max_contrib = float(self.max_contrib)
+        delta = self.delta
+        epsilon = self.epsilon
+        if delta == 0.0:
+            return "censor_dims requires delta to be > 0.0  Try delta=1/n*sqrt(n) where n is the number of individuals"
+        log_term = math.log(2 * delta / max_contrib) 
+        thresh = max_contrib * (1 - ( log_term / epsilon))
+        return thresh
     def release(self, vals):
         enable_features('floating-point', 'contrib')
         meas = make_base_laplace(self.scale)
         vals = [meas(float(v)) for v in vals]
         return vals
+    def accuracy(self, alpha):
+        percentile = 1 - alpha
+        right = (1.0 + percentile) / 2
+        return laplace.ppf(right, loc=0.0, scale=self.scale)

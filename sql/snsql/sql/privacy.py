@@ -25,7 +25,19 @@ class Mechanisms:
             Stat.sum_float: Mechanism.laplace,
             Stat.threshold: Mechanism.laplace
         }
-    def get_mechanism(self, stat, sensitivity):
+    def _get_stat(self, stat, t):
+        if stat == 'threshold':
+            return Stat.threshold
+        elif stat == 'count':
+            return Stat.count
+        elif stat == 'sum' and t in ['float', 'int']:
+            return Stat.sum_int if t == 'int' else Stat.sum_float
+        else:
+            return None
+    def get_mechanism(self, sensitivity, stat, t):
+        stat = self._get_stat(stat, t)
+        if stat is None:
+            return None
         if stat is Stat.sum_int:
             if sensitivity > self.large and Stat.sum_large_int in self.map:
                 stat = Stat.sum_large_int

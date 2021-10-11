@@ -93,12 +93,12 @@ class TestOdometer:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv.execute("SELECT SUM(age) FROM PUMS.PUMS GROUP BY educ")
         assert(priv.odometer.k == 2)
-    def test_three_var(self):
+    def test_two_var(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.execute("SELECT VAR(age), VAR(educ), VAR(income) FROM PUMS.PUMS GROUP BY sex")
+        res = priv.execute("SELECT VAR(age), VAR(income) FROM PUMS.PUMS GROUP BY sex")
         assert(priv.odometer.k == 5)
     def test_odo_hom(self):
         privacy = Privacy(epsilon=0.1, delta = 1/(1000))
@@ -118,7 +118,7 @@ class TestOdometer:
         assert(np.isclose(delt, 0.2596633))
     def test_odo_het_alternate(self):
         privacy = Privacy(epsilon=0.1, delta = 1/(1000))
-        odo = OdometerHeterogeneous()
+        odo = OdometerHeterogeneous(privacy)
         for _ in range(300):
             odo.spend(privacy)
         eps, delt = odo.spent
@@ -189,12 +189,12 @@ class TestMultiplier:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv.get_budget_multiplier("SELECT SUM(age) FROM PUMS.PUMS GROUP BY educ")
         assert(res == 2)
-    def test_three_var(self):
+    def test_two_var(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        query = "SELECT VAR(age), VAR(educ), VAR(income) FROM PUMS.PUMS GROUP BY sex"
+        query = "SELECT VAR(age), VAR(income) FROM PUMS.PUMS GROUP BY sex"
         res = priv.get_budget_multiplier(query)
         assert(res == 5)
         eps, _ = priv.get_privacy_cost(query)
