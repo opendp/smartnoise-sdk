@@ -137,7 +137,7 @@ class PrivateReader(Reader):
         Columns with no mechanism application return None.
         """
         self._refresh_options()
-        subquery, _ = self._rewrite(query_string)
+        subquery, query = self._rewrite(query_string)
         mechs = self._get_mechanisms(subquery)
         accuracies = {}
         for alpha in alphas:
