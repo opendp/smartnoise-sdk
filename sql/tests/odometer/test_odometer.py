@@ -128,74 +128,85 @@ class TestOdometer:
 class TestMultiplier:
     def test_count_pid_query(self):
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_path)
-        res = priv.get_budget_multiplier("SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 1)
+        res = priv._get_mechanism_costs("SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len (res) == 1)
     def test_count_query(self):
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_path)
-        res = priv.get_budget_multiplier("SELECT COUNT(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 2)
+        res = priv._get_mechanism_costs("SELECT COUNT(age) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 2)
     def test_count_row_privacy(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT COUNT(*) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 1)
+        res = priv._get_mechanism_costs("SELECT COUNT(*) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 1)
     def test_count_row_privacy_col(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT COUNT(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 1)
+        res = priv._get_mechanism_costs("SELECT COUNT(age) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 1)
     def test_count_row_privacy_col_quantifier(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT COUNT(DISTINCT age) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 2)
+        res = priv._get_mechanism_costs("SELECT COUNT(DISTINCT age) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 2)
     def test_count_row_privacy_no_censor(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = False
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT COUNT(DISTINCT age) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 1)
+        res = priv._get_mechanism_costs("SELECT COUNT(DISTINCT age) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 1)
     def test_variance(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT VAR(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 3)
+        res = priv._get_mechanism_costs("SELECT VAR(age) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 3)
     def test_std(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT STD(age) FROM PUMS.PUMS GROUP BY sex")
-        assert(res == 3)
+        res = priv._get_mechanism_costs("SELECT STD(age) FROM PUMS.PUMS GROUP BY sex")
+        res = [r for r in res if r]
+        assert(len(res) == 3)
     def test_avg(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT AVG(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 2)
+        res = priv._get_mechanism_costs("SELECT AVG(age) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 2)
     def test_sum(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.get_budget_multiplier("SELECT SUM(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(res == 2)
+        res = priv._get_mechanism_costs("SELECT SUM(age) FROM PUMS.PUMS GROUP BY educ")
+        res = [r for r in res if r]
+        assert(len(res) == 2)
     def test_two_var(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         query = "SELECT VAR(age), VAR(income) FROM PUMS.PUMS GROUP BY sex"
-        res = priv.get_budget_multiplier(query)
-        assert(res == 5)
+        res = priv._get_mechanism_costs(query)
+        res = [r for r in res if r]
+        assert(len(res) == 5)
         eps, _ = priv.get_privacy_cost(query)
         assert(eps <= 5.0)

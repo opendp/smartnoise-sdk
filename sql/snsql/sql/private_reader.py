@@ -131,30 +131,37 @@ class PrivateReader(Reader):
         self.rewriter.options.max_contrib = self._options.max_contrib
         self.rewriter.options.censor_dims = self._options.censor_dims
 
-    def get_budget_multiplier(self, query_string):
-        """Analyzes the query and tells how many differentially private mechanism invocations
-         will be required to execute the query.  SUM and COUNT both use 1, while MEAN (composed of 
-         a SUM divided by a COUNT) uses 2.  VAR and STDDEV use 3.
-
-            mul = priv.get_budget_multiplier('SELECT AVG(age) FROM PUMS.PUMS GROUP BY sex')
-            assert(mul == 2)
-
+    def _get_mechanism_accuracies(self, query_string, alphas):
+        """
+        Return accuracy for each alpha and each mechanism in column order.
+        Columns with no mechanism application return None.
         """
         self._refresh_options()
         subquery, _ = self._rewrite(query_string)
         mechs = self._get_mechanisms(subquery)
-        return len([m for m in mechs if m])
+        accuracies = {}
+        for alpha in alphas:
+            accuracies[alpha] = [mech.accuracy(alpha) if mech else None for mech in mechs]
+        return accuracies
+    
+    def _get_mechanism_costs(self, query_string):
+        """
+        Return epsilon, delta cost for each mechanism in column order.
+        Columns with no mechanism application return None.
+        """
+        self._refresh_options()
+        subquery, _ = self._rewrite(query_string)
+        mechs = self._get_mechanisms(subquery)
+        return [(mech.epsilon, mech.delta) if mech else None for mech in mechs]
     
     def get_privacy_cost(self, query_string):
         """Estimates the epsilon and delta cost for running the given query.
         """
         odo = OdometerHeterogeneous(self.privacy)
-        self._refresh_options()
-        subquery, _ = self._rewrite(query_string)
-        mechs = self._get_mechanisms(subquery)
-        for mech in mechs:
-            if mech:
-                odo.spend(Privacy(epsilon=mech.epsilon, delta=mech.delta))
+        costs = self._get_mechanism_costs(query_string)
+        costs = [cost for cost in costs if cost]
+        for epsilon, delta in costs:
+            odo.spend(Privacy(epsilon=epsilon, delta=delta))
         return odo.spent
 
     def parse_query_string(self, query_string) -> Query:

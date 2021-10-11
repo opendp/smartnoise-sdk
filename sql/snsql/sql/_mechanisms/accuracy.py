@@ -15,7 +15,7 @@ class Accuracy:
 
     All formulas from: https://github.com/opendp/smartnoise-sdk/blob/main/papers/DP_SQL_budget.pdf
     """
-    def __init__(self, query: Query, subquery: Query, privacy : Privacy):
+    def __init__(self, query: Query, subquery: Query, privacy: Privacy):
         """
         Detection of formulas happens only once per query
         """
