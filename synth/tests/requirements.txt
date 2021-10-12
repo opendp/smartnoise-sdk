@@ -7,3 +7,4 @@ ctgan
 opacus
 torch
 flake8
+pytest
