@@ -22,7 +22,8 @@ install_requires = \
  'antlr4-python3-runtime==4.8',
  'graphviz>=0.17,<0.18',
  'opendp>=0.3.0,<0.4.0',
- 'pandasql>=0.7.3,<0.8.0']
+ 'pandasql>=0.7.3,<0.8.0',
+ 'scipy>=1.7.1,<2.0.0']
 
 setup_kwargs = {
     'name': 'smartnoise-sql',
@@ -36,8 +37,7 @@ setup_kwargs = {
     'url': 'https://smartnoise.org',
     'packages': packages,
     'package_data': package_data,
-    'install_requires': install_requires,
-    'python_requires': '>=3.7.1,<=3.11',
+    'install_requires': install_requires
 }
 
 
