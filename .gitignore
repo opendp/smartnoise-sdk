@@ -122,7 +122,6 @@ sdk/opendp/v1/
 
 
 # datasets
-iris.csv
 iris.yaml
 reddit.csv
 reddit.yaml
