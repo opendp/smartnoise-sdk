@@ -1,6 +1,5 @@
 import os
 import subprocess
-import sklearn.datasets
 import pandas as pd
 import copy
 import yaml
@@ -35,13 +34,6 @@ def find_ngrams(input_list, n):
     return input_list if n == 1 else list(zip(*[input_list[i:] for i in range(n)]))
 
 def download_data_files():
-    iris_dataset_path = os.path.join(root_url,"datasets", "iris.csv")
-    if not os.path.exists(iris_dataset_path):
-        sklearn_dataset = sklearn.datasets.load_iris()
-        sklearn_df = pd.DataFrame(data=sklearn_dataset.data, columns=sklearn_dataset.feature_names)
-        sklearn_df.to_csv(iris_dataset_path)
-
-
     iris_schema_path = os.path.join(root_url,"datasets", "iris.yaml")
     if not os.path.exists(iris_schema_path):
         iris = Table("iris", "iris", [

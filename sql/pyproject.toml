@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smartnoise-sql"
-version = "0.2.1"
+version = "0.2.1.1"
 description = "Differentially Private SQL Queries"
 authors = ["SmartNoise Team <smartnoise@opendp.org>"]
 license = "MIT"
@@ -10,14 +10,13 @@ repository = "https://github.com/opendp/smartnoise-sdk"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<=3.9"
-antlr4-python3-runtime = "4.8"
+python = ">=3.7.1,<3.10"
 opendp = "^0.3.0"
+antlr4-python3-runtime = "4.8"
 pandasql = "^0.7.3"
-numpy = "^1.21.2"
 PyYAML = "^5.4.1"
-pandas = "^1.3.3"
 graphviz = "^0.17"
+scipy = "^1.7.1"
 
 
 [tool.poetry.dev-dependencies]
