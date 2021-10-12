@@ -41,11 +41,11 @@ jobs:
       run: |
         cd sql
         pip install --no-cache-dir .
-#     - name: Install smartnoise-synth
-#       shell: bash -l {0}
-#       run: |
-#         cd synth
-#         pip install --no-cache-dir .
+    - name: Install smartnoise-synth
+      shell: bash -l {0}
+      run: |
+        cd synth
+        pip install --no-cache-dir .
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
