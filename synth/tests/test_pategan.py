@@ -5,14 +5,14 @@ import pytest
 import string
 import pandas as pd
 
-try:
-    from snsynth.preprocessors import GeneralTransformer
-    from snsynth.pytorch import PytorchDPSynthesizer
-    from snsynth.pytorch.nn import PATEGAN
-except:
-    import logging
-    test_logger = logging.getLogger(__name__)
-    test_logger.warning("Requires torch and torchdp")
+# try:
+from snsynth.preprocessors import GeneralTransformer
+from snsynth.pytorch import PytorchDPSynthesizer
+from snsynth.pytorch.nn import PATEGAN
+# except:
+#     import logging
+#     test_logger = logging.getLogger(__name__)
+#     test_logger.warning("Requires torch and torchdp")
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 

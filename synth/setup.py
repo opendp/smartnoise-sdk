@@ -12,7 +12,7 @@ package_data = \
 {'': ['*']}
 
 install_requires = \
-['ctgan==0.2.2.dev0', 'numpy>=1.21.2,<2.0.0', 'opacus==0.11.0', 'torch==1.7.1']
+[]
 
 setup_kwargs = {
     'name': 'smartnoise-synth',
