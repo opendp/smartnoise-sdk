@@ -131,18 +131,29 @@ class PrivateReader(Reader):
         self.rewriter.options.max_contrib = self._options.max_contrib
         self.rewriter.options.censor_dims = self._options.censor_dims
 
-    def _get_mechanism_accuracies(self, query_string, alphas):
+    def _get_simple_accuracy(self, *ignore, query: Query, subquery: Query, alpha: float, **kwargs):
+        def name_to_idx(q: Query, name: str):
+            idx = -1
+            cols = q.m_symbols
+            for i in range(len(q)):
+                if cols[i][0] == name:
+                    idx = i
+                    break
+            return idx
+        sens = [s if s[1].sensitivity() else None for s in query.m_symbols]
+        col_names = [s[1].xpath("//Column")[0] if s else None for s in sens]
+        idxs = [name_to_idx(subquery, c) if c else None for c in col_names]
+        mechs = self._get_mechanisms(subquery)
+        accuracy = [mechs[idx].accuracy(alpha) if idx else None for idx in idxs]
+        return accuracy
+
+    def get_simple_accuracy(self, query_string: str, alpha: float):
         """
         Return accuracy for each alpha and each mechanism in column order.
         Columns with no mechanism application return None.
         """
-        self._refresh_options()
         subquery, query = self._rewrite(query_string)
-        mechs = self._get_mechanisms(subquery)
-        accuracies = {}
-        for alpha in alphas:
-            accuracies[alpha] = [mech.accuracy(alpha) if mech else None for mech in mechs]
-        return accuracies
+        return self._get_simple_accuracy(query=query, subquery=subquery, alpha=alpha)
     
     def _get_mechanism_costs(self, query_string):
         """
