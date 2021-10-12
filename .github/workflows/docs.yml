@@ -1,14 +1,14 @@
 name: Test Documentation Build
 
 on:
-  pull_request:
-    paths:
-      - 'sql/tests/**'
-      - 'sql/snsql/**'
-      - 'sql/pyproject.toml'
-      - 'synth/tests/**'
-      - 'synth/snsynth/**'
-      - 'synth/pyproject.toml'
+  # pull_request:
+  #   paths:
+  #     - 'sql/tests/**'
+  #     - 'sql/snsql/**'
+  #     - 'sql/pyproject.toml'
+  #     - 'synth/tests/**'
+  #     - 'synth/snsynth/**'
+  #     - 'synth/pyproject.toml'
   workflow_dispatch:
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.8]
       max-parallel: 5
 
     steps:
@@ -34,31 +34,24 @@ jobs:
       run: |
         conda install pip
         conda update pip
-    - name: Install cython and pandas
-      shell: bash -l {0}
-      run: |
-        pip install cython
-        pip install numpy
-        pip install pandas
     - name: Get development headers
       shell: bash -l {0}
       run: |
         sudo apt-get update
         sudo apt-get -yq upgrade
         sudo apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev openjdk-11-jre-headless
-    - name: Install dependencies
+    - name: Install smartnoise-sql
       shell: bash -l {0}
       run: |
-        pip install numpy
-        pip install -r tests/requirements.txt
-        pip install psycopg2
-        pip install readchar
-        pip install --user pyodbc
-        pip install keyring
-    - name: Install opendp-smartnoise
+        cd sql
+        pip install --no-cache-dir .
+        pip install --no-cache-dir -r tests/requirements.txt
+    - name: Install smartnoise-synth
       shell: bash -l {0}
       run: |
-        pip install ./sdk
+        cd synth
+        pip install --no-cache-dir .
+        pip install --no-cache-dir -r tests/requirements.txt
     - name: Clone documentation repo
       shell: bash -l {0}
       run: |
