@@ -35,7 +35,6 @@ jobs:
       run: |
         cd synth
         pip install --no-cache-dir -r tests/requirements.txt
-        pip install --no-cache-dir opendp-smartnoise-core  # temporary
     - name: Install smartnoise-sql
       shell: bash -l {0}
       run: |
