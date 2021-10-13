@@ -4,7 +4,7 @@ from opendp.trans import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.meas import make_base_laplace
-from scipy.stats import laplace
+from opendp.accuracy import laplacian_scale_to_accuracy
 
 class Laplace(AdditiveNoiseMechanism):
     def __init__(
@@ -57,6 +57,4 @@ class Laplace(AdditiveNoiseMechanism):
         vals = [meas(float(v)) for v in vals]
         return vals
     def accuracy(self, alpha):
-        percentile = 1 - alpha
-        right = (1.0 + percentile) / 2
-        return laplace.ppf(right, loc=0.0, scale=self.scale)
+        return laplacian_scale_to_accuracy(self.scale, alpha)

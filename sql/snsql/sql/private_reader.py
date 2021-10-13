@@ -131,22 +131,43 @@ class PrivateReader(Reader):
         self.rewriter.options.max_contrib = self._options.max_contrib
         self.rewriter.options.censor_dims = self._options.censor_dims
 
+    def _grouping_columns(self, query: Query):
+        """
+        Return a vector of boolean corresponding to the columns of the
+        query, indicating which are grouping columns.
+        """
+        syms = query.all_symbols()
+        if query.agg is not None:
+            group_keys = [
+                ge.expression.name if hasattr(ge.expression, "name") else None
+                for ge in query.agg.groupingExpressions
+            ]
+        else:
+            group_keys = []
+        return [colname in group_keys for colname in [s[0] for s in syms]]
+    def _aggregated_columns(self, query: Query):
+        """
+        Return a vector of boolean corresponding to columns of the
+        query, indicating if the column is randomized
+        """
+        group_key = self._grouping_columns(query)
+        agg = [s if s[1].xpath("//AggFunction") else None for s in query.m_symbols]
+        return [True if s and not g else False for s, g in zip(agg, group_key)]
     def _get_simple_accuracy(self, *ignore, query: Query, subquery: Query, alpha: float, **kwargs):
-        def name_to_idx(q: Query, name: str):
-            idx = -1
-            cols = q.m_symbols
-            for i in range(len(q)):
-                if cols[i][0] == name:
-                    idx = i
-                    break
-            return idx
-        sens = [s if s[1].sensitivity() else None for s in query.m_symbols]
-        col_names = [s[1].xpath("//Column")[0] if s else None for s in sens]
-        idxs = [name_to_idx(subquery, c) if c else None for c in col_names]
-        mechs = self._get_mechanisms(subquery)
-        accuracy = [mechs[idx].accuracy(alpha) if idx else None for idx in idxs]
+        """
+        Return accuracy for each column in column order.  Currently only applies
+        to simple aggregates, COUNT and SUM.  All other columns return None
+        """
+        agg = self._aggregated_columns(query)
+        has_sens = [True if s[1].sensitivity() else False for s in query.m_symbols]
+        simple = [a and h for a, h in zip(agg, has_sens)]
+        exprs = [ne.expression if simp else None for simp, ne in zip(simple, query.select.namedExpressions)]
+        sources = [col.xpath_first("//Column") if col else None for col in exprs]
+        col_names = [source.name if source else None for source in sources]
+        mech_map = self._get_mechanism_map(subquery)
+        mechs = [mech_map[name] if name and name in mech_map else None for name in col_names]
+        accuracy = [mech.accuracy(alpha) if mech else None for mech in mechs]
         return accuracy
-
     def get_simple_accuracy(self, query_string: str, alpha: float):
         """
         Return accuracy for each alpha and each mechanism in column order.
@@ -224,23 +245,40 @@ class PrivateReader(Reader):
             return PandasReader(dpsu_df, self.metadata)
         else:
             return self.reader
+    def _get_mechanism_map(self, subquery: Query):
+        """
+        Returns a dictionary keyed by column name, with the instance of the
+        mechanism used to randomize that column.
+        """
+        colnames = [s[0] for s in subquery.m_symbols]
+        mechs = self._get_mechanisms(subquery)
+        mech_map = {}
+        for name, mech in zip(colnames, mechs):
+            if mech and name not in mech_map:
+                mech_map[name] = mech
+        return mech_map
+    def _get_keycount_position(self, subquery: Query):
+        """
+        Returns the column index of the column that serves as the
+        key count for tau thresholding.  Returns None if no keycount
+        """
+        kc_pos = None
+        syms = subquery.all_symbols()
+        for idx in range(len(syms)):
+            sname, _ = syms[idx]
+            if sname == "keycount":
+                kc_pos = idx
+        return kc_pos
 
-    def _get_mechanisms(self, subquery: Query, kc_pos=None):
+    def _get_mechanisms(self, subquery: Query):
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
 
         syms = subquery.all_symbols()
+        kc_pos = self._get_keycount_position(subquery)
+
         cols = [(s[1].sensitivity(), s[1].type(), s[1].is_count) for s in syms]
 
-        # set sensitivity to None if the column is a grouping key
-        if subquery.agg is not None:
-            group_keys = [
-                ge.expression.name if hasattr(ge.expression, "name") else None
-                for ge in subquery.agg.groupingExpressions
-            ]
-        else:
-            group_keys = []
-        is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
-
+        is_group_key = self._grouping_columns(subquery)
         cols = zip(is_group_key, cols)
         cols = [(None if gk else s, t, c) for gk, (s, t, c) in cols]
         if any([s is np.inf for s, _, _ in cols]):
@@ -303,15 +341,12 @@ class PrivateReader(Reader):
         # tell which are counts, in column order
         is_count = [s[1].is_count for s in syms]
 
-        kc_pos = None
-        for idx in range(len(syms)):
-            sname, _ = syms[idx]
-            if sname == "keycount":
-                kc_pos = idx
+
 
         # get a list of mechanisms in column order
-        mechs = self._get_mechanisms(subquery, kc_pos)
+        mechs = self._get_mechanisms(subquery)
 
+        kc_pos = self._get_keycount_position(subquery)
         if kc_pos is not None:
             thresh_mech = mechs[kc_pos]
             self.tau = thresh_mech.threshold

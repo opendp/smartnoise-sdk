@@ -49,5 +49,5 @@ class TestMechAccuracy:
                         inside = [v >= -acc and v <= acc for v in vals]
                         percent_in = sum(inside) / n_trials
                         percentile = 1.0 - alpha
-                        assert(percent_in >= percentile - 0.03 and percent_in <= percentile + 0.035)
+                        assert(percent_in >= percentile - 0.03 and percent_in <= percentile + 0.05)
                         

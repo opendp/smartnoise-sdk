@@ -1,11 +1,11 @@
 import math
 from os import name
-from typing import List, Tuple
+from typing import Tuple
 from snsql._ast.ast import Query
 from snsql._ast.expression import NamedExpression
 from snsql._ast.expressions.numeric import ArithmeticExpression
 from snsql.sql.privacy import Privacy
-from scipy.stats import norm
+from opendp.accuracy import gaussian_scale_to_accuracy
 
 class Accuracy:
     """
@@ -87,10 +87,8 @@ class Accuracy:
         sigma = (math.sqrt(math.log(1/self.privacy.delta)) + math.sqrt(math.log(1/self.privacy.delta) + self.privacy.epsilon)) / (math.sqrt(2) * self.privacy.epsilon)
         return sigma * self.max_contrib * sensitivity
     def percentile(self, *ignore, percentile: float, sigma: float):
-        # qnorm
-        dist = norm(0, sigma)
-        right = (1.0 + percentile) / 2
-        return dist.ppf(right)
+        alpha = 1.0 - percentile
+        return gaussian_scale_to_accuracy(sigma, alpha)
     def accuracy(self, *ignore, row:Tuple, alpha:float):
         """
         Returns a tuple of the same size as the output row, with +/-

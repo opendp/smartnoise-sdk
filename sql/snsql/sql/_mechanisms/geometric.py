@@ -4,7 +4,6 @@ from opendp.trans import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.meas import make_base_geometric
-from scipy.stats import geom
 
 class Geometric(AdditiveNoiseMechanism):
     def __init__(

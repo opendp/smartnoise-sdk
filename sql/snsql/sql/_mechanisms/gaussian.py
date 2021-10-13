@@ -4,7 +4,7 @@ from opendp.trans import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.meas import make_base_gaussian
-from scipy.stats import norm
+from opendp.accuracy import gaussian_scale_to_accuracy
 
 class Gaussian(AdditiveNoiseMechanism):
     def __init__(
@@ -69,7 +69,5 @@ class Gaussian(AdditiveNoiseMechanism):
         vals = [meas(float(v)) for v in vals]
         return vals
     def accuracy(self, alpha):
-        percentile = 1 - alpha
-        right = (1.0 + percentile) / 2
-        return norm.ppf(right, loc=0.0, scale=self.scale)
+        return gaussian_scale_to_accuracy(self.scale, alpha)
         

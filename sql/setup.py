@@ -5,7 +5,6 @@ packages = \
 ['snsql',
  'snsql._ast',
  'snsql._ast.expressions',
- 'snsql.metadata',
  'snsql.reader',
  'snsql.sql',
  'snsql.sql._mechanisms',
@@ -22,8 +21,7 @@ install_requires = \
  'antlr4-python3-runtime==4.8',
  'graphviz>=0.17,<0.18',
  'opendp>=0.3.0,<0.4.0',
- 'pandasql>=0.7.3,<0.8.0',
- 'scipy>=1.7.1,<2.0.0']
+ 'pandasql>=0.7.3,<0.8.0']
 
 setup_kwargs = {
     'name': 'smartnoise-sql',
