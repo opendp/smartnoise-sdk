@@ -68,4 +68,4 @@ Please let us know if you encounter a bug by [creating an issue](https://github.
 
 We appreciate all contributions. Please review the [contributors guide](../contributing.rst). We welcome pull requests with bug-fixes without prior discussion.
 
-If you plan to contribute new features, utility functions or extensions to this system, please first open an issue and discuss the feature with us.
+If you plan to contribute new features, utility functions or extensions, please first open an issue and discuss the feature with us.

@@ -307,7 +307,7 @@ class PrivateReader(Reader):
         return self.execute_df(query_string, accuracy=True)
 
 
-    def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None):
+    def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None, _no_postprocess=None):
         """Executes a query and returns a recordset that is differentially private.
 
         Follows ODBC and DB_API convention of consuming query as a string and returning
@@ -320,9 +320,14 @@ class PrivateReader(Reader):
          contain column names.
         """
         query = self.parse_query_string(query_string)
-        return self._execute_ast(query, accuracy=accuracy, _pre_aggregated=_pre_aggregated)
+        return self._execute_ast(
+            query, 
+            accuracy=accuracy, 
+            _pre_aggregated=_pre_aggregated, 
+            _no_postprocess=_no_postprocess
+        )
 
-    def _execute_ast(self, query, *ignore, accuracy:bool=False, _pre_aggregated=None):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False, _pre_aggregated=None, _no_postprocess=None):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
@@ -351,9 +356,7 @@ class PrivateReader(Reader):
             thresh_mech = mechs[kc_pos]
             self.tau = thresh_mech.threshold
 
-        clamp_counts = self._options.clamp_counts
-
-        def process_row(row_in):
+        def randomize_row(row_in):
             row = [v for v in row_in]
             # set null to 0 before adding noise
             for idx in range(len(row)):
@@ -361,28 +364,43 @@ class PrivateReader(Reader):
                 if mechs[idx] and row[idx] is None:
                     row[idx] = 0.0
             # call all mechanisms to add noise
-            out_row = [
+            return [
                 mech.release([v])[0] if mech is not None else v
                 for mech, v in zip(mechs, row)
             ]
-            # clamp counts to be non-negative
-            if clamp_counts:
-                for idx in range(len(row)):
-                    if is_count[idx] and out_row[idx] < 0:
-                        out_row[idx] = 0
-            return out_row
 
         if hasattr(exact_aggregates, "rdd"):
             # it's a dataframe
-            out = exact_aggregates.rdd.map(process_row)
+            out = exact_aggregates.rdd.map(randomize_row)
         elif hasattr(exact_aggregates, "map"):
             # it's an RDD
-            out = exact_aggregates.map(process_row)
+            out = exact_aggregates.map(randomize_row)
         else:
-            out = map(process_row, exact_aggregates[1:])
+            out = map(randomize_row, exact_aggregates[1:])
+
+        if _no_postprocess:
+            return out
+
+        def process_clamp_counts(row_in):
+            # clamp counts to be non-negative
+            row = [v for v in row_in]
+            for idx in range(len(row)):
+                if is_count[idx] and row[idx] < 0:
+                    row[idx] = 0
+            return row
+
+        clamp_counts = self._options.clamp_counts
+        if clamp_counts:
+            if hasattr(out, "rdd"):
+                # it's a dataframe
+                out = out.rdd.map(process_clamp_counts)
+            elif hasattr(out, "map"):
+                # it's an RDD
+                out = out.map(process_clamp_counts)
+            else:
+                out = map(process_clamp_counts, out)
 
         # censor infrequent dimensions
-        # if subquery.agg is not None and self._options.censor_dims:
         if self._options.censor_dims:
             if kc_pos is None:
                 raise ValueError("Query needs a key count column to censor dimensions")

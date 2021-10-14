@@ -1,6 +1,6 @@
 # Data Source Metadata
 
-To perform processing over tabular data, the system needs some metadata with sensitivity, identifiers, and other information needed for differential private processing.
+To perform processing over tabular data, the system needs some metadata with sensitivity, identifiers, and other information for differential private processing.
 
 This metadata is typically loaded directly from a YAML file supplied by the data curator, or read from a database table stored with the source data.
 
