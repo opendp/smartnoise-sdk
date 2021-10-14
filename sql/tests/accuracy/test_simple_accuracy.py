@@ -21,22 +21,24 @@ class TestSimpleAccuracy:
         for alpha, epsilon, delta, max_contrib in grid:
             privacy = Privacy(epsilon=epsilon, delta=delta)
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.geometric)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.geometric)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_geom_small_sum(self):
         query = 'SELECT SUM(age) FROM PUMS.PUMS'
         sensitivity = 100
         for alpha, epsilon, delta, max_contrib in grid:
             privacy = Privacy(epsilon=epsilon, delta=delta)
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'sum', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.geometric)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'sum', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.geometric)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_geom_large_sum(self):
         # reverts to laplace because it's large
         query = 'SELECT SUM(income) FROM PUMS.PUMS'
@@ -46,11 +48,12 @@ class TestSimpleAccuracy:
                 delta = 1/100_000
             privacy = Privacy(epsilon=epsilon, delta=delta)
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'sum', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.laplace)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'sum', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.laplace)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_geom_key_count(self):
         # reverts to laplace because we need a threshold
         query = 'SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS'
@@ -60,11 +63,12 @@ class TestSimpleAccuracy:
                 delta = 1/100_000
             privacy = Privacy(epsilon=epsilon, delta=delta)
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'threshold', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.laplace)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'threshold', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.laplace)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_geom_key_count_gauss(self):
         # reverts to gaussian because we need a threshold
         query = 'SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS'
@@ -75,11 +79,12 @@ class TestSimpleAccuracy:
             privacy = Privacy(epsilon=epsilon, delta=delta)
             privacy.mechanisms.map[Stat.threshold] = Mechanism.gaussian
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'threshold', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.gaussian)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'threshold', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.gaussian)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_gauss_count(self):
         query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
         sensitivity = 1
@@ -89,11 +94,12 @@ class TestSimpleAccuracy:
             privacy = Privacy(epsilon=epsilon, delta=delta)
             privacy.mechanisms.map[Stat.count] = Mechanism.gaussian
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.gaussian)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.gaussian)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_gauss_large_sum(self):
         query = 'SELECT SUM(income) FROM PUMS.PUMS'
         sensitivity = 500_000
@@ -103,11 +109,12 @@ class TestSimpleAccuracy:
             privacy = Privacy(epsilon=epsilon, delta=delta)
             privacy.mechanisms.map[Stat.sum_large_int] = Mechanism.gaussian
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'sum', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.gaussian)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'sum', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.gaussian)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_lap_count(self):
         query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
         sensitivity = 1
@@ -117,11 +124,12 @@ class TestSimpleAccuracy:
             privacy = Privacy(epsilon=epsilon, delta=delta)
             privacy.mechanisms.map[Stat.count] = Mechanism.laplace
             reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-            mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
-            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-            assert(mech.mechanism == Mechanism.laplace)
-            acc = reader.get_simple_accuracy(query, alpha)
-            assert(np.isclose(acc[0], mech.accuracy(alpha)))
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.laplace)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
 
 class TestSimpleMatch:
     """
@@ -139,10 +147,11 @@ class TestSimpleMatch:
             engine="pandas", 
             privacy=privacy,
             overrides={'max_ids': max_ids})
-        simple_a = reader.get_simple_accuracy(query, alpha=alpha)
-        res = reader.execute(query, accuracy=True)
-        simple_b = res[1][1][0]
-        assert (all([a == b for a, b in zip(simple_a, simple_b)]))
+        if reader:
+            simple_a = reader.get_simple_accuracy(query, alpha=alpha)
+            res = reader.execute(query, accuracy=True)
+            simple_b = res[1][1][0]
+            assert (all([a == b for a, b in zip(simple_a, simple_b)]))
     def test_simple_row_privacy(self):
         alpha = 0.07
         privacy = Privacy(alphas=[alpha], epsilon=0.5, delta=1/1000)
@@ -152,8 +161,9 @@ class TestSimpleMatch:
             engine="pandas", 
             privacy=privacy
         )
-        simple_a = reader.get_simple_accuracy(query, alpha=alpha)
-        res = reader.execute(query, accuracy=True)
-        simple_b = res[1][1][0]
-        assert (all([a == b for a, b in zip(simple_a, simple_b)]))
+        if reader:
+            simple_a = reader.get_simple_accuracy(query, alpha=alpha)
+            res = reader.execute(query, accuracy=True)
+            simple_b = res[1][1][0]
+            assert (all([a == b for a, b in zip(simple_a, simple_b)]))
 
