@@ -1,4 +1,4 @@
-from dataloader import TestDbCollection, download_data_files
+from dataloader import DbCollection, download_data_files
 download_data_files()
-test_databases = TestDbCollection()
+test_databases = DbCollection()
 print(test_databases)

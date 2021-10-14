@@ -1,11 +1,8 @@
 import logging
-import math
-from antlr4.atn.Transition import EpsilonTransition
 import numpy as np
 from snsql.metadata import Metadata
 from snsql.sql._mechanisms.accuracy import Accuracy
-from snsql.sql._mechanisms.laplace import Laplace
-from snsql.sql.odometer import Odometer, OdometerHeterogeneous
+from snsql.sql.odometer import OdometerHeterogeneous
 from snsql.sql.privacy import Privacy
 
 from snsql.sql.reader.base import SqlReader
@@ -310,7 +307,7 @@ class PrivateReader(Reader):
         return self.execute_df(query_string, accuracy=True)
 
 
-    def execute(self, query_string, accuracy:bool=False):
+    def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None):
         """Executes a query and returns a recordset that is differentially private.
 
         Follows ODBC and DB_API convention of consuming query as a string and returning
@@ -323,13 +320,18 @@ class PrivateReader(Reader):
          contain column names.
         """
         query = self.parse_query_string(query_string)
-        return self._execute_ast(query, accuracy=accuracy)
+        return self._execute_ast(query, accuracy=accuracy, _pre_aggregated=_pre_aggregated)
 
-    def _execute_ast(self, query, *ignore, accuracy:bool=False):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False, _pre_aggregated=None):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
         subquery, query = self._rewrite_ast(query)
+
+        if _pre_aggregated:
+            exact_aggregates = _pre_aggregated
+        else:
+            exact_aggregates = self._get_reader(subquery)._execute_ast(subquery)
 
         _accuracy = None
         if accuracy:
@@ -341,8 +343,6 @@ class PrivateReader(Reader):
         # tell which are counts, in column order
         is_count = [s[1].is_count for s in syms]
 
-
-
         # get a list of mechanisms in column order
         mechs = self._get_mechanisms(subquery)
 
@@ -351,12 +351,9 @@ class PrivateReader(Reader):
             thresh_mech = mechs[kc_pos]
             self.tau = thresh_mech.threshold
 
-        db_rs = self._get_reader(subquery)._execute_ast(subquery)
-
         clamp_counts = self._options.clamp_counts
 
         def process_row(row_in):
-            # pull out tuple values
             row = [v for v in row_in]
             # set null to 0 before adding noise
             for idx in range(len(row)):
@@ -365,8 +362,8 @@ class PrivateReader(Reader):
                     row[idx] = 0.0
             # call all mechanisms to add noise
             out_row = [
-                noise.release([v])[0] if noise is not None else v
-                for noise, v in zip(mechs, row)
+                mech.release([v])[0] if mech is not None else v
+                for mech, v in zip(mechs, row)
             ]
             # clamp counts to be non-negative
             if clamp_counts:
@@ -375,14 +372,14 @@ class PrivateReader(Reader):
                         out_row[idx] = 0
             return out_row
 
-        if hasattr(db_rs, "rdd"):
+        if hasattr(exact_aggregates, "rdd"):
             # it's a dataframe
-            out = db_rs.rdd.map(process_row)
-        elif hasattr(db_rs, "map"):
+            out = exact_aggregates.rdd.map(process_row)
+        elif hasattr(exact_aggregates, "map"):
             # it's an RDD
-            out = db_rs.map(process_row)
+            out = exact_aggregates.map(process_row)
         else:
-            out = map(process_row, db_rs[1:])
+            out = map(process_row, exact_aggregates[1:])
 
         # censor infrequent dimensions
         # if subquery.agg is not None and self._options.censor_dims:
@@ -416,7 +413,6 @@ class PrivateReader(Reader):
             else:
                 raise ValueError("Can't convert type " + type)
         
-
         alphas = [alpha for alpha in self.privacy.alphas]
 
         def process_out_row(row):
@@ -500,12 +496,12 @@ class PrivateReader(Reader):
             elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
                 limit_rows = query.select.quantifier.n
             if limit_rows is not None:
-                if hasattr(db_rs, "rdd"):
+                if hasattr(exact_aggregates, "rdd"):
                     # it's a dataframe
-                    out = db_rs.limit(limit_rows)
-                elif hasattr(db_rs, "map"):
+                    out = exact_aggregates.limit(limit_rows)
+                elif hasattr(exact_aggregates, "map"):
                     # it's an RDD
-                    out = db_rs.limit(limit_rows)
+                    out = exact_aggregates.limit(limit_rows)
                 else:
                     out = itertools.islice(out, limit_rows)
 

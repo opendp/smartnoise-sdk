@@ -4,6 +4,7 @@ import pandas as pd
 import copy
 import yaml
 import random
+import copy
 
 from snsql.sql import PrivateReader
 from snsql.metadata import Metadata
@@ -196,7 +197,7 @@ class TestDbEngine:
                 priv.reader.compare.search_path = ["PUMS"]
             return priv
 
-class TestDbCollection:
+class DbCollection:
     # Collection of test databases keyed by engine and database name.
     # Automatically connects to databases listed in connections-unit.yaml
     def __init__(self):
@@ -263,7 +264,7 @@ class TestDbCollection:
                 table.censor_dims = propval
             elif propname == 'clamp_counts':
                 table.clamp_counts = propval
-            elif propname == 'max_ids':
+            elif propname == 'max_ids' or propname == 'max_contrib':
                 table.max_ids = propval
             else:
                 print(f"Unable to set override for {propname}={propval}")
