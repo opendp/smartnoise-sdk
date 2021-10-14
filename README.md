@@ -52,6 +52,7 @@ fit = synth.fit(my_data)  # learn the distribution of the real data
 sample = synth.sample(10) # synthesize 10 rows
 ```
 
+See the [Synthesizers project](synth/README.md)
 
 ## Communication
 

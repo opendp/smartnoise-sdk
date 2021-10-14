@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smartnoise-sql"
-version = "0.2.1.1"
+version = "0.2.2"
 description = "Differentially Private SQL Queries"
 authors = ["SmartNoise Team <smartnoise@opendp.org>"]
 license = "MIT"
