@@ -102,7 +102,10 @@ class ArithmeticExpression(SqlExpr):
     def evaluate(self, bindings):
         l = self.left.evaluate(bindings)
         r = self.right.evaluate(bindings)
-        return ops[self.op](l, r)
+        if self.op == '/' and int(r) == 0:
+            return 0
+        else:
+            return ops[self.op](l, r)
 
     def symbol(self, relations):
         return ArithmeticExpression(

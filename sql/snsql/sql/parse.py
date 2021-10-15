@@ -1,5 +1,4 @@
-
-import importlib
+from snsql.metadata import Metadata
 from .parser.SqlSmallLexer import SqlSmallLexer  # type: ignore
 from .parser.SqlSmallParser import SqlSmallParser  # type: ignore
 from .parser.SqlSmallVisitor import SqlSmallVisitor  # type: ignore
@@ -13,8 +12,7 @@ from snsql._ast.ast import *
 class QueryParser:
     def __init__(self, metadata=None):
         if metadata:
-            class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-            self.metadata = class_.from_(metadata)
+            self.metadata = Metadata.from_(metadata)
         else:
             self.metadata = None
 
@@ -31,8 +29,7 @@ class QueryParser:
         if metadata is None and self.metadata is not None:
             metadata = self.metadata
         elif metadata:
-            class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-            metadata = class_.from_(metadata)
+            metadata = Metadata.from_(metadata)
 
         istream = InputStream(query_string)
         parser = self.start_parser(istream)

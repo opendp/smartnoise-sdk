@@ -6,9 +6,9 @@ import math
 import pytest
 
 from snsql.sql.dpsu import preprocess_df_from_query, run_dpsu
-from snsql.metadata import CollectionMetadata
-from snsql.sql.parse import QueryParser
-from snsql.sql import PrivateReader, PandasReader
+from snsql.metadata import Metadata
+from snsql.sql import PrivateReader
+from snsql.sql.reader.pandas import PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -16,7 +16,7 @@ meta_path = os.path.join(git_root_dir, os.path.join("datasets", "reddit.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "reddit.csv"))
 
 
-schema = CollectionMetadata.from_file(meta_path)
+schema = Metadata.from_file(meta_path)
 df = pd.read_csv(csv_path, index_col=0)
 
 

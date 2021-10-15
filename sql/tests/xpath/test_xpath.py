@@ -3,8 +3,9 @@ import subprocess
 
 import pandas as pd
 
-from snsql.metadata import CollectionMetadata
-from snsql.sql import PrivateReader, PandasReader, SqlReader
+from snsql.metadata import Metadata
+from snsql.sql import PrivateReader
+from snsql.sql.reader.base import SqlReader
 from snsql.sql.parse import QueryParser
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -16,7 +17,7 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 from snsql.xpath.parse import XPath
 p = XPath()
 
-meta = CollectionMetadata.from_file(meta_path)
+meta = Metadata.from_file(meta_path)
 pums = pd.read_csv(csv_path)
 query = 'SELECT AVG(age) + 3, STD(age), VAR(age), SUM(age) / 10, COUNT(age) + 2 FROM PUMS.PUMS'
 q = QueryParser(meta).query(query)

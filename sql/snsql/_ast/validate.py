@@ -1,5 +1,5 @@
-import importlib
 from .ast import *
+from snsql.metadata import Metadata
 
 
 class Validate(object):
@@ -33,8 +33,7 @@ class QueryConstraints:
         self.query = query
 
         if metadata:
-            class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-            self.metadata = class_.from_(metadata)
+            self.metadata = Metadata.from_(metadata)
         else:
             self.metadata = metadata
 
@@ -90,6 +89,8 @@ class QueryConstraints:
         for ac in aggs:
             if not isinstance(ac.expression, (TableColumn, AllColumns)):
                 raise ValueError("We don't support aggregation over expressions: " + str(ac))
+            if ac.expression.type() not in ['int', 'float', 'bool'] and not ac.name == 'COUNT':
+                raise ValueError(f"Aggregations must be over numeric or boolean, got {ac.expression.type()} in {str(ac)}")
 
         for ge in grouping_expressions:
             if not isinstance(ge, Column):

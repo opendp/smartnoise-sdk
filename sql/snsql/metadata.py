@@ -1,4 +1,3 @@
-import importlib
 import yaml
 import io
 from os import path
@@ -8,7 +7,7 @@ from snsql.sql.reader.base import NameCompare
 # implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
 
 
-class CollectionMetadata:
+class Metadata:
     """Information about a collection of tabular data sources"""
 
     def __init__(self, tables, engine, compare=None):
@@ -59,7 +58,7 @@ class CollectionMetadata:
 
     @classmethod 
     def from_(cls, val):
-        if isinstance(val, CollectionMetadata):
+        if isinstance(val, Metadata):
             return val
         elif isinstance(val, str):
             if path.exists(val):
@@ -70,13 +69,12 @@ class CollectionMetadata:
         elif isinstance(val, dict):
             return cls.from_dict(val)
         else:
-            raise ValueError(f"Metadata needs to be string, dictionary, or CollectionMetadata.  Got {str(type(val))}")
+            raise ValueError(f"Metadata needs to be string, dictionary, or Metadata.  Got {str(type(val))}")
 
     def to_file(self, file, collection_name):
         """Save collection metadata to a YAML file"""
         ys = CollectionYamlLoader(file)
         ys.write_file(self, collection_name)
-
 
 """
     Common attributes for a table or a view
@@ -307,7 +305,7 @@ class CollectionYamlLoader:
                 t = s[table]
                 tables.append(self.load_table(schema, table, t))
 
-        return CollectionMetadata(tables, engine)
+        return Metadata(tables, engine)
 
     def load_table(self, schema, table, t):
         rowcount = int(t["rows"]) if "rows" in t else 0

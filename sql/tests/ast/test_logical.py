@@ -17,7 +17,7 @@ import numpy as np
     values for numeric, date, and string
 """
 
-vals_5 = [5, 5.0, "5", "5.0", np.float(5.0), np.int(5)]
+vals_5 = [5, 5.0, "5", "5.0", float(5.0), int(5)]
 names_5 = ["i5", "f5", "si5", "sf5", "npf5", "npi5"]
 
 vals_7 = [7, 7.0, "7", "7.0"]

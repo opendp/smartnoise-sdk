@@ -2,7 +2,7 @@ from snsql.sql.reader.postgres import PostgresNameCompare
 import pytest
 from snsql._ast.validate import Validate
 from snsql.sql.parse import QueryParser
-from snsql.metadata import CollectionMetadata
+from snsql.metadata import Metadata
 
 from os import listdir
 from os.path import isfile, join, dirname
@@ -38,7 +38,7 @@ validate_files = [join(testpath + "validate_pums/", f) for f in listdir(testpath
 good_files = [f for f in validate_files if not "_fail" in f]
 bad_files = [f for f in validate_files if "_fail" in f]
 
-metadata = CollectionMetadata.from_file(meta_path)
+metadata = Metadata.from_file(meta_path)
 metadata.compare = PostgresNameCompare()
 
 

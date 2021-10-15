@@ -8,9 +8,9 @@ import pandas as pd
 from pandasql import sqldf
 import math
 
-from snsql.metadata import CollectionMetadata
-from snsql.sql import PrivateReader, PandasReader
-from snsql.sql.parse import QueryParser
+from snsql.metadata import Metadata
+from snsql.sql import PrivateReader
+from snsql.sql.reader.pandas import PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -22,7 +22,7 @@ pums_schema_path = os.path.join("datasets", "PUMS.yaml")
 
 class TestTopAndLimit:
     def setup_class(cls):
-        meta = CollectionMetadata.from_file(meta_path)
+        meta = Metadata.from_file(meta_path)
         meta["PUMS.PUMS"].censor_dims = False
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)

@@ -108,3 +108,40 @@ Contributing from a fork:
 If you are submitting a one-time patch or feature, you can submit a pull request from your own fork.  Create and test your patch as above.  When it's time to submit the pull request, navigate your Web browser to the GitHub page for your fork, and go to the "pull requests" tab.  You will have the option to create a new pull request, and GitHub should automatically select base: :code:`opendp/smartnoise-sdk/main` for the destination, and your fork and branch as the source. 
 
 .. image:: images/doc/PR_from_fork.png
+
+Managing Dependencies
+=====================
+
+We try to minimize the number of dependencies.  Dependencies are managed with poetry.  
+
+You can `install poetry here <https://python-poetry.org/docs/#installation>`_.
+
+To add a dependency, use:
+
+.. code-block:: bash
+
+    poetry add
+    
+and to check that dependencies are solvable, use:
+
+.. code-block:: bash
+
+    poetry check
+
+
+Releasing Packages
+==================
+
+To release a new package to PyPi, in a new release branch:
+
+- Update :code:`pyproject.toml` to increment the version number
+- Run :code:`poetry check`
+- Run :code:`make setup` to autogenerate a new :code:`setup.py`
+- Submit the pull request.  Ensure that all CI tests pass.  If not, make fixes and push.  Make sure to run `make setup` after any changes, since this also builds the wheel for publication
+- Once all CI tests are passing, run `poetry publish` to publish the package
+- From the project folder, run `git tag project/version`.  Tags should include the project name, and the letter 'v' before the version.  For example, to release version 0.2.2 of the :code:`synth` package, use `git tag synth/v0.2.2`.  After creating the release tag, push it to the server:
+  
+.. code-block:: bash
+
+    git tag synth/v0.2.2
+    git push origin synth/v0.2.2

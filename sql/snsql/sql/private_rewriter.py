@@ -1,6 +1,7 @@
-import importlib
 import random
 import string
+
+from snsql.metadata import Metadata
 
 from .parse import QueryParser
 
@@ -51,8 +52,7 @@ class Rewriter:
 
     def __init__(self, metadata):
         self.options = RewriterOptions()
-        class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-        self.metadata = class_.from_(metadata)
+        self.metadata = Metadata.from_(metadata)
 
     def calculate_avg(self, exp, scope):
         """
@@ -260,6 +260,14 @@ class Rewriter:
                 for ne in query.select.namedExpressions
             ]
         select = Select(None, select)
+        if not child_scope.expressions:
+            # nothing is selected, may be lone COUNT(*)
+            if len(select.namedExpressions) == 1:
+                expr = select.namedExpressions[0].expression
+                if isinstance(expr, AggFunction) and expr.name == 'COUNT' and isinstance(expr.expression, AllColumns):
+                    table = expr.expression.table
+                    alias = '*' if table is None else '*_' + str(table)
+                    child_scope.push_name(AllColumns(), alias)
         subquery = Query(child_scope.select(), query.source, query.where, None, None, None, None)
         return subquery
 
@@ -340,7 +348,13 @@ class Scope:
     def select(self, quantifier=None):
         return Select(
             quantifier,
-            [NamedExpression(Identifier(str(name)), self.expressions[name]) for name in self.expressions.keys()],
+            [
+                NamedExpression(
+                    Identifier(str(name)) if not str(name).startswith('*') else None, 
+                    self.expressions[name]
+                ) 
+                for name in self.expressions.keys()
+            ],
         )
 
     def push_name(self, expression, proposed=None):

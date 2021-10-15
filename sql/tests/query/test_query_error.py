@@ -7,16 +7,16 @@ import pandas as pd
 from pandasql import sqldf
 import math
 
-from snsql.metadata import CollectionMetadata
-from snsql.sql import PrivateReader, PandasReader
-from snsql.sql.parse import QueryParser
+from snsql.metadata import Metadata
+from snsql.sql import PrivateReader
+from snsql.sql.reader.pandas import PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 
-schema = CollectionMetadata.from_file(meta_path)
+schema = Metadata.from_file(meta_path)
 df = pd.read_csv(csv_path)
 
 class TestQueryError:

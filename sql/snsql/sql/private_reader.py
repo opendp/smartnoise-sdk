@@ -1,10 +1,8 @@
-import importlib
 import logging
-import warnings
-import math
 import numpy as np
+from snsql.metadata import Metadata
 from snsql.sql._mechanisms.accuracy import Accuracy
-from snsql.sql.odometer import Odometer
+from snsql.sql.odometer import OdometerHeterogeneous
 from snsql.sql.privacy import Privacy
 
 from snsql.sql.reader.base import SqlReader
@@ -17,7 +15,7 @@ from snsql._ast.ast import Query, Top
 from snsql._ast.expressions import sql as ast
 from snsql.reader import Reader
 
-from ._mechanisms.gaussian import Gaussian
+from ._mechanisms import *
 
 module_logger = logging.getLogger(__name__)
 
@@ -31,8 +29,8 @@ class PrivateReader(Reader):
     
     .. code-block:: python
 
-        meta = 'datasets/PUMS.yaml'
         conn = pyodbc.connect(dsn)
+        meta = 'datasets/PUMS.yaml'
         privacy = Privacy(epsilon=0.1, delta=1/10000)
         reader = PrivateReader.from_connection(conn, metadata=meta, privacy=privacy)
 
@@ -42,9 +40,9 @@ class PrivateReader(Reader):
 
     .. code-block:: python
 
-        meta = 'datasets/PUMS.yaml'
         csv = 'datasets/PUMS.csv'
         pums = pd.read_csv(csv)
+        meta = 'datasets/PUMS.yaml'
 
         privacy = Privacy(epsilon=0.1, delta=1/10000)
         reader = PrivateReader.from_connection(pums, metadata=meta, privacy=privacy)
@@ -52,7 +50,6 @@ class PrivateReader(Reader):
         result = reader.execute('SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
 
     """
-
 
     def __init__(
         self,
@@ -66,32 +63,17 @@ class PrivateReader(Reader):
     ):
         """Create a new private reader.
 
-            :param metadata: The CollectionMetadata object with information about all tables referenced in this query
+            :param metadata: The Metadata object with information about all tables referenced in this query
             :param reader: The data reader to wrap, such as a SqlServerReader, PandasReader, or SparkReader
                 The PrivateReader intercepts queries to the underlying reader and ensures differential privacy.
             :param epsilon_per_column: The privacy budget to spend for each column in the query
             :param delta: The delta privacy parameter
         """
-        # check for old calling convention
-        if isinstance(metadata, Reader):
-            warnings.warn(
-                "[reader] API has changed to pass (reader, metadata).  Please update code to pass reader first and metadata second.  This will be a breaking change in future versions.",
-                Warning,
-            )
-            tmp = reader
-            reader = metadata
-            metadata = tmp
-
         if isinstance(reader, Reader):
             self.reader = reader
         else:
             raise ValueError("Parameter reader must be of type Reader")
-
-        # we can replace this when we remove
-        # CollectionMetadata from the root __init__
-        class_ = getattr(importlib.import_module("snsql.metadata.collection"), "CollectionMetadata")
-        self.metadata = class_.from_(metadata)
-
+        self.metadata = Metadata.from_(metadata)
         self.rewriter = Rewriter(metadata)
         self._options = PrivateReaderOptions()
 
@@ -100,10 +82,7 @@ class PrivateReader(Reader):
         else:
             self.privacy = Privacy(epsilon=epsilon_per_column, delta=delta)
         
-        self.odometer = Odometer(self.privacy)
-
-        self._cached_exact = None
-        self._cached_ast = None
+        self.odometer = OdometerHeterogeneous(self.privacy)
 
         self._refresh_options()
 
@@ -149,26 +128,69 @@ class PrivateReader(Reader):
         self.rewriter.options.max_contrib = self._options.max_contrib
         self.rewriter.options.censor_dims = self._options.censor_dims
 
-    def get_budget_multiplier(self, query_string):
-        """Analyzes the query and tells how many differentially private mechanism invocations
-         will be required to execute the query.  SUM and COUNT both use 1, while MEAN (composed of 
-         a SUM divided by a COUNT) uses 2.  VAR and STDDEV use 3.
-
-            mul = priv.get_budget_multiplier('SELECT AVG(age) FROM PUMS.PUMS GROUP BY sex')
-            assert(mul == 2)
-
+    def _grouping_columns(self, query: Query):
+        """
+        Return a vector of boolean corresponding to the columns of the
+        query, indicating which are grouping columns.
+        """
+        syms = query.all_symbols()
+        if query.agg is not None:
+            group_keys = [
+                ge.expression.name if hasattr(ge.expression, "name") else None
+                for ge in query.agg.groupingExpressions
+            ]
+        else:
+            group_keys = []
+        return [colname in group_keys for colname in [s[0] for s in syms]]
+    def _aggregated_columns(self, query: Query):
+        """
+        Return a vector of boolean corresponding to columns of the
+        query, indicating if the column is randomized
+        """
+        group_key = self._grouping_columns(query)
+        agg = [s if s[1].xpath("//AggFunction") else None for s in query.m_symbols]
+        return [True if s and not g else False for s, g in zip(agg, group_key)]
+    def _get_simple_accuracy(self, *ignore, query: Query, subquery: Query, alpha: float, **kwargs):
+        """
+        Return accuracy for each column in column order.  Currently only applies
+        to simple aggregates, COUNT and SUM.  All other columns return None
+        """
+        agg = self._aggregated_columns(query)
+        has_sens = [True if s[1].sensitivity() else False for s in query.m_symbols]
+        simple = [a and h for a, h in zip(agg, has_sens)]
+        exprs = [ne.expression if simp else None for simp, ne in zip(simple, query.select.namedExpressions)]
+        sources = [col.xpath_first("//Column") if col else None for col in exprs]
+        col_names = [source.name if source else None for source in sources]
+        mech_map = self._get_mechanism_map(subquery)
+        mechs = [mech_map[name] if name and name in mech_map else None for name in col_names]
+        accuracy = [mech.accuracy(alpha) if mech else None for mech in mechs]
+        return accuracy
+    def get_simple_accuracy(self, query_string: str, alpha: float):
+        """
+        Return accuracy for each alpha and each mechanism in column order.
+        Columns with no mechanism application return None.
+        """
+        subquery, query = self._rewrite(query_string)
+        return self._get_simple_accuracy(query=query, subquery=subquery, alpha=alpha)
+    
+    def _get_mechanism_costs(self, query_string):
+        """
+        Return epsilon, delta cost for each mechanism in column order.
+        Columns with no mechanism application return None.
         """
         self._refresh_options()
         subquery, _ = self._rewrite(query_string)
         mechs = self._get_mechanisms(subquery)
-        return len([m for m in mechs if m])
+        return [(mech.epsilon, mech.delta) if mech else None for mech in mechs]
     
     def get_privacy_cost(self, query_string):
         """Estimates the epsilon and delta cost for running the given query.
         """
-        odo = Odometer(self.privacy)
-        k = self.get_budget_multiplier(query_string)
-        odo.spend(k)
+        odo = OdometerHeterogeneous(self.privacy)
+        costs = self._get_mechanism_costs(query_string)
+        costs = [cost for cost in costs if cost]
+        for epsilon, delta in costs:
+            odo.spend(Privacy(epsilon=epsilon, delta=delta))
         return odo.spent
 
     def parse_query_string(self, query_string) -> Query:
@@ -220,36 +242,64 @@ class PrivateReader(Reader):
             return PandasReader(dpsu_df, self.metadata)
         else:
             return self.reader
+    def _get_mechanism_map(self, subquery: Query):
+        """
+        Returns a dictionary keyed by column name, with the instance of the
+        mechanism used to randomize that column.
+        """
+        colnames = [s[0] for s in subquery.m_symbols]
+        mechs = self._get_mechanisms(subquery)
+        mech_map = {}
+        for name, mech in zip(colnames, mechs):
+            if mech and name not in mech_map:
+                mech_map[name] = mech
+        return mech_map
+    def _get_keycount_position(self, subquery: Query):
+        """
+        Returns the column index of the column that serves as the
+        key count for tau thresholding.  Returns None if no keycount
+        """
+        kc_pos = None
+        syms = subquery.all_symbols()
+        for idx in range(len(syms)):
+            sname, _ = syms[idx]
+            if sname == "keycount":
+                kc_pos = idx
+        return kc_pos
 
     def _get_mechanisms(self, subquery: Query):
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
 
         syms = subquery.all_symbols()
+        kc_pos = self._get_keycount_position(subquery)
 
-        # list of sensitivities in column order
-        sens = [s[1].sensitivity() for s in syms]
+        cols = [(s[1].sensitivity(), s[1].type(), s[1].is_count) for s in syms]
 
-        # set sensitivity to None if the column is a grouping key
-        if subquery.agg is not None:
-            group_keys = [
-                ge.expression.name if hasattr(ge.expression, "name") else None
-                for ge in subquery.agg.groupingExpressions
-            ]
-        else:
-            group_keys = []
-        is_group_key = [colname in group_keys for colname in [s[0] for s in syms]]
-        for idx in range(len(sens)):
-            if is_group_key[idx]:
-                sens[idx] = None
-        if any([s is np.inf for s in sens]):
+        is_group_key = self._grouping_columns(subquery)
+        cols = zip(is_group_key, cols)
+        cols = [(None if gk else s, t, c) for gk, (s, t, c) in cols]
+        if any([s is np.inf for s, _, _ in cols]):
             raise ValueError(
                 "Query is attempting to query an unbounded column that isn't part of the grouping key"
             )
-        mechs = [
-            Gaussian(self.privacy.epsilon, self.privacy.delta, s, max_contrib) if s is not None else None
-            for s in sens
-        ]
+        mechanisms = self.privacy.mechanisms
+        epsilon = self.privacy.epsilon
+        delta = self.privacy.delta
+        mechs = []
+        for idx in range(len(cols)):
+            sensitivity, t, is_count = cols[idx]
+            mech = None
+            if t in ['int', 'float'] and sensitivity is not None:
+                stat = 'count' if is_count else 'sum'
+                if kc_pos is not None and idx == kc_pos:
+                    stat = 'threshold'
+                mech_class = mechanisms.get_mechanism(sensitivity, stat, t)
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                if kc_pos is not None and idx == kc_pos:
+                    mech.delta = delta
+            mechs.append(mech)
         return mechs
+
     def execute_with_accuracy(self, query_string:str):
         return self.execute(query_string, accuracy=True)
 
@@ -257,7 +307,7 @@ class PrivateReader(Reader):
         return self.execute_df(query_string, accuracy=True)
 
 
-    def execute(self, query_string, accuracy:bool=False):
+    def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None, _no_postprocess=None):
         """Executes a query and returns a recordset that is differentially private.
 
         Follows ODBC and DB_API convention of consuming query as a string and returning
@@ -270,29 +320,27 @@ class PrivateReader(Reader):
          contain column names.
         """
         query = self.parse_query_string(query_string)
-        return self._execute_ast(query, accuracy=accuracy)
+        return self._execute_ast(
+            query, 
+            accuracy=accuracy, 
+            _pre_aggregated=_pre_aggregated, 
+            _no_postprocess=_no_postprocess
+        )
 
-    def _execute_ast(self, query, *ignore, accuracy:bool=False, cache_exact=False):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False, _pre_aggregated=None, _no_postprocess=None):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
         subquery, query = self._rewrite_ast(query)
-        max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
+
+        if _pre_aggregated:
+            exact_aggregates = _pre_aggregated
+        else:
+            exact_aggregates = self._get_reader(subquery)._execute_ast(subquery)
 
         _accuracy = None
         if accuracy:
             _accuracy = Accuracy(query, subquery, self.privacy)
-
-        thresh_scale = math.sqrt(max_contrib) * (
-            (
-                math.sqrt(math.log(1 / self.privacy.delta))
-                + math.sqrt(math.log(1 / self.privacy.delta) + self.privacy.epsilon)
-            )
-            / (math.sqrt(2) * self.privacy.epsilon)
-        )
-        self.tau = 1 + thresh_scale * math.sqrt(
-            2 * math.log(max_contrib / math.sqrt(2 * math.pi * self.privacy.delta))
-        )
 
         syms = subquery.all_symbols()
         source_col_names = [s[0] for s in syms]
@@ -300,41 +348,15 @@ class PrivateReader(Reader):
         # tell which are counts, in column order
         is_count = [s[1].is_count for s in syms]
 
-        kc_pos = None
-        for idx in range(len(syms)):
-            sname, _ = syms[idx]
-            if sname == "keycount":
-                kc_pos = idx
-
         # get a list of mechanisms in column order
         mechs = self._get_mechanisms(subquery)
 
-        # execute the subquery against the backend and load in tuples
-        if cache_exact:
-            # we only execute the exact query once
-            if self._cached_exact is not None:
-                if subquery == self._cached_ast:
-                    db_rs = self._cached_exact
-                    _accuracy = self._cached_accuracy
-                else:
-                    raise ValueError(
-                        "Cannot run different query against cached result.  "
-                        "Make a new PrivateReader or else clear the cache with cache = False"
-                    )
-            else:
-                db_rs = self._get_reader(subquery)._execute_ast(subquery)
-                self._cached_exact = list(db_rs)
-                self._cached_ast = subquery
-                self._cached_accuracy = _accuracy
-        else:
-            self._cached_exact = None
-            self._cached_ast = None
-            db_rs = self._get_reader(subquery)._execute_ast(subquery)
+        kc_pos = self._get_keycount_position(subquery)
+        if kc_pos is not None:
+            thresh_mech = mechs[kc_pos]
+            self.tau = thresh_mech.threshold
 
-        clamp_counts = self._options.clamp_counts
-
-        def process_row(row_in):
-            # pull out tuple values
+        def randomize_row(row_in):
             row = [v for v in row_in]
             # set null to 0 before adding noise
             for idx in range(len(row)):
@@ -342,29 +364,45 @@ class PrivateReader(Reader):
                 if mechs[idx] and row[idx] is None:
                     row[idx] = 0.0
             # call all mechanisms to add noise
-            out_row = [
-                noise.release([v]).values[0] if noise is not None else v
-                for noise, v in zip(mechs, row)
+            return [
+                mech.release([v])[0] if mech is not None else v
+                for mech, v in zip(mechs, row)
             ]
-            # clamp counts to be non-negative
-            if clamp_counts:
-                for idx in range(len(row)):
-                    if is_count[idx] and out_row[idx] < 0:
-                        out_row[idx] = 0
-            return out_row
 
-        if hasattr(db_rs, "rdd"):
+        if hasattr(exact_aggregates, "rdd"):
             # it's a dataframe
-            out = db_rs.rdd.map(process_row)
-        elif hasattr(db_rs, "map"):
+            out = exact_aggregates.rdd.map(randomize_row)
+        elif hasattr(exact_aggregates, "map"):
             # it's an RDD
-            out = db_rs.map(process_row)
+            out = exact_aggregates.map(randomize_row)
         else:
-            out = map(process_row, db_rs[1:])
+            out = map(randomize_row, exact_aggregates[1:])
+
+        if _no_postprocess:
+            return out
+
+        def process_clamp_counts(row_in):
+            # clamp counts to be non-negative
+            row = [v for v in row_in]
+            for idx in range(len(row)):
+                if is_count[idx] and row[idx] < 0:
+                    row[idx] = 0
+            return row
+
+        clamp_counts = self._options.clamp_counts
+        if clamp_counts:
+            if hasattr(out, "rdd"):
+                # it's a dataframe
+                out = out.rdd.map(process_clamp_counts)
+            elif hasattr(out, "map"):
+                # it's an RDD
+                out = out.map(process_clamp_counts)
+            else:
+                out = map(process_clamp_counts, out)
 
         # censor infrequent dimensions
-        if subquery.agg is not None and self._options.censor_dims:
-            if kc_pos == None:
+        if self._options.censor_dims:
+            if kc_pos is None:
                 raise ValueError("Query needs a key count column to censor dimensions")
             if hasattr(out, "filter"):
                 # it's an RDD
@@ -393,7 +431,6 @@ class PrivateReader(Reader):
             else:
                 raise ValueError("Can't convert type " + type)
         
-
         alphas = [alpha for alpha in self.privacy.alphas]
 
         def process_out_row(row):
@@ -477,12 +514,12 @@ class PrivateReader(Reader):
             elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
                 limit_rows = query.select.quantifier.n
             if limit_rows is not None:
-                if hasattr(db_rs, "rdd"):
+                if hasattr(exact_aggregates, "rdd"):
                     # it's a dataframe
-                    out = db_rs.limit(limit_rows)
-                elif hasattr(db_rs, "map"):
+                    out = exact_aggregates.limit(limit_rows)
+                elif hasattr(exact_aggregates, "map"):
                     # it's an RDD
-                    out = db_rs.limit(limit_rows)
+                    out = exact_aggregates.limit(limit_rows)
                 else:
                     out = itertools.islice(out, limit_rows)
 
@@ -497,7 +534,9 @@ class PrivateReader(Reader):
                 out = map(drop_accuracy, out)
 
         # increment odometer
-        self.odometer.spend(len([m for m in mechs if m]))
+        for mech in mechs:
+            if mech:
+                self.odometer.spend(Privacy(epsilon=mech.epsilon, delta=mech.delta))
 
         # output it
         if accuracy == False and hasattr(out, "toDF"):
@@ -513,8 +552,8 @@ class PrivateReader(Reader):
             out_rows = row0 + list(out)
             return out_rows
 
-    def _execute_ast_df(self, query, cache_exact=False):
-        return self._to_df(self._execute_ast(query, cache_exact=cache_exact))
+    def _execute_ast_df(self, query):
+        return self._to_df(self._execute_ast(query))
 
 
 class PrivateReaderOptions:

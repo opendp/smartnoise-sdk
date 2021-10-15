@@ -22,13 +22,13 @@ res = reader.execute('COUNT(age) AS age_count FROM PUMS.PUMS')
 assert(res['age_count'][0] > 500)
 ```
 
-The fixture will cache connections for multiple database engines and databases, if they're avaialble on the test machine.
+The fixture will cache connections for multiple database engines and databases, if they're available on the test machine.
 
 If you want to access the cached connections outside of pytest, you can instantiate the `test_databases` manually:
 
 ```python
-from .tests.setup.dataloader import TestDbCollection
-test_databases = TestDbCollection()
+from .tests.setup.dataloader import DbCollection
+test_databases = DbCollection()
 print(test_databases)
 ```
 
@@ -69,7 +69,7 @@ The GitHub Actions CI runners for SQL Server and Postgres will automatically ins
 
 ## Test Against Multiple Engines
 
-Unit tests which check query outputs should run on all available engines.  In normal development, this will be `pandas` only, but in CI will include `spark`, `postgres`, and `sqlserver`.  Developers can have all of these installed locally, and `pandas` can be disabled with `export SKIP_PANDAS=1`.
+Unit tests which check query outputs should run on all available engines.  In normal development, this will be `pandas` only, but in CI will include `spark`, `postgres`, and `sqlserver`.  Developers can have all of these installed locally, and `pandas` can be disabled with `export SKIP_PANDAS=1`.  If you have a unit test that requests pandas only, make sure the test checks for `None` from the reader, since `DbCollection` will not return pandas readers when `SKIP_PANDAS` is set.
 
 Runs a test against all available engines that have PUMS_pid:
 

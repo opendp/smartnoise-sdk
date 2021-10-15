@@ -1,4 +1,4 @@
-from snsql.sql import SqlReader
+from snsql.sql.reader.base import SqlReader
 
 import yaml
 from os import path

@@ -25,7 +25,8 @@ class AllColumns(SqlExpr):
 
     @property
     def is_key_count(self):
-        return True
+        # should be true if no table specified and row_privacy
+        return False
 
     @property
     def is_count(self):

@@ -4,10 +4,11 @@ import pandas as pd
 import copy
 import yaml
 import random
+import copy
 
 from snsql.sql import PrivateReader
-from snsql.metadata import CollectionMetadata
-from snsql.metadata.collection import Table, Float, String
+from snsql.metadata import Metadata
+from snsql.metadata import Table, Float, String
 
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -42,7 +43,7 @@ def download_data_files():
                     Float("petal length (cm)", 1, 7),
                     Float("petal width (cm)", 0, 3)
         ], 150)
-        schema = CollectionMetadata([iris], "csv")
+        schema = Metadata([iris], "csv")
         schema.to_file(iris_schema_path, "iris")
 
     if not os.path.exists(pums_csv_path) or not os.path.exists(pums_pid_csv_path) or not os.path.exists(pums_large_csv_path):
@@ -103,7 +104,7 @@ def download_data_files():
                     String("author", card=10000, is_key=True),
                     String("ngram", card=10000)
         ], 500000, None, False, max_ids=500)
-        schema = CollectionMetadata([reddit], "csv")
+        schema = Metadata([reddit], "csv")
         schema.to_file(reddit_schema_path, "reddit")
 
 class TestDbEngine:
@@ -130,6 +131,7 @@ class TestDbEngine:
                 password = keyring.get_password(conn, user)
                 self.password = password
             except:
+                print(f"No password for engine {conn}")
                 self.password = ""
         self.connections = {}
         for database in self.databases:
@@ -147,18 +149,20 @@ class TestDbEngine:
             try:
                 import psycopg2
                 self.connections[database] = psycopg2.connect(host=host, port=port, user=user, password=password, database=dbname)
-                print(f'Connected {database} to {dbname}')
+                print(f'Postgres: Connected {database} to {dbname}')
             except:
                 print(f"Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
         elif self.engine.lower() == "pandas":
             self.connections['PUMS'] = pd.read_csv(pums_csv_path)
             self.connections['PUMS_pid'] = pd.read_csv(pums_pid_csv_path)
             self.connections['PUMS_dup'] = pd.read_csv(pums_dup_csv_path)
+            print(f'Pandas: Connected to 3 databases')
         elif self.engine.lower() == "sqlserver":
             try:
                 import pyodbc
                 dsn = f"Driver={{ODBC Driver 17 for SQL Server}};Server={host},{port};UID={user};Database={dbname};PWD={password}"
                 self.connections[database] = pyodbc.connect(dsn)
+                print(f'SQL Server: Connected {database} to {dbname}')
             except:
                 print(f"Unable to connect to SQL Server database {database}.  Ensure connection info is correct and pyodbc is installed.")
         elif self.engine.lower() == "spark":
@@ -178,6 +182,7 @@ class TestDbEngine:
                 self.connections['PUMS_pid'] = spark
                 self.connections['PUMS_dup'] = spark
                 self.connections['PUMS_large'] = spark
+                print(f'Spark: Connected to 4 databases')
             except:
                 print("Unable to connect to Spark test databases.  Make sure pyspark is installed.")
         else:
@@ -192,15 +197,15 @@ class TestDbEngine:
                 priv.reader.compare.search_path = ["PUMS"]
             return priv
 
-class TestDbCollection:
+class DbCollection:
     # Collection of test databases keyed by engine and database name.
     # Automatically connects to databases listed in connections-unit.yaml
     def __init__(self):
         self.metadata = {
-            'PUMS': CollectionMetadata.from_file(pums_schema_path),
-            'PUMS_large': CollectionMetadata.from_file(pums_large_schema_path),
-            'PUMS_pid': CollectionMetadata.from_file(pums_pid_schema_path),
-            'PUMS_dup': CollectionMetadata.from_file(pums_dup_schema_path)
+            'PUMS': Metadata.from_file(pums_schema_path),
+            'PUMS_large': Metadata.from_file(pums_large_schema_path),
+            'PUMS_pid': Metadata.from_file(pums_pid_schema_path),
+            'PUMS_dup': Metadata.from_file(pums_dup_schema_path)
         }
         self.engines = {}
         home = os.path.expanduser("~")
@@ -246,7 +251,7 @@ class TestDbCollection:
             print(f"No metadata available for {database}")
             return []
         if isinstance(metadata, str):
-            metadata = CollectionMetadata.from_file(metadata)
+            metadata = Metadata.from_file(metadata)
         if len(overrides) > 0:
             # make a copy
             metadata = copy.deepcopy(metadata)
@@ -259,7 +264,7 @@ class TestDbCollection:
                 table.censor_dims = propval
             elif propname == 'clamp_counts':
                 table.clamp_counts = propval
-            elif propname == 'max_ids':
+            elif propname == 'max_ids' or propname == 'max_contrib':
                 table.max_ids = propval
             else:
                 print(f"Unable to set override for {propname}={propval}")

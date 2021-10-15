@@ -1,11 +1,12 @@
 import math
 from os import name
-from typing import List, Tuple
+from typing import Tuple
 from snsql._ast.ast import Query
 from snsql._ast.expression import NamedExpression
 from snsql._ast.expressions.numeric import ArithmeticExpression
 from snsql.sql.privacy import Privacy
-from scipy.stats import norm
+from opendp.accuracy import gaussian_scale_to_accuracy
+from snsql.sql._mechanisms import *
 
 class Accuracy:
     """
@@ -15,13 +16,12 @@ class Accuracy:
 
     All formulas from: https://github.com/opendp/smartnoise-sdk/blob/main/papers/DP_SQL_budget.pdf
     """
-    def __init__(self, query: Query, subquery: Query, privacy : Privacy):
+    def __init__(self, query: Query, subquery: Query, privacy: Privacy):
         """
         Detection of formulas happens only once per query
         """
         self.privacy = privacy
         self.max_contrib = query.max_ids # always take from Query
-        self.base_scale = self.scale(sensitivity=1.0)
         
         detect = DetectFormula(query, subquery)
         self.properties = [detect.detect(ne) for ne in query.xpath("/Query/Select//NamedExpression")]
@@ -32,11 +32,11 @@ class Accuracy:
      output column.  The properties are populated at detect time.
     """
     def count(self, *ignore, alpha: float, properties={}, row:Tuple=None):
-        sigma = self.scale(sensitivity=1)
-        return self.percentile(percentile=1 - alpha, sigma=sigma)
+        return self.error_range(alpha=alpha, stat='count', sensitivity=1)
+    def threshold(self, *ignore, alpha: float, properties={}, row:Tuple=None):
+        return self.error_range(alpha=alpha, stat='threshold', sensitivity=1)
     def sum(self, *ignore, alpha: float, properties={}, row:Tuple=None):
-        sigma = self.scale(sensitivity=properties["sensitivity"]["sum"])
-        return self.percentile(percentile=1 - alpha, sigma=sigma)
+        return self.error_range(alpha=alpha, stat='sum', sensitivity=properties["sensitivity"]["sum"])
     def _mean(self, *ignore, alpha:float, sigma_1:float, sigma_2:float, n:float, sum_val:float):
         # mean, variance, and stddev all use this formula
         shift = math.sqrt(2 * math.log(4/alpha)) 
@@ -53,10 +53,10 @@ class Accuracy:
         sum_idx = properties['columns']['sum']
         n = row[n_idx]
         sum_val = row[sum_idx]
-        sigma = self.scale(sensitivity=1)
+        scale = self.gauss_scale(stat='count', sensitivity=1)
         sum_sens = properties['sensitivity']['sum']
-        sigma_sum = self.scale(sensitivity=sum_sens)
-        return self._mean(alpha=alpha, sigma_1=sigma, sigma_2=sigma_sum, n=n, sum_val=sum_val)
+        scale_sum = self.gauss_scale(stat='sum', sensitivity=sum_sens)
+        return self._mean(alpha=alpha, sigma_1=scale, sigma_2=scale_sum, n=n, sum_val=sum_val)
 
     def variance(self, *ignore, alpha: float,  properties={}, row: Tuple):
         alpha = 2.0/3.0 * alpha
@@ -66,12 +66,12 @@ class Accuracy:
         n = row[n_idx]
         sum_val = row[sum_idx]
         sum_s_val = row[sum_s_idx]
-        sigma_count = self.scale(sensitivity=1)
+        scale_count = self.gauss_scale(stat='count', sensitivity=1)
         sum_sens = properties['sensitivity']['sum']
-        sigma_sum = self.scale(sensitivity=sum_sens)
-        sigma_sum_s = self.scale(sensitivity=(sum_sens*sum_sens))
-        f1 = self._mean(alpha=alpha, sigma_1=sigma_count, sigma_2=sigma_sum_s, n=n, sum_val=sum_s_val)
-        f2 = self._mean(alpha=alpha, sigma_1=sigma_count, sigma_2=sigma_sum, n=n, sum_val=sum_val)
+        scale_sum = self.gauss_scale(stat='sum', sensitivity=sum_sens)
+        scale_sum_s = self.gauss_scale(stat='sum', sensitivity=(sum_sens*sum_sens))
+        f1 = self._mean(alpha=alpha, sigma_1=scale_count, sigma_2=scale_sum_s, n=n, sum_val=sum_s_val)
+        f2 = self._mean(alpha=alpha, sigma_1=scale_count, sigma_2=scale_sum, n=n, sum_val=sum_val)
         if f1 and f2:
             return f1 + f2 * (f2 + ((2*sum_val)/n))
         else:
@@ -82,15 +82,21 @@ class Accuracy:
             return math.sqrt(v)
         else:
             return None
-    def scale(self, *ignore, sensitivity: float):
-        # compute sigma for a given set of privacy parameters, sensitivity, and max_contrib
-        sigma = (math.sqrt(math.log(1/self.privacy.delta)) + math.sqrt(math.log(1/self.privacy.delta) + self.privacy.epsilon)) / (math.sqrt(2) * self.privacy.epsilon)
-        return sigma * self.max_contrib * sensitivity
-    def percentile(self, *ignore, percentile: float, sigma: float):
-        # qnorm
-        dist = norm(0, sigma)
-        right = (1.0 + percentile) / 2
-        return dist.ppf(right)
+    def _mech(self, *ignore, stat: str, sensitivity):
+        if not isinstance(sensitivity, (int, float)):
+            raise ValueError(f"Sensitivity must be int or float.  Got {type(sensitivity)}")
+        t = 'int' if isinstance(sensitivity, int) else 'float'
+        mech_class = self.privacy.mechanisms.get_mechanism(sensitivity, stat, t)
+        return mech_class(self.privacy.epsilon, delta=self.privacy.delta, sensitivity=sensitivity, max_contrib=self.max_contrib)
+    def scale(self, *ignore, stat: str, sensitivity):
+        mech = self._mech(stat=stat, sensitivity=sensitivity)
+        return mech.scale
+    def gauss_scale(self, *ignore, stat: str, sensitivity):
+        mech = Gaussian(self.privacy.epsilon, delta=self.privacy.delta, sensitivity=sensitivity, max_contrib=self.max_contrib)
+        return mech.scale
+    def error_range(self, *ignore, alpha: float, stat: str, sensitivity):
+        mech = self._mech(stat=stat, sensitivity=sensitivity)
+        return mech.accuracy(alpha)
     def accuracy(self, *ignore, row:Tuple, alpha:float):
         """
         Returns a tuple of the same size as the output row, with +/-
@@ -108,6 +114,8 @@ class Accuracy:
                 r = None
                 if stat == "count":
                     r = self.count(alpha=alpha, properties=p, row=row)
+                elif stat == "threshold":
+                    r = self.threshold(alpha=alpha, properties=p, row=row)
                 elif stat == "sum":
                     r = self.sum(alpha=alpha, properties=p, row=row)
                 elif stat == "mean":
@@ -156,11 +164,11 @@ class DetectFormula:
             source = self.subquery.xpath_first(source_path)
             source_path = "@expression/AggFunction[@name='COUNT']"
             if source.xpath_first(source_path):
-                source_path = "@m_symbol/@expression//TableColumn"
-                source = source.xpath_first(source_path)
-                if source:
+                tc_source_path = "@m_symbol//TableColumn"
+                ac_source_path = "@m_symbol//AllColumns"
+                if source.xpath_first(tc_source_path) or source.xpath_first(ac_source_path):
                     return {
-                        'statistic': 'count',
+                        'statistic': 'threshold' if cname == 'keycount' else 'count',
                         'columns':  {
                             'count': source_idx,
                         },

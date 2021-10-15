@@ -1,10 +1,10 @@
 import pytest
 
-from .setup.dataloader import TestDbCollection, download_data_files
+from .setup.dataloader import DbCollection, download_data_files
 
 download_data_files()
 
-dbcol = TestDbCollection()
+dbcol = DbCollection()
 print(dbcol)
 
 @pytest.fixture(scope="module")

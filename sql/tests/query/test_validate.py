@@ -1,7 +1,7 @@
 import pytest
 from snsql._ast.validate import Validate
 from snsql.sql.parse import QueryParser
-from snsql.metadata import CollectionMetadata
+from snsql.metadata import Metadata
 
 from os import listdir
 from os.path import isfile, join, dirname
@@ -22,7 +22,7 @@ for d in other_dirs:
     good_files.extend(other_files)
 
 
-metadata = CollectionMetadata.from_file(join(dir_name, "Devices.yaml"))
+metadata = Metadata.from_file(join(dir_name, "Devices.yaml"))
 
 
 #
