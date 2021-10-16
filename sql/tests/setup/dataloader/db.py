@@ -107,7 +107,7 @@ def download_data_files():
         schema = Metadata([reddit], "csv")
         schema.to_file(reddit_schema_path, "reddit")
 
-class TestDbEngine:
+class DbEngine:
     # Connections to a list of test databases sharing connection info
     def __init__(self, engine, user=None, host=None, port=None, databases={}):
         self.engine = engine
@@ -132,6 +132,7 @@ class TestDbEngine:
                 self.password = password
             except:
                 print(f"No password for engine {conn}")
+                print("Please make sure password is set and keyring is installed")
                 self.password = ""
         self.connections = {}
         for database in self.databases:
@@ -187,6 +188,15 @@ class TestDbEngine:
                 print("Unable to connect to Spark test databases.  Make sure pyspark is installed.")
         else:
             print(f"Unable to connect to databases for engine {self.engine}")
+    @property
+    def dialect(self):
+        engine = self.engine
+        dialects = {
+            'postgres': 'postgresql+psycopg2',
+            'sqlserver': 'mssql+pyodbc',
+            'mysql': 'mysql+pymysql'
+        }
+        return None if engine not in dialects else dialects[engine]
     def get_private_reader(self, *ignore, metadata, privacy, database, **kwargs):
         if database not in self.connections:
             return None
@@ -196,6 +206,11 @@ class TestDbEngine:
             if self.engine.lower() == "spark":
                 priv.reader.compare.search_path = ["PUMS"]
             return priv
+    def get_connection(self, *ignore, database, **kwargs):
+        if database not in self.connections:
+            return None
+        else:
+            return self.connections[database]
 
 class DbCollection:
     # Collection of test databases keyed by engine and database name.
@@ -211,11 +226,11 @@ class DbCollection:
         home = os.path.expanduser("~")
         p = os.path.join(home, ".smartnoise", "connections-unit.yaml")
         if not os.environ.get('SKIP_PANDAS'):
-            self.engines['pandas'] = TestDbEngine('pandas')
+            self.engines['pandas'] = DbEngine('pandas')
         else:
             print("Skipping pandas database tests")
         if os.environ.get('TEST_SPARK'):
-            self.engines['spark'] = TestDbEngine('spark')
+            self.engines['spark'] = DbEngine('spark')
         else:
             print("TEST_SPARK not set, so skipping Spark tests")
         if not os.path.exists(p):
@@ -232,7 +247,7 @@ class DbCollection:
                     port = conns[engine]["port"]
                     user = conns[engine]["user"]
                     databases = eng['databases']
-                    self.engines[engine] = TestDbEngine(engine, user, host, port, databases)
+                    self.engines[engine] = DbEngine(engine, user, host, port, databases)
     def __str__(self):
         description = ""
         for engine in self.engines:
@@ -282,6 +297,18 @@ class DbCollection:
     def get_private_reader(self, *ignore, metadata=None, privacy, database, engine, overrides={}, **kwargs):
         readers = self.get_private_readers(metadata=metadata, privacy=privacy, database=database, engine=engine, overrides=overrides)
         return None if len(readers) == 0 else readers[0]
+    def get_connection(self, *ignore, database, engine, **kwargs):
+        if engine in self.engines:
+            eng = self.engines[engine]
+            return eng.get_connection(database=database)
+        else:
+            return None
+    def get_dialect(self, *ignore, engine, **kwargs):
+        if engine in self.engines:
+            eng = self.engines[engine]
+            return eng.dialect
+        else:
+            return None
     def to_tuples(self, rowset):
         if hasattr(rowset, 'toLocalIterator'): # it's RDD
             colnames = rowset.columns
