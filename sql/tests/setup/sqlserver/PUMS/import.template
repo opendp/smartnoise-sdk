@@ -50,3 +50,19 @@ BULK INSERT PUMS.PUMS_dup
     TABLOCK
     )
 GO
+
+USE PUMS_null
+GO
+
+BULK INSERT PUMS.PUMS
+    FROM '{current}\PUMS_null.csv'
+    WITH
+    (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',  --CSV field delimiter
+    ROWTERMINATOR = '\n',   --Use to shift the control to next row
+    ERRORFILE = '{current}\PUMS_null.log',
+    TABLOCK,
+    KEEPNULLS
+    )
+GO

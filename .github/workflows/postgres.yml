@@ -51,6 +51,7 @@ jobs:
         run: |
           cd sql
           pip install --no-cache-dir -r tests/requirements.txt
+          pip install --no-cache-dir -r tests/setup/postgres/requirements.txt
           pip install --no-cache-dir  .
           pip install --no-cache-dir opendp-smartnoise-core # temporary
       - name: Download test datasets
@@ -63,7 +64,7 @@ jobs:
         run: |
           source pass.sh
           cd sql
-          cd tests/engines/postgres/PUMS
+          cd tests/setup/postgres/PUMS
           source install.sh
         env:
           POSTGRES_HOST: localhost
@@ -80,11 +81,10 @@ jobs:
       - name: Check database connections test fixture
         shell: bash -l {0}
         run: |
-          pip install psycopg2
           source pass.sh
           cd sql
           mkdir ~/.smartnoise
-          cp tests/engines/postgres/connections-unit.yaml ~/.smartnoise
+          cp tests/setup/postgres/connections-unit.yaml ~/.smartnoise
           python tests/setup/download.py
       - name: Test SDK
         shell: bash -l {0}
@@ -93,3 +93,4 @@ jobs:
           cd sql
           export SKIP_PANDAS=1
           pytest tests
+

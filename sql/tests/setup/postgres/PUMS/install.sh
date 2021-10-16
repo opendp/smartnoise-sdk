@@ -1,5 +1,6 @@
-# set DATA to location of dp-test-datasets/data/
+pwd
 DATASETS=../../../../../datasets/
+ls -l $DATASETS
 PUMS=${DATASETS}PUMS.csv
 PUMS_LARGE=${DATASETS}PUMS_large.csv
 PUMS_PID=${DATASETS}PUMS_pid.csv

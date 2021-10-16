@@ -4,8 +4,6 @@ import pandas as pd
 from itertools import islice
 from sqlalchemy.sql.sqltypes import Float
 
-from tqdm import tqdm
-
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 from sqlalchemy import Table, Column, Integer, Float, Boolean, MetaData
@@ -151,6 +149,7 @@ def create_pums_large(engine):
     with open(pums_large_csv_path) as pums:
         next(pums)
         batch_size = 500
+        from tqdm import tqdm
         pbar = tqdm(total=1_200_000)
         while True:
             rows = list(islice(pums, batch_size))

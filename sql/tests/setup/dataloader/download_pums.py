@@ -24,7 +24,7 @@ def download_pums():
     if not os.path.exists(pums_large_csv_path):
         print("Downloading PUMS large with 1.2 million rows")
         pums_large_url = "https://raw.githubusercontent.com/opendifferentialprivacy/dp-test-datasets/master/data/PUMS_california_demographics/data.csv"
-        _download_file(pums_large_url, pums_csv_path)
+        _download_file(pums_large_url, pums_large_csv_path)
     if not os.path.exists(pums_csv_path):
         print("Downloading PUMS small with 1000 rows")
         pums_url = "https://raw.githubusercontent.com/opendifferentialprivacy/dp-test-datasets/master/data/PUMS_california_demographics_1000/data.csv"

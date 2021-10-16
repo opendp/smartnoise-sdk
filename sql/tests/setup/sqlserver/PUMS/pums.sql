@@ -43,3 +43,21 @@ CREATE SCHEMA PUMS
 	CREATE TABLE PUMS (age int, sex char(2), educ int, race char(2), income float, married bit, pid int)
 	CREATE TABLE PUMS_dup (age int, sex char(2), educ int, race char(2), income float, married bit, pid int)
 GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE database_id = DB_ID(N'PUMS_null'))
+    CREATE DATABASE PUMS_null;
+GO
+
+USE PUMS_null;
+GO
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[PUMS].[PUMS]') AND type in (N'U'))
+DROP TABLE [PUMS].[PUMS]
+GO
+
+DROP SCHEMA IF EXISTS PUMS;
+GO
+
+CREATE SCHEMA PUMS
+	CREATE TABLE PUMS (age int, sex char(2), educ int, race char(2), income float, married bit, pid int)
+GO
