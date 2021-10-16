@@ -1,0 +1,7 @@
+sqlserver:
+  host: (localdb)\MSSQLLocalDB
+  port: 1433
+  user: sa
+  databases:
+    PUMS: PUMS
+    PUMS_large: PUMS_LARGE

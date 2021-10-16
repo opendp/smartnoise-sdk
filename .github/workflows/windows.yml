@@ -12,12 +12,31 @@ jobs:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v2
-      - name: pip install smartnoise-sql
+      - name: install smartnoise-sql
         shell: cmd
         run: |
           cd sql
           pip install --no-cache-dir -r tests\requirements.txt
           pip install --no-cache-dir .
+      - name: install sqlserver dependencies
+        shell: cmd
+        run: |
+          cd sql
+          pip install --no-cache-dir -r tests\setup\sqlserver\requirements.txt
+      - name: download CSV files
+        shell: cmd
+        run: |
+          python tests\setup\download.py
+      - name: install databases in localdb
+        shell: cmd
+        run: |
+          SQLLocalDB info
+          cd sql\tests\setup\sqlserver\PUMS
+          .\install.cmd
+      - name: show what's installed
+        shell: cmd
+        run: |
+          python tests\setup\download.py
       - name: Unit tests
         shell: cmd
         run: |

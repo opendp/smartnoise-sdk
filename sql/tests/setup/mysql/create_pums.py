@@ -1,9 +1,18 @@
 import os
-
-parent = os.path.abspath('..')
-
+import subprocess
 import sys
-sys.path.insert(0, parent)
+
+git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+setup_path = os.path.abspath(
+    os.path.join(
+        git_root_dir, 
+        "sql", 
+        "tests", 
+        "setup"
+    )
+)
+
+sys.path.insert(0, setup_path)
 
 from dataloader.create_pums_dbs import *
 

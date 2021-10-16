@@ -1,4 +1,3 @@
-pwd
 DATASETS=../../../../../datasets/
 ls -l $DATASETS
 PUMS=${DATASETS}PUMS.csv

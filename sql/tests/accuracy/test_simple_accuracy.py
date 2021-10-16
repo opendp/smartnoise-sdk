@@ -2,9 +2,6 @@ import numpy as np
 from snsql.sql._mechanisms import *
 from snsql.sql.privacy import Privacy, Stat
 
-from tests.setup.dataloader import DbCollection
-test_databases = DbCollection()
-
 # grid of (alpha, epsilon, delta, max_contrib) to test
 grid = [
     (0.01, 0.5, 0.0, 3),
@@ -15,7 +12,7 @@ grid = [
 
 
 class TestSimpleAccuracy:
-    def test_geom_count(self):
+    def test_geom_count(self, test_databases):
         query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
         sensitivity = 1
         for alpha, epsilon, delta, max_contrib in grid:
@@ -27,7 +24,7 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.geometric)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    def test_geom_small_sum(self):
+    def test_geom_small_sum(self, test_databases):
         query = 'SELECT SUM(age) FROM PUMS.PUMS'
         sensitivity = 100
         for alpha, epsilon, delta, max_contrib in grid:
@@ -39,7 +36,7 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.geometric)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    def test_geom_large_sum(self):
+    def test_geom_large_sum(self, test_databases):
         # reverts to laplace because it's large
         query = 'SELECT SUM(income) FROM PUMS.PUMS'
         sensitivity = 500_000
@@ -54,7 +51,7 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.laplace)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    def test_geom_key_count(self):
+    def test_geom_key_count(self, test_databases):
         # reverts to laplace because we need a threshold
         query = 'SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS'
         sensitivity = 1
@@ -69,7 +66,7 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.laplace)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    def test_geom_key_count_gauss(self):
+    def test_geom_key_count_gauss(self, test_databases):
         # reverts to gaussian because we need a threshold
         query = 'SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS'
         sensitivity = 1
@@ -85,7 +82,7 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.gaussian)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    def test_gauss_count(self):
+    def test_gauss_count(self, test_databases):
         query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
         sensitivity = 1
         for alpha, epsilon, delta, max_contrib in grid:
@@ -100,7 +97,7 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.gaussian)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    def test_gauss_large_sum(self):
+    def test_gauss_large_sum(self, test_databases):
         query = 'SELECT SUM(income) FROM PUMS.PUMS'
         sensitivity = 500_000
         for alpha, epsilon, delta, max_contrib in grid:
@@ -115,7 +112,7 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.gaussian)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    def test_lap_count(self):
+    def test_lap_count(self, test_databases):
         query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
         sensitivity = 1
         for alpha, epsilon, delta, max_contrib in grid:
@@ -136,7 +133,7 @@ class TestSimpleMatch:
     Compare accuracies obtained from the reader without executing query
     with accuracies provided inline with query result.
     """
-    def test_simple_pid(self):
+    def test_simple_pid(self, test_databases):
         max_ids = 2
         alpha = 0.05
         privacy = Privacy(alphas=[alpha], epsilon=1.5, delta=1/100_000)
@@ -152,7 +149,7 @@ class TestSimpleMatch:
             res = reader.execute(query, accuracy=True)
             simple_b = res[1][1][0]
             assert (all([a == b for a, b in zip(simple_a, simple_b)]))
-    def test_simple_row_privacy(self):
+    def test_simple_row_privacy(self, test_databases):
         alpha = 0.07
         privacy = Privacy(alphas=[alpha], epsilon=0.5, delta=1/1000)
         query = 'SELECT COUNT(*), COUNT(educ), SUM(age) FROM PUMS.PUMS'

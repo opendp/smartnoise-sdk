@@ -1,11 +1,21 @@
-from dataloader.db import DbCollection
-from dataloader.download_reddit import download_reddit
-from dataloader.download_pums import download_pums
-from dataloader.make_sqlite import make_sqlite
+import os
+import subprocess
+import sys
 
-download_reddit()
-download_pums()
-make_sqlite()
+git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+setup_path = os.path.abspath(
+    os.path.join(
+        git_root_dir, 
+        "sql", 
+        "tests", 
+        "setup"
+    )
+)
 
+sys.path.insert(0, setup_path)
+
+from dataloader.db import DbCollection, download_data_files
+
+download_data_files()
 test_databases = DbCollection()
 print(test_databases)
