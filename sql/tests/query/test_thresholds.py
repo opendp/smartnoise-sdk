@@ -62,13 +62,14 @@ class TestQueryThresholds:
             rs = test_databases.to_tuples(reader.execute("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 70 GROUP BY educ"))
             assert(len(rs) >= 2 and len(rs) <= 8)
     def test_yes_tau_laplace_no_group(self, test_databases):
-        privacy = Privacy(epsilon=1.0, delta=1/1000)
+        # This should always return empty, because it pinpoints a small cohort
+        privacy = Privacy(epsilon=1.0, delta=1/100_000)
         privacy.mechanisms.map[Stat.threshold] = Mechanism.laplace
-        readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
+        readers = test_databases.get_private_readers(database='PUMS', privacy=privacy)
         assert(len(readers) > 0)
         for reader in readers:
             rs = test_databases.to_tuples(reader.execute("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 70 AND educ < 2"))
-            assert(len(rs) >= 1)
+            assert(len(rs) <= 1)
     @pytest.mark.skip("strange error in CI")
     def test_execute_with_dpsu(self):
         schema_dpsu = copy.copy(schema)

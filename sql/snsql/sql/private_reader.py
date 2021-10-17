@@ -541,7 +541,10 @@ class PrivateReader(Reader):
         # output it
         if accuracy == False and hasattr(out, "toDF"):
             # Pipeline RDD
-            return out.toDF(out_col_names)
+            if not out.isEmpty():
+                return out.toDF(out_col_names)
+            else:
+                return out
         elif hasattr(out, "map"):
             # Bare RDD
             return out

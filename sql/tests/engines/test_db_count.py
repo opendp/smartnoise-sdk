@@ -1,11 +1,12 @@
 from snsql.sql.privacy import Privacy
 
-privacy = Privacy(alphas=[0.01, 0.05], epsilon=10.0, delta=0.1)
+privacy = Privacy(alphas=[0.01, 0.05], epsilon=30.0, delta=0.1)
 
 overrides = {'censor_dims': False}
 
 class TestDbCounts:
     def test_db_counts(self, test_databases):
+        # Actual is 1000
         for dbname in ['PUMS', 'PUMS_pid', 'PUMS_large', 'PUMS_dup', 'PUMS_null' ]:
             readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
             for reader in readers:
@@ -14,17 +15,19 @@ class TestDbCounts:
                 res = reader.execute(query)
                 res = test_databases.to_tuples(res)
                 n = res[1][0]
-                lower = 950
-                upper = 1050
+                lower = 980
+                upper = 1020
+                if dbname == 'PUMS_null':
+                    # Actual is ~926
+                    lower = 910
+                    upper = 970
                 if dbname == 'PUMS_large':
                     lower = 1223900
                     upper = 1224000
-                elif dbname == 'PUMS_null':
-                    lower = 950
-                    upper = 992
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(age) rows in {reader.engine}")
                 assert(n > lower and n < upper)
     def test_db_counts_star(self, test_databases):
+        # Actual is 1000
         for dbname in ['PUMS', 'PUMS_pid', 'PUMS_large', 'PUMS_dup', 'PUMS_null']:
             readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
             for reader in readers:
@@ -33,14 +36,19 @@ class TestDbCounts:
                 res = reader.execute(query)
                 res = test_databases.to_tuples(res)
                 n = res[1][0]
-                lower = 950
-                upper = 1050
-                if tablename == 'PUMS_large':
+                lower = 980
+                upper = 1020
+                if dbname == 'PUMS_null':
+                    # actual is ~978
+                    lower = 950
+                    upper = 995
+                if dbname == 'PUMS_large':
                     lower = 1223900
                     upper = 1224000
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(*) rows in {reader.engine}")
                 assert(n > lower and n < upper)
     def test_db_counts_no_max_ids(self, test_databases):
+        # Actual is ~1690
         for dbname in ['PUMS_dup', 'PUMS_null']:
             overrides = {'max_ids': 9, 'censor_dims': False}
             readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
@@ -56,7 +64,7 @@ class TestDbCounts:
                 assert(n > lower and n < upper)
     def test_db_counts_distinct_pid(self, test_databases):
         for dbname in ['PUMS_pid', 'PUMS_dup', 'PUMS_null']:
-            overrides = {'max_ids': 5, 'censor_dims': False}
+            overrides = {'max_ids': 9, 'censor_dims': False}
             readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
             for reader in readers:
                 tablename = 'PUMS'
@@ -64,11 +72,14 @@ class TestDbCounts:
                 res = reader.execute(query)
                 res = test_databases.to_tuples(res)
                 n = res[1][0]
+                # Actual is 1000
                 lower = 990
                 upper = 1010
                 if dbname == 'PUMS_null':
-                    lower = 900
-                    upper = 980
+                    # this is more variable with max_ids
+                    # Actual is ~977
+                    lower = 915
+                    upper = 990
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(DISTINCT pid) rows in {reader.engine}")
                 assert(n > lower and n < upper)
 

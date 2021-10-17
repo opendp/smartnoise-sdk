@@ -267,11 +267,14 @@ class DbCollection:
             return None
     def to_tuples(self, rowset):
         if hasattr(rowset, 'toLocalIterator'): # it's RDD
-            colnames = rowset.columns
-            try:
-                return [colnames] + [[c for c in r] for r in rowset.toLocalIterator()]
-            except:
-                return [colnames]
+            if hasattr(rowset, 'columns'):
+                colnames = rowset.columns
+                try:
+                    return [colnames] + [[c for c in r] for r in rowset.toLocalIterator()]
+                except:
+                    return [colnames]
+            else:
+                return [[c for c in r] for r in rowset.collect()]
         else:
             return rowset
 
