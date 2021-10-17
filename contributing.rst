@@ -135,6 +135,7 @@ Releasing Packages
 To release a new package to PyPi, in a new release branch:
 
 - Update :code:`pyproject.toml` to increment the version number
+- Edit :code:`HISTORY.md` to add release notes
 - Run :code:`poetry check`
 - Run :code:`make setup` to autogenerate a new :code:`setup.py`
 - Submit the pull request.  Ensure that all CI tests pass.  If not, make fixes and push.  Make sure to run `make setup` after any changes, since this also builds the wheel for publication
