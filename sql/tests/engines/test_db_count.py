@@ -20,8 +20,8 @@ class TestDbCounts:
                     lower = 1223900
                     upper = 1224000
                 elif dbname == 'PUMS_null':
-                    lower = 900
-                    upper = 980
+                    lower = 950
+                    upper = 992
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(age) rows in {reader.engine}")
                 assert(n > lower and n < upper)
     def test_db_counts_star(self, test_databases):

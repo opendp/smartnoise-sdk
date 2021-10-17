@@ -138,8 +138,9 @@ class TestExecution:
     def test_spark_accuracy(self, test_databases):
         priv = test_databases.get_private_reader(privacy=privacy, database="PUMS_pid", engine="spark")
         if priv is None:
-            raise ValueError("No db available for spark")
-            return # TEST_SPARK not set
+            if os.environ.get('TEST_SPARK'):
+                raise ValueError("TEST_SPARK is set, but no Spark reader available on fixture")
+            return
         res = priv.execute_with_accuracy(query)
         row_count = 0
         for row, accuracies in res.collect():

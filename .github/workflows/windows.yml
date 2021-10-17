@@ -39,10 +39,11 @@ jobs:
         run: |
           SQLLocalDB info
           cd sql\tests\setup\sqlserver\PUMS
-          .\install.cmd
+          .\install_localdb.cmd
       - name: show what's installed
         shell: cmd
         run: |
+          cd sql
           python tests\setup\download.py
       - name: Unit tests
         shell: cmd
