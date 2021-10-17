@@ -26,7 +26,14 @@ jobs:
       - name: download CSV files
         shell: cmd
         run: |
+          cd sql
           python tests\setup\download.py
+      - name: copy connections-unit.yaml
+        shell: cmd
+        run: |
+          cd sql
+          mkdir %USERPROFILE%\.smartnoise
+          copy /Y tests/setup/sqlserver/connections-unit-localdb.yaml %USERPROFILE%\.smartnoise\connections-unit.yaml
       - name: install databases in localdb
         shell: cmd
         run: |
