@@ -25,17 +25,19 @@ else:
         pass
     else:
         engine = "postgres"
-        host = conns[engine]["host"]
-        port = conns[engine]["port"]
-        user = conns[engine]["user"]
-        conn = f"{engine}://{host}:{port}"
-        if has_postgres:
-            password = keyring.get_password(conn, user)
-            if password is not None:
-                database = conns[engine]["databases"]["NameTests"]
-                connection = psycopg2.connect(database=database, host=host, user=user, port=port, password=password)
-                connection_case = psycopg2.connect(database="2NameTests", host=host, user=user, port=port, password=password)
-
+        try:
+            host = conns[engine]["host"]
+            port = conns[engine]["port"]
+            user = conns[engine]["user"]
+            conn = f"{engine}://{host}:{port}"
+            if has_postgres:
+                password = keyring.get_password(conn, user)
+                if password is not None:
+                    database = conns[engine]["databases"]["NameTests"]
+                    connection = psycopg2.connect(database=database, host=host, user=user, port=port, password=password)
+                    connection_case = psycopg2.connect(database="2NameTests", host=host, user=user, port=port, password=password)
+        except:
+            print("Failed to connect to NameTests on Postgres, skipping")
 
 class TestPostgresIdentifiersNormal:
     def test_reserved(self):

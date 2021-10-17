@@ -1,6 +1,6 @@
 Database:
   PUMS:
-    PUMS_dup:
+    PUMS:
       max_ids: 1
       rows: 1000
       age:
