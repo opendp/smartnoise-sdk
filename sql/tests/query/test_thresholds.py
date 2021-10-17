@@ -61,6 +61,7 @@ class TestQueryThresholds:
         for reader in readers:
             rs = test_databases.to_tuples(reader.execute("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 70 GROUP BY educ"))
             assert(len(rs) >= 2 and len(rs) <= 8)
+
     def test_yes_tau_laplace_no_group(self, test_databases):
         # This should always return empty, because it pinpoints a small cohort
         privacy = Privacy(epsilon=1.0, delta=1/100_000)

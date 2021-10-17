@@ -1,3 +1,6 @@
+import pytest
+import sys
+
 from snsql.sql.privacy import Privacy
 
 privacy = Privacy(alphas=[0.01, 0.05], epsilon=30.0, delta=0.1)
@@ -5,6 +8,7 @@ privacy = Privacy(alphas=[0.01, 0.05], epsilon=30.0, delta=0.1)
 overrides = {'censor_dims': False}
 
 class TestDbCounts:
+    @pytest.mark.skipif(sys.version_info <= (3, 7), reason="Skip because older PRNG")
     def test_db_counts(self, test_databases):
         # Actual is 1000
         for dbname in ['PUMS', 'PUMS_pid', 'PUMS_large', 'PUMS_dup', 'PUMS_null' ]:
@@ -62,6 +66,7 @@ class TestDbCounts:
                 upper = 1800
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(*) rows in {reader.engine} with no max_ids")
                 assert(n > lower and n < upper)
+    @pytest.mark.skipif(sys.version_info <= (3, 7), reason="Skip because older PRNG")
     def test_db_counts_distinct_pid(self, test_databases):
         for dbname in ['PUMS_pid', 'PUMS_dup', 'PUMS_null']:
             overrides = {'max_ids': 9, 'censor_dims': False}
