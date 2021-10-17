@@ -138,8 +138,9 @@ To release a new package to PyPi, in a new release branch:
 - Run :code:`poetry check`
 - Run :code:`make setup` to autogenerate a new :code:`setup.py`
 - Submit the pull request.  Ensure that all CI tests pass.  If not, make fixes and push.  Make sure to run `make setup` after any changes, since this also builds the wheel for publication
-- Once all CI tests are passing, run `poetry publish` to publish the package
-- From the project folder, run `git tag project/version`.  Tags should include the project name, and the letter 'v' before the version.  For example, to release version 0.2.2 of the :code:`synth` package, use `git tag synth/v0.2.2`.  After creating the release tag, push it to the server:
+- Once all CI tests are passing, merge to main
+- From the project folder in `main`, run `poetry publish` to publish the package
+- From the project folder in `main`, run `git tag project/version`.  Tags should include the project name, and the letter 'v' before the version.  For example, to release version 0.2.2 of the :code:`synth` package, use `git tag synth/v0.2.2`.  After creating the release tag, push it to the server:
   
 .. code-block:: bash
 
