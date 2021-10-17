@@ -5,9 +5,6 @@ import copy
 import yaml
 import copy
 
-from snsql.sql import PrivateReader
-from snsql.metadata import Metadata
-
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 pums_csv_path = os.path.join(root_url,"datasets", "PUMS.csv")
@@ -134,6 +131,7 @@ class DbEngine:
         if database not in self.connections:
             return None
         else:
+            from snsql.sql import PrivateReader
             conn = self.connections[database]
             priv = PrivateReader.from_connection(conn, metadata=metadata, privacy=privacy)
             if self.engine.lower() == "spark":
@@ -149,6 +147,7 @@ class DbCollection:
     # Collection of test databases keyed by engine and database name.
     # Automatically connects to databases listed in connections-unit.yaml
     def __init__(self):
+        from snsql.metadata import Metadata
         self.metadata = {
             'PUMS': Metadata.from_file(pums_schema_path),
             'PUMS_large': Metadata.from_file(pums_large_schema_path),
@@ -200,6 +199,7 @@ class DbCollection:
             print(f"No metadata available for {database}")
             return []
         if isinstance(metadata, str):
+            from snsql.metadata import Metadata
             metadata = Metadata.from_file(metadata)
         if len(overrides) > 0:
             # make a copy

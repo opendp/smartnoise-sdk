@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smartnoise-synth"
-version = "0.2.1"
+version = "0.2.2"
 description = "Differentially Private Synthetic Data"
 authors = ["SmartNoise Team <smartnoise@opendp.org>"]
 license = "MIT"
@@ -10,7 +10,7 @@ repository = "https://github.com/opendp/smartnoise-sdk"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.6.8,<3.9"
+python = ">=3.6.8,<=3.9"
 ctgan = "^0.4.3"
 opacus = "^0.14.0"
 

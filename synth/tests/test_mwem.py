@@ -10,7 +10,6 @@ from snsynth import MWEMSynthesizer as ShortMWEMSynthesizer
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
-meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 
 df = pd.read_csv(csv_path, index_col=0)
