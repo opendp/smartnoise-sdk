@@ -20,7 +20,7 @@ class TestDbCounts:
                     lower = 1223900
                     upper = 1224000
                 elif dbname == 'PUMS_null':
-                    lower = 920
+                    lower = 900
                     upper = 980
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(age) rows in {reader.engine}")
                 assert(n > lower and n < upper)
@@ -53,5 +53,22 @@ class TestDbCounts:
                 lower = 1650
                 upper = 1800
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(*) rows in {reader.engine} with no max_ids")
+                assert(n > lower and n < upper)
+    def test_db_counts_distinct_pid(self, test_databases):
+        for dbname in ['PUMS_pid', 'PUMS_dup', 'PUMS_null']:
+            overrides = {'max_ids': 5, 'censor_dims': False}
+            readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
+            for reader in readers:
+                tablename = 'PUMS'
+                query = f'SELECT COUNT(DISTINCT pid) AS n FROM PUMS.{tablename}'
+                res = reader.execute(query)
+                res = test_databases.to_tuples(res)
+                n = res[1][0]
+                lower = 990
+                upper = 1010
+                if dbname == 'PUMS_null':
+                    lower = 900
+                    upper = 980
+                print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(DISTINCT pid) rows in {reader.engine}")
                 assert(n > lower and n < upper)
 

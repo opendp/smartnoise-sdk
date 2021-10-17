@@ -75,7 +75,8 @@ jobs:
           psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums.pums"
           psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums.pums_large"
           psql -U postgres -h $POSTGRES_HOST -d pums_pid -c "select count(*) FROM pums.pums"
-          psql -U postgres -h $POSTGRES_HOST -d pums_pid -c "select count(*) FROM pums.pums_dup"
+          psql -U postgres -h $POSTGRES_HOST -d pums_dup -c "select count(*) FROM pums.pums"
+          psql -U postgres -h $POSTGRES_HOST -d pums_null -c "select count(*) FROM pums.pums"
         env:
           POSTGRES_HOST: localhost
       - name: Check database connections test fixture
