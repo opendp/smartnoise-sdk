@@ -44,8 +44,7 @@ class DbEngine:
                 password = keyring.get_password(conn, user)
                 self.password = password
             except:
-                print(f"No password for engine {conn}")
-                print("Please make sure password is set and keyring is installed")
+                print(f"Connecting to {conn} with no password")
                 self.password = ""
         self.connections = {}
         for database in self.databases:
@@ -64,14 +63,18 @@ class DbEngine:
                 import psycopg2
                 self.connections[database] = psycopg2.connect(host=host, port=port, user=user, password=password, database=dbname)
                 print(f'Postgres: Connected {database} to {dbname}')
-            except:
+            except Exception as e:
+                print(str(e))
                 print(f"Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
         elif self.engine.lower() == "pandas":
-            self.connections['PUMS'] = pd.read_csv(pums_csv_path)
-            self.connections['PUMS_pid'] = pd.read_csv(pums_pid_csv_path)
-            self.connections['PUMS_dup'] = pd.read_csv(pums_dup_csv_path)
-            self.connections['PUMS_null'] = pd.read_csv(pums_null_csv_path)
-            print(f'Pandas: Connected to 3 databases')
+            if 'PUMS' not in self.connections:
+                self.connections['PUMS'] = pd.read_csv(pums_csv_path)
+            if 'PUMS_pid' not in self.connections:
+                self.connections['PUMS_pid'] = pd.read_csv(pums_pid_csv_path)
+            if 'PUMS_dup' not in self.connections:
+                self.connections['PUMS_dup'] = pd.read_csv(pums_dup_csv_path)
+            if 'PUMS_null' not in self.connections:
+                self.connections['PUMS_null'] = pd.read_csv(pums_null_csv_path)
         elif self.engine.lower() == "sqlserver":
             try:
                 import pyodbc
@@ -100,20 +103,26 @@ class DbEngine:
             try:
                 from pyspark.sql import SparkSession
                 spark = SparkSession.builder.getOrCreate()
-                pums_pid = spark.read.load(pums_pid_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                pums_pid.createOrReplaceTempView("PUMS") # use same table for PUMS and PUMS_pid
-                pums_dup = spark.read.load(pums_dup_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                pums_dup.createOrReplaceTempView("PUMS_dup")
-                pums_large = spark.read.load(pums_large_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                colnames = list(pums_large.columns)
-                colnames[0] = "PersonID"
-                pums_large = pums_large.toDF(*colnames)
-                pums_large.createOrReplaceTempView("PUMS_large")
-                self.connections['PUMS'] = spark
-                self.connections['PUMS_pid'] = spark
-                self.connections['PUMS_dup'] = spark
-                self.connections['PUMS_large'] = spark
-                print(f'Spark: Connected to 4 databases')
+                self.session = spark
+                if 'PUMS' not in self.connections:
+                    pums = spark.read.load(pums_csv_path, format="csv", sep=",",inferSchema="true", header="true")
+                    self.connections['PUMS'] = pums
+                if 'PUMS_pid' not in self.connections:
+                    pums_pid = spark.read.load(pums_pid_csv_path, format="csv", sep=",",inferSchema="true", header="true")
+                    self.connections['PUMS_pid'] = pums_pid
+                if 'PUMS_dup' not in self.connections:
+                    pums_dup = spark.read.load(pums_dup_csv_path, format="csv", sep=",",inferSchema="true", header="true")
+                    self.connections['PUMS_dup'] = pums_dup
+                if 'PUMS_null' not in self.connections:
+                    pums_null = spark.read.load(pums_null_csv_path, format="csv", sep=",",inferSchema="true", header="true")
+                    self.connections['PUMS_null'] = pums_null
+                if 'PUMS_large' not in self.connections:
+                    pums_large = spark.read.load(pums_large_csv_path, format="csv", sep=",",inferSchema="true", header="true")
+                    colnames = list(pums_large.columns)
+                    colnames[0] = "PersonID"
+                    pums_large = pums_large.toDF(*colnames)
+                    self.connections['PUMS_large'] = pums_large
+                    pums_large.createOrReplaceTempView("PUMS_large")
             except:
                 print("Unable to connect to Spark test databases.  Make sure pyspark is installed.")
         else:
@@ -133,7 +142,15 @@ class DbEngine:
         else:
             from snsql.sql import PrivateReader
             conn = self.connections[database]
-            priv = PrivateReader.from_connection(conn, metadata=metadata, privacy=privacy)
+            if self.engine.lower() == "spark":
+                if database.lower() != 'pums_large':
+                    conn.createOrReplaceTempView("PUMS")
+                conn = self.session
+            priv = PrivateReader.from_connection(
+                conn, 
+                metadata=metadata, 
+                privacy=privacy
+            )
             if self.engine.lower() == "spark":
                 priv.reader.compare.search_path = ["PUMS"]
             return priv
@@ -224,12 +241,13 @@ class DbCollection:
         for engine in engines:
             if engine in self.engines:
                 eng = self.engines[engine]
+                reader = None
                 try:
                     reader = eng.get_private_reader(metadata=metadata, privacy=privacy, database=database)
                 except:
                     pass
                 finally:
-                    if reader is not None:
+                    if reader:
                         readers.append(reader)
         return readers
     def get_private_reader(self, *ignore, metadata=None, privacy, database, engine, overrides={}, **kwargs):

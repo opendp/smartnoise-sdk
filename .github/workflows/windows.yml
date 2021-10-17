@@ -33,7 +33,7 @@ jobs:
         run: |
           cd sql
           mkdir %USERPROFILE%\.smartnoise
-          copy /Y tests/setup/sqlserver/connections-unit-localdb.yaml %USERPROFILE%\.smartnoise\connections-unit.yaml
+          copy /Y tests\setup\sqlserver\connections-unit-localdb.yaml %USERPROFILE%\.smartnoise\connections-unit.yaml
       - name: install databases in localdb
         shell: cmd
         run: |
