@@ -51,7 +51,7 @@ class TestQueryThresholds:
         assert(len(readers) > 0)
         for reader in readers:
             rs = test_databases.to_tuples(reader.execute("SELECT COUNT(*) AS c FROM PUMS.PUMS WHERE age > 70 GROUP BY educ"))
-            assert(len(rs) >= 2 and len(rs) <= 8)
+            assert(len(rs) >= 2 and len(rs) <= 12)
     def test_yes_tau_gauss_row(self, test_databases):
         # should drop approximately half of educ bins
         privacy = Privacy(epsilon=1.0, delta=1/1000)
