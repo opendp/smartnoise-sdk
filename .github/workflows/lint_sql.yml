@@ -1,20 +1,18 @@
-name: SQL on Pandas
+name: SQL code linter
 
 on:
   pull_request:
     paths:
-      - 'sql/tests/**'
       - 'sql/snsql/**'
-      - 'sql/pyproject.toml'
   workflow_dispatch:
 
 jobs:
-  sql-pandas-ubuntu:
+  lint-sql:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.9']
       max-parallel: 5
     steps:
     - uses: actions/checkout@v2
@@ -40,8 +38,9 @@ jobs:
       run: |
         cd sql
         pip install --no-cache-dir -r tests/requirements.txt
-    - name: Test SDK
+    - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        cd sql
-        pytest tests
+        conda install flake8
+        flake8 sql/snsql/sql/dpsu.py -v
+        flake8 sql/snsql/reader/ -v

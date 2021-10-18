@@ -8,7 +8,7 @@ privacy = Privacy(alphas=[0.01, 0.05], epsilon=30.0, delta=0.1)
 overrides = {'censor_dims': False}
 
 class TestDbCounts:
-    @pytest.mark.skipif(sys.version_info <= (3, 7), reason="Skip because older PRNG")
+    @pytest.mark.skipif(sys.version_info < (3, 8), reason="Skip because older PRNG")
     def test_db_counts(self, test_databases):
         # Actual is 1000
         for dbname in ['PUMS', 'PUMS_pid', 'PUMS_large', 'PUMS_dup', 'PUMS_null' ]:
@@ -23,8 +23,8 @@ class TestDbCounts:
                 upper = 1020
                 if dbname == 'PUMS_null':
                     # Actual is ~926
-                    lower = 910
-                    upper = 970
+                    lower = 900
+                    upper = 950
                 if dbname == 'PUMS_large':
                     lower = 1223900
                     upper = 1224000
@@ -44,7 +44,7 @@ class TestDbCounts:
                 upper = 1020
                 if dbname == 'PUMS_null':
                     # actual is ~978
-                    lower = 950
+                    lower = 940
                     upper = 995
                 if dbname == 'PUMS_large':
                     lower = 1223900
@@ -66,7 +66,7 @@ class TestDbCounts:
                 upper = 1800
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(*) rows in {reader.engine} with no max_ids")
                 assert(n > lower and n < upper)
-    @pytest.mark.skipif(sys.version_info <= (3, 7), reason="Skip because older PRNG")
+    @pytest.mark.skipif(sys.version_info < (3, 8), reason="Skip because older PRNG")
     def test_db_counts_distinct_pid(self, test_databases):
         for dbname in ['PUMS_pid', 'PUMS_dup', 'PUMS_null']:
             overrides = {'max_ids': 9, 'censor_dims': False}
@@ -83,7 +83,7 @@ class TestDbCounts:
                 if dbname == 'PUMS_null':
                     # this is more variable with max_ids
                     # Actual is ~977
-                    lower = 915
+                    lower = 945
                     upper = 990
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(DISTINCT pid) rows in {reader.engine}")
                 assert(n > lower and n < upper)
