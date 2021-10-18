@@ -1,4 +1,4 @@
-name: SQL on Pandas on Windows
+name: SQL on Pandas and LocalDB on Windows
 on:
   pull_request:
     paths:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
   
 jobs:
-  build:
+  windows-localdb:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v2

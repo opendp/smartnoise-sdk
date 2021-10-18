@@ -1,4 +1,4 @@
-sqlcmd -S "(localdb)\MSSQLLocalDB" -i pums.sql
+sqlcmd -l 90 -S "(localdb)\MSSQLLocalDB" -i pums.sql
 python clean_text.py
-sqlcmd -S "(localdb)\MSSQLLocalDB" -i install.sql
+sqlcmd -l 90 -S "(localdb)\MSSQLLocalDB" -i install.sql
 del PUMS*.csv
