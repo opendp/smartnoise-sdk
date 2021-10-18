@@ -1,6 +1,7 @@
+import pytest
 from snsql.sql._mechanisms import *
 
-n_trials = 500
+n_trials = 2500
 
 """
 Sample each mechanism 500 times for a combination of epsilon, delta,
@@ -8,6 +9,7 @@ alpha, and sensitivity.  The sampled values must fall within +/- 3%
 of the reported accuracy, to account for slack due to small sample size.
 """
 class TestMechAccuracy:
+    @pytest.mark.slow
     def test_lap(self):
         for epsilon in [0.1, 2.0]:
             for delta in [0.0, 0.01]:
@@ -22,6 +24,7 @@ class TestMechAccuracy:
                         percent_in = sum(inside) / n_trials
                         percentile = 1.0 - alpha
                         assert(percent_in >= percentile - 0.03 and percent_in <= percentile + 0.03)
+    @pytest.mark.slow
     def test_gauss(self):
         for epsilon in [0.1, 2.0]:
             for delta in [10E-6, 0.01]:
@@ -36,6 +39,7 @@ class TestMechAccuracy:
                         percent_in = sum(inside) / n_trials
                         percentile = 1.0 - alpha
                         assert(percent_in >= percentile - 0.03 and percent_in <= percentile + 0.03)
+    @pytest.mark.slow
     def test_geom(self):
         for epsilon in [0.1, 1.0]:
             for delta in [0.0]:
