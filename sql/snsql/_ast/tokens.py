@@ -246,7 +246,7 @@ class SqlRel(Sql):
             return True
         if hasattr(self, "alias"):
             if self.alias is None:
-                return False
+                return self.name.lower() == alias.lower()
             else:
                 return self.alias.lower() == alias.lower()
         else:
