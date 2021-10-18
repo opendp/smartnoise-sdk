@@ -23,7 +23,8 @@ class TestDbCounts:
                 upper = 1020
                 if dbname == 'PUMS_null':
                     # Actual is ~926
-                    lower = 900
+                    # Reservoir sampling increases variance
+                    lower = 890
                     upper = 950
                 if dbname == 'PUMS_large':
                     lower = 1223900
