@@ -505,29 +505,33 @@ class PrivateReader(Reader):
             else:
                 out = sorted(out, key=sort_func)
 
-            # check for LIMIT or TOP
-            limit_rows = None
-            if query.limit is not None:
-                if query.select.quantifier is not None:
-                    raise ValueError("Query cannot have both LIMIT and TOP set")
-                limit_rows = query.limit.n
-            elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
-                limit_rows = query.select.quantifier.n
-            if limit_rows is not None:
-                if hasattr(exact_aggregates, "rdd"):
-                    # it's a dataframe
-                    out = exact_aggregates.limit(limit_rows)
-                elif hasattr(exact_aggregates, "map"):
-                    # it's an RDD
-                    out = exact_aggregates.limit(limit_rows)
-                else:
-                    out = itertools.islice(out, limit_rows)
+        # check for LIMIT or TOP
+        limit_rows = None
+        if query.limit is not None:
+            if query.select.quantifier is not None:
+                raise ValueError("Query cannot have both LIMIT and TOP set")
+            limit_rows = query.limit.n
+        elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
+            limit_rows = query.select.quantifier.n
+        if limit_rows is not None:
+            if hasattr(out, "rdd"):
+                # it's a dataframe
+                out = out.limit(limit_rows)
+            elif hasattr(out, "map"):
+                # it's an RDD
+                out = out.take(limit_rows)
+            else:
+                out = itertools.islice(out, limit_rows)
+
 
         # drop empty accuracy if no accuracy requested
         def drop_accuracy(row):
             return row[0]
         if accuracy == False:
-            if hasattr(out, "map"):
+            if hasattr(out, "rdd"):
+                # it's a dataframe
+                out = out.rdd.map(drop_accuracy)
+            elif hasattr(out, "map"):
                 # it's an RDD
                 out = out.map(drop_accuracy)
             else:
@@ -541,7 +545,10 @@ class PrivateReader(Reader):
         # output it
         if accuracy == False and hasattr(out, "toDF"):
             # Pipeline RDD
-            return out.toDF(out_col_names)
+            if not out.isEmpty():
+                return out.toDF(out_col_names)
+            else:
+                return out
         elif hasattr(out, "map"):
             # Bare RDD
             return out

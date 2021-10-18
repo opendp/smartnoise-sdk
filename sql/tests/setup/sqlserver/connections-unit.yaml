@@ -5,4 +5,7 @@ sqlserver:
   databases:
     NameTests: nametests
     PUMS: PUMS
-    PUMS_large: PUMS_LARGE
+    PUMS_large: PUMS
+    PUMS_pid: PUMS_pid
+    PUMS_null: PUMS_null
+    PUMS_dup: PUMS_dup

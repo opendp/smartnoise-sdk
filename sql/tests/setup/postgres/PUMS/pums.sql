@@ -13,9 +13,22 @@ CREATE DATABASE pums_pid;
 \c pums_pid
 CREATE SCHEMA pums
 CREATE TABLE pums.pums (age int, sex char(2), educ int, race char(2), income float, married boolean, pid int);
-CREATE TABLE pums.pums_dup (age int, sex char(2), educ int, race char(2), income float, married boolean, pid int);
 
 DELETE FROM pums.pums;
 \copy pums.pums FROM 'PUMS_pid.csv' CSV;
-DELETE FROM pums.pums_dup;
-\copy pums.pums_dup FROM 'PUMS_dup.csv' CSV;
+
+CREATE DATABASE pums_dup;
+\c pums_dup
+CREATE SCHEMA pums
+CREATE TABLE pums.pums (age int, sex char(2), educ int, race char(2), income float, married boolean, pid int);
+
+DELETE FROM pums.pums;
+\copy pums.pums FROM 'PUMS_dup.csv' CSV;
+
+CREATE DATABASE pums_null;
+\c pums_null
+CREATE SCHEMA pums
+CREATE TABLE pums.pums (age int, sex char(2), educ int, race char(2), income float, married boolean, pid int);
+
+DELETE FROM pums.pums;
+\copy pums.pums FROM 'PUMS_null.csv' CSV;

@@ -54,7 +54,8 @@ sa@sqlserver://tcp:10.0.0.199:1433
 The current pre-cached datasets are:
 * `PUMS`: The 1000-row sample of PUMS, using `row_privacy`.  When querying, use `PUMS.PUMS` as the table name.
 * `PUMS_pid`: The 1000-row sample of PUMS, with an additional column, `pid` for a person primary key.  Does not use `row_privacy`.  When querying, use `PUMS.PUMS` as the table name.
-* `PUMS_dup`: Oversample of PUMS_pid with ~2500 rows, each person appears 1-3 times.  Use this table for tests where reservoir needs to work.  When querying, use `PUMS.PUMS_dup` as the table name.
+* `PUMS_dup`: Oversample of PUMS_pid with ~1750 rows, each person appears 1-3 times.  Use this table for tests where reservoir needs to work.  When querying, use `PUMS.PUMS` as the table name.
+* `PUMS_null`: PUMS_pid with ~40% of rows having one NULL value.  Use this table for tests where NULL behavior is important.  When querying, use `PUMS.PUMS` as the table name.
 * `PUMS_large`: A sample of PUMS with 1.2 million records, and a person primary key.  When querying, use `PUMS.PUMS_large` as the table name.
 
 The current supported engines are:

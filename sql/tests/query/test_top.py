@@ -28,10 +28,35 @@ class TestTopAndLimit:
         reader = PandasReader(df, meta)
         private_reader = PrivateReader(reader, meta, 10.0, 0.1)
         cls.reader = private_reader
-
+    def test_order_limit(self, test_databases):
+        """
+        The top 3 education levels are each more than double the 4th,
+        so a SELECT TOP will reliably give the top 3
+        """
+        privacy = Privacy(epsilon=3.0, delta=1/1000)
+        readers = test_databases.get_private_readers(database='PUMS_dup', privacy=privacy)
+        for reader in readers:
+            res = reader.execute('SELECT TOP 5 educ, COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ ORDER BY n DESC')
+            res = test_databases.to_tuples(res)
+            educs = [str(r[0]) for r in res]
+            assert('9' in educs)
+            assert('13' in educs)
+            assert('11' in educs)
+    def test_no_order_limit(self, test_databases):
+        """
+        The top 3 education levels are each more than double the 4th,
+        so a SELECT TOP will reliably give the top 3
+        """
+        privacy = Privacy(epsilon=3.0, delta=1/1000)
+        readers = test_databases.get_private_readers(database='PUMS_dup', privacy=privacy)
+        for reader in readers:
+            res = reader.execute('SELECT educ, COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ LIMIT 4')
+            res = test_databases.to_tuples(res)
+            educs = [str(r[0]) for r in res]
+            top_educs = ['9', '13', '11', '12']
+            assert(not all([a == b for a, b in zip(educs, top_educs)]))
     def test_queries(self, test_databases):
         query = 'SELECT TOP 20 age, married, COUNT(*) AS n, SUM(income) AS income FROM PUMS.PUMS GROUP BY age, married ORDER BY married, age DESC'
-        #query = 'SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY race'
         privacy = Privacy(10.0, 0.1)
         tdb = test_databases
         readers = tdb.get_private_readers(privacy=privacy, database='PUMS_pid', overrides={'censor_dims': False})

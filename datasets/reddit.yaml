@@ -1,0 +1,19 @@
+engine: csv
+reddit:
+  reddit:
+    reddit:
+      author:
+        cardinality: 10000
+        private_id: true
+        type: string
+      censor_dims: true
+      clamp_columns: true
+      clamp_counts: false
+      max_ids: 500
+      ngram:
+        cardinality: 10000
+        type: string
+      row_privacy: false
+      rows: 500000
+      sample_max_ids: true
+      use_dpsu: false

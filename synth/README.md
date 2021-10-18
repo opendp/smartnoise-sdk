@@ -2,13 +2,13 @@
 
 <a href="https://smartnoise.org"><img src="https://github.com/opendp/smartnoise-sdk/raw/main/images/SmartNoise/SVG/Logo%20Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
 
-## SmartNoise Synthesizers
+# SmartNoise Synthesizers
 
 Differentially private synthesizers for tabular data.  Package includes:
 * MWEM
 * QUAIL
-* PATE-CTGAN
 * DP-CTGAN
+* PATE-CTGAN
 * PATE-GAN
 
 ## Installation
@@ -19,13 +19,56 @@ pip install smartnoise-synth
 
 ## Using
 
-```python
-import snsynth
-import pandas as pd
+### MWEM
 
-synth = snsynth.MWEMSynthesizer(1.0)  # epsilon=1.0
-fit = synth.fit(my_data)  # learn the distribution of the real data
+```python
+import pandas as pd
+import numpy as np
+
+pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
+pums = pums.drop(['income'], axis=1)
+nf = pums.to_numpy().astype(int)
+
+synth = snsynth.MWEMSynthesizer(epsilon=1.0, split_factor=nf.shape[1]) 
+synth.fit(nf)
+
+sample = synth.sample(10)
+print(sample)
+```
+### DP-CTGAN
+
+```python
+import pandas as pd
+import numpy as np
+from snsynth.pytorch.nn import DPCTGAN
+from snsynth.pytorch import PytorchDPSynthesizer
+
+pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
+pums = pums.drop(['income'], axis=1)
+
+synth = PytorchDPSynthesizer(1.0, DPCTGAN(), None)
+synth.fit(pums, categorical_columns=pums.columns)
+
 sample = synth.sample(10) # synthesize 10 rows
+print(sample)
+```
+
+### PATE-CTGAN
+
+```python
+import pandas as pd
+import numpy as np
+from snsynth.pytorch.nn import PATECTGAN
+from snsynth.pytorch import PytorchDPSynthesizer
+
+pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
+pums = pums.drop(['income'], axis=1)
+
+synth = PytorchDPSynthesizer(1.0, PATECTGAN(regularization='dragan'), None)
+synth.fit(pums, categorical_columns=pums.columns)
+
+sample = synth.sample(10) # synthesize 10 rows
+print(sample)
 ```
 
 ## Communication

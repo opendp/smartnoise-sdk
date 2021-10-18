@@ -1,4 +1,4 @@
-name: SQL on Pandas on Windows
+name: SQL on Pandas and LocalDB on Windows
 on:
   pull_request:
     paths:
@@ -8,16 +8,43 @@ on:
   workflow_dispatch:
   
 jobs:
-  build:
+  windows-localdb:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v2
-      - name: pip install smartnoise-sql
+      - name: install smartnoise-sql
         shell: cmd
         run: |
           cd sql
           pip install --no-cache-dir -r tests\requirements.txt
           pip install --no-cache-dir .
+      - name: install sqlserver dependencies
+        shell: cmd
+        run: |
+          cd sql
+          pip install --no-cache-dir -r tests\setup\sqlserver\requirements.txt
+      - name: download CSV files
+        shell: cmd
+        run: |
+          cd sql
+          python tests\setup\download.py
+      - name: copy connections-unit.yaml
+        shell: cmd
+        run: |
+          cd sql
+          mkdir %USERPROFILE%\.smartnoise
+          copy /Y tests\setup\sqlserver\connections-unit-localdb.yaml %USERPROFILE%\.smartnoise\connections-unit.yaml
+      - name: install databases in localdb
+        shell: cmd
+        run: |
+          SQLLocalDB info
+          cd sql\tests\setup\sqlserver\PUMS
+          .\install_localdb.cmd
+      - name: show what's installed
+        shell: cmd
+        run: |
+          cd sql
+          python tests\setup\download.py
       - name: Unit tests
         shell: cmd
         run: |

@@ -31,3 +31,7 @@ with open('PUMS_pid.csv', 'w') as pums_pid_out:
 pums_dup = open(os.path.join(datasets, 'PUMS_dup.csv'))
 with open('PUMS_dup.csv', 'w') as pums_dup_out:
     pums_dup_out.writelines(pums_dup.readlines())
+
+pums_null = open(os.path.join(datasets, 'PUMS_null.csv'))
+with open('PUMS_null.csv', 'w') as pums_null_out:
+    pums_null_out.writelines(pums_null.readlines())

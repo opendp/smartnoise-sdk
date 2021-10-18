@@ -1,3 +1,5 @@
+-- PUMS and PUMS_large databases
+
 USE PUMS
 GO
 
@@ -25,8 +27,11 @@ BULK INSERT PUMS.PUMS_large
     )
 GO
 
+-- PUMS_pid database
+
 USE PUMS_pid
 GO
+
 BULK INSERT PUMS.PUMS
     FROM '{current}\PUMS_pid.csv'
     WITH
@@ -39,7 +44,12 @@ BULK INSERT PUMS.PUMS
     )
 GO
 
-BULK INSERT PUMS.PUMS_dup
+-- PUMS_dup database
+
+USE PUMS_dup
+GO
+
+BULK INSERT PUMS.PUMS
     FROM '{current}\PUMS_dup.csv'
     WITH
     (
@@ -48,5 +58,23 @@ BULK INSERT PUMS.PUMS_dup
     ROWTERMINATOR = '\n',   --Use to shift the control to next row
     ERRORFILE = '{current}\PUMS_dup.log',
     TABLOCK
+    )
+GO
+
+-- PUMS_null database
+
+USE PUMS_null
+GO
+
+BULK INSERT PUMS.PUMS
+    FROM '{current}\PUMS_null.csv'
+    WITH
+    (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',  --CSV field delimiter
+    ROWTERMINATOR = '\n',   --Use to shift the control to next row
+    ERRORFILE = '{current}\PUMS_null.log',
+    TABLOCK,
+    KEEPNULLS
     )
 GO

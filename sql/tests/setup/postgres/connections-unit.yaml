@@ -6,4 +6,5 @@ postgres:
     PUMS: pums
     PUMS_large: pums
     PUMS_pid: pums_pid
-    PUMS_dup: pums_pid
+    PUMS_dup: pums_dup
+    PUMS_null: pums_null

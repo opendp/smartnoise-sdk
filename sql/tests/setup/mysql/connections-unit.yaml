@@ -1,0 +1,10 @@
+mysql:
+  host: localhost
+  port: 3306
+  user: root
+  databases:
+    PUMS: pums
+    PUMS_large: pums_large
+    PUMS_pid: pums_pid
+    PUMS_dup: pums_dup
+    PUMS_null: pums_null
