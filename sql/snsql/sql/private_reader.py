@@ -514,20 +514,24 @@ class PrivateReader(Reader):
             elif query.select.quantifier is not None and isinstance(query.select.quantifier, Top):
                 limit_rows = query.select.quantifier.n
             if limit_rows is not None:
-                if hasattr(exact_aggregates, "rdd"):
+                if hasattr(out, "rdd"):
                     # it's a dataframe
-                    out = exact_aggregates.limit(limit_rows)
-                elif hasattr(exact_aggregates, "map"):
+                    out = out.limit(limit_rows)
+                elif hasattr(out, "map"):
                     # it's an RDD
-                    out = exact_aggregates.limit(limit_rows)
+                    out = out.take(limit_rows)
                 else:
                     out = itertools.islice(out, limit_rows)
+
 
         # drop empty accuracy if no accuracy requested
         def drop_accuracy(row):
             return row[0]
         if accuracy == False:
-            if hasattr(out, "map"):
+            if hasattr(out, "rdd"):
+                # it's a dataframe
+                out = out.rdd.map(drop_accuracy)
+            elif hasattr(out, "map"):
                 # it's an RDD
                 out = out.map(drop_accuracy)
             else:
