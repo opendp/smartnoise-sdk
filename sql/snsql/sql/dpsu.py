@@ -38,8 +38,6 @@ def policy_laplace(df, epsilon, delta, max_contrib):
     (epsilon, delta)-differentially private algorithm that outputs the largest possible set of the
     the union of these items.
 
-    Parameters
-    ----------
     df: pandas df with user_id | item where item is a tuple
     max_contrib: maximum number of items a user can contribute
     epsilon/delta: privacy parameters
