@@ -49,8 +49,7 @@ class GoodQueryTester:
             new_q = Rewriter(metadata).query(q)
             assert q.has_symbols()
             assert new_q.has_symbols()
-            assert all([qt[1].type() == nqt[1].type() for qt, nqt in zip(q.m_symbols, new_q.m_symbols) ])
-
+            assert all([qt.expression.type() == nqt.expression.type() for qt, nqt in zip(q._select_symbols, new_q._select_symbols) ])
 
 class BadQueryTester:
     def __init__(self, path):

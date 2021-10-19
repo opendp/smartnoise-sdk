@@ -1,6 +1,7 @@
 from .tokens import *
 from .expression import *
-
+import copy
+import warnings
 
 """
     AST for parsed Python Query Batch.  Allows validation, normalization,
@@ -35,48 +36,68 @@ class Query(SqlRel):
         self.sample_max_ids = True
         self.row_privacy = False
 
-        # m_symbols includes all columns in the output, including anonymous columns,
+        # _select_symbols includes all columns in the output, including anonymous columns,
         #   equivalent to the result of SELECT * on this name scope.
-        # m_sym_dict includes only columns with explicit or inferred aliases,
+        # _named_symbols includes only columns with explicit or inferred aliases,
         #   which includes only columns that analyst can SELECT by name.
 
-        self.m_sym_dict = None
-        self.m_symbols = None
+        self._named_symbols = None
+        self._select_symbols = None
 
         if metadata:
             self.load_symbols(metadata)
 
     def load_symbols(self, metadata):
-        symbols = []
+        # recursively load symbols for all relations
         relations = self.source.relations
         for r in relations:
             r.load_symbols(metadata)
         if not all([r.has_symbols() for r in relations]):
+            # raise ValueError("Unable to load symbols")
             return  # unable to load symbols
+
+        # get grouping expression symbols
+        _grouping_symbols = []
+        if self.agg:
+            _grouping_symbols = [Symbol(ge.expression.symbol(relations)) for ge in self.agg.groupingExpressions]
+        self._grouping_symbols = _grouping_symbols
+
+        # get namedExpression symbols
+        _symbols = []
         for ne in self.select.namedExpressions:
             if type(ne.expression) is not AllColumns:
                 name = ne.column_name()
-                m_symbol = ne.expression.symbol(relations)
-                symbols.append((name, m_symbol))
-                ne.m_symbol = m_symbol
+                _symbol_expr = ne.expression.symbol(relations)
+                _symbol = Symbol(_symbol_expr, name)
+                _symbol.is_grouping_column = False
+                for ge in self._grouping_symbols:
+                    if _symbol == ge:
+                        _symbol.is_grouping_column = True
+                _symbols.append(_symbol)
+
+                # attach to named expression for xpath in accuracy.py
+                # should remove this when accuracy fully switches over
+                ne.m_symbol = _symbol
             else:
+                # for SELECT *, expand out to all columns
                 syms = ne.expression.all_symbols(relations)
                 for sym in syms:
-                    name, symbol = sym
-                    symbols.append((name, symbol))
-        self.m_symbols = symbols
-        self.m_sym_dict = {}
+                    _symbols.append(Symbol(sym.expression, sym.name))
 
-        for name, symbol in self.m_symbols:
-            if name == "???":
+        self._select_symbols = _symbols
+        self._named_symbols = {}
+
+        for sym in self._select_symbols:
+            if sym.name == "???":
                 continue
-            if name in self.m_sym_dict:
+            if sym.name in self._named_symbols:
                 raise ValueError("SELECT has duplicate column names: " + name)
-            self.m_sym_dict[name] = symbol
+            self._named_symbols[sym.name] = sym
 
         tables = []
         for t in self.find_nodes(Table):
-            tables.append(t.m_symbols[0][1])
+            # grab the first column in the table, to extract table metadata
+            tables.append(t._select_symbols[0].expression)
 
         if len(tables) > 0:
             self.max_ids = max(tc.max_ids for tc in tables)
@@ -96,11 +117,17 @@ class Query(SqlRel):
             )
         return self[expression.name]
 
+    @property
+    def m_symbols(self):
+        raise ValueError("Property access m_symbols disabled")
+        warnings.warn("sm_symbols has been renamed to _select_symbols")
+        return self._select_symbols
+
     def numeric_symbols(self):
-        return [s for s in self.all_symbols() if s[1].type() in ["int", "float"]]
+        return [s for s in self.all_symbols() if s.expression.type() in ["int", "float"]]
 
     def keycount_symbols(self):
-        return [s for s in self.all_symbols() if s[1].is_key_count]
+        return [s for s in self.all_symbols() if s.expression.is_key_count]
 
     def children(self) -> List[Any]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
@@ -226,11 +253,9 @@ class Relation(SqlRel):
             r.load_symbols(metadata)
         # check the join keys
         if len(self.joins) > 0:
-            primary_symbols = [
-                name.lower() for name, symbol in self.primary.all_symbols(AllColumns())
-            ]
+            primary_symbols = [s.name.lower() for s in self.primary.all_symbols(AllColumns())]
             for j in self.joins:
-                join_symbols = [name.lower() for name, symbol in j.right.all_symbols(AllColumns())]
+                join_symbols = [s.name.lower() for s in j.right.all_symbols(AllColumns())]
                 if type(j.criteria) is UsingJoinCriteria:
                     for i in j.criteria.identifiers:
                         if not i.name.lower() in primary_symbols:
@@ -252,10 +277,10 @@ class Relation(SqlRel):
         syms_a = self.all_symbols(AllColumns(alias))
         syms_b = [s for s in syms_a if s is not None]
         syms_c = [
-            symbol
-            for name, symbol in syms_b
-            if (type(symbol) is TableColumn and symbol.compare.identifier_match(colname, name))
-            or name == colname
+            s.expression
+            for s in syms_b
+            if (type(s.expression) is TableColumn and s.expression.compare.identifier_match(colname, s.name))
+            or s.name == colname
         ]
         if len(syms_c) == 1:
             return syms_c[0]
@@ -283,9 +308,9 @@ class Relation(SqlRel):
             if type(j.criteria) is UsingJoinCriteria and alias == "":
                 drop_cols = [str(i).lower() for i in j.criteria.identifiers]
             syms = syms + [
-                (name, symbol)
-                for name, symbol in j.all_symbols(expression)
-                if name.lower() not in drop_cols
+                Symbol(sym.expression, sym.name)
+                for sym in j.all_symbols(expression)
+                if sym.name.lower() not in drop_cols
             ]
         if len(syms) == 0:
             raise ValueError("Symbol could not be found in any relations: " + str(expression))
@@ -301,8 +326,8 @@ class Table(SqlRel):
     def __init__(self, name, alias):
         self.name = name
         self.alias = alias
-        self.m_symbols = None
-        self.m_sym_dict = None
+        self._select_symbols = None
+        self._named_symbols = None
 
     def symbol(self, expression):
         if type(expression) is not Column:
@@ -315,7 +340,7 @@ class Table(SqlRel):
                 + str(self.name)
             )
         alias, name = self.split_alias(expression.name)
-        if self.m_symbols is None:
+        if self._select_symbols is None:
             raise ValueError("Please load symbols with metadata first: " + str(self))
         else:
             if name in self:
@@ -324,7 +349,7 @@ class Table(SqlRel):
                 return None
 
     def load_symbols(self, metadata):
-        self.m_sym_dict = None
+        self._named_symbols = None
         if metadata is None:
             return
         else:
@@ -332,24 +357,20 @@ class Table(SqlRel):
             if table is None:
                 raise ValueError("No metadata available for " + str(self.name))
             tc = table.m_columns
-            self.m_symbols = [
-                (
-                    name,
-                    TableColumn(
-                        tablename=self.name,
-                        colname=name,
-                        valtype=tc[name].typename(),
-                        is_key=tc[name].is_key,
-                        minval=tc[name].minval if tc[name].typename() in ["int", "float"] else None,
-                        maxval=tc[name].maxval if tc[name].typename() in ["int", "float"] else None,
-                        max_ids=table.max_ids,
-                        sample_max_ids=table.sample_max_ids,
-                        row_privacy=table.row_privacy,
-                        compare=metadata.compare,
-                    ),
+            def get_table_expr(name):
+                return TableColumn(
+                    tablename=self.name,
+                    colname=name,
+                    valtype=tc[name].typename(),
+                    is_key=tc[name].is_key,
+                    minval=tc[name].minval if tc[name].typename() in ["int", "float"] else None,
+                    maxval=tc[name].maxval if tc[name].typename() in ["int", "float"] else None,
+                    max_ids=table.max_ids,
+                    sample_max_ids=table.sample_max_ids,
+                    row_privacy=table.row_privacy,
+                    compare=metadata.compare
                 )
-                for name in tc.keys()
-            ]
+            self._select_symbols = [Symbol(get_table_expr(name), name) for name in tc.keys()]
 
     def escaped(self):
         # is any part of this identifier escaped?

@@ -145,10 +145,6 @@ class Rewriter:
             exp = self.rewrite_agg_expression(exp, scope)
 
         else:
-            for outer_col_exp in exp.find_nodes(Column, AggFunction):
-                new_name = scope.push_name(Column(outer_col_exp.name))
-                outer_col_exp.name = new_name
-
             def replace_agg_exprs(expr):
                 for child_name, child_expr in expr.__dict__.items():
                     if isinstance(child_expr, Sql):
@@ -180,10 +176,19 @@ class Rewriter:
             for ge in query.agg.groupingExpressions:
                 child_scope.push_name(ge.expression)
 
-        select = [
-                self.rewrite_outer_named_expression(ne, child_scope)
-                for ne in query.select.namedExpressions
-            ]
+        select = []
+        for ne in query.select.namedExpressions:
+            expr = ne.expression
+            is_grouping = False
+            if query.agg is not None:
+                for ge in query.agg.groupingExpressions:
+                    if expr == ge.expression:
+                        is_grouping = True
+                        expr = Column(child_scope.push_name(ge.expression))
+            if is_grouping:
+                select.append(NamedExpression(ne.name, expr))
+            else:
+                select.append(self.rewrite_outer_named_expression(ne, child_scope))
 
         select = Select(query.select.quantifier, select)
 
@@ -192,7 +197,7 @@ class Rewriter:
         )
         subquery = self.exact_aggregates(subquery)
         subquery = [Relation(AliasedSubquery(subquery, Identifier("exact_aggregates")), None)]
-        return Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit, metadata=self.metadata)
+        return Query(select, From(subquery), None, None, query.having, query.order, query.limit, metadata=self.metadata)
 
     def exact_aggregates(self, query):
         child_scope = Scope()
@@ -320,7 +325,7 @@ class Rewriter:
             Return the key column, given a from clause
         """
         rsyms = query.source.relations[0].all_symbols(AllColumns())
-        tcsyms = [r for name, r in rsyms if type(r) is TableColumn]
+        tcsyms = [r.expression for r in rsyms if type(r.expression) is TableColumn]
         keys = [str(tc) for tc in tcsyms if tc.is_key]
         if len(keys) > 1:
             raise ValueError("We only know how to handle tables with one key: " + str(keys))

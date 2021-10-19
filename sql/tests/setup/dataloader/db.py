@@ -230,6 +230,8 @@ class DbCollection:
                 table.censor_dims = propval
             elif propname == 'clamp_counts':
                 table.clamp_counts = propval
+            elif propname == 'clamp_columns':
+                table.clamp_columns = propval
             elif propname == 'max_ids' or propname == 'max_contrib':
                 table.max_ids = propval
             else:

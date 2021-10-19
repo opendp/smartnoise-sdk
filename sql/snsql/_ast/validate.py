@@ -51,50 +51,39 @@ class QueryConstraints:
     def check_aggregate(self):
         q = self.query
 
-        def simplify(exp):
-            while type(exp) is NestedExpression:
-                exp = exp.expression
-            if type(exp) is ArithmeticExpression:
-                l = simplify(exp.left)
-                r = simplify(exp.right)
-                if type(l) is Literal:
-                    exp = r
-                elif type(r) is Literal:
-                    exp = l
-            if isinstance(exp, (PowerFunction, RoundFunction)):
-                exp = exp.expression
-            return exp
+        """
+        Look at each column
+        """
+        for s in q._select_symbols:
+            subqueries = s.expression.xpath('//Query')
+            if len(subqueries) > 0:
+                raise ValueError("Subqueries in column expressions not supported: {str(sym)}")
+            aggfuncs = s.expression.xpath('//AggFunction')
+            n_aggs = len(aggfuncs)
+            if n_aggs > 0:
+                # It's a column that uses an aggregate, such as SUM, COUNT, etc.
+                for ac in aggfuncs:
+                    if not isinstance(ac.expression, (TableColumn, AllColumns)):
+                        # should allow literals here?  any scalar that doesn't include a 
+                        raise ValueError("We don't support aggregation over expressions: " + str(ac))
+                    if ac.expression.type() not in ['int', 'float', 'bool'] and not ac.name == 'COUNT':
+                        raise ValueError(f"Aggregations must be over numeric or boolean, got {ac.expression.type()} in {str(ac)}")
+            else:
+                # It's not an aggregate.  Must be grouping or literal
+                tcs = s.expression.xpath('//TableColumn')
+                n_tcs = len(tcs)
+                if n_tcs > 0:
+                    # expression must appear in grouping expressions
+                    match = False
+                    for ge in q._grouping_symbols:
+                        if s.expression == ge.expression:
+                            match = True
+                    if not match:
+                        raise ValueError(f"Column {s.name if s.name else ''} does not include an aggregate and is not included in GROUP BY: {str(s.expression)}")
+                else:
+                    # it's a bare/literal expression
+                    pass
 
-        select_expressions = [simplify(s[1]) for s in q.m_symbols]
-        is_agg = lambda n: type(n) == AggFunction and n.is_aggregate
-        aggs = [expr for expr in select_expressions if is_agg(expr)]
-        non_aggs = [expr for expr in select_expressions if not is_agg(expr)]
-
-        grouping_expressions = (
-            [simplify(exp.expression) for exp in q.agg.groupingExpressions]
-            if q.agg is not None
-            else []
-        )
-        group_col_names = [gc.name for gc in q.agg.groupedColumns()] if q.agg is not None else []
-
-        for nac in non_aggs:
-            if not isinstance(nac, (TableColumn, Literal, BareFunction)):
-                raise ValueError("Select column not a supported type: " + str(nac))
-            if type(nac) is TableColumn:
-                if nac.colname not in group_col_names:
-                    raise ValueError(
-                        "Attempting to select a column not in a GROUP BY clause: " + str(nac)
-                    )
-
-        for ac in aggs:
-            if not isinstance(ac.expression, (TableColumn, AllColumns)):
-                raise ValueError("We don't support aggregation over expressions: " + str(ac))
-            if ac.expression.type() not in ['int', 'float', 'bool'] and not ac.name == 'COUNT':
-                raise ValueError(f"Aggregations must be over numeric or boolean, got {ac.expression.type()} in {str(ac)}")
-
-        for ge in grouping_expressions:
-            if not isinstance(ge, Column):
-                raise ValueError("We don't support grouping by expressions: " + str(ge))
 
     def check_groupkey(self):
         agg = self.query.agg
@@ -129,7 +118,7 @@ class QueryConstraints:
             or type(r) is AliasedSubquery
         ):
             syms = r.all_symbols(AllColumns())
-            tcs = [s for name, s in syms if type(s) is TableColumn]
+            tcs = [s.expression for s in syms if type(s.expression) is TableColumn]
             if not any([tc.is_key for tc in tcs]):
                 if not any([tc.row_privacy for tc in tcs]):
                     raise ValueError("Source relation must include a private key column: " + str(r))
@@ -151,7 +140,7 @@ class QueryConstraints:
 
     def key_col(self, query):
         rsyms = query.source.relations[0].all_symbols(AllColumns())
-        tcsyms = [r for name, r in rsyms if type(r) is TableColumn]
+        tcsyms = [r.expression for r in rsyms if type(r.expression) is TableColumn]
         keys = [str(tc) for tc in tcsyms if tc.is_key]
         if len(keys) > 1:
             raise ValueError("We only know how to handle tables with one key: " + str(keys))

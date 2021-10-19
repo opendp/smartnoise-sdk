@@ -141,14 +141,14 @@ class PrivateReader(Reader):
             ]
         else:
             group_keys = []
-        return [colname in group_keys for colname in [s[0] for s in syms]]
+        return [colname in group_keys for colname in [s.name for s in syms]]
     def _aggregated_columns(self, query: Query):
         """
         Return a vector of boolean corresponding to columns of the
         query, indicating if the column is randomized
         """
         group_key = self._grouping_columns(query)
-        agg = [s if s[1].xpath("//AggFunction") else None for s in query.m_symbols]
+        agg = [s if s.expression.xpath("//AggFunction") else None for s in query._select_symbols]
         return [True if s and not g else False for s, g in zip(agg, group_key)]
     def _get_simple_accuracy(self, *ignore, query: Query, subquery: Query, alpha: float, **kwargs):
         """
@@ -156,7 +156,7 @@ class PrivateReader(Reader):
         to simple aggregates, COUNT and SUM.  All other columns return None
         """
         agg = self._aggregated_columns(query)
-        has_sens = [True if s[1].sensitivity() else False for s in query.m_symbols]
+        has_sens = [True if s.expression.sensitivity() else False for s in query._select_symbols]
         simple = [a and h for a, h in zip(agg, has_sens)]
         exprs = [ne.expression if simp else None for simp, ne in zip(simple, query.select.namedExpressions)]
         sources = [col.xpath_first("//Column") if col else None for col in exprs]
@@ -247,7 +247,7 @@ class PrivateReader(Reader):
         Returns a dictionary keyed by column name, with the instance of the
         mechanism used to randomize that column.
         """
-        colnames = [s[0] for s in subquery.m_symbols]
+        colnames = [s.name for s in subquery._select_symbols]
         mechs = self._get_mechanisms(subquery)
         mech_map = {}
         for name, mech in zip(colnames, mechs):
@@ -262,7 +262,7 @@ class PrivateReader(Reader):
         kc_pos = None
         syms = subquery.all_symbols()
         for idx in range(len(syms)):
-            sname, _ = syms[idx]
+            sname = syms[idx].name
             if sname == "keycount":
                 kc_pos = idx
         return kc_pos
@@ -273,7 +273,7 @@ class PrivateReader(Reader):
         syms = subquery.all_symbols()
         kc_pos = self._get_keycount_position(subquery)
 
-        cols = [(s[1].sensitivity(), s[1].type(), s[1].is_count) for s in syms]
+        cols = [(s.expression.sensitivity(), s.expression.type(), s.expression.is_count) for s in syms]
 
         is_group_key = self._grouping_columns(subquery)
         cols = zip(is_group_key, cols)
@@ -343,10 +343,10 @@ class PrivateReader(Reader):
             _accuracy = Accuracy(query, subquery, self.privacy)
 
         syms = subquery.all_symbols()
-        source_col_names = [s[0] for s in syms]
+        source_col_names = [s.name for s in syms]
 
         # tell which are counts, in column order
-        is_count = [s[1].is_count for s in syms]
+        is_count = [s.expression.is_count for s in syms]
 
         # get a list of mechanisms in column order
         mechs = self._get_mechanisms(subquery)
@@ -413,8 +413,8 @@ class PrivateReader(Reader):
 
         # get column information for outer query
         out_syms = query.all_symbols()
-        out_types = [s[1].type() for s in out_syms]
-        out_col_names = [s[0] for s in out_syms]
+        out_types = [s.expression.type() for s in out_syms]
+        out_col_names = [s.name for s in out_syms]
 
         def convert(val, type):
             if type == "string" or type == "unknown":

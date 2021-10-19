@@ -53,10 +53,10 @@ class TestBaseTypes:
         res = self.reader.execute(query)
         assert len(res) == 43
 
-        # this one is indeterminate behavior based on engine, but works on PrivateReader
-        query = "SELECT age * 1000 as age, COUNT(*) FROM PUMS.PUMS GROUP BY age HAVING age < 30000 OR age > 60000"
-        res = self.reader.execute(query)
-        assert len(res) == 43
+        # # this one is indeterminate behavior based on engine, but works on PrivateReader
+        # query = "SELECT age * 1000 as age, COUNT(*) FROM PUMS.PUMS GROUP BY age HAVING age < 30000 OR age > 60000"
+        # res = self.reader.execute(query)
+        # assert len(res) == 43
 
         query = "SELECT age as age, COUNT(*) FROM PUMS.PUMS GROUP BY age HAVING age * 1000 < 30000 OR age * 2 > 120"
         res = self.reader.execute(query)
@@ -103,10 +103,10 @@ class TestOtherTypes:
         res = self.reader.execute(query)
         assert len(res) == 43
 
-        # this one is indeterminate behavior based on engine, works with PrivateReader
-        query = "SELECT age * 1000 as age, COUNT(*) FROM PUMS.PUMS GROUP BY age HAVING age < 30000 OR age > 60000"
-        res = self.reader.execute(query)
-        assert len(res) == 43
+        # # this one is indeterminate behavior based on engine, works with PrivateReader
+        # query = "SELECT age * 1000 as age, COUNT(*) FROM PUMS.PUMS GROUP BY age HAVING age < 30000 OR age > 60000"
+        # res = self.reader.execute(query)
+        # assert len(res) == 43
 
         query = "SELECT age as age, COUNT(*) FROM PUMS.PUMS GROUP BY age HAVING age * 1000 < 30000 OR age * 2 > 120"
         res = self.reader.execute(query)
