@@ -288,15 +288,15 @@ class Rewriter:
                 grouping_colnames = [col.name for col in query.agg.groupedColumns()]
                 if colname in grouping_colnames:
                     return None, None
-            minval = None
-            maxval = None
+            lower = None
+            upper = None
             sym = col.symbol(relations)
             if sym.valtype in ["float", "int"] and not sym.unbounded:
-                minval = sym.minval
-                maxval = sym.maxval
-            if minval is None or maxval is None or sym.is_key:
+                lower = sym.lower
+                upper = sym.upper
+            if lower is None or upper is None or sym.is_key:
                 return None, None
-            return minval, maxval
+            return lower, upper
 
         exp = ne.expression
         cols = exp.find_nodes(Column)
@@ -304,16 +304,16 @@ class Rewriter:
             cols += [exp]
         for col in cols:
             colname = col.name
-            minval, maxval = bounds_clamp(colname)
-            if minval == None:
+            lower, upper = bounds_clamp(colname)
+            if lower == None:
                 cexpr = Column(colname)
                 ce_name = scope.push_name(cexpr, str(colname))
             else:
                 when_min = WhenExpression(
-                    BooleanCompare(col, Op("<"), Literal(minval)), Literal(minval)
+                    BooleanCompare(col, Op("<"), Literal(lower)), Literal(lower)
                     )
                 when_max = WhenExpression(
-                    BooleanCompare(col, Op(">"), Literal(maxval)), Literal(maxval)
+                    BooleanCompare(col, Op(">"), Literal(upper)), Literal(upper)
                     )
                 cexpr = CaseExpression(None, [when_min, when_max], col)
                 ce_name = scope.push_name(cexpr, str(colname))

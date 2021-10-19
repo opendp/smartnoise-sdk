@@ -88,7 +88,7 @@ class PandasReader(SqlReader):
             from snsql.metadata import Int
 
             metadata.m_tables[table_name].m_columns[key] = Int(
-                key, minval=0, maxval=len(self.df), is_key=True
+                key, lower=0, upper=len(self.df), is_key=True
             )
         return metadata, original_column_names
 

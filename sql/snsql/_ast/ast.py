@@ -363,8 +363,8 @@ class Table(SqlRel):
                     colname=name,
                     valtype=tc[name].typename(),
                     is_key=tc[name].is_key,
-                    minval=tc[name].minval if tc[name].typename() in ["int", "float"] else None,
-                    maxval=tc[name].maxval if tc[name].typename() in ["int", "float"] else None,
+                    lower=tc[name].lower if tc[name].typename() in ["int", "float"] else None,
+                    upper=tc[name].upper if tc[name].typename() in ["int", "float"] else None,
                     max_ids=table.max_ids,
                     sample_max_ids=table.sample_max_ids,
                     row_privacy=table.row_privacy,
@@ -459,8 +459,8 @@ class TableColumn(SqlExpr):
         colname,
         valtype="unknown",
         is_key=False,
-        minval=None,
-        maxval=None,
+        lower=None,
+        upper=None,
         max_ids=1,
         sample_max_ids=True,
         row_privacy=False,
@@ -470,12 +470,12 @@ class TableColumn(SqlExpr):
         self.colname = colname
         self.valtype = valtype
         self.is_key = is_key
-        self.minval = minval
-        self.maxval = maxval
+        self.lower = lower
+        self.upper = upper
         self.max_ids = max_ids
         self.sample_max_ids = sample_max_ids
         self.row_privacy = row_privacy
-        self.unbounded = minval is None or maxval is None
+        self.unbounded = lower is None or upper is None
         self.compare = compare
 
     def __str__(self):
@@ -492,8 +492,8 @@ class TableColumn(SqlExpr):
 
     def sensitivity(self):
         if self.valtype in ["int", "float"]:
-            if self.minval is not None and self.maxval is not None:
-                return max(abs(self.maxval), abs(self.minval))
+            if self.lower is not None and self.upper is not None:
+                return max(abs(self.upper), abs(self.lower))
             else:
                 return np.inf  # unbounded
         elif self.valtype == "boolean":
