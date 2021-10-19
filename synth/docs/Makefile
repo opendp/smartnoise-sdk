@@ -24,7 +24,7 @@ clean:
 	rm -rf $(BUILDDIR)/* source/api
 
 html:
-	$(SPHINXAPIDOC) -f -F -e -H "SmartNoise SQL" -A "The OpenDP Project" -V $(VERSION) -o source/api ../snsql --templatedir source/_templates
+	$(SPHINXAPIDOC) -f -F -e -H "SmartNoise Synthesizers" -A "The OpenDP Project" -V $(VERSION) -o source/api ../snsynth --templatedir source/_templates
 	$(SPHINXBUILD) $(SPHINXOPTS) -D version=$(VERSION) -D 'html_sidebars.**'=search-field.html,sidebar-nav-bs.html source $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

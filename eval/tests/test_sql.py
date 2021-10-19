@@ -10,7 +10,7 @@ from sneval.evaluator._dp_evaluator import DPEvaluator
 from sneval.benchmarking._dp_benchmark import DPBenchmarking
 from sneval.metrics._metrics import Metrics
 from snsql.sql import PandasReader
-from snsql.metadata.collection import *
+from snsql.metadata import *
 from dp_singleton_query import DPSingletonQuery
 import pytest
 import pandas as pd
@@ -58,7 +58,7 @@ class TestSql:
         d1_table.schema, d2_table.schema = "dataset", "dataset"
         d1_table.name, d2_table.name = "dataset", "dataset"
         d2_table.rowcount = d1_table.rowcount - 1
-        d1_metadata, d2_metadata = CollectionMetadata([d1_table], "csv"), CollectionMetadata([d2_table], "csv")
+        d1_metadata, d2_metadata = Metadata([d1_table], "csv"), Metadata([d2_table], "csv")
 
         return d1, d2, d1_metadata, d2_metadata
 
