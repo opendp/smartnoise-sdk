@@ -522,9 +522,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
         # Split intelligently
         fits = int((np.floor(len(indices) / factor)) * factor)
-        even_inds = indices[:fits].reshape((int(len(indices) / factor), factor))
+        even_inds = indices[:fits].copy().reshape((int(len(indices) / factor), factor))
         s1 = even_inds.tolist()
-        if indices[fits:] != np.array([]):
+        if indices[fits:].size != 0:
             s1.append(indices[fits:])
         s2 = [np.array(l_val) for l_val in s1]
         return np.array(s2)
