@@ -60,7 +60,10 @@ metadata['PUMS.PUMS']['']
 
 def test_rewriting():
     for query in queries:
-        query = QueryParser(metadata).query(str(query))
-        dp_query = Rewriter(metadata).query(query)
+        try:
+            query = QueryParser(metadata).query(str(query))
+            dp_query = Rewriter(metadata).query(query)
+        except:
+            raise ValueError(f"Query parse and rewrite failed: {query}")
         parsed_dp_query = QueryParser(metadata).query(str(dp_query))
         assert dp_query == parsed_dp_query

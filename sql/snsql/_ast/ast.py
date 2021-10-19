@@ -32,9 +32,9 @@ class Query(SqlRel):
         self.order = order
         self.limit = limit
 
-        self.max_ids = 1
-        self.sample_max_ids = True
-        self.row_privacy = False
+        self.max_ids = None
+        self.sample_max_ids = None
+        self.row_privacy = None
 
         # _select_symbols includes all columns in the output, including anonymous columns,
         #   equivalent to the result of SELECT * on this name scope.
@@ -53,33 +53,53 @@ class Query(SqlRel):
         for r in relations:
             r.load_symbols(metadata)
         if not all([r.has_symbols() for r in relations]):
-            # raise ValueError("Unable to load symbols")
             return  # unable to load symbols
 
+        tables = []
+        for t in self.find_nodes(Table):
+            # grab the first column in the table, to extract table metadata
+            tables.append(t._select_symbols[0].expression)
+        if len(tables) > 0:
+            self.max_ids = max(tc.max_ids for tc in tables)
+            self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
+            self.row_privacy = any(tc.row_privacy for tc in tables)
+
         # get grouping expression symbols
-        _grouping_symbols = []
+        self._grouping_symbols = []
         if self.agg:
-            _grouping_symbols = [Symbol(ge.expression.symbol(relations)) for ge in self.agg.groupingExpressions]
-        self._grouping_symbols = _grouping_symbols
+            self._grouping_symbols = [Symbol(ge.expression.symbol(relations)) for ge in self.agg.groupingExpressions]
 
         # get namedExpression symbols
         _symbols = []
         for ne in self.select.namedExpressions:
             if type(ne.expression) is not AllColumns:
                 name = ne.column_name()
+
                 _symbol_expr = ne.expression.symbol(relations)
                 _symbol = Symbol(_symbol_expr, name)
+
+                # annotate selects that reference GROUP BY column
                 _symbol.is_grouping_column = False
                 for ge in self._grouping_symbols:
-                    if _symbol == ge:
+                    if _symbol_expr == ge.expression:
                         _symbol.is_grouping_column = True
+
+                # annotate key_counts
+                _symbol.is_key_count = False
+                if _symbol.is_count:
+                    col = _symbol.expression.xpath_first("//AggFunction[@name='COUNT']")
+                    if col:
+                        if self.row_privacy:
+                            _symbol.is_key_count = isinstance(col.expression, AllColumns)
+                        else:
+                            _symbol.is_key_count = col.is_key_count
+
                 _symbols.append(_symbol)
 
                 # attach to named expression for xpath in accuracy.py
-                # should remove this when accuracy fully switches over
                 ne.m_symbol = _symbol
             else:
-                # for SELECT *, expand out to all columns
+                # It's SELECT *, expand out to all columns
                 syms = ne.expression.all_symbols(relations)
                 for sym in syms:
                     _symbols.append(Symbol(sym.expression, sym.name))
@@ -93,16 +113,6 @@ class Query(SqlRel):
             if sym.name in self._named_symbols:
                 raise ValueError("SELECT has duplicate column names: " + name)
             self._named_symbols[sym.name] = sym
-
-        tables = []
-        for t in self.find_nodes(Table):
-            # grab the first column in the table, to extract table metadata
-            tables.append(t._select_symbols[0].expression)
-
-        if len(tables) > 0:
-            self.max_ids = max(tc.max_ids for tc in tables)
-            self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
-            self.row_privacy = any(tc.row_privacy for tc in tables)
 
     def symbol(self, expression):
         """
@@ -119,15 +129,38 @@ class Query(SqlRel):
 
     @property
     def m_symbols(self):
-        raise ValueError("Property access m_symbols disabled")
-        warnings.warn("sm_symbols has been renamed to _select_symbols")
+        warnings.warn("m_symbols has been renamed to _select_symbols")
         return self._select_symbols
 
     def numeric_symbols(self):
-        return [s for s in self.all_symbols() if s.expression.type() in ["int", "float"]]
+        return [s for s in self._select_symbols if s.expression.type() in ["int", "float"]]
 
-    def keycount_symbols(self):
-        return [s for s in self.all_symbols() if s.expression.is_key_count]
+    @property
+    def key_column(self):
+        # return TableColumn used as the primary key
+        rsyms = self.source.relations[0].all_symbols(AllColumns())
+        tcsyms = [r.expression for r in rsyms if type(r.expression) is TableColumn]
+        keys = [tc for tc in tcsyms if tc.is_key]
+        if len(keys) > 1:
+            raise ValueError("We only know how to handle tables with one key: " + str(keys))
+        if self.row_privacy:
+            if len(keys) > 0:
+                raise ValueError("Row privacy is set, but metadata specifies a private_id")
+            else:
+                return None
+        elif self.row_privacy == False:
+            if len(keys) < 1:
+                raise ValueError("No private_id column specified, and row_privacy is not set")
+            else:
+                return keys[0]
+        else:
+            # symbols haven't been loaded yet
+            if len(keys) < 1:
+                return None
+            else:
+                # kp = keys[0].split(".")
+                # return kp[len(kp) - 1]
+                return keys[0]
 
     def children(self) -> List[Any]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]

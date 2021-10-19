@@ -14,7 +14,6 @@ from snsql._ast.ast import (
     Order,
     Literal,
     Column,
-    TableColumn,
     AllColumns,
     NamedExpression,
     NestedExpression,
@@ -156,6 +155,7 @@ class Rewriter:
 
         return NamedExpression(name, exp)
 
+    # Main entry point.  Takes a query and recursively builds rewritten wuery
     def query(self, query):
         query = QueryParser(self.metadata).query(str(query))
         Validate().validateQuery(query, self.metadata)
@@ -165,8 +165,8 @@ class Rewriter:
         if self.options.row_privacy:
             keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
         else:
-            key_col = self.key_col(query)
-            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
+            key_col = query.key_column
+            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col.colname))
 
         if self.options.censor_dims:
             child_scope.push_name(keycount_expr, "keycount")
@@ -229,7 +229,7 @@ class Rewriter:
             return Query(select, From(subquery), None, query.agg, None, None, None)
 
     def per_key_random(self, query):
-        key_col = self.key_col(query)
+        key_col = query.key_column
 
         select = [
                 NamedExpression(None, AllColumns()),
@@ -237,7 +237,7 @@ class Rewriter:
                     Identifier("row_num"),
                     RankingFunction(FuncName("ROW_NUMBER"),
                                     OverClause(
-                                        Column(key_col),
+                                        Column(key_col.colname),
                                         Order([
                                             SortItem(BareFunction(FuncName("RANDOM")), None)
                                             ])
@@ -256,9 +256,9 @@ class Rewriter:
 
     def per_key_clamped(self, query):
         child_scope = Scope()
-        key_col = self.key_col(query)
         if self.options.reservoir_sample and not self.options.row_privacy:
-            child_scope.push_name(Column(key_col), key_col)
+            key_col = query.key_column
+            child_scope.push_name(Column(key_col.colname), key_col.colname)
         relations = query.source.relations
         select = [
                 self.clamp_expression(ne, relations, child_scope, query, self.options.clamp_columns)
@@ -319,28 +319,6 @@ class Rewriter:
                 ce_name = scope.push_name(cexpr, str(colname))
             col.name = ce_name
         return ne
-
-    def key_col(self, query):
-        """
-            Return the key column, given a from clause
-        """
-        rsyms = query.source.relations[0].all_symbols(AllColumns())
-        tcsyms = [r.expression for r in rsyms if type(r.expression) is TableColumn]
-        keys = [str(tc) for tc in tcsyms if tc.is_key]
-        if len(keys) > 1:
-            raise ValueError("We only know how to handle tables with one key: " + str(keys))
-        if self.options.row_privacy:
-            if len(keys) > 0:
-                raise ValueError("Row privacy is set, but metadata specifies a private_id")
-            else:
-                return None
-        else:
-            if len(keys) < 1:
-                raise ValueError("No private_id column specified, and row_privacy is not set")
-            else:
-                kp = keys[0].split(".")
-                return kp[len(kp) - 1]
-
 
 class Scope:
     """

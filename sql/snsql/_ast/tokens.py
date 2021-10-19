@@ -11,13 +11,14 @@ class Symbol:
     def __init__(self, expression, name=None):
         self.name = name
         self.expression = expression
-        self.is_count = None
         self.is_key_count = None
         self.is_grouping_column = None
         self.mechanism = None
+    @property
+    def is_count(self):
+        return self.expression.is_count if self.expression else None
     def __getitem__(self, key):
         # temporary patch to handle s[0], s[1] in legacy code
-        raise ValueError("Symbol array indexing disabled")
         warnings.warn("symbol array indexing is deprecated")
         if key == 0:
             return self.name
@@ -26,7 +27,6 @@ class Symbol:
         else:
             raise ValueError(f"Index error on symbol for key: {key}")
     def __iter__(self):
-        raise ValueError("Symbol tuple unpacking disabled")
         warnings.warn("symbol tuple unpacking is deprecated")
         return iter((self.name, self.expression))
     def children(self):

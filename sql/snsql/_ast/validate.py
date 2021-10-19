@@ -39,7 +39,7 @@ class QueryConstraints:
 
     def validate_all(self):
         # will throw if more or less than one key
-        self.keycol = self.key_col(self.query)
+        self.keycol = self.query.key_column
 
         checks = [
             func
@@ -88,7 +88,7 @@ class QueryConstraints:
     def check_groupkey(self):
         agg = self.query.agg
         gc = agg.groupedColumns() if agg is not None else []
-        keycol = self.keycol.lower() if self.keycol is not None else None
+        keycol = self.keycol.colname.lower() if self.keycol is not None else None
         gbk = [g for g in gc if g.name.lower() == keycol]
         if (len(gbk) > 0) and (len(gbk) == len(gc)):
             raise ValueError(
@@ -133,23 +133,3 @@ class QueryConstraints:
                 raise ValueError("All JOINS must include the private key")
         for c in [ch for ch in r.children() if ch is not None]:
             self.walk_relations(c)
-
-    """
-        Return the key column, given a from clause
-    """
-
-    def key_col(self, query):
-        rsyms = query.source.relations[0].all_symbols(AllColumns())
-        tcsyms = [r.expression for r in rsyms if type(r.expression) is TableColumn]
-        keys = [str(tc) for tc in tcsyms if tc.is_key]
-        if len(keys) > 1:
-            raise ValueError("We only know how to handle tables with one key: " + str(keys))
-
-        if query.row_privacy:
-            if len(keys) > 0:
-                raise ValueError("Row privacy is set, but metadata specifies a private_id")
-            else:
-                return None
-        else:
-            kp = keys[0].split(".")
-            return kp[len(kp) - 1]

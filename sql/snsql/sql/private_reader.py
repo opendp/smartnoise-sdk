@@ -133,7 +133,7 @@ class PrivateReader(Reader):
         Return a vector of boolean corresponding to the columns of the
         query, indicating which are grouping columns.
         """
-        syms = query.all_symbols()
+        syms = query._select_symbols
         if query.agg is not None:
             group_keys = [
                 ge.expression.name if hasattr(ge.expression, "name") else None
@@ -260,7 +260,7 @@ class PrivateReader(Reader):
         key count for tau thresholding.  Returns None if no keycount
         """
         kc_pos = None
-        syms = subquery.all_symbols()
+        syms = subquery._select_symbols
         for idx in range(len(syms)):
             sname = syms[idx].name
             if sname == "keycount":
@@ -270,12 +270,13 @@ class PrivateReader(Reader):
     def _get_mechanisms(self, subquery: Query):
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
 
-        syms = subquery.all_symbols()
+        syms = subquery._select_symbols
         kc_pos = self._get_keycount_position(subquery)
 
         cols = [(s.expression.sensitivity(), s.expression.type(), s.expression.is_count) for s in syms]
 
-        is_group_key = self._grouping_columns(subquery)
+        # is_group_key = self._grouping_columns(subquery)
+        is_group_key = [s.is_grouping_column for s in subquery._select_symbols]
         cols = zip(is_group_key, cols)
         cols = [(None if gk else s, t, c) for gk, (s, t, c) in cols]
         if any([s is np.inf for s, _, _ in cols]):
@@ -342,7 +343,7 @@ class PrivateReader(Reader):
         if accuracy:
             _accuracy = Accuracy(query, subquery, self.privacy)
 
-        syms = subquery.all_symbols()
+        syms = subquery._select_symbols
         source_col_names = [s.name for s in syms]
 
         # tell which are counts, in column order
@@ -356,11 +357,10 @@ class PrivateReader(Reader):
             thresh_mech = mechs[kc_pos]
             self.tau = thresh_mech.threshold
 
-        def randomize_row(row_in):
+        def randomize_row_values(row_in):
             row = [v for v in row_in]
             # set null to 0 before adding noise
             for idx in range(len(row)):
-                #if sens[idx] is not None and row[idx] is None:
                 if mechs[idx] and row[idx] is None:
                     row[idx] = 0.0
             # call all mechanisms to add noise
@@ -371,12 +371,12 @@ class PrivateReader(Reader):
 
         if hasattr(exact_aggregates, "rdd"):
             # it's a dataframe
-            out = exact_aggregates.rdd.map(randomize_row)
+            out = exact_aggregates.rdd.map(randomize_row_values)
         elif hasattr(exact_aggregates, "map"):
             # it's an RDD
-            out = exact_aggregates.map(randomize_row)
+            out = exact_aggregates.map(randomize_row_values)
         else:
-            out = map(randomize_row, exact_aggregates[1:])
+            out = map(randomize_row_values, exact_aggregates[1:])
 
         if _no_postprocess:
             return out
@@ -412,7 +412,7 @@ class PrivateReader(Reader):
                 out = filter(lambda row: row[kc_pos] > self.tau, out)
 
         # get column information for outer query
-        out_syms = query.all_symbols()
+        out_syms = query._select_symbols
         out_types = [s.expression.type() for s in out_syms]
         out_col_names = [s.name for s in out_syms]
 
