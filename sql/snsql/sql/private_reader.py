@@ -111,7 +111,7 @@ class PrivateReader(Reader):
         return self.reader.engine
 
     def _refresh_options(self):
-        self.rewriter = Rewriter(self.metadata)
+        self.rewriter = Rewriter(self.metadata, privacy=self.privacy)
         self.metadata.compare = self.reader.compare
         tables = self.metadata.tables()
         self._options.row_privacy = any([t.row_privacy for t in tables])
@@ -133,7 +133,7 @@ class PrivateReader(Reader):
         Return a vector of boolean corresponding to the columns of the
         query, indicating which are grouping columns.
         """
-        syms = query.all_symbols()
+        syms = query._select_symbols
         if query.agg is not None:
             group_keys = [
                 ge.expression.name if hasattr(ge.expression, "name") else None
@@ -141,14 +141,14 @@ class PrivateReader(Reader):
             ]
         else:
             group_keys = []
-        return [colname in group_keys for colname in [s[0] for s in syms]]
+        return [colname in group_keys for colname in [s.name for s in syms]]
     def _aggregated_columns(self, query: Query):
         """
         Return a vector of boolean corresponding to columns of the
         query, indicating if the column is randomized
         """
         group_key = self._grouping_columns(query)
-        agg = [s if s[1].xpath("//AggFunction") else None for s in query.m_symbols]
+        agg = [s if s.expression.xpath("//AggFunction") else None for s in query._select_symbols]
         return [True if s and not g else False for s, g in zip(agg, group_key)]
     def _get_simple_accuracy(self, *ignore, query: Query, subquery: Query, alpha: float, **kwargs):
         """
@@ -156,7 +156,7 @@ class PrivateReader(Reader):
         to simple aggregates, COUNT and SUM.  All other columns return None
         """
         agg = self._aggregated_columns(query)
-        has_sens = [True if s[1].sensitivity() else False for s in query.m_symbols]
+        has_sens = [True if s.expression.sensitivity() else False for s in query._select_symbols]
         simple = [a and h for a, h in zip(agg, has_sens)]
         exprs = [ne.expression if simp else None for simp, ne in zip(simple, query.select.namedExpressions)]
         sources = [col.xpath_first("//Column") if col else None for col in exprs]
@@ -247,65 +247,36 @@ class PrivateReader(Reader):
         Returns a dictionary keyed by column name, with the instance of the
         mechanism used to randomize that column.
         """
-        colnames = [s[0] for s in subquery.m_symbols]
+        colnames = [s.name for s in subquery._select_symbols]
         mechs = self._get_mechanisms(subquery)
         mech_map = {}
         for name, mech in zip(colnames, mechs):
             if mech and name not in mech_map:
                 mech_map[name] = mech
         return mech_map
+
     def _get_keycount_position(self, subquery: Query):
         """
         Returns the column index of the column that serves as the
         key count for tau thresholding.  Returns None if no keycount
         """
-        kc_pos = None
-        syms = subquery.all_symbols()
-        for idx in range(len(syms)):
-            sname, _ = syms[idx]
-            if sname == "keycount":
-                kc_pos = idx
-        return kc_pos
+        is_key_count = [s.is_key_count for s in subquery._select_symbols]
+        if any(is_key_count):
+            return is_key_count.index(True)
+        else:
+            return None
 
     def _get_mechanisms(self, subquery: Query):
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
+        assert(subquery.max_ids == max_contrib)
 
-        syms = subquery.all_symbols()
-        kc_pos = self._get_keycount_position(subquery)
-
-        cols = [(s[1].sensitivity(), s[1].type(), s[1].is_count) for s in syms]
-
-        is_group_key = self._grouping_columns(subquery)
-        cols = zip(is_group_key, cols)
-        cols = [(None if gk else s, t, c) for gk, (s, t, c) in cols]
-        if any([s is np.inf for s, _, _ in cols]):
-            raise ValueError(
-                "Query is attempting to query an unbounded column that isn't part of the grouping key"
-            )
-        mechanisms = self.privacy.mechanisms
-        epsilon = self.privacy.epsilon
-        delta = self.privacy.delta
-        mechs = []
-        for idx in range(len(cols)):
-            sensitivity, t, is_count = cols[idx]
-            mech = None
-            if t in ['int', 'float'] and sensitivity is not None:
-                stat = 'count' if is_count else 'sum'
-                if kc_pos is not None and idx == kc_pos:
-                    stat = 'threshold'
-                mech_class = mechanisms.get_mechanism(sensitivity, stat, t)
-                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-                if kc_pos is not None and idx == kc_pos:
-                    mech.delta = delta
-            mechs.append(mech)
-        return mechs
+        return [s.mechanism for s in subquery._select_symbols]
 
     def execute_with_accuracy(self, query_string:str):
         return self.execute(query_string, accuracy=True)
 
     def execute_with_accuracy_df(self, query_string:str, *ignore, privacy:bool=False):
         return self.execute_df(query_string, accuracy=True)
-
 
     def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None, _no_postprocess=None):
         """Executes a query and returns a recordset that is differentially private.
@@ -342,25 +313,27 @@ class PrivateReader(Reader):
         if accuracy:
             _accuracy = Accuracy(query, subquery, self.privacy)
 
-        syms = subquery.all_symbols()
-        source_col_names = [s[0] for s in syms]
+        syms = subquery._select_symbols
+        source_col_names = [s.name for s in syms]
 
         # tell which are counts, in column order
-        is_count = [s[1].is_count for s in syms]
+        is_count = [s.expression.is_count for s in syms]
 
         # get a list of mechanisms in column order
         mechs = self._get_mechanisms(subquery)
+        check_sens = [m for m in mechs if m]
+        if any([m.sensitivity is np.inf for m in check_sens]):
+            raise ValueError(f"Attempting to query an unbounded column")
 
         kc_pos = self._get_keycount_position(subquery)
         if kc_pos is not None:
             thresh_mech = mechs[kc_pos]
             self.tau = thresh_mech.threshold
 
-        def randomize_row(row_in):
+        def randomize_row_values(row_in):
             row = [v for v in row_in]
             # set null to 0 before adding noise
             for idx in range(len(row)):
-                #if sens[idx] is not None and row[idx] is None:
                 if mechs[idx] and row[idx] is None:
                     row[idx] = 0.0
             # call all mechanisms to add noise
@@ -371,12 +344,12 @@ class PrivateReader(Reader):
 
         if hasattr(exact_aggregates, "rdd"):
             # it's a dataframe
-            out = exact_aggregates.rdd.map(randomize_row)
+            out = exact_aggregates.rdd.map(randomize_row_values)
         elif hasattr(exact_aggregates, "map"):
             # it's an RDD
-            out = exact_aggregates.map(randomize_row)
+            out = exact_aggregates.map(randomize_row_values)
         else:
-            out = map(randomize_row, exact_aggregates[1:])
+            out = map(randomize_row_values, exact_aggregates[1:])
 
         if _no_postprocess:
             return out
@@ -412,13 +385,13 @@ class PrivateReader(Reader):
                 out = filter(lambda row: row[kc_pos] > self.tau, out)
 
         # get column information for outer query
-        out_syms = query.all_symbols()
-        out_types = [s[1].type() for s in out_syms]
-        out_col_names = [s[0] for s in out_syms]
+        out_syms = query._select_symbols
+        out_types = [s.expression.type() for s in out_syms]
+        out_col_names = [s.name for s in out_syms]
 
         def convert(val, type):
             if type == "string" or type == "unknown":
-                return str(val).replace('"', "").replace("'", "")
+                return str(val)
             elif type == "int":
                 return int(float(str(val).replace('"', "").replace("'", "")))
             elif type == "float":

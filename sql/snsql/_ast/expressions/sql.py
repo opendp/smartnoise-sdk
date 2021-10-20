@@ -25,7 +25,8 @@ class AllColumns(SqlExpr):
 
     @property
     def is_key_count(self):
-        # should be true if no table specified and row_privacy
+        # can only be key_count if metadata specifies row_privacy,
+        # which is set by load_symbols
         return False
 
     @property

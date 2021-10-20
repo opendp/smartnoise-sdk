@@ -66,7 +66,10 @@ class GoodQueryTester:
     def runValidate(self):
         for qs in self.queries:
             q = QueryParser(metadata).query(qs)
-            Validate().validateQuery(q, metadata)
+            try:
+                Validate().validateQuery(q, metadata)
+            except:
+                raise ValueError(f"Validation failed for query: {str(q)}")
 
 
 class BadQueryTester:
@@ -82,5 +85,8 @@ class BadQueryTester:
             self.validateSingle(q)
 
     def validateSingle(self, q):
-        with pytest.raises(ValueError):
+        try:
             Validate().validateQuery(q, metadata)
+        except ValueError:
+            return
+        raise ValueError(f"Query didn't fail validation: {str(q)}")

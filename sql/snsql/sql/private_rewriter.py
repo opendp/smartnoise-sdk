@@ -14,7 +14,6 @@ from snsql._ast.ast import (
     Order,
     Literal,
     Column,
-    TableColumn,
     AllColumns,
     NamedExpression,
     NestedExpression,
@@ -50,9 +49,10 @@ class Rewriter:
 
     """
 
-    def __init__(self, metadata):
+    def __init__(self, metadata, privacy=None):
         self.options = RewriterOptions()
         self.metadata = Metadata.from_(metadata)
+        self.privacy = privacy
 
     def calculate_avg(self, exp, scope):
         """
@@ -145,10 +145,6 @@ class Rewriter:
             exp = self.rewrite_agg_expression(exp, scope)
 
         else:
-            for outer_col_exp in exp.find_nodes(Column, AggFunction):
-                new_name = scope.push_name(Column(outer_col_exp.name))
-                outer_col_exp.name = new_name
-
             def replace_agg_exprs(expr):
                 for child_name, child_expr in expr.__dict__.items():
                     if isinstance(child_expr, Sql):
@@ -160,6 +156,7 @@ class Rewriter:
 
         return NamedExpression(name, exp)
 
+    # Main entry point.  Takes a query and recursively builds rewritten wuery
     def query(self, query):
         query = QueryParser(self.metadata).query(str(query))
         Validate().validateQuery(query, self.metadata)
@@ -169,8 +166,8 @@ class Rewriter:
         if self.options.row_privacy:
             keycount_expr = AggFunction(FuncName("COUNT"), None, AllColumns())
         else:
-            key_col = self.key_col(query)
-            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col))
+            key_col = query.key_column
+            keycount_expr = AggFunction(FuncName("COUNT"), Token("DISTINCT"), Column(key_col.colname))
 
         if self.options.censor_dims:
             child_scope.push_name(keycount_expr, "keycount")
@@ -180,10 +177,19 @@ class Rewriter:
             for ge in query.agg.groupingExpressions:
                 child_scope.push_name(ge.expression)
 
-        select = [
-                self.rewrite_outer_named_expression(ne, child_scope)
-                for ne in query.select.namedExpressions
-            ]
+        select = []
+        for ne in query.select.namedExpressions:
+            expr = ne.expression
+            is_grouping = False
+            if query.agg is not None:
+                for ge in query.agg.groupingExpressions:
+                    if expr == ge.expression:
+                        is_grouping = True
+                        expr = Column(child_scope.push_name(ge.expression))
+            if is_grouping:
+                select.append(NamedExpression(ne.name, expr))
+            else:
+                select.append(self.rewrite_outer_named_expression(ne, child_scope))
 
         select = Select(query.select.quantifier, select)
 
@@ -192,7 +198,7 @@ class Rewriter:
         )
         subquery = self.exact_aggregates(subquery)
         subquery = [Relation(AliasedSubquery(subquery, Identifier("exact_aggregates")), None)]
-        return Query(select, From(subquery), None, query.agg, query.having, query.order, query.limit, metadata=self.metadata)
+        return Query(select, From(subquery), None, None, query.having, query.order, query.limit, metadata=self.metadata, privacy=self.privacy)
 
     def exact_aggregates(self, query):
         child_scope = Scope()
@@ -224,7 +230,7 @@ class Rewriter:
             return Query(select, From(subquery), None, query.agg, None, None, None)
 
     def per_key_random(self, query):
-        key_col = self.key_col(query)
+        key_col = query.key_column
 
         select = [
                 NamedExpression(None, AllColumns()),
@@ -232,7 +238,7 @@ class Rewriter:
                     Identifier("row_num"),
                     RankingFunction(FuncName("ROW_NUMBER"),
                                     OverClause(
-                                        Column(key_col),
+                                        Column(key_col.colname),
                                         Order([
                                             SortItem(BareFunction(FuncName("RANDOM")), None)
                                             ])
@@ -251,9 +257,9 @@ class Rewriter:
 
     def per_key_clamped(self, query):
         child_scope = Scope()
-        key_col = self.key_col(query)
         if self.options.reservoir_sample and not self.options.row_privacy:
-            child_scope.push_name(Column(key_col), key_col)
+            key_col = query.key_column
+            child_scope.push_name(Column(key_col.colname), key_col.colname)
         relations = query.source.relations
         select = [
                 self.clamp_expression(ne, relations, child_scope, query, self.options.clamp_columns)
@@ -283,15 +289,15 @@ class Rewriter:
                 grouping_colnames = [col.name for col in query.agg.groupedColumns()]
                 if colname in grouping_colnames:
                     return None, None
-            minval = None
-            maxval = None
+            lower = None
+            upper = None
             sym = col.symbol(relations)
             if sym.valtype in ["float", "int"] and not sym.unbounded:
-                minval = sym.minval
-                maxval = sym.maxval
-            if minval is None or maxval is None or sym.is_key:
+                lower = sym.lower
+                upper = sym.upper
+            if lower is None or upper is None or sym.is_key:
                 return None, None
-            return minval, maxval
+            return lower, upper
 
         exp = ne.expression
         cols = exp.find_nodes(Column)
@@ -299,43 +305,21 @@ class Rewriter:
             cols += [exp]
         for col in cols:
             colname = col.name
-            minval, maxval = bounds_clamp(colname)
-            if minval == None:
+            lower, upper = bounds_clamp(colname)
+            if lower == None:
                 cexpr = Column(colname)
                 ce_name = scope.push_name(cexpr, str(colname))
             else:
                 when_min = WhenExpression(
-                    BooleanCompare(col, Op("<"), Literal(minval)), Literal(minval)
+                    BooleanCompare(col, Op("<"), Literal(lower)), Literal(lower)
                     )
                 when_max = WhenExpression(
-                    BooleanCompare(col, Op(">"), Literal(maxval)), Literal(maxval)
+                    BooleanCompare(col, Op(">"), Literal(upper)), Literal(upper)
                     )
                 cexpr = CaseExpression(None, [when_min, when_max], col)
                 ce_name = scope.push_name(cexpr, str(colname))
             col.name = ce_name
         return ne
-
-    def key_col(self, query):
-        """
-            Return the key column, given a from clause
-        """
-        rsyms = query.source.relations[0].all_symbols(AllColumns())
-        tcsyms = [r for name, r in rsyms if type(r) is TableColumn]
-        keys = [str(tc) for tc in tcsyms if tc.is_key]
-        if len(keys) > 1:
-            raise ValueError("We only know how to handle tables with one key: " + str(keys))
-        if self.options.row_privacy:
-            if len(keys) > 0:
-                raise ValueError("Row privacy is set, but metadata specifies a private_id")
-            else:
-                return None
-        else:
-            if len(keys) < 1:
-                raise ValueError("No private_id column specified, and row_privacy is not set")
-            else:
-                kp = keys[0].split(".")
-                return kp[len(kp) - 1]
-
 
 class Scope:
     """

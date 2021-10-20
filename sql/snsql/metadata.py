@@ -210,16 +210,16 @@ class DateTime:
 class Int:
     """A column with integer data"""
 
-    def __init__(self, name, minval=None, maxval=None, is_key=False, bounded=False):
+    def __init__(self, name, lower=None, upper=None, is_key=False, bounded=False):
         self.name = name
-        self.minval = minval
-        self.maxval = maxval
+        self.lower = lower
+        self.upper = upper
         self.is_key = is_key
-        self.unbounded = minval is None or maxval is None
+        self.unbounded = lower is None or upper is None
         self.bounded = bounded
 
     def __str__(self):
-        bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval)
+        bounds = "unbounded" if self.unbounded else str(self.lower) + "," + str(self.upper)
         return ("*" if self.is_key else "") + str(self.name) + " [int] (" + bounds + ")"
 
     def typename(self):
@@ -229,16 +229,16 @@ class Int:
 class Float:
     """A floating point column"""
 
-    def __init__(self, name, minval=None, maxval=None, is_key=False, bounded=False):
+    def __init__(self, name, lower=None, upper=None, is_key=False, bounded=False):
         self.name = name
-        self.minval = minval
-        self.maxval = maxval
+        self.lower = lower
+        self.upper = upper
         self.is_key = is_key
-        self.unbounded = minval is None or maxval is None
+        self.unbounded = lower is None or upper is None
         self.bounded = bounded
 
     def __str__(self):
-        bounds = "unbounded" if self.unbounded else str(self.minval) + "," + str(self.maxval)
+        bounds = "unbounded" if self.unbounded else str(self.lower) + "," + str(self.upper)
         return ("*" if self.is_key else "") + str(self.name) + " [float] (" + bounds + ")"
 
     def typename(self):
@@ -362,13 +362,13 @@ class CollectionYamlLoader:
         elif c["type"] == "datetime":
             return DateTime(column, is_key, bounded)
         elif c["type"] == "int":
-            minval = int(c["lower"]) if "lower" in c else None
-            maxval = int(c["upper"]) if "upper" in c else None
-            return Int(column, minval, maxval, is_key, bounded)
+            lower = int(c["lower"]) if "lower" in c else None
+            upper = int(c["upper"]) if "upper" in c else None
+            return Int(column, lower, upper, is_key, bounded)
         elif c["type"] == "float":
-            minval = float(c["lower"]) if "lower" in c else None
-            maxval = float(c["upper"]) if "upper" in c else None
-            return Float(column, minval, maxval, is_key, bounded)
+            lower = float(c["lower"]) if "lower" in c else None
+            upper = float(c["upper"]) if "upper" in c else None
+            return Float(column, lower, upper, is_key, bounded)
         elif c["type"] == "string":
             card = int(c["cardinality"]) if "cardinality" in c else 0
             return String(column, card, is_key, bounded)
@@ -421,10 +421,10 @@ class CollectionYamlLoader:
                     column["bounded"] = c.bounded
                 if hasattr(c, "card"):
                     column["cardinality"] = c.card
-                if hasattr(c, "minval") and c.minval is not None:
-                    column["lower"] = c.minval
-                if hasattr(c, "maxval") and c.maxval is not None:
-                    column["upper"] = c.maxval
+                if hasattr(c, "lower") and c.lower is not None:
+                    column["lower"] = c.lower
+                if hasattr(c, "upper") and c.upper is not None:
+                    column["upper"] = c.upper
                 if c.is_key is not None and c.is_key == True:
                     column["private_id"] = c.is_key
                 if type(c) is String:

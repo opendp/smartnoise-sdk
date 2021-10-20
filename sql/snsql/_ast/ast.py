@@ -1,6 +1,7 @@
 from .tokens import *
 from .expression import *
-
+import copy
+import warnings
 
 """
     AST for parsed Python Query Batch.  Allows validation, normalization,
@@ -22,7 +23,7 @@ class Batch(Sql):
 class Query(SqlRel):
     """A single query"""
 
-    def __init__(self, select, source, where, agg, having, order, limit, metadata=None) -> None:
+    def __init__(self, select, source, where, agg, having, order, limit, metadata=None, privacy=None) -> None:
         self.select = select
         self.source = source
         self.where = where
@@ -31,57 +32,102 @@ class Query(SqlRel):
         self.order = order
         self.limit = limit
 
-        self.max_ids = 1
-        self.sample_max_ids = True
-        self.row_privacy = False
+        self.max_ids = None
+        self.sample_max_ids = None
+        self.row_privacy = None
 
-        # m_symbols includes all columns in the output, including anonymous columns,
-        #   equivalent to the result of SELECT * on this name scope.
-        # m_sym_dict includes only columns with explicit or inferred aliases,
-        #   which includes only columns that analyst can SELECT by name.
-
-        self.m_sym_dict = None
-        self.m_symbols = None
+        self._named_symbols = None
+        self._select_symbols = None
 
         if metadata:
-            self.load_symbols(metadata)
+            self.load_symbols(metadata, privacy=privacy)
 
-    def load_symbols(self, metadata):
-        symbols = []
+    def load_symbols(self, metadata, privacy=None):
+        self.privacy = privacy
+        # recursively load symbols for all relations
         relations = self.source.relations
         for r in relations:
-            r.load_symbols(metadata)
+            r.load_symbols(metadata, privacy=privacy)
         if not all([r.has_symbols() for r in relations]):
             return  # unable to load symbols
-        for ne in self.select.namedExpressions:
-            if type(ne.expression) is not AllColumns:
-                name = ne.column_name()
-                m_symbol = ne.expression.symbol(relations)
-                symbols.append((name, m_symbol))
-                ne.m_symbol = m_symbol
-            else:
-                syms = ne.expression.all_symbols(relations)
-                for sym in syms:
-                    name, symbol = sym
-                    symbols.append((name, symbol))
-        self.m_symbols = symbols
-        self.m_sym_dict = {}
-
-        for name, symbol in self.m_symbols:
-            if name == "???":
-                continue
-            if name in self.m_sym_dict:
-                raise ValueError("SELECT has duplicate column names: " + name)
-            self.m_sym_dict[name] = symbol
 
         tables = []
         for t in self.find_nodes(Table):
-            tables.append(t.m_symbols[0][1])
-
+            # grab the first column in the table, to extract table metadata
+            tables.append(t._select_symbols[0].expression)
         if len(tables) > 0:
             self.max_ids = max(tc.max_ids for tc in tables)
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
             self.row_privacy = any(tc.row_privacy for tc in tables)
+
+        # get grouping expression symbols
+        self._grouping_symbols = []
+        if self.agg:
+            self._grouping_symbols = [Symbol(ge.expression.symbol(relations)) for ge in self.agg.groupingExpressions]
+
+        # get namedExpression symbols
+        _symbols = []
+        for ne in self.select.namedExpressions:
+            if type(ne.expression) is not AllColumns:
+                name = ne.column_name()
+
+                _symbol_expr = ne.expression.symbol(relations)
+                _symbol = Symbol(_symbol_expr, name)
+
+                # annotate selects that reference GROUP BY column
+                _symbol.is_grouping_column = False
+                for ge in self._grouping_symbols:
+                    if _symbol_expr == ge.expression:
+                        _symbol.is_grouping_column = True
+
+                # annotate key_counts
+                _symbol.is_key_count = False
+                if _symbol.is_count:
+                    col = _symbol.expression.xpath_first("//AggFunction[@name='COUNT']")
+                    if col:
+                        if self.row_privacy:
+                            _symbol.is_key_count = isinstance(col.expression, AllColumns)
+                        else:
+                            _symbol.is_key_count = col.is_key_count
+
+                if self.privacy:
+                    # add mechanism
+                    _symbol.mechanism = None
+                    mechanisms = self.privacy.mechanisms
+                    epsilon = self.privacy.epsilon
+                    delta = self.privacy.delta
+                    if not _symbol.is_grouping_column:
+                        sensitivity = _symbol.expression.sensitivity()
+                        t = _symbol.expression.type()
+                        if t in ['int', 'float'] and sensitivity is not None:
+                            stat = 'count' if _symbol.is_count else 'sum'
+                            if _symbol.is_key_count:
+                                stat = 'threshold'
+                            mech_class = mechanisms.get_mechanism(sensitivity, stat, t)
+                            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=self.max_ids)
+                            if _symbol.is_key_count:
+                                mech.delta = delta
+                            _symbol.mechanism = mech
+
+                _symbols.append(_symbol)
+
+                # attach to named expression for xpath in accuracy.py
+                ne.m_symbol = _symbol
+            else:
+                # It's SELECT *, expand out to all columns
+                syms = ne.expression.all_symbols(relations)
+                for sym in syms:
+                    _symbols.append(Symbol(sym.expression, sym.name))
+
+        self._select_symbols = _symbols
+        self._named_symbols = {}
+
+        for sym in self._select_symbols:
+            if sym.name == "???":
+                continue
+            if sym.name in self._named_symbols:
+                raise ValueError("SELECT has duplicate column names: " + name)
+            self._named_symbols[sym.name] = sym
 
     def symbol(self, expression):
         """
@@ -96,11 +142,40 @@ class Query(SqlRel):
             )
         return self[expression.name]
 
-    def numeric_symbols(self):
-        return [s for s in self.all_symbols() if s[1].type() in ["int", "float"]]
+    @property
+    def m_symbols(self):
+        warnings.warn("m_symbols has been renamed to _select_symbols")
+        return self._select_symbols
 
-    def keycount_symbols(self):
-        return [s for s in self.all_symbols() if s[1].is_key_count]
+    def numeric_symbols(self):
+        return [s for s in self._select_symbols if s.expression.type() in ["int", "float"]]
+
+    @property
+    def key_column(self):
+        # return TableColumn used as the primary key
+        rsyms = self.source.relations[0].all_symbols(AllColumns())
+        tcsyms = [r.expression for r in rsyms if type(r.expression) is TableColumn]
+        keys = [tc for tc in tcsyms if tc.is_key]
+        if len(keys) > 1:
+            raise ValueError("We only know how to handle tables with one key: " + str(keys))
+        if self.row_privacy:
+            if len(keys) > 0:
+                raise ValueError("Row privacy is set, but metadata specifies a private_id")
+            else:
+                return None
+        elif self.row_privacy == False:
+            if len(keys) < 1:
+                raise ValueError("No private_id column specified, and row_privacy is False")
+            else:
+                return keys[0]
+        else:
+            # symbols haven't been loaded yet
+            if len(keys) < 1:
+                return None
+            else:
+                # kp = keys[0].split(".")
+                # return kp[len(kp) - 1]
+                return keys[0]
 
     def children(self) -> List[Any]:
         return [self.select, self.source, self.where, self.agg, self.having, self.order, self.limit]
@@ -220,17 +295,16 @@ class Relation(SqlRel):
         self.primary = primary
         self.joins = joins if joins is not None else []
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata, privacy=None):
+        self.privacy = privacy
         relations = [self.primary] + [j for j in self.joins]
         for r in relations:
-            r.load_symbols(metadata)
+            r.load_symbols(metadata, privacy)
         # check the join keys
         if len(self.joins) > 0:
-            primary_symbols = [
-                name.lower() for name, symbol in self.primary.all_symbols(AllColumns())
-            ]
+            primary_symbols = [s.name.lower() for s in self.primary.all_symbols(AllColumns())]
             for j in self.joins:
-                join_symbols = [name.lower() for name, symbol in j.right.all_symbols(AllColumns())]
+                join_symbols = [s.name.lower() for s in j.right.all_symbols(AllColumns())]
                 if type(j.criteria) is UsingJoinCriteria:
                     for i in j.criteria.identifiers:
                         if not i.name.lower() in primary_symbols:
@@ -252,10 +326,10 @@ class Relation(SqlRel):
         syms_a = self.all_symbols(AllColumns(alias))
         syms_b = [s for s in syms_a if s is not None]
         syms_c = [
-            symbol
-            for name, symbol in syms_b
-            if (type(symbol) is TableColumn and symbol.compare.identifier_match(colname, name))
-            or name == colname
+            s.expression
+            for s in syms_b
+            if (type(s.expression) is TableColumn and s.expression.compare.identifier_match(colname, s.name))
+            or s.name == colname
         ]
         if len(syms_c) == 1:
             return syms_c[0]
@@ -283,9 +357,9 @@ class Relation(SqlRel):
             if type(j.criteria) is UsingJoinCriteria and alias == "":
                 drop_cols = [str(i).lower() for i in j.criteria.identifiers]
             syms = syms + [
-                (name, symbol)
-                for name, symbol in j.all_symbols(expression)
-                if name.lower() not in drop_cols
+                Symbol(sym.expression, sym.name)
+                for sym in j.all_symbols(expression)
+                if sym.name.lower() not in drop_cols
             ]
         if len(syms) == 0:
             raise ValueError("Symbol could not be found in any relations: " + str(expression))
@@ -301,8 +375,8 @@ class Table(SqlRel):
     def __init__(self, name, alias):
         self.name = name
         self.alias = alias
-        self.m_symbols = None
-        self.m_sym_dict = None
+        self._select_symbols = None
+        self._named_symbols = None
 
     def symbol(self, expression):
         if type(expression) is not Column:
@@ -315,7 +389,7 @@ class Table(SqlRel):
                 + str(self.name)
             )
         alias, name = self.split_alias(expression.name)
-        if self.m_symbols is None:
+        if self._select_symbols is None:
             raise ValueError("Please load symbols with metadata first: " + str(self))
         else:
             if name in self:
@@ -323,8 +397,9 @@ class Table(SqlRel):
             else:
                 return None
 
-    def load_symbols(self, metadata):
-        self.m_sym_dict = None
+    def load_symbols(self, metadata, privacy=None):
+        self.privacy = privacy
+        self._named_symbols = None
         if metadata is None:
             return
         else:
@@ -332,24 +407,20 @@ class Table(SqlRel):
             if table is None:
                 raise ValueError("No metadata available for " + str(self.name))
             tc = table.m_columns
-            self.m_symbols = [
-                (
-                    name,
-                    TableColumn(
-                        tablename=self.name,
-                        colname=name,
-                        valtype=tc[name].typename(),
-                        is_key=tc[name].is_key,
-                        minval=tc[name].minval if tc[name].typename() in ["int", "float"] else None,
-                        maxval=tc[name].maxval if tc[name].typename() in ["int", "float"] else None,
-                        max_ids=table.max_ids,
-                        sample_max_ids=table.sample_max_ids,
-                        row_privacy=table.row_privacy,
-                        compare=metadata.compare,
-                    ),
+            def get_table_expr(name):
+                return TableColumn(
+                    tablename=self.name,
+                    colname=name,
+                    valtype=tc[name].typename(),
+                    is_key=tc[name].is_key,
+                    lower=tc[name].lower if tc[name].typename() in ["int", "float"] else None,
+                    upper=tc[name].upper if tc[name].typename() in ["int", "float"] else None,
+                    max_ids=table.max_ids,
+                    sample_max_ids=table.sample_max_ids,
+                    row_privacy=table.row_privacy,
+                    compare=metadata.compare
                 )
-                for name in tc.keys()
-            ]
+            self._select_symbols = [Symbol(get_table_expr(name), name) for name in tc.keys()]
 
     def escaped(self):
         # is any part of this identifier escaped?
@@ -438,8 +509,8 @@ class TableColumn(SqlExpr):
         colname,
         valtype="unknown",
         is_key=False,
-        minval=None,
-        maxval=None,
+        lower=None,
+        upper=None,
         max_ids=1,
         sample_max_ids=True,
         row_privacy=False,
@@ -449,12 +520,12 @@ class TableColumn(SqlExpr):
         self.colname = colname
         self.valtype = valtype
         self.is_key = is_key
-        self.minval = minval
-        self.maxval = maxval
+        self.lower = lower
+        self.upper = upper
         self.max_ids = max_ids
         self.sample_max_ids = sample_max_ids
         self.row_privacy = row_privacy
-        self.unbounded = minval is None or maxval is None
+        self.unbounded = lower is None or upper is None
         self.compare = compare
 
     def __str__(self):
@@ -471,8 +542,8 @@ class TableColumn(SqlExpr):
 
     def sensitivity(self):
         if self.valtype in ["int", "float"]:
-            if self.minval is not None and self.maxval is not None:
-                return max(abs(self.maxval), abs(self.minval))
+            if self.lower is not None and self.upper is not None:
+                return max(abs(self.upper), abs(self.lower))
             else:
                 return np.inf  # unbounded
         elif self.valtype == "boolean":

@@ -8,7 +8,7 @@ class TestGroupingClamp:
         assert(len(readers) > 0)
         for reader in readers:
             meta = reader.metadata
-            meta["PUMS.PUMS"]["income"].maxval = 100
+            meta["PUMS.PUMS"]["income"].upper = 100
             query = "SELECT AVG(income) AS income FROM PUMS.PUMS"
             res = test_databases.to_tuples(reader.execute(query))
             assert(res[1][0] < 150.0)
@@ -18,7 +18,7 @@ class TestGroupingClamp:
         assert(len(readers) > 0)
         for reader in readers:
             meta = reader.metadata
-            meta["PUMS.PUMS"]["income"].maxval = 100
+            meta["PUMS.PUMS"]["income"].upper = 100
             query = "SELECT income, COUNT(pid) AS n FROM PUMS.PUMS GROUP BY income"
             res = test_databases.to_tuples(reader.execute(query))
             assert(len(res) > 40)

@@ -1,6 +1,37 @@
 from typing import List, Any, Dict, Union
 import itertools
 from snsql.xpath.parse import XPath
+import warnings
+
+class Symbol:
+    """
+    Class used to decorate AST with information from metadata
+    and privacy object.
+    """
+    def __init__(self, expression, name=None):
+        self.name = name
+        self.expression = expression
+        self.is_key_count = None
+        self.is_grouping_column = None
+        self.mechanism = None
+    @property
+    def is_count(self):
+        return self.expression.is_count if self.expression else None
+    def __getitem__(self, key):
+        # temporary patch to handle s[0], s[1] in legacy code
+        warnings.warn("symbol array indexing is deprecated")
+        if key == 0:
+            return self.name
+        elif key == 1:
+            return self.expression
+        else:
+            raise ValueError(f"Index error on symbol for key: {key}")
+    def __iter__(self):
+        warnings.warn("symbol tuple unpacking is deprecated")
+        return iter((self.name, self.expression))
+    def children(self):
+        return [self.expression]
+
 
 class Token(str):
     def __init__(self, text):
@@ -90,6 +121,10 @@ class Sql:
         if other is None:
             return False
         else:
+            s = self.children()
+            o = other.children()
+            if len(s) != len(o):
+                return False
             return all([s == o for s, o in zip(self.children(), other.children())])
 
     def symbol_name(self):
@@ -231,12 +266,12 @@ class SqlRel(Sql):
     """
 
     def __init__(self):
-        self.m_symbols = None
-        self.m_sym_dict = None
+        self._select_symbols = None
+        self._named_symbols = None
 
     def has_symbols(self):
-        if hasattr(self, "m_symbols"):
-            return self.m_symbols is not None
+        if hasattr(self, "_select_symbols"):
+            return self._select_symbols is not None
         return any([r.has_symbols() for r in self.relations()])
 
     def alias_match(self, name):
@@ -264,20 +299,20 @@ class SqlRel(Sql):
     def __contains__(self, key):
         if not self.has_symbols():
             return False
-        if self.m_sym_dict is None:
-            self.m_sym_dict = dict(self.m_symbols)
-        return key in self.m_sym_dict
+        if self._named_symbols is None:
+            self._named_symbols = dict(self._select_symbols)
+        return key in self._named_symbols
 
     def __getitem__(self, key):
         if not self.has_symbols():
             raise ValueError("No symbols loaded")
-        if self.m_sym_dict is None:
-            self.m_sym_dict = dict(self.m_symbols)
-        return self.m_sym_dict[key]
+        if self._named_symbols is None:
+            self._named_symbols = dict(self._select_symbols)
+        return self._named_symbols[key]
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata, privacy=None):
         for r in self.relations():
-            r.load_symbols(metadata)
+            r.load_symbols(metadata, privacy=privacy)
 
     def all_symbols(self, expression=None):
         if not self.has_symbols():
@@ -286,7 +321,7 @@ class SqlRel(Sql):
                 + str(self)
             )
         else:
-            return self.m_symbols
+            return self._select_symbols
 
     def relations(self):
         return [r for r in self.children() if isinstance(r, SqlRel)]
@@ -400,13 +435,13 @@ class Column(SqlExpr):
         return self.name
 
     def symbol(self, relations):
-        sym = [r.symbol(self) for r in relations if r.alias_match(self.name)]
-        if len(sym) == 0:
+        sym_exprs = [r.symbol(self) for r in relations if r.alias_match(self.name)]
+        if len(sym_exprs) == 0:
             raise ValueError("Column cannot be found " + str(self))
-        elif len(sym) > 1:
+        elif len(sym_exprs) > 1:
             raise ValueError("Column matches more than one relation, ambiguous " + str(self))
         else:
-            return sym[0]
+            return sym_exprs[0]
 
     def evaluate(self, bindings):
         # may need to handle escaping here
