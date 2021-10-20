@@ -184,7 +184,10 @@ class RoundFunction(SqlExpr):
         self.decimals = decimals
 
     def children(self):
-        return [Token("ROUND"), Token("("), self.expression, Token(","), self.decimals, Token(")")]
+        start = [Token("ROUND"), Token("("), self.expression]
+        end = [Token(")")]
+        middle = [] if not self.decimals else [Token(","), self.decimals]
+        return start + middle + end
 
     def evaluate(self, bindings):
         exp = self.expression.evaluate(bindings)

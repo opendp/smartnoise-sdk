@@ -120,12 +120,14 @@ expression
     | left=expression op=PLUS right=expression              #add
     | left=expression op=MINUS right=expression             #subtract
     | caseExpression                                        #caseExpr
+    | castExpression                                        #castExpr
     | allExpression                                         #allExpr
     | literal                                               #literalExpr
     | rankingFunction                                       #rankFunction
     | functionExpression                                    # functionExpr
-    | expressionSubquery                                                        #subqueryExpr
-    | '(' expression ')'                                                        #nestedExpr
+    | expressionSubquery                                    #subqueryExpr
+    | '(' expression ')'                                    #nestedExpr
+    | stringFunction                                        #stringFunc
     ;
 
 
@@ -141,6 +143,7 @@ functionExpression
     : bareFunction              #bareFunc
     | roundFunction             #roundFunc
     | powerFunction             #powerFunc
+    | truncFunction             #truncFunc
     | function=aggregateFunctionName '(' setQuantifier? expression ')' #aggFunc
     | function=mathFunctionName '(' expression ')' #mathFunc
     | IIF '(' test=booleanExpression ',' yes=expression ',' no=expression ')' #iifFunc
@@ -157,13 +160,26 @@ booleanExpression
     | name=qualifiedColumnName #boolColumn
     ;
 
+castExpression: CAST '(' fromExpr=expression AS dbType ')';
+
+dbType
+    : INTEGER
+    | FLOAT
+    | BOOLEAN
+    | TIMESTAMP
+    | DATE
+    | TIME
+    | variableString
+    | fixedString
+    ;
+
+variableString: (VARCHAR | NVARCHAR) ( '(' varCharLength=INTEGER_VALUE | MAX ')')?;
+fixedString: (CHAR | NCHAR) ( '(' fixedCharLength=INTEGER_VALUE ')')?;
+
 bareFunction : function=bareFunctionName '(' ')';
 
 rankingFunction: function=rankingFunctionName  '(' ')' overClause;
 
-roundFunction : ROUND '(' expression ',' digits=number ')';
-
-powerFunction : POWER '(' expression ',' number ')';
 
 comparisonOperator
     : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
@@ -186,14 +202,50 @@ literal
     | NULL      #nullLiteral
     ;
 
+// date and time functions
+
+extractFunction: EXTRACT '(' datePart FROM sourceExpr=expression ')';
+
+datePart
+    : YEAR
+    | MONTH
+    | DAY
+    | HOUR
+    | MINUTE
+    | SECOND
+    ;
+
+// string functions
+stringFunction
+    : stringUpper
+    | stringLower
+    | stringConcat
+    | trimFunction
+    | substringFunction
+    | positionFunction
+    | charLengthFunction
+    ;
+
+stringUpper: UPPER '(' sourceExpr=expression ')';
+stringLower: LOWER '(' sourceExpr=expression ')';
+stringConcat: CONCAT '(' string1=expression ',' string2=expression ')';
+trimFunction: TRIM '(' sourceExpr=expression ')';
+substringFunction: SUBSTRING '(' sourceExpr=expression FROM start=INTEGER_VALUE (FOR length=INTEGER_VALUE)? ')';
+positionFunction: POSITION '(' searchString=expression IN sourceString=expression ')';
+charLengthFunction: CHAR_LENGTH '(' sourceString=expression ')';
+
+// numeric functions
+
+truncFunction: (TRUNC | TRUNCATE) '(' sourceExpr=expression (',' digits=number)? ')';
+roundFunction : ROUND '(' expression (',' digits=number)? ')';
+powerFunction : POWER '(' expression ',' number ')';
+mathFunctionName : ABS | CEIL | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LN | LOG | LOG10 | LOG2 | SIN | COS | TAN | ASIN | ACOS | ATAN | ATANH  | DEGREES;
+bareFunctionName : PI | RANDOM | RAND | NEWID;
+
 
 rankingFunctionName : ROW_NUMBER | RANK | DENSE_RANK;
 
 aggregateFunctionName : COUNT | SUM | AVG | VAR | VARIANCE | STD | STDDEV | STDEV | MIN | MAX | PERCENTILE_DISC | PERCENTILE_CONT;
-
-mathFunctionName : ABS | CEIL | CEILING | FLOOR | SIGN | SQRT | SQUARE | EXP | LN | LOG | LOG10 | LOG2 | SIN | COS | TAN | ASIN | ACOS | ATAN | ATANH  | DEGREES;
-
-bareFunctionName : PI | RANDOM | RAND | NEWID;
 
 overClause : OVER '(' (PARTITION BY expression)? (orderClause)? ')';
 
@@ -220,7 +272,6 @@ number
     | MINUS? INTEGER_VALUE            #integerLiteral
     ;
 
-
 ABS: A B S;
 ACOS: A C O S;
 ALL: A L L;
@@ -233,15 +284,22 @@ ATAN: A T A N;
 ATANH: A T A N H;
 AVG: A V G;
 BETWEEN: B E T W E E N;
+BOOLEAN: B O O L E A N;
 BY: B Y;
 CASE: C A S E;
+CAST: C A S T;
+CHAR: C H A R;
+CHAR_LENGTH: C H A R UNDERSCORE L E N G T H;
 CEIL: C E I L;
 CEILING: C E I L I N G;
 CHOOSE: C H O O S E;
+CONCAT: C O N C A T;
 COS: C O S;
 COT: C O T;
 COUNT: C O U N T;
 CROSS: C R O S S;
+DATE: D A T E;
+DAY: D A Y;
 DEGREES: D E G R E E S;
 DENSE_RANK: D E N S E '_' R A N K;
 DESC: D E S C;
@@ -250,16 +308,21 @@ DIV: D I V;
 ELSE: E L S E;
 END: E N D;
 EXP: E X P;
+EXTRACT: E X T R A C T;
 FALSE: F A L S E;
+FLOAT: F L O A T;
 FLOOR: F L O O R;
+FOR: F O R;
 FROM: F R O M;
 FULL: F U L L;
 GROUP: G R O U P;
 HAVING: H A V I N G;
+HOUR: H O U R;
 IF: I F;
 IIF: I I F;
 IN: I N;
 INNER: I N N E R;
+INTEGER: I N T E G E R;
 INTERSECT: I N T E R S E C T;
 IS: I S;
 JOIN: J O I N;
@@ -269,8 +332,12 @@ LN: L N;
 LOG: L O G;
 LOG10: L O G '1' '0';
 LOG2: L O G '2';
+LOWER: L O W E R;
 MAX: M A X;
 MIN: M I N;
+MINUTE: M I N U T E;
+MONTH: M O N T H;
+NCHAR: N C H A R;
 NEWID: N E W I D;
 NOT: N O T;
 NULL: N U L L;
@@ -284,6 +351,7 @@ PARTITION: P A R T I T I O N;
 PERCENTILE_CONT: P E R C E N T I L E '_' C O N T;
 PERCENTILE_DISC: P E R C E N T I L E '_' D I S C;
 PI: P I;
+POSITION: P O S I T I O N;
 POWER: P O W E R;
 RAND: R A N D;
 RANDOM: R A N D O M;
@@ -292,6 +360,7 @@ RIGHT: R I G H T;
 ROUND: R O U N D;
 ROW_NUMBER: R O W '_' N U M B E R;
 ROWNUM: R O W N U M;
+SECOND: S E C O N D;
 SELECT: S E L E C T;
 SEMI: S E M I;
 SIGN: S I G N;
@@ -303,17 +372,27 @@ SQUARE: S Q U A R E;
 STD: S T D;
 STDDEV: S T D D E V;
 STDEV: S T D E V;
+SUBSTRING: S U B S T R I N G;
 SUM: S U M;
 TAN: T A N;
 THEN: T H E N;
+TIME: T I M E;
+TIMESTAMP: T I M E S T A M P;
 TOP: T O P;
+TRIM: T R I M;
 TRUE: T R U E;
+TRUNC: T R U N C;
+TRUNCATE: T R U N C A T E;
 UNION: U N I O N; // reserved
+UPPER: U P P E R;
 USING: U S I N G;
 VAR: V A R;
+VARCHAR: V A R C H A R;
+NVARCHAR: N V A R C H A R;
 VARIANCE: V A R I A N C E;
 WHEN: W H E N;
 WHERE: W H E R E;
+YEAR: Y E A R;
 
 EQ  : '=' | '==';
 NSEQ: '<=>';
@@ -334,6 +413,7 @@ AMPERSAND: '&';
 PIPE: '|';
 CONCAT_PIPE: '||';
 HAT: '^';
+UNDERSCORE: '_';
 
 
 /*

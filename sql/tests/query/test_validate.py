@@ -48,8 +48,11 @@ class GoodQueryTester:
 
     def runValidate(self):
         for qs in self.queries:
-            q = QueryParser(metadata).query(qs)
-            Validate().validateQuery(q, metadata)
+            try:
+                q = QueryParser(metadata).query(qs)
+                Validate().validateQuery(q, metadata)
+            except Exception as e:
+                raise ValueError(f"Parse and validate failed for query: {str(q)}")
 
 
 class BadQueryTester:

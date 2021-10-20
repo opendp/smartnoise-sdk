@@ -297,7 +297,10 @@ class ExpressionVisitor(SqlSmallVisitor):
 
     def visitRoundFunction(self, ctx):
         expression = ExpressionVisitor().visit(ctx.expression())
-        digits = ExpressionVisitor().visit(ctx.digits)
+        if ctx.digits:
+            digits = ExpressionVisitor().visit(ctx.digits)
+        else:
+            digits = None
         return RoundFunction(expression, digits)
 
     def visitMathFunc(self, ctx):
