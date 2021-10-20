@@ -1,4 +1,5 @@
 from enum import Enum
+import numpy as np
 
 class Mechanism(Enum):
     gaussian = 1
@@ -53,3 +54,17 @@ class AdditiveNoiseMechanism:
         """
         raise NotImplementedError("Please implement release on the derived class")
     
+class Unbounded(AdditiveNoiseMechanism):
+    def __init__(
+            self, epsilon, *ignore, delta, sensitivity=None, max_contrib=1, upper=None, lower=None, **kwargs
+        ):
+        super().__init__(
+                epsilon,
+                mechanism=Mechanism.gaussian,
+                delta=delta,
+                sensitivity=sensitivity,
+                max_contrib=max_contrib,
+                upper=upper,
+                lower=lower
+            )
+        self.sensitivity = np.inf

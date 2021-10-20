@@ -1,6 +1,7 @@
 from typing import List
 from ._mechanisms import *
 from enum import Enum
+import numpy as np
 
 class Stat(Enum):
     count = 1
@@ -35,6 +36,8 @@ class Mechanisms:
         else:
             return None
     def get_mechanism(self, sensitivity, stat: str, t: str):
+        if sensitivity is np.inf:
+            return Unbounded
         stat = self._get_stat(stat, t)
         if stat is None:
             return None

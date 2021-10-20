@@ -310,9 +310,9 @@ class SqlRel(Sql):
             self._named_symbols = dict(self._select_symbols)
         return self._named_symbols[key]
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata, privacy=None):
         for r in self.relations():
-            r.load_symbols(metadata)
+            r.load_symbols(metadata, privacy=privacy)
 
     def all_symbols(self, expression=None):
         if not self.has_symbols():

@@ -49,9 +49,10 @@ class Rewriter:
 
     """
 
-    def __init__(self, metadata):
+    def __init__(self, metadata, privacy=None):
         self.options = RewriterOptions()
         self.metadata = Metadata.from_(metadata)
+        self.privacy = privacy
 
     def calculate_avg(self, exp, scope):
         """
@@ -197,7 +198,7 @@ class Rewriter:
         )
         subquery = self.exact_aggregates(subquery)
         subquery = [Relation(AliasedSubquery(subquery, Identifier("exact_aggregates")), None)]
-        return Query(select, From(subquery), None, None, query.having, query.order, query.limit, metadata=self.metadata)
+        return Query(select, From(subquery), None, None, query.having, query.order, query.limit, metadata=self.metadata, privacy=self.privacy)
 
     def exact_aggregates(self, query):
         child_scope = Scope()

@@ -23,7 +23,7 @@ class Batch(Sql):
 class Query(SqlRel):
     """A single query"""
 
-    def __init__(self, select, source, where, agg, having, order, limit, metadata=None) -> None:
+    def __init__(self, select, source, where, agg, having, order, limit, metadata=None, privacy=None) -> None:
         self.select = select
         self.source = source
         self.where = where
@@ -36,22 +36,18 @@ class Query(SqlRel):
         self.sample_max_ids = None
         self.row_privacy = None
 
-        # _select_symbols includes all columns in the output, including anonymous columns,
-        #   equivalent to the result of SELECT * on this name scope.
-        # _named_symbols includes only columns with explicit or inferred aliases,
-        #   which includes only columns that analyst can SELECT by name.
-
         self._named_symbols = None
         self._select_symbols = None
 
         if metadata:
-            self.load_symbols(metadata)
+            self.load_symbols(metadata, privacy=privacy)
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata, privacy=None):
+        self.privacy = privacy
         # recursively load symbols for all relations
         relations = self.source.relations
         for r in relations:
-            r.load_symbols(metadata)
+            r.load_symbols(metadata, privacy=privacy)
         if not all([r.has_symbols() for r in relations]):
             return  # unable to load symbols
 
@@ -93,6 +89,25 @@ class Query(SqlRel):
                             _symbol.is_key_count = isinstance(col.expression, AllColumns)
                         else:
                             _symbol.is_key_count = col.is_key_count
+
+                if self.privacy:
+                    # add mechanism
+                    _symbol.mechanism = None
+                    mechanisms = self.privacy.mechanisms
+                    epsilon = self.privacy.epsilon
+                    delta = self.privacy.delta
+                    if not _symbol.is_grouping_column:
+                        sensitivity = _symbol.expression.sensitivity()
+                        t = _symbol.expression.type()
+                        if t in ['int', 'float'] and sensitivity is not None:
+                            stat = 'count' if _symbol.is_count else 'sum'
+                            if _symbol.is_key_count:
+                                stat = 'threshold'
+                            mech_class = mechanisms.get_mechanism(sensitivity, stat, t)
+                            mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=self.max_ids)
+                            if _symbol.is_key_count:
+                                mech.delta = delta
+                            _symbol.mechanism = mech
 
                 _symbols.append(_symbol)
 
@@ -150,7 +165,7 @@ class Query(SqlRel):
                 return None
         elif self.row_privacy == False:
             if len(keys) < 1:
-                raise ValueError("No private_id column specified, and row_privacy is not set")
+                raise ValueError("No private_id column specified, and row_privacy is False")
             else:
                 return keys[0]
         else:
@@ -280,10 +295,11 @@ class Relation(SqlRel):
         self.primary = primary
         self.joins = joins if joins is not None else []
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata, privacy=None):
+        self.privacy = privacy
         relations = [self.primary] + [j for j in self.joins]
         for r in relations:
-            r.load_symbols(metadata)
+            r.load_symbols(metadata, privacy)
         # check the join keys
         if len(self.joins) > 0:
             primary_symbols = [s.name.lower() for s in self.primary.all_symbols(AllColumns())]
@@ -381,7 +397,8 @@ class Table(SqlRel):
             else:
                 return None
 
-    def load_symbols(self, metadata):
+    def load_symbols(self, metadata, privacy=None):
+        self.privacy = privacy
         self._named_symbols = None
         if metadata is None:
             return

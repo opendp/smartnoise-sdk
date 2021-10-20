@@ -111,7 +111,7 @@ class PrivateReader(Reader):
         return self.reader.engine
 
     def _refresh_options(self):
-        self.rewriter = Rewriter(self.metadata)
+        self.rewriter = Rewriter(self.metadata, privacy=self.privacy)
         self.metadata.compare = self.reader.compare
         tables = self.metadata.tables()
         self._options.row_privacy = any([t.row_privacy for t in tables])
@@ -254,59 +254,29 @@ class PrivateReader(Reader):
             if mech and name not in mech_map:
                 mech_map[name] = mech
         return mech_map
+
     def _get_keycount_position(self, subquery: Query):
         """
         Returns the column index of the column that serves as the
         key count for tau thresholding.  Returns None if no keycount
         """
-        kc_pos = None
-        syms = subquery._select_symbols
-        for idx in range(len(syms)):
-            sname = syms[idx].name
-            if sname == "keycount":
-                kc_pos = idx
-        return kc_pos
+        is_key_count = [s.is_key_count for s in subquery._select_symbols]
+        if any(is_key_count):
+            return is_key_count.index(True)
+        else:
+            return None
 
     def _get_mechanisms(self, subquery: Query):
         max_contrib = self._options.max_contrib if self._options.max_contrib is not None else 1
+        assert(subquery.max_ids == max_contrib)
 
-        syms = subquery._select_symbols
-        kc_pos = self._get_keycount_position(subquery)
-
-        cols = [(s.expression.sensitivity(), s.expression.type(), s.expression.is_count) for s in syms]
-
-        # is_group_key = self._grouping_columns(subquery)
-        is_group_key = [s.is_grouping_column for s in subquery._select_symbols]
-        cols = zip(is_group_key, cols)
-        cols = [(None if gk else s, t, c) for gk, (s, t, c) in cols]
-        if any([s is np.inf for s, _, _ in cols]):
-            raise ValueError(
-                "Query is attempting to query an unbounded column that isn't part of the grouping key"
-            )
-        mechanisms = self.privacy.mechanisms
-        epsilon = self.privacy.epsilon
-        delta = self.privacy.delta
-        mechs = []
-        for idx in range(len(cols)):
-            sensitivity, t, is_count = cols[idx]
-            mech = None
-            if t in ['int', 'float'] and sensitivity is not None:
-                stat = 'count' if is_count else 'sum'
-                if kc_pos is not None and idx == kc_pos:
-                    stat = 'threshold'
-                mech_class = mechanisms.get_mechanism(sensitivity, stat, t)
-                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-                if kc_pos is not None and idx == kc_pos:
-                    mech.delta = delta
-            mechs.append(mech)
-        return mechs
+        return [s.mechanism for s in subquery._select_symbols]
 
     def execute_with_accuracy(self, query_string:str):
         return self.execute(query_string, accuracy=True)
 
     def execute_with_accuracy_df(self, query_string:str, *ignore, privacy:bool=False):
         return self.execute_df(query_string, accuracy=True)
-
 
     def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None, _no_postprocess=None):
         """Executes a query and returns a recordset that is differentially private.
@@ -351,6 +321,9 @@ class PrivateReader(Reader):
 
         # get a list of mechanisms in column order
         mechs = self._get_mechanisms(subquery)
+        check_sens = [m for m in mechs if m]
+        if any([m.sensitivity is np.inf for m in check_sens]):
+            raise ValueError(f"Attempting to query an unbounded column")
 
         kc_pos = self._get_keycount_position(subquery)
         if kc_pos is not None:
@@ -418,7 +391,7 @@ class PrivateReader(Reader):
 
         def convert(val, type):
             if type == "string" or type == "unknown":
-                return str(val).replace('"', "").replace("'", "")
+                return str(val)
             elif type == "int":
                 return int(float(str(val).replace('"', "").replace("'", "")))
             elif type == "float":
