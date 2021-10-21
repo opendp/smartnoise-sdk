@@ -149,6 +149,11 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlSmallParser#dayNameFunc.
+    def visitDayNameFunc(self, ctx:SqlSmallParser.DayNameFuncContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlSmallParser#add.
     def visitAdd(self, ctx:SqlSmallParser.AddContext):
         return self.visitChildren(ctx)
@@ -161,6 +166,11 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#castExpr.
     def visitCastExpr(self, ctx:SqlSmallParser.CastExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#extractFunc.
+    def visitExtractFunc(self, ctx:SqlSmallParser.ExtractFuncContext):
         return self.visitChildren(ctx)
 
 
@@ -191,6 +201,11 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#rankFunction.
     def visitRankFunction(self, ctx:SqlSmallParser.RankFunctionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#currentTimeFunc.
+    def visitCurrentTimeFunc(self, ctx:SqlSmallParser.CurrentTimeFuncContext):
         return self.visitChildren(ctx)
 
 
@@ -389,8 +404,18 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlSmallParser#dayNameFunction.
+    def visitDayNameFunction(self, ctx:SqlSmallParser.DayNameFunctionContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlSmallParser#datePart.
     def visitDatePart(self, ctx:SqlSmallParser.DatePartContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#getTime.
+    def visitGetTime(self, ctx:SqlSmallParser.GetTimeContext):
         return self.visitChildren(ctx)
 
 
@@ -411,6 +436,11 @@ class SqlSmallVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlSmallParser#stringConcat.
     def visitStringConcat(self, ctx:SqlSmallParser.StringConcatContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlSmallParser#coalesceFunction.
+    def visitCoalesceFunction(self, ctx:SqlSmallParser.CoalesceFunctionContext):
         return self.visitChildren(ctx)
 
 

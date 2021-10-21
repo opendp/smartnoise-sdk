@@ -1,3 +1,4 @@
+from numpy.lib.arraysetops import isin
 from snsql._ast.tokens import *
 import numpy as np
 import operator
@@ -180,6 +181,8 @@ class BareFunction(SqlExpr):
 
 class RoundFunction(SqlExpr):
     def __init__(self, expression, decimals):
+        if not isinstance(decimals.value, int):
+            raise ValueError("Decimals argument must be integer")
         self.expression = expression
         self.decimals = decimals
 
@@ -190,8 +193,36 @@ class RoundFunction(SqlExpr):
         return start + middle + end
 
     def evaluate(self, bindings):
+        decimals = self.decimals.evaluate(bindings)
         exp = self.expression.evaluate(bindings)
-        return np.round(exp, self.decimals.value)
+        return np.round(exp, decimals if decimals else 0)
 
     def symbol(self, relations):
         return RoundFunction(self.expression.symbol(relations), self.decimals)
+
+
+class TruncFunction(SqlExpr):
+    def __init__(self, expression, decimals):
+        if not isinstance(decimals.value, int):
+            raise ValueError("Decimals argument must be integer")
+        self.expression = expression
+        self.decimals = decimals
+    def children(self):
+        start = [Token("TRUNCATE"), Token("("), self.expression]
+        end = [Token(")")]
+        middle = [] if not self.decimals else [Token(","), self.decimals]
+        return start + middle + end
+    def evaluate(self, bindings):
+        decimals = self.decimals.evaluate(bindings)
+        exp = self.expression.evaluate(bindings)
+        if decimals == None:
+            decimals = 0
+        shift = float(10 ** decimals)
+        v = float(exp * shift)
+        v = np.floor(v)
+        v = v / shift
+        if isinstance(exp, int):
+            v = int(v)
+        return v
+    def symbol(self, relations):
+        return TruncFunction(self.expression.symbol(relations), self.decimals)

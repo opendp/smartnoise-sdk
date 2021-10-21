@@ -128,9 +128,10 @@ expression
     | expressionSubquery                                    #subqueryExpr
     | '(' expression ')'                                    #nestedExpr
     | stringFunction                                        #stringFunc
+    | getTime                                               #currentTimeFunc
+    | extractFunction                                       #extractFunc
+    | dayNameFunction                                       #dayNameFunc
     ;
-
-
 
 
 predicate
@@ -180,7 +181,6 @@ bareFunction : function=bareFunctionName '(' ')';
 
 rankingFunction: function=rankingFunctionName  '(' ')' overClause;
 
-
 comparisonOperator
     : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
     ;
@@ -205,6 +205,7 @@ literal
 // date and time functions
 
 extractFunction: EXTRACT '(' datePart FROM sourceExpr=expression ')';
+dayNameFunction: DAYNAME '(' expr=expression ')';
 
 datePart
     : YEAR
@@ -213,6 +214,14 @@ datePart
     | HOUR
     | MINUTE
     | SECOND
+    | MICROSECOND
+    | WEEKDAY
+    ;
+
+getTime
+    : CURRENT_DATE
+    | CURRENT_TIME
+    | CURRENT_TIMESTAMP
     ;
 
 // string functions
@@ -220,6 +229,7 @@ stringFunction
     : stringUpper
     | stringLower
     | stringConcat
+    | coalesceFunction
     | trimFunction
     | substringFunction
     | positionFunction
@@ -228,9 +238,10 @@ stringFunction
 
 stringUpper: UPPER '(' sourceExpr=expression ')';
 stringLower: LOWER '(' sourceExpr=expression ')';
-stringConcat: CONCAT '(' string1=expression ',' string2=expression ')';
+stringConcat: CONCAT '(' expression (',' expression)* ')';
+coalesceFunction: COALESCE '(' expression (',' expression)* ')';
 trimFunction: TRIM '(' sourceExpr=expression ')';
-substringFunction: SUBSTRING '(' sourceExpr=expression FROM start=INTEGER_VALUE (FOR length=INTEGER_VALUE)? ')';
+substringFunction: SUBSTRING '(' sourceExpr=expression FROM startIdx=expression (FOR length=expression)? ')';
 positionFunction: POSITION '(' searchString=expression IN sourceString=expression ')';
 charLengthFunction: CHAR_LENGTH '(' sourceString=expression ')';
 
@@ -293,13 +304,18 @@ CHAR_LENGTH: C H A R UNDERSCORE L E N G T H;
 CEIL: C E I L;
 CEILING: C E I L I N G;
 CHOOSE: C H O O S E;
+COALESCE: C O A L E S C E;
 CONCAT: C O N C A T;
 COS: C O S;
 COT: C O T;
 COUNT: C O U N T;
 CROSS: C R O S S;
+CURRENT_DATE: C U R R E N T UNDERSCORE D A T E;
+CURRENT_TIME: C U R R E N T UNDERSCORE T I M E;
+CURRENT_TIMESTAMP: C U R R E N T UNDERSCORE T I M E S T A M P;
 DATE: D A T E;
 DAY: D A Y;
+DAYNAME: D A Y N A M E;
 DEGREES: D E G R E E S;
 DENSE_RANK: D E N S E '_' R A N K;
 DESC: D E S C;
@@ -334,6 +350,7 @@ LOG10: L O G '1' '0';
 LOG2: L O G '2';
 LOWER: L O W E R;
 MAX: M A X;
+MICROSECOND: M I C R O S E C O N D;
 MIN: M I N;
 MINUTE: M I N U T E;
 MONTH: M O N T H;
@@ -383,6 +400,7 @@ TRIM: T R I M;
 TRUE: T R U E;
 TRUNC: T R U N C;
 TRUNCATE: T R U N C A T E;
+TZOFFSET: T Z O F F S E T;
 UNION: U N I O N; // reserved
 UPPER: U P P E R;
 USING: U S I N G;
@@ -390,6 +408,7 @@ VAR: V A R;
 VARCHAR: V A R C H A R;
 NVARCHAR: N V A R C H A R;
 VARIANCE: V A R I A N C E;
+WEEKDAY: W E E K D A Y;
 WHEN: W H E N;
 WHERE: W H E R E;
 YEAR: Y E A R;
