@@ -8,7 +8,7 @@
 The SmartNoise SDK includes 3 packages:
 * [smartnoise-sql](sql/): Run differentially private SQL queries
 * [smartnoise-synth](synth/): Generate differentially private synthetic data
-* [smartnoise-eval](evaluator/): Evaluate simple differentially private algorithms
+* [smartnoise-eval](eval/): Evaluate simple differentially private algorithms
 
 To get started, see the examples below. Click into each project for more detailed examples.
 
