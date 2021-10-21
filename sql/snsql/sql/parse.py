@@ -1,3 +1,7 @@
+from snsql._ast.expressions.date import CurrentDateFunction, CurrentTimeFunction, CurrentTimestampFunction, DayNameFunction, ExtractFunction
+from snsql._ast.expressions.string import *
+from snsql._ast.expressions.numeric import *
+from snsql._ast.expressions.types import CastFunction
 from snsql.metadata import Metadata
 from .parser.SqlSmallLexer import SqlSmallLexer  # type: ignore
 from .parser.SqlSmallParser import SqlSmallParser  # type: ignore
@@ -221,30 +225,15 @@ class RelationVisitor(SqlSmallVisitor):
 
 
 class ExpressionVisitor(SqlSmallVisitor):
+    """
+    SQL Grammar
+    """
     def visitColumnName(self, ctx):
         return Column(ctx.name.getText())
-
-    def visitCaseExpr(self, ctx):
-        return CaseExpressionVisitor().visit(ctx)
 
     def visitAllExpr(self, ctx):
         ident = ctx.allExpression().identifier()
         return AllColumns(ident.getText() if ident is not None else None)
-
-    def visitMultiply(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op("*"), self.visit(ctx.right))
-
-    def visitDivide(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op("/"), self.visit(ctx.right))
-
-    def visitModulo(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op("%"), self.visit(ctx.right))
-
-    def visitAdd(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op("+"), self.visit(ctx.right))
-
-    def visitSubtract(self, ctx):
-        return ArithmeticExpression(self.visit(ctx.left), Op("-"), self.visit(ctx.right))
 
     def visitDecimalLiteral(self, ctx):
         return Literal(float(allText(ctx)))
@@ -273,6 +262,9 @@ class ExpressionVisitor(SqlSmallVisitor):
     def visitNullLiteral(self, ctx):
         return Literal(None)
 
+    def visitNestedExpr(self, ctx):
+        return NestedExpression(self.visit(ctx.expression()))
+
     def visitAggFunc(self, ctx):
         fname = FuncName(ctx.function.getText().upper())
         qt = ctx.setQuantifier()
@@ -285,37 +277,6 @@ class ExpressionVisitor(SqlSmallVisitor):
         qv = QueryVisitor()
         q = qv.visitQuery(sq)
         return AliasedSubquery(q, None)
-
-    def visitNestedExpr(self, ctx):
-        return NestedExpression(self.visit(ctx.expression()))
-
-    def visitIifFunc(self, ctx):
-        test = BooleanExpressionVisitor().visit(ctx.test)
-        yes = ExpressionVisitor().visit(ctx.yes)
-        no = ExpressionVisitor().visit(ctx.no)
-        return IIFFunction(test, yes, no)
-
-    def visitRoundFunction(self, ctx):
-        expression = ExpressionVisitor().visit(ctx.expression())
-        digits = ExpressionVisitor().visit(ctx.digits)
-        return RoundFunction(expression, digits)
-
-    def visitMathFunc(self, ctx):
-        fname = FuncName(ctx.function.getText().upper())
-        return MathFunction(fname, self.visit(ctx.expression()))
-
-    def visitChooseFunc(self, ctx):
-        expression = ExpressionVisitor().visit(ctx.index)
-        choices = Seq([ExpressionVisitor().visit(e) for e in ctx.literal()])
-        return ChooseFunction(expression, choices)
-
-    def visitPowerFunction(self, ctx):
-        return PowerFunction(
-            ExpressionVisitor().visit(ctx.expression()), ExpressionVisitor().visit(ctx.number())
-        )
-
-    def visitBareFunction(self, ctx):
-        return BareFunction(FuncName(ctx.function.getText().upper()))
 
     def visitRankingFunction(self, ctx):
         fname = FuncName(ctx.function.getText().upper())
@@ -330,6 +291,149 @@ class ExpressionVisitor(SqlSmallVisitor):
         order = OrderVisitor().visit(oc) if oc is not None else None
         return OverClause(partition, order)
 
+    """
+    Typing functions
+    """
+
+    def visitCastExpression(self, ctx: SqlSmallParser.CastExpressionContext):
+        exp = ExpressionVisitor().visit(ctx.fromExpr)
+        dbtype = ctx.dbType().getText().lower()
+        return CastFunction(exp, dbtype)
+
+    """
+    Logical functions
+    """
+    def visitCaseExpr(self, ctx):
+        return CaseExpressionVisitor().visit(ctx)
+
+    def visitIifFunc(self, ctx):
+        test = BooleanExpressionVisitor().visit(ctx.test)
+        yes = ExpressionVisitor().visit(ctx.yes)
+        no = ExpressionVisitor().visit(ctx.no)
+        return IIFFunction(test, yes, no)
+
+    def visitChooseFunc(self, ctx):
+        expression = ExpressionVisitor().visit(ctx.index)
+        choices = Seq([ExpressionVisitor().visit(e) for e in ctx.literal()])
+        return ChooseFunction(expression, choices)
+
+
+    """
+    Numeric functions
+    """
+    def visitMultiply(self, ctx):
+        return ArithmeticExpression(self.visit(ctx.left), Op("*"), self.visit(ctx.right))
+
+    def visitDivide(self, ctx):
+        return ArithmeticExpression(self.visit(ctx.left), Op("/"), self.visit(ctx.right))
+
+    def visitModulo(self, ctx):
+        return ArithmeticExpression(self.visit(ctx.left), Op("%"), self.visit(ctx.right))
+
+    def visitAdd(self, ctx):
+        return ArithmeticExpression(self.visit(ctx.left), Op("+"), self.visit(ctx.right))
+
+    def visitSubtract(self, ctx):
+        return ArithmeticExpression(self.visit(ctx.left), Op("-"), self.visit(ctx.right))
+
+    def visitRoundFunction(self, ctx):
+        expression = ExpressionVisitor().visit(ctx.expression())
+        if ctx.digits:
+            digits = ExpressionVisitor().visit(ctx.digits)
+        else:
+            digits = None
+        return RoundFunction(expression, digits)
+
+    def visitTruncFunction(self, ctx):
+        expression = ExpressionVisitor().visit(ctx.expression())
+        if ctx.digits:
+            digits = ExpressionVisitor().visit(ctx.digits)
+        else:
+            digits = None
+        return TruncFunction(expression, digits)
+
+    def visitMathFunc(self, ctx):
+        fname = FuncName(ctx.function.getText().upper())
+        return MathFunction(fname, self.visit(ctx.expression()))
+
+    def visitPowerFunction(self, ctx):
+        return PowerFunction(
+            ExpressionVisitor().visit(ctx.expression()), ExpressionVisitor().visit(ctx.number())
+        )
+
+    def visitBareFunction(self, ctx):
+        return BareFunction(FuncName(ctx.function.getText().upper()))
+
+    """
+    String functions
+    """
+
+    def visitStringLower(self, ctx: SqlSmallParser.StringLowerContext):
+        return LowerFunction(
+            ExpressionVisitor().visit(ctx.expression())
+        )
+
+    def visitStringUpper(self, ctx: SqlSmallParser.StringUpperContext):
+        return UpperFunction(
+            ExpressionVisitor().visit(ctx.expression())
+        )
+
+    def visitTrimFunction(self, ctx: SqlSmallParser.TrimFunctionContext):
+        return TrimFunction(
+            ExpressionVisitor().visit(ctx.expression())
+        )
+
+    def visitCharLengthFunction(self, ctx: SqlSmallParser.CharLengthFunctionContext):
+        return CharLengthFunction(
+            ExpressionVisitor().visit(ctx.expression())
+        )
+    
+    def visitPositionFunction(self, ctx: SqlSmallParser.PositionFunctionContext):
+        return PositionFunction(
+            ExpressionVisitor().visit(ctx.searchString),
+            ExpressionVisitor().visit(ctx.sourceString)
+        )
+
+    def visitStringConcat(self, ctx: SqlSmallParser.StringConcatContext):
+        ev = ExpressionVisitor()
+        expressions = [e for e in [ev.visit(c) for c in ctx.children] if e is not None]
+        return ConcatFunction(expressions)
+
+    def visitCoalesceFunction(self, ctx: SqlSmallParser.CoalesceFunctionContext):
+        ev = ExpressionVisitor()
+        expressions = [e for e in [ev.visit(c) for c in ctx.children] if e is not None]
+        return CoalesceFunction(expressions)
+
+    def visitSubstringFunction(self, ctx: SqlSmallParser.SubstringFunctionContext):
+        return SubstringFunction(
+            ExpressionVisitor().visit(ctx.sourceExpr),
+            ExpressionVisitor().visit(ctx.startIdx),
+            ExpressionVisitor().visit(ctx.length) if ctx.length else None
+        )
+
+    """
+    Date/time functions
+    """
+
+    def visitCurrentTimeFunc(self, ctx: SqlSmallParser.CurrentTimeFuncContext):
+        func = ctx.getText()
+        if func == 'CURRENT_TIMESTAMP':
+            return CurrentTimestampFunction()
+        elif func == 'CURRENT_TIME':
+            return CurrentTimeFunction()
+        elif func == 'CURRENT_DATE':
+            return CurrentDateFunction()
+        else:
+            raise ValueError(f"Unknown function to get current time: {func}")
+
+    def visitDayNameFunction(self, ctx: SqlSmallParser.DayNameFuncContext):
+        expr = ExpressionVisitor().visit(ctx.expr)
+        return DayNameFunction(expr)
+
+    def visitExtractFunction(self, ctx: SqlSmallParser.ExtractFunctionContext):
+        expr = ExpressionVisitor().visit(ctx.expression())
+        date_part = ctx.datePart().getText()
+        return ExtractFunction(date_part.lower(), expr)
 
 class CaseExpressionVisitor(SqlSmallVisitor):
     def visitCaseBaseExpr(self, ctx):

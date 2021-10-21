@@ -65,14 +65,19 @@ class GoodQueryTester:
             self.walk_children(n)
     def runParse(self):
         for query in self.queries:
-            QueryParser().parse_only(query)
+            try:
+                QueryParser().parse_only(query)
+            except Exception as e:
+                raise ValueError(f"Parse error for {str(query)}: {str(e)}")
     def runBuild(self):
         for query in self.queries:
-            q = QueryParser().query(query)
-            self.walk_children(q)
-#        assert len(qb) == len(self.queries)
-            assert query.replace(' ','').replace('\n','').lower() == str(q).replace(' ','').replace('\n','').lower()
-            self.runParseAgain(q)
+            try:
+                q = QueryParser().query(query)
+                self.walk_children(q)
+                assert query.replace(' ','').replace('\n','').lower() == str(q).replace(' ','').replace('\n','').lower()
+                self.runParseAgain(q)
+            except Exception as e:
+                raise ValueError(f"Parse error for {str(query)}: {str(e)}")
     def runParseAgain(self, q):
         """ Converts AST to text, re-parses to AST, and compares the two ASTs"""
         repeat = QueryParser().query(str(q))
