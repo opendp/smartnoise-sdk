@@ -3,7 +3,7 @@ import pandas as pd
 import copy
 import csv
 import os
-from snsql.metadata.collection import *
+from snsql.metadata import *
 from sneval.learner._generate import Grammar
 
 
@@ -55,8 +55,8 @@ def generate_neighbors(df, metadata, flag="bandit"):
     d1_table.name, d2_table.name = "dataset", "dataset"
     d2_table.rowcount = d1_table.rowcount - 1
     d1_metadata, d2_metadata = (
-        CollectionMetadata([d1_table], "csv"),
-        CollectionMetadata([d2_table], "csv"),
+        Metadata([d1_table], "csv"),
+        Metadata([d2_table], "csv"),
     )
 
     return d1, d2, d1_metadata, d2_metadata
