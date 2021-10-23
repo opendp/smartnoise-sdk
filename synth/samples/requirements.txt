@@ -1,0 +1,7 @@
+smartnoise-synth
+scikit-learn
+scikit-image
+matplotlib
+seaborn
+requests
+jupyter

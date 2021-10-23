@@ -56,6 +56,60 @@ reader = snsql.from_connection(pumsdb, privacy=privacy, metadata=meta_path)
 result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex')
 ```
 
+## Querying a Spark DataFrame
+
+Use `from_connection` to wrap a spark session.
+
+```python
+import pyspark
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+from snsql import *
+
+pums = spark.read.load(...)  # load a Spark DataFrame
+pums.createOrReplaceTempView("PUMS_large")
+
+metadata = 'PUMS_large.yaml'
+
+private_reader = from_connection(
+    spark, 
+    metadata=metadata, 
+    privacy=Privacy(epsilon=3.0, delta=1/1_000_000)
+)
+private_reader.reader.compare.search_path = ["PUMS"]
+
+
+res = private_reader.execute('SELECT COUNT(*) FROM PUMS_large')
+res.show()
+```
+
+## Histograms
+
+SQL `group by` queries represent histograms binned by grouping key.  Queries over a grouping key with unbounded or non-public dimensions expose privacy risk. For example:
+
+```sql
+SELECT last_name, COUNT(*) FROM Sales GROUP BY last_name
+```
+
+In the above query, if someone with a distinctive last name is included in the database, that person's record might accidentally be revealed, even if the noisy count returns 0 or negative.  To prevent this from happening, the system will automatically censor dimensions which would violate differential privacy.
+
+## Private Synopsis
+
+A private synopsis is a pre-computed set of differentially private aggregates that can be filtered and aggregated in various ways to produce new reports.  Because the private synopsis is differentially private, reports generated from the synopsis do not need to have additional privacy applied, and the synopsis can be distributed without risk of additional privacy loss.  Reports over the synopsis can be generated with non-private SQL, within an Excel Pivot Table, or through other common reporting tools.
+
+You can see a sample [notebook for creating private synopsis](samples/Synopsis.ipynb) suitable for consumption in Excel or SQL.
+
+## Limitations
+
+You can think of the data access layer as simple middleware that allows composition of `opendp` computations using the SQL language.  The SQL language provides a limited subset of what can be expressed through the full `opendp` library.  For example, the SQL language does not provide a way to set per-field privacy budget.
+
+Because we delegate the computation of exact aggregates to the underlying database engines, execution through the SQL layer can be considerably faster, particularly with database engines optimized for precomputed aggregates.  However, this design choice means that analysis graphs composed with SQL language do not access data in the engine on a per-row basis.  Therefore, SQL queries do not currently support algorithms that require per-row access, such as quantile algorithms that use underlying values.  This is a limitation that future releases will relax for database engines that support row-based access, such as Spark.
+
+The SQL processing layer has limited support for bounding contributions when individuals can appear more than once in the data.  This includes ability to perform reservoir sampling to bound contributions of an individual, and to scale the sensitivity parameter.  These parameters are important when querying reporting tables that might be produced from subqueries and joins, but require caution to use safely.
+
+For this release, we recommend using the SQL functionality while bounding user contribution to 1 row.  The platform defaults to this option by setting `max_contrib` to 1, and should only be overridden if you know what you are doing.  Future releases will focus on making these options easier for non-experts to use safely.
+
+
 ## Communication
 
 - You are encouraged to join us on [GitHub Discussions](https://github.com/opendp/opendp/discussions/categories/smartnoise)
