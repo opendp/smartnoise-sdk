@@ -25,6 +25,6 @@ class TestMetadataLoadFrom:
         assert(len(res) == 3)
     def test_load_from_private_reader_path(self):
         reader = PandasReader(pums, meta_path)
-        priv = PrivateReader(reader, meta_path)
+        priv = PrivateReader(reader, meta_path, privacy=Privacy(epsilon=1.0))
         res = priv.execute("SELECT COUNT(age) FROM PUMS.PUMS GROUP BY sex")
         assert(len(res) == 3)

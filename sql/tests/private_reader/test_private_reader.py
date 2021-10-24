@@ -8,6 +8,7 @@ import pytest
 from snsql.sql.dpsu import preprocess_df_from_query, run_dpsu
 from snsql.metadata import Metadata
 from snsql.sql import PrivateReader
+from snsql import *
 from snsql.sql.reader.pandas import PandasReader
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -44,11 +45,11 @@ class TestDPSU:
     def test_dpsu_vs_korolova(self):
         query = "SELECT ngram, COUNT(*) as n FROM reddit.reddit GROUP BY ngram ORDER BY n desc"
         reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 3.0)
+        private_reader = PrivateReader(reader, schema, privacy=Privacy(epsilon=3.0))
         private_reader.options.max_contrib = 10
         result = private_reader.execute_df(query)
 
-        private_reader_korolova = PrivateReader(reader, schema, 3.0)
+        private_reader_korolova = PrivateReader(reader, schema, privacy=Privacy(epsilon=3.0))
         private_reader_korolova.options.dpsu = False
         private_reader_korolova.options.max_contrib = 10
         korolova_result = private_reader_korolova.execute_df(query)

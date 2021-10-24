@@ -4,6 +4,7 @@ import subprocess
 from snsql._ast.tokens import Column
 import pandas as pd
 
+from snsql import *
 from snsql.metadata import Metadata, Table, Int
 from snsql.sql import PrivateReader
 from snsql.sql.reader.pandas import PandasReader
@@ -22,7 +23,7 @@ class TestOptRewriter:
         meta = Metadata.from_file(meta_path)
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, 1.0)
+        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=3.0))
         query = "SELECT COUNT (*) AS foo, COUNT(DISTINCT pid) AS bar FROM PUMS.PUMS"
         q = QueryParser(meta).query(query)
         inner, outer = private_reader._rewrite_ast(q)
@@ -35,7 +36,7 @@ class TestOptRewriter:
         meta['PUMS.PUMS']['pid'].is_key = False
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, 1.0)
+        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=3.0))
         query = "SELECT COUNT (*) AS foo, COUNT(DISTINCT pid) AS bar FROM PUMS.PUMS"
         q = QueryParser(meta).query(query)
         inner, outer = private_reader._rewrite_ast(q)
@@ -49,7 +50,7 @@ class TestOptRewriter:
         ], 150)
         meta = Metadata([sample], "csv")
         reader = PostgresReader("localhost", "PUMS", "admin", "password")
-        private_reader = PrivateReader(reader, meta, 1.0)
+        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=3.0))
         query = 'SELECT COUNT (DISTINCT pid) AS foo, COUNT(DISTINCT "PiD") AS bar FROM PUMS.PUMS'
         inner, outer = private_reader._rewrite(query)
         ne = outer.select.namedExpressions
@@ -59,7 +60,7 @@ class TestOptRewriter:
         meta = Metadata.from_file(meta_path)
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, 1.0)
+        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=3.0))
         query = 'SELECT AVG(age), SUM(age), COUNT(age) FROM PUMS.PUMS'
         q = QueryParser(meta).query(query)
         inner, outer = private_reader._rewrite(query)
