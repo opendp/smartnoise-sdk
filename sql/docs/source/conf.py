@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 # We're inside source when this runs.
-sys.path.append(os.path.abspath('../../python/src'))
+sys.path.append(os.path.abspath('../..'))
 # print("*****************************************")
 # [print(p) for p in sys.path]
 # print("*****************************************")

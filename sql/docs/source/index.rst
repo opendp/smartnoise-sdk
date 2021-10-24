@@ -1,21 +1,43 @@
-Welcome
-=======
+SmartNoise SQL
+==============
 
-SmartNoise documentation is organized into the guides below.
-Return home by clicking the OpenDP logo in the header.
-Each section in the header bar corresponds to a top-level section below.
-When you are in a top-level section, the left panel contains a table of contents for the section,
-and the right panel contains a table of contents for the current document.
-Documentation for past releases are available in the drop down on the left panel.
-In addition to browsing, you can :ref:`search <search>`.
+
+
+API Reference
+-------------
+.. toctree::
+  :glob:
+  :titlesonly:
+  :maxdepth: 1
+
+  API index <api/index>
+
+Getting Started
+===============
+
+.. code-block:: python
+
+  import snsql
+  import pandas as pd
+  privacy = snsql.Privacy(epsilon=1.0, delta=0.01)
+
+  csv_path = 'PUMS.csv'
+  meta_path = 'PUMS.yaml'
+
+  pums = pd.read_csv(csv_path)
+  reader = snsql.from_df(pums, privacy=privacy, metadata=meta_path)
+
+  result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex')
+
+Metadata
+========
 
 .. toctree::
   :glob:
   :titlesonly:
-  :maxdepth: 2
+  :maxdepth: 1
 
-  quickstart
-  API <api/index>
+  Metadata <metadata.rst>
 
 This is version |version| of the guides, last built on |today|.
 

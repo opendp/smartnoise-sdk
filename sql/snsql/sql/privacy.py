@@ -53,13 +53,30 @@ class Mechanisms:
         return self.classes[mech]
 
 class Privacy:
-    def __init__(self, *ignore, epsilon:float=1.0, delta:float=10E-16, alphas:List[float]=[], neighboring:str="addremove"):
-        """Privacy parameters.  Values are keyword-only.
+    """Privacy parameters.  The Privacy object is passed in when creating
+    any private SQL connection, and applies to all queries executed against that
+    connection.
+
+    :param epsilon: The epsilon value for each statistic returned by the private SQL connection.
+    :param delta: The delta value for each query processed by the private SQL connection.  Most counts and sums will use delta of 0, but dimension
+        censoring and Gaussian mechanism require delta.  Set delta to something like
+        1/n*sqrt(n), where n is the approximate number of rows in the data source.
+    :param alphas: A list of floats representing desired accuracy bounds.  Only set this parameter if you plan
+        to use execute_with_accuracy for row-based accuracy.  For simple column accuracy bounds, you can pass
+        an alpha directly to get_simple_accuracy, which ignores these alphas.
+    :param neighboring: The neighboring definition to use when computing sensitivity.  Can be "AddRemove" or "Substitute".
+    :param mechanisms: A property bag specifying which mechanisms to use for which
+        types of statistics.  You will only set this parameter if you want to override
+        default mechanism mapping.
+    """
+    def __init__(self, *ignore, epsilon:float=1.0, delta:float=10E-16, alphas:List[float]=[], neighboring:str="addremove", mechanisms:Mechanisms=Mechanisms()):
+        """Privacy params.
+        
         """
         self.epsilon = epsilon
         self.delta = delta
         self.alphas = alphas
-        self.mechanisms = Mechanisms()
-        if neighboring not in ["addremove", "substitute"]:
+        self.mechanisms = mechanisms
+        if neighboring.lower() not in ["addremove", "substitute"]:
             raise ValueError("Neighboring definition must be 'addremove' or 'substitute'")
-        self.neighboring = neighboring
+        self.neighboring = neighboring.lower()

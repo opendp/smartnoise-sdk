@@ -24,50 +24,27 @@ import itertools
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results.
 
-    PrivateReader should be created using the `from_connection` factory method.  For example,
-    using pyodbc:
-    
-    .. code-block:: python
-
-        conn = pyodbc.connect(dsn)
-        meta = 'datasets/PUMS.yaml'
-        privacy = Privacy(epsilon=0.1, delta=1/10000)
-        reader = PrivateReader.from_connection(conn, metadata=meta, privacy=privacy)
-
-        result = reader.execute('SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
-
-    or using a Pandas dataframe:
-
-    .. code-block:: python
-
-        csv = 'datasets/PUMS.csv'
-        pums = pd.read_csv(csv)
-        meta = 'datasets/PUMS.yaml'
-
-        privacy = Privacy(epsilon=0.1, delta=1/10000)
-        reader = PrivateReader.from_connection(pums, metadata=meta, privacy=privacy)
-
-        result = reader.execute('SELECT COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
-
+    PrivateReader should be created using the `from_connection` method.
     """
-
     def __init__(
         self,
         reader,
         metadata,
         epsilon_per_column=1.0,
-        delta=10e-16,
+        delta=None,
         *ignore,
         privacy=None
 
     ):
-        """Create a new private reader.
+        """Create a new private reader.  Do not use the constructor directly;
+            use the from_connection factory method.
 
             :param metadata: The Metadata object with information about all tables referenced in this query
             :param reader: The data reader to wrap, such as a SqlServerReader, PandasReader, or SparkReader
                 The PrivateReader intercepts queries to the underlying reader and ensures differential privacy.
-            :param epsilon_per_column: The privacy budget to spend for each column in the query
-            :param delta: The delta privacy parameter
+            :param epsilon_per_column: The privacy budget to spend for each column in the query (deprecated)
+            :param delta: The delta privacy parameter (deprecated)
+            :param privacy: Pass epsilon and delta
         """
         if isinstance(reader, Reader):
             self.reader = reader
@@ -104,8 +81,10 @@ class PrivateReader(Reader):
     def engine(self) -> str:
         """The engine being used by this private reader.
 
+        .. code-block:: python
+
             df = pd.read_csv('datasets/PUMS.csv')
-            reader = PrivateReader.from_connection(df, metadata=meta, privacy=privacy)
+            reader = PrivateReader.from_connection(df, metadata=metadata, privacy=privacy)
             assert(reader.engine == 'pandas')
         """
         return self.reader.engine
@@ -195,6 +174,8 @@ class PrivateReader(Reader):
 
     def parse_query_string(self, query_string) -> Query:
         """Parse a query string using this `PrivateReader`'s metadata, returning a `Query` from the AST.
+
+        .. code-block:: python
 
             reader = PrivateReader.from_connection(pums, metadata=meta, privacy=privacy)
             query_string = 'SELECT STDDEV(age) AS age FROM PUMS.PUMS'
