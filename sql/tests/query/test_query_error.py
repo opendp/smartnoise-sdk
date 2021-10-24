@@ -10,6 +10,7 @@ import math
 from snsql.metadata import Metadata
 from snsql.sql import PrivateReader
 from snsql.sql.reader.pandas import PandasReader
+from snsql import *
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -24,25 +25,25 @@ class TestQueryError:
         s = copy.copy(schema)
         s["PUMS.PUMS"]["income"].upper = None
         reader = PandasReader(df, s)
-        private_reader = PrivateReader(reader, s, 4.0)
+        private_reader = PrivateReader(reader, s, privacy=Privacy(epsilon=4.0))
         with pytest.raises(ValueError):
             rs = private_reader.execute_df("SELECT SUM(income) FROM PUMS.PUMS")
     def test_err2(self):
         s = copy.copy(schema)
         s["PUMS.PUMS"]["income"].lower = None
         reader = PandasReader(df, s)
-        private_reader = PrivateReader(reader, s, 4.0)
+        private_reader = PrivateReader(reader, s, privacy=Privacy(epsilon=4.0))
         with pytest.raises(ValueError):
             rs = private_reader.execute_df("SELECT income, SUM(income) FROM PUMS.PUMS GROUP BY income")
     def test_ok1(self):
         s = copy.copy(schema)
         s["PUMS.PUMS"]["income"].upper = None
         reader = PandasReader(df, s)
-        private_reader = PrivateReader(reader, s, 4.0)
+        private_reader = PrivateReader(reader, s, privacy=Privacy(epsilon=4.0))
         rs = private_reader.execute_df("SELECT income FROM PUMS.PUMS GROUP BY income")
     def test_ok2(self):
         s = copy.copy(schema)
         s["PUMS.PUMS"]["income"].upper = None
         reader = PandasReader(df, s)
-        private_reader = PrivateReader(reader, s, 4.0)
+        private_reader = PrivateReader(reader, s, privacy=Privacy(epsilon=4.0))
         rs = private_reader.execute_df("SELECT COUNT(income) FROM PUMS.PUMS")

@@ -62,12 +62,12 @@ class TestQuery:
     #     assert(rs[1][0] > rs[2][0])
     def test_group_by_noisy_typed_order(self):
         reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 4.0)
+        private_reader = PrivateReader(reader, schema, privacy=Privacy(epsilon=4.0))
         rs = private_reader.execute_df("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c")
         assert(rs['c'][0] < rs['c'][1])
     def test_group_by_noisy_typed_order_desc(self):
         reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 4.0)
+        private_reader = PrivateReader(reader, schema, privacy=Privacy(epsilon=4.0))
         rs = private_reader.execute_df("SELECT COUNT(*) AS c, married AS m FROM PUMS.PUMS GROUP BY married ORDER BY c DESC")
         assert(rs['c'][0] > rs['c'][1])
     def test_count_no_rows_exact_typed(self):
@@ -87,6 +87,6 @@ class TestQuery:
         assert(trs['age_total'][0] > 1000)
     def test_sum_noisy_postprocess(self):
         reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 1.0)
+        private_reader = PrivateReader(reader, schema, privacy=Privacy(epsilon=1.0))
         trs = private_reader.execute_df("SELECT POWER(SUM(age), 2) as age_total FROM PUMS.PUMS")
         assert(trs['age_total'][0] > 1000 ** 2)

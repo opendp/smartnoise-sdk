@@ -10,6 +10,7 @@ import os
 from snsql.sql import PandasReader, PrivateReader
 from snsql.sql._mechanisms.gaussian import Gaussian
 from pandasql import sqldf
+from snsql.sql.privacy import Privacy
 
 
 class Aggregation:
@@ -133,7 +134,7 @@ class Aggregation:
         # VAR not supported in Pandas Reader. So not needed to fetch actual on every aggregation
         if get_exact:
             actual = reader.execute(query)[1:][0][0]
-        private_reader = PrivateReader(reader, metadata, self.epsilon)
+        private_reader = PrivateReader(reader, metadata, privacy=Privacy(epsilon=self.epsilon))
         query_ast = private_reader.parse_query_string(query)
 
         noisy_values = []
@@ -157,7 +158,7 @@ class Aggregation:
         reader = PandasReader(df, metadata)
         exact_res = reader.execute(query)[1:]
 
-        private_reader = PrivateReader(reader, metadata, self.epsilon)
+        private_reader = PrivateReader(reader, metadata, privacy=Privacy(epsilon=self.epsilon))
         query_ast = private_reader.parse_query_string(query)
 
         # Distinguishing dimension and measure columns

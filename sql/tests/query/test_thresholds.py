@@ -84,7 +84,7 @@ class TestQueryThresholds:
         schema_no_dpsu = copy.copy(schema)
         schema_no_dpsu["PUMS.PUMS"].use_dpsu = False
         reader = PandasReader(df, schema_no_dpsu)
-        private_reader = PrivateReader(reader, schema_no_dpsu, 1.0)
+        private_reader = PrivateReader(reader, schema_no_dpsu, privacy=Privacy(epsilon=1.0))
         assert(private_reader._options.use_dpsu == False)
         query = QueryParser(schema_no_dpsu).queries("SELECT COUNT(*) AS c FROM PUMS.PUMS GROUP BY married")[0]
         assert(private_reader._get_reader(query) is private_reader.reader)
@@ -117,7 +117,7 @@ class TestQueryThresholds:
         schema_all['PUMS.PUMS'].censor_dims = False
         reader = PandasReader(df, schema)
         query = QueryParser(schema).queries("SELECT COUNT(*) as c FROM PUMS.PUMS WHERE age > 100")[0]
-        private_reader = PrivateReader(reader, schema_all, 1.0)
+        private_reader = PrivateReader(reader, schema_all, privacy=Privacy(epsilon=1.0))
         private_reader._execute_ast(query, True)
         for i in range(3):
             print(private_reader._options)

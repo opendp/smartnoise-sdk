@@ -7,6 +7,7 @@ from snsql.metadata import Metadata
 from snsql.sql import PrivateReader
 from snsql.sql.reader.base import SqlReader
 from snsql.sql.parse import QueryParser
+from snsql import *
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -22,7 +23,7 @@ pums = pd.read_csv(csv_path)
 query = 'SELECT AVG(age) + 3, STD(age), VAR(age), SUM(age) / 10, COUNT(age) + 2 FROM PUMS.PUMS'
 q = QueryParser(meta).query(query)
 reader = SqlReader.from_connection(pums, "pandas", metadata=meta)
-priv = PrivateReader(reader, meta, 1.0)
+priv = PrivateReader(reader, meta, privacy=Privacy(epsilon=1.0))
 subquery, root = priv._rewrite(query)
 
 class TestXPathExecutionNoRewrite:

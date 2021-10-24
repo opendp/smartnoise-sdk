@@ -30,11 +30,7 @@ class PrivateReader(Reader):
         self,
         reader,
         metadata,
-        epsilon_per_column=1.0,
-        delta=None,
-        *ignore,
         privacy=None
-
     ):
         """Create a new private reader.  Do not use the constructor directly;
             use the from_connection factory method.
@@ -57,7 +53,7 @@ class PrivateReader(Reader):
         if privacy:
             self.privacy = privacy
         else:
-            self.privacy = Privacy(epsilon=epsilon_per_column, delta=delta)
+            raise ValueError("Must pass in a Privacy object with privacy parameters.")
         
         self.odometer = OdometerHeterogeneous(self.privacy)
 
