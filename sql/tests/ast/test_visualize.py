@@ -7,6 +7,7 @@ import pandas as pd
 from pandasql import sqldf
 import math
 
+from snsql import *
 from snsql.metadata import Metadata
 from snsql.sql import PrivateReader
 from snsql.sql.reader.pandas import PandasReader
@@ -42,7 +43,7 @@ class TestAstVisualize:
         query = "SELECT SUM(age) AS my_sum FROM PUMS.PUMS GROUP BY age"
         parsed_query = QueryParser(schema).query(query)
         reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 1.0)
+        private_reader = PrivateReader(reader, schema, privacy=Privacy(epsilon=1.0))
         inner, outer = private_reader._rewrite_ast(parsed_query)
         graph = outer.visualize(n_trunc=30)
         assert(isinstance(graph, Digraph))
@@ -53,7 +54,7 @@ class TestAstVisualize:
     def test_viz_child_nodes(self):
         query = "SELECT AVG(age) AS my_sum FROM PUMS.PUMS GROUP BY age"
         reader = PandasReader(df, schema)
-        private_reader = PrivateReader(reader, schema, 1.0)
+        private_reader = PrivateReader(reader, schema, privacy=Privacy(epsilon=1.0))
         inner, outer = private_reader._rewrite(query)
         aggfuncs = outer.find_nodes(AggFunction)
         for aggfunc in aggfuncs:

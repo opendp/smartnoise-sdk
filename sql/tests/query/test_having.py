@@ -30,7 +30,7 @@ class TestBaseTypes:
         meta["PUMS.PUMS"].censor_dims = False
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, 10.0, 10E-3)
+        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=3.0, delta=10e-3))
         cls.reader = private_reader
 
     def test_queries(self, test_databases):
@@ -83,7 +83,7 @@ class TestOtherTypes:
         meta["PUMS.PUMS"]["married"].type = "bool"
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, 10.0, 10E-3)
+        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=10.0, delta=10e-3))
         self.reader = private_reader
 
     def test_queries(self):
