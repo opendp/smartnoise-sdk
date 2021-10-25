@@ -303,9 +303,6 @@ class PrivateReader(Reader):
             raise ValueError(f"Attempting to query an unbounded column")
 
         kc_pos = self._get_keycount_position(subquery)
-        if kc_pos is not None:
-            thresh_mech = mechs[kc_pos]
-            self.tau = thresh_mech.threshold
 
         def randomize_row_values(row_in):
             row = [v for v in row_in]
@@ -354,6 +351,9 @@ class PrivateReader(Reader):
         if self._options.censor_dims:
             if kc_pos is None:
                 raise ValueError("Query needs a key count column to censor dimensions")
+            else:
+                thresh_mech = mechs[kc_pos]
+                self.tau = thresh_mech.threshold
             if hasattr(out, "filter"):
                 # it's an RDD
                 tau = self.tau

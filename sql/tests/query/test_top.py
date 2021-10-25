@@ -26,7 +26,7 @@ class TestTopAndLimit:
         meta["PUMS.PUMS"].censor_dims = False
         df = pd.read_csv(csv_path)
         reader = PandasReader(df, meta)
-        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=3.0, delta=1.0))
+        private_reader = PrivateReader(reader, meta, privacy=Privacy(epsilon=10.0, delta=0.1))
         cls.reader = private_reader
     def test_order_limit(self, test_databases):
         """
