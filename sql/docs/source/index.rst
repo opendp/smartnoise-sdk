@@ -1,25 +1,30 @@
 SmartNoise SQL
 ==============
 
-
-
 API Reference
 -------------
 .. toctree::
   :glob:
-  :titlesonly:
-  :maxdepth: 1
+  :maxdepth: 2
 
   API index <api/index>
 
 Getting Started
 ===============
 
+SmartNoise applies differential privacy by wrapping an existing database connection, intercepting queries, and ensuring results are private before returning results to the caller.
+
+Querying a Pandas DataFrame
+---------------------------
+
+Use the ``from_df`` method to create a private reader that can issue queries against a pandas dataframe.
+
 .. code-block:: python
 
   import snsql
+  from snsql import Privacy
   import pandas as pd
-  privacy = snsql.Privacy(epsilon=1.0, delta=0.01)
+  privacy = Privacy(epsilon=1.0, delta=0.01)
 
   csv_path = 'PUMS.csv'
   meta_path = 'PUMS.yaml'
@@ -29,13 +34,61 @@ Getting Started
 
   result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex')
 
+Querying a SQL Database
+-----------------------
+
+Use ``from_connection`` to wrap an existing database connection.
+
+.. code-block:: python
+
+  import snsql
+  from snsql import Privacy
+  import psycopg2
+
+  privacy = Privacy(epsilon=1.0, delta=0.01)
+  meta_path = 'PUMS.yaml'
+
+  pumsdb = psycopg2.connect(user='postgres', host='localhost', database='PUMS')
+  reader = snsql.from_connection(pumsdb, privacy=privacy, metadata=meta_path)
+
+  result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex')
+
+Querying a Spark DataFrame
+--------------------------
+
+Use ``from_connection`` to wrap a spark session.
+
+.. code-block:: python
+
+  import pyspark
+  from pyspark.sql import SparkSession
+  spark = SparkSession.builder.getOrCreate()
+  from snsql import *
+
+  pums = spark.read.load(...)  # load a Spark DataFrame
+  pums.createOrReplaceTempView("PUMS_large")
+
+  metadata = 'PUMS_large.yaml'
+
+  private_reader = from_connection(
+      spark, 
+      metadata=metadata, 
+      privacy=Privacy(epsilon=3.0, delta=1/1_000_000)
+  )
+  private_reader.reader.compare.search_path = ["PUMS"]
+
+  res = private_reader.execute('SELECT COUNT(*) FROM PUMS_large')
+  res.show()
+
+
 Metadata
 ========
 
+The metadata is loaded from a file path, and describes important properties of the data source.
+
 .. toctree::
   :glob:
-  :titlesonly:
-  :maxdepth: 1
+  :maxdepth: 2
 
   Metadata <metadata.rst>
 

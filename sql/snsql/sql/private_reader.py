@@ -69,6 +69,13 @@ class PrivateReader(Reader):
         :param metadata: The metadata describing the database.  `Metadata documentation is here <https://github.com/opendp/smartnoise-sdk/blob/new_opendp/sdk/Metadata.md>`_.  Keyword-only.
         :param engine: Optional keyword-only argument that can be used to specify engine-specific rules if automatic detection fails.  This should only be necessary when using an uncommon database or middleware.
         :returns: A `PrivateReader` object initialized to process queries against the supplied connection, using the supplied `Privacy` properties.
+
+        .. code-block:: python
+        
+            privacy = Privacy(epsilon=1.0, delta=1/1000)
+            metadata = 'datasets/PUMS.yaml'
+            pums = pd.read_csv('datasets/PUMS.csv')
+            reader = PrivateReader.from_connection(pums, privacy=privacy, metadata=metadata)
         """
         _reader = SqlReader.from_connection(conn, engine=engine, metadata=metadata, **kwargs)
         return PrivateReader(_reader, metadata, privacy=privacy)
@@ -80,7 +87,7 @@ class PrivateReader(Reader):
         .. code-block:: python
 
             df = pd.read_csv('datasets/PUMS.csv')
-            reader = PrivateReader.from_connection(df, metadata=metadata, privacy=privacy)
+            reader = from_connection(df, metadata=metadata, privacy=privacy)
             assert(reader.engine == 'pandas')
         """
         return self.reader.engine
@@ -143,7 +150,22 @@ class PrivateReader(Reader):
     def get_simple_accuracy(self, query_string: str, alpha: float):
         """
         Return accuracy for each alpha and each mechanism in column order.
-        Columns with no mechanism application return None.
+        Columns with no mechanism application return None.  Returns accuracy
+        without running the query.
+
+        :param query_string: The SQL query
+        :param alpha: The desired accuracy alpha.  For example, alpha of 0.05 will
+            return a 95% interval.
+
+        .. code-block:: python
+
+            reader = from_df(df, metadata=metadata, privacy=privacy)
+            query = 'SELECT COUNT(*) AS n, SUM(age) AS age FROM PUMS.PUMS GROUP BY income'
+
+            accuracy = reader.get_simple_accuracy(query, 0.05)
+
+            print(f'For 95% of query executions, n will be within +/- {accuracy[0]} of true value')
+            print(f'For 95% of query executions, age will be within +/- {accuracy[1]} of true value')
         """
         subquery, query = self._rewrite(query_string)
         return self._get_simple_accuracy(query=query, subquery=subquery, alpha=alpha)
@@ -160,6 +182,36 @@ class PrivateReader(Reader):
     
     def get_privacy_cost(self, query_string):
         """Estimates the epsilon and delta cost for running the given query.
+        Privacy cost is returned without running the query or incrementing the odometer.
+
+        :param query_string: The query string to analyze
+        :returns: A tuple of (epsilon, delta) estimating total privacy cost for
+            running this query.
+
+        .. code-block:: python
+
+            # metadata specifies censor_dims: False
+            privacy = Privacy(epsilon=0.1, delta=1/1000)
+            reader = from_df(df, metadata=metadata, privacy=privacy)
+
+            query = 'SELECT AVG(age) FROM PUMS.PUMS GROUP BY educ'
+            eps_cost, delta_cost = reader.get_privacy_cost(query)
+
+            # will be ~0.2 epsilon, since AVG computed from SUM and COUNT
+            print(f'Total epsilon spent will be {eps_cost}')
+
+            query = 'SELECT SUM(age), COUNT(age), AVG(age) FROM PUMS.PUMS GROUP BY educ'
+            eps_cost, delta_cost = reader.get_privacy_cost(query)
+
+            # will be ~0.2 epsilon, since noisy SUM and COUNT are re-used
+            print(f'Total epsilon spent will be {eps_cost}')
+
+            query = 'SELECT COUNT(*), AVG(age) FROM PUMS.PUMS GROUP BY educ'
+            eps_cost, delta_cost = reader.get_privacy_cost(query)
+
+            # will be ~0.3 epsilon, since COUNT(*) and COUNT(age) can be different
+            print(f'Total epsilon spent will be {eps_cost}')
+
         """
         odo = OdometerHeterogeneous(self.privacy)
         costs = self._get_mechanism_costs(query_string)
@@ -169,11 +221,11 @@ class PrivateReader(Reader):
         return odo.spent
 
     def parse_query_string(self, query_string) -> Query:
-        """Parse a query string using this `PrivateReader`'s metadata, returning a `Query` from the AST.
+        """Parse a query string, returning an AST `Query` object.
 
         .. code-block:: python
 
-            reader = PrivateReader.from_connection(pums, metadata=meta, privacy=privacy)
+            reader = from_connection(db, metadata=metadata, privacy=privacy)
             query_string = 'SELECT STDDEV(age) AS age FROM PUMS.PUMS'
             query = reader.parse_query_string(query_string)
             age_node = query.xpath_first("//NamedExpression[@name='age']")
@@ -250,9 +302,78 @@ class PrivateReader(Reader):
         return [s.mechanism for s in subquery._select_symbols]
 
     def execute_with_accuracy(self, query_string:str):
+        """Executes a private SQL query, returning accuracy bounds for each column 
+            and row.  This should only be used if you need analytic bounds for statistics
+            where the bounds change based on partition size, such as AVG and VARIANCE.
+            In cases where simple statistics such as COUNT and SUM are used, `get_simple_accuracy`
+            is recommended.  The analytic bounds for AVG and VARIANCE can be quite wide,
+            so it's better to determine accuracy through simulation, whenever that's an option.
+
+        Executes query and advances privacy odometer.  Returns accuracies for multiple alphas,
+            using `alphas` property on the `Privacy` object that was passed in when the reader
+            was instantiated.
+
+        Note that the tuple format of `execute_with_accuracy` is not interchangeable with `execute`,
+            because the accuracy tuples need to be nested in the output rows to allow
+            streamed processing.
+
+        :param query_string: The query to execute.
+        :returns: A tuple with a dataframe showing row results, and a nested
+            tuple with a dataframe for each set of accuracies.  The accuracy
+            dataframes will have the same number of rows and columns as the
+            result dataframe.
+
+        .. code-block:: python
+
+            # alphas for 95% and 99% intervals
+            privacy = Privacy(epsilon=0.1, delta=1/1000, alphas=[0.05, 0.01])
+            reader = from_connection(db, metadata=metadata, privacy=privacy)            
+            query = 'SELECT educ, AVG(age) AS age FROM PUMS.PUMS GROUP BY educ'
+
+            res = reader.execute_with_accuracy(query)
+
+            age_col = 2
+            for row, accuracies in res:
+                acc95, acc99 = accuracies
+                print(f'Noisy average is {row[age_col]} with 95% +/- {acc95[age_col]} and 99% +/- {acc99[age_col]}')
+
+        """
         return self.execute(query_string, accuracy=True)
 
-    def execute_with_accuracy_df(self, query_string:str, *ignore, privacy:bool=False):
+    def execute_with_accuracy_df(self, query_string:str, *ignore):
+        """Executes a private SQL query, returning accuracy bounds for each column 
+            and row.  This should only be used if you need analytic bounds for statistics
+            where the bounds change based on partition size, such as AVG and VARIANCE.
+            In cases where simple statistics such as COUNT and SUM are used, `get_simple_accuracy`
+            is recommended.  The analytic bounds for AVG and VARIANCE can be quite wide,
+            so it's better to determine accuracy through simulation, whenever that's an option.
+
+        Executes query and advances privacy odometer.  Returns accuracies for multiple alphas,
+            using `alphas` property on the `Privacy` object that was passed in when the reader
+            was instantiated.
+
+        Note that the tuple format of `execute_with_accuracy_df` is not interchangeable with 
+            `execute`, because the accuracy tuples need to be nested in the output rows to allow
+            streamed processing.
+
+        :param query_string: The query to execute.
+        :returns: A list of tuples, with each item in the list representing a row.
+            each row has a tuple of the result values, and a nested tuple with
+            each of the column accuracies for that row, for each alpha.
+
+        .. code-block:: python
+
+            # alphas for 95% and 99% intervals
+            privacy = Privacy(epsilon=0.1, delta=1/1000, alphas=[0.05, 0.01])
+            reader = from_connection(db, metadata=metadata, privacy=privacy)            
+            query = 'SELECT educ, AVG(age) AS age FROM PUMS.PUMS GROUP BY educ'
+
+            res (acc95, acc99) = reader.execute_with_accuracy_df(query)
+
+            print(res)
+            print(acc95)
+            print(acc99)
+        """
         return self.execute_df(query_string, accuracy=True)
 
     def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None, _no_postprocess=None):
