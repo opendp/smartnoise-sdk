@@ -83,6 +83,77 @@ res = private_reader.execute('SELECT COUNT(*) FROM PUMS_large')
 res.show()
 ```
 
+## Privacy Cost
+
+The privacy parameters epsilon and delta are passed in to the private connection at instantiation time, and apply to each computed column during the life of the session.  Privacy cost accrues indefinitely as new queries are executed, with the total accumulated privacy cost being available via the `spent` property of the connection's `odometer`:
+
+```python
+privacy = Privacy(epsilon=0.1, delta=10e-7)
+
+reader = from_connection(conn, metadata=metadata, privacy=privacy)
+print(reader.odometer.spent)  # (0.0, 0.0)
+
+result = reader.execute('SELECT COUNT(*) FROM PUMS.PUMS')
+print(reader.odometer.spent)  # approximately (0.1, 10e-7)
+```
+
+The privacy cost increases with the number of columns:
+
+```python
+reader = from_connection(conn, metadata=metadata, privacy=privacy)
+print(reader.odometer.spent)  # (0.0, 0.0)
+
+result = reader.execute('SELECT AVG(age), AVG(income) FROM PUMS.PUMS')
+print(reader.odometer.spent)  # approximately (0.4, 10e-6)
+```
+
+The odometer is advanced immediately before the differentially private query result is returned to the caller.  If the caller wishes to estimate the privacy cost of a query without running it, `get_privacy_cost` can be used:
+
+```python
+reader = from_connection(conn, metadata=metadata, privacy=privacy)
+print(reader.odometer.spent)  # (0.0, 0.0)
+
+cost = reader.get_privacy_cost('SELECT AVG(age), AVG(income) FROM PUMS.PUMS')
+print(cost)  # approximately (0.4, 10e-6)
+
+print(reader.odometer.spent)  # (0.0, 0.0)
+```
+
+Note that the total privacy cost of a session accrues at a slower rate than the sum of the individual query costs obtained by `get_privacy_cost`.  The odometer accrues all invocations of mechanisms for the life of a session, and uses them to compute total spend.
+
+```python
+reader = from_connection(conn, metadata=metadata, privacy=privacy)
+query = 'SELECT COUNT(*) FROM PUMS.PUMS'
+epsilon_single, _ = reader.get_privacy_cost(query)
+print(epsilon_single)  # 0.1
+
+# no queries executed yet
+print(reader.odometer.spent)  # (0.0, 0.0)
+
+for _ in range(100):
+    reader.execute(query)
+
+epsilon_many, _ = reader.odometer.spent
+print(f'{epsilon_many} < {epsilon_single * 100}')
+```
+
+## Accuracy
+
+The `get_simple_accuracy` method returns the column-wise accuracies for a given alpha for a given query.
+
+```python
+privacy = Privacy(epsilon=1.0, delta=10e-6)
+
+reader = from_connection(conn, metadata=metadata, privacy=privacy)
+
+query = 'SELECT COUNT(*) AS n, SUM(age) AS age FROM PUMS.PUMS'
+
+acc95 = reader.get_simple_accuracy(query, alpha=0.05)
+print(f'n will be +/- {acc95[0]} in 95% of executions.  Age will be +/- {acc95[1]}')
+```
+
+This method only returns simple accuracies, where the noise scale for each column is fixed and does not vary per row.  Statistics like AVG and VARIANCE are computed from a quotient of noisy sum and noisy count, so the accuracy can vary widely per row.  In these cases, a per-row accuracy can be obtained with `execute_with_accuracy`.  
+
 ## Histograms
 
 SQL `group by` queries represent histograms binned by grouping key.  Queries over a grouping key with unbounded or non-public dimensions expose privacy risk. For example:
