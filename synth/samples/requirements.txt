@@ -1,0 +1,14 @@
+smartnoise-synth
+scikit-learn
+scikit-image
+matplotlib
+seaborn
+requests
+jupyter
+
+# for whitepaper samples
+z3-solver
+tqdm
+zipcodes
+opendp
+diffprivlib

@@ -2,14 +2,14 @@
 
 To perform processing over tabular data, the system needs some metadata with sensitivity, identifiers, and other information for differential private processing.
 
-This metadata is typically loaded directly from a YAML file supplied by the data curator, or read from a database table stored with the source data.
+This metadata is typically loaded directly from a YAML file supplied by the data curator.
 
 ## YAML Metadata
 
-The YAML metadata format looks something like this:
+The YAML metadata format looks like this:
 
 ```yaml
-MyDatabase:
+MySchema:
     MyTable:
         max_ids: 1
         user_id:

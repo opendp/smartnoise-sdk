@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import copy
 from statsmodels.tools import sequences
-from snsql.metadata.collection import *
+from snsql.metadata import *
 
 
 class Exploration:
@@ -104,8 +104,8 @@ class Exploration:
                         d1_table.rowcount - 1,
                     )
                     d1_metadata, d2_metadata = (
-                        CollectionMetadata([d1_table], "csv"),
-                        CollectionMetadata([d2_table], "csv"),
+                        Metadata([d1_table], "csv"),
+                        Metadata([d2_table], "csv"),
                     )
 
                     self.neighbor_pair[filename] = [d1, d2, d1_metadata, d2_metadata]

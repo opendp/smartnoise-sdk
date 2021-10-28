@@ -79,7 +79,7 @@ class TestDbCounts:
                 res = test_databases.to_tuples(res)
                 n = res[1][0]
                 # Actual is 1000
-                lower = 990
+                lower = 985
                 upper = 1010
                 if dbname == 'PUMS_null':
                     # this is more variable with max_ids

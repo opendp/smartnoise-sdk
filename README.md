@@ -2,13 +2,12 @@
 
 <a href="https://smartnoise.org"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
 
-# SmartNoise SDK: Tools for Differential Privacy
+# SmartNoise SDK: Tools for Differential Privacy on Tabular Data
 
 
-The SmartNoise SDK includes 3 packages:
+The SmartNoise SDK includes 2 packages:
 * [smartnoise-sql](sql/): Run differentially private SQL queries
 * [smartnoise-synth](synth/): Generate differentially private synthetic data
-* [smartnoise-eval](eval/): Evaluate simple differentially private algorithms
 
 To get started, see the examples below. Click into each project for more detailed examples.
 

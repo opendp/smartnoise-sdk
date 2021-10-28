@@ -1,0 +1,52 @@
+{
+    "nursery": {
+        "name": "nursery",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/nursery/nursery.data",
+        "categorical_columns": "parents,has_nurs,form,children,housing,finance,social,health",
+        "columns":"parents,has_nurs,form,children,housing,finance,social,health",
+        "target": "health",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "f"
+    },
+    "wine": {
+        "name": "wine",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv",
+        "categorical_columns": "quality",
+        "columns":"fixed,volatile,citric,residual,chlorides,free,total,density,ph,sulphates,alc,quality",
+        "target": "quality",
+        "header": "t",
+        "sep": ";",
+        "imbalanced": "f"
+    },
+    "mushroom": {
+        "name": "mushroom",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data",
+        "categorical_columns": "edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat", 
+"columns":"edible,cap-shape,cap-surface,cap-color,bruises,odor,gill-attach,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-sar,stalk-sbr,stalk-car,stalk-cbr,veil-type,veil-color,ring-number,ring-type,spore-print,population,habitat",
+        "target": "edible",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "f"
+    },
+    "car": {
+        "name": "car",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data",
+        "categorical_columns": "buying,maint,doors,persons,lug_boot,safety,class", 
+"columns":"buying,maint,doors,persons,lug_boot,safety,class",
+        "target": "class",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "f"
+    },
+    "adult": {
+        "name": "adult",
+        "url": "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data",
+        "categorical_columns": "workclass,education,marital-status,occupation,relationship,race,sex,native-country,earning-class", 
+        "columns":"age,workclass,fnlwgt,education,education-num,marital-status,occupation,relationship,race,sex,capital-gain,capital-loss,hours-per-week,native-country,earning-class",
+        "target": "earning-class",
+        "header": "f",
+        "sep": ",",
+        "imbalanced": "t"
+    }
+}

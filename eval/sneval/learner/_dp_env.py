@@ -15,7 +15,7 @@ from sneval.learner._transformation import *
 from sneval.learner._computeactions import compute_action
 from sneval.evaluator._dp_evaluator import DPEvaluator
 from sneval.learner.util import create_simulated_dataset, generate_neighbors
-from snsql.metadata.collection import *
+from snsql.metadata import *
 from dp_singleton_query import DPSingletonQuery
 
 

@@ -59,7 +59,8 @@ class Query(SqlRel):
             self.max_ids = max(tc.max_ids for tc in tables)
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
             self.row_privacy = any(tc.row_privacy for tc in tables)
-
+            self.censor_dims = any(tc.censor_dims for tc in tables)
+            
         # get grouping expression symbols
         self._grouping_symbols = []
         if self.agg:
@@ -101,7 +102,7 @@ class Query(SqlRel):
                         t = _symbol.expression.type()
                         if t in ['int', 'float'] and sensitivity is not None:
                             stat = 'count' if _symbol.is_count else 'sum'
-                            if _symbol.is_key_count:
+                            if _symbol.is_key_count and self.censor_dims:
                                 stat = 'threshold'
                             mech_class = mechanisms.get_mechanism(sensitivity, stat, t)
                             mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=self.max_ids)
@@ -418,6 +419,7 @@ class Table(SqlRel):
                     max_ids=table.max_ids,
                     sample_max_ids=table.sample_max_ids,
                     row_privacy=table.row_privacy,
+                    censor_dims=table.censor_dims,
                     compare=metadata.compare
                 )
             self._select_symbols = [Symbol(get_table_expr(name), name) for name in tc.keys()]
@@ -514,6 +516,7 @@ class TableColumn(SqlExpr):
         max_ids=1,
         sample_max_ids=True,
         row_privacy=False,
+        censor_dims=False,
         compare=None,
     ):
         self.tablename = tablename
@@ -525,6 +528,7 @@ class TableColumn(SqlExpr):
         self.max_ids = max_ids
         self.sample_max_ids = sample_max_ids
         self.row_privacy = row_privacy
+        self.censor_dims = censor_dims
         self.unbounded = lower is None or upper is None
         self.compare = compare
 

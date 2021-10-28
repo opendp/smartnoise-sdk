@@ -1,0 +1,3 @@
+smartnoise-sql
+jupyter
+pyspark
