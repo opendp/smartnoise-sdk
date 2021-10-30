@@ -18,6 +18,10 @@ nf = df.to_numpy().astype(int)
 
 synth = MWEMSynthesizer(3., split_factor=3)
 
+synth_df = MWEMSynthesizer(3., split_factor=3)
+
+synth_default_params = MWEMSynthesizer()
+
 faux_synth = MWEMSynthesizer(3., split_factor=1)
 
 test_data = np.array([[1,1,1],[2,2,2],[3,3,3]])
@@ -45,6 +49,27 @@ class TestMWEM:
     def test_sample(self):
         sample_size = nf.shape[0]
         synthetic = synth.sample(sample_size)
+        assert synthetic.shape == nf.shape
+
+    def test_sample_different_sizes(self):
+        sample_size = int(nf.shape[0] / 2)
+        synthetic = synth.sample(sample_size)
+        assert synthetic.shape[0] == int(nf.shape[0] / 2)
+
+        synth_df.fit(df)
+        assert synth_df.histograms
+
+        synthetic = synth_df.sample(sample_size)
+        assert synthetic.shape[0] == int(df.shape[0] / 2)
+
+        sample_size = int(nf.shape[0] * 2)
+        synthetic = synth_df.sample(sample_size)
+        assert synthetic.shape[0] == int(df.shape[0] * 2)
+
+    def test_sample_default_params(self):
+        synth_default_params.fit(nf)
+        sample_size = nf.shape[0]
+        synthetic = synth_default_params.sample(sample_size)
         assert synthetic.shape == nf.shape
 
     def test_initialize_a(self):
