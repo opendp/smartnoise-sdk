@@ -36,7 +36,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
 
     @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
-        def column_names (n_items, prefix = 'col'):
+        def column_names(n_items, prefix='col'):
             names = []
             for i in range(n_items):
                 names.append(prefix + '_' + str(i))
