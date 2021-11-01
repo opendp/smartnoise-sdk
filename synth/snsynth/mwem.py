@@ -14,7 +14,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
     def __init__(
         self,
-        epsilon,
+        epsilon=3.0,
         q_count=400,
         iterations=30,
         mult_weights_iterations=20,
@@ -121,6 +121,17 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             raise ValueError("Data must be a numpy array or pandas dataframe.")
         if self.split_factor is not None and self.splits == []:
             self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
+        elif self.split_factor is None and self.splits == []:
+            # Set split factor to default to shape[1]
+            self.split_factor = data.shape[1]
+            warnings.warn(
+                    "Unset split_factor and splits, defaulting to include all columns "
+                    + "- this can lead to slow performance or out of memory error. "
+                    + " split_factor: " + str(self.split_factor),
+                    Warning,
+                )
+            self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
+
         self.splits = np.array(self.splits)
         if self.splits.size == 0:
             self.histograms = self._histogram_from_data_attributes(
@@ -183,7 +194,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # Reorder the columns to mirror their original order
         r = self._reorder(self.splits)
         if self.pandas:
-            df = pd.DataFrame(combined[:, r], index=self.pd_index, columns=self.pd_cols)
+            df = pd.DataFrame(combined[:, r], columns=self.pd_cols)
             return df
         else:
             return combined[:, r]

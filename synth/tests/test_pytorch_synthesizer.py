@@ -23,6 +23,8 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 
 df = pd.read_csv(csv_path)
 
+nf = df.to_numpy()
+
 @pytest.mark.torch
 class TestPytorchDPSynthesizer_DPGAN:
     def setup(self):
@@ -53,6 +55,10 @@ class TestPytorchDPSynthesizer_DPCTGAN:
         sample_size = len(df)
         synth_data = self.dpctgan.sample(sample_size)
         assert synth_data.shape == df.shape
+    
+    def test_fit_numpy(self):
+        self.dpctgan.fit(nf)
+        assert self.dpctgan.gan._generator
 
 class TestPytorchDPSynthesizer_PATECTGAN:
     def setup(self):

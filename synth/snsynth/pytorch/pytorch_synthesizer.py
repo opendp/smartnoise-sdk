@@ -2,6 +2,7 @@ from functools import wraps
 
 import numpy as np
 import pandas as pd
+import warnings
 
 from snsynth.preprocessors.preprocessing import GeneralTransformer
 from snsynth.base import SDGYMBaseSynthesizer
@@ -35,8 +36,25 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
 
     @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+        def column_names(n_items, prefix='col'):
+            names = []
+            for i in range(n_items):
+                names.append(prefix + '_' + str(i))
+            return names
+
         if isinstance(data, pd.DataFrame):
             self._data_columns = data.columns
+        elif isinstance(data, np.ndarray):
+            placeholder_columns = column_names(data.shape[1])
+            data = pd.DataFrame(data, columns=placeholder_columns).infer_objects()
+            self._data_columns = placeholder_columns
+            warnings.warn(
+                    "Data is numpy array, converting to pandas dataframe with default "
+                    + "column names. Inferring data types. Note: for best performance, "
+                    + "pandas dataframe should be constructed by user and "
+                    + "data_types should be specified beforehand. Dtypes: " + str(data.dtypes),
+                    Warning,
+                )
 
         self.dtypes = data.dtypes
 
