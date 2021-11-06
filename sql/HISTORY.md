@@ -1,3 +1,8 @@
+# SmartNoise SQL v0.2.3 Release Notes
+
+* Add scalar functions to AST
+* Allow GROUP BY to group on complex expressions
+
 # SmartNoise SQL v0.2.2 Release Notes
 
 * Switch to `opendp` Geometric and Laplace for counts and sums (was previously Gaussian)

@@ -1,4 +1,5 @@
 import logging
+from typing import Iterable
 import numpy as np
 from snsql.metadata import Metadata
 from snsql.sql._mechanisms.accuracy import Accuracy
@@ -303,19 +304,19 @@ class PrivateReader(Reader):
 
     def execute_with_accuracy(self, query_string:str):
         """Executes a private SQL query, returning accuracy bounds for each column 
-            and row.  This should only be used if you need analytic bounds for statistics
-            where the bounds change based on partition size, such as AVG and VARIANCE.
-            In cases where simple statistics such as COUNT and SUM are used, `get_simple_accuracy`
-            is recommended.  The analytic bounds for AVG and VARIANCE can be quite wide,
-            so it's better to determine accuracy through simulation, whenever that's an option.
+        and row.  This should only be used if you need analytic bounds for statistics
+        where the bounds change based on partition size, such as AVG and VARIANCE.
+        In cases where simple statistics such as COUNT and SUM are used, ``get_simple_accuracy``
+        is recommended.  The analytic bounds for AVG and VARIANCE can be quite wide,
+        so it's better to determine accuracy through simulation, whenever that's an option.
 
         Executes query and advances privacy odometer.  Returns accuracies for multiple alphas,
-            using `alphas` property on the `Privacy` object that was passed in when the reader
-            was instantiated.
+        using ``alphas`` property on the ``Privacy`` object that was passed in when the reader
+        was instantiated.
 
-        Note that the tuple format of `execute_with_accuracy` is not interchangeable with `execute`,
-            because the accuracy tuples need to be nested in the output rows to allow
-            streamed processing.
+        Note that the tuple format of ``execute_with_accuracy`` is not interchangeable with ``execute``,
+        because the accuracy tuples need to be nested in the output rows to allow
+        streamed processing.
 
         :param query_string: The query to execute.
         :returns: A tuple with a dataframe showing row results, and a nested
@@ -342,19 +343,19 @@ class PrivateReader(Reader):
 
     def execute_with_accuracy_df(self, query_string:str, *ignore):
         """Executes a private SQL query, returning accuracy bounds for each column 
-            and row.  This should only be used if you need analytic bounds for statistics
-            where the bounds change based on partition size, such as AVG and VARIANCE.
-            In cases where simple statistics such as COUNT and SUM are used, `get_simple_accuracy`
-            is recommended.  The analytic bounds for AVG and VARIANCE can be quite wide,
-            so it's better to determine accuracy through simulation, whenever that's an option.
+        and row.  This should only be used if you need analytic bounds for statistics
+        where the bounds change based on partition size, such as AVG and VARIANCE.
+        In cases where simple statistics such as COUNT and SUM are used, ``get_simple_accuracy``
+        is recommended.  The analytic bounds for AVG and VARIANCE can be quite wide,
+        so it's better to determine accuracy through simulation, whenever that's an option.
 
         Executes query and advances privacy odometer.  Returns accuracies for multiple alphas,
-            using `alphas` property on the `Privacy` object that was passed in when the reader
-            was instantiated.
+        using ``alphas`` property on the ``Privacy`` object that was passed in when the reader
+        was instantiated.
 
-        Note that the tuple format of `execute_with_accuracy_df` is not interchangeable with 
-            `execute`, because the accuracy tuples need to be nested in the output rows to allow
-            streamed processing.
+        Note that the tuple format of ``execute_with_accuracy_df`` is not interchangeable with 
+        ``execute``, because the accuracy tuples need to be nested in the output rows to allow
+        streamed processing.
 
         :param query_string: The query to execute.
         :returns: A list of tuples, with each item in the list representing a row.
@@ -376,34 +377,41 @@ class PrivateReader(Reader):
         """
         return self.execute_df(query_string, accuracy=True)
 
-    def execute(self, query_string, accuracy:bool=False, *ignore, _pre_aggregated=None, _no_postprocess=None):
+    def execute(self, query_string, accuracy:bool=False, *ignore, pre_aggregated=None, postprocess:bool=True):
         """Executes a query and returns a recordset that is differentially private.
 
         Follows ODBC and DB_API convention of consuming query as a string and returning
         recordset as tuples.  This is useful for cases where existing DB_API clients
         want to swap out API calls with minimal changes.
 
-        :param query_string: A query string in SQL syntax
+        :param query_string: A query string in SQL syntax        
+        :param pre_aggregated: By default, `execute` will use the underlying database engine to compute exact aggregates.  To use exact aggregates from a different source, pass in the exact aggregates here as an iterable of tuples.
+        :param postprocess: If False, the intermediate result, immediately after adding noise and censoring dimensions, will be returned.  All post-processing that does not impact privacy, such as clamping negative counts, LIMIT, HAVING, and ORDER BY, will be skipped.
         :return: A recordset structured as an array of tuples, where each tuple
-         represents a row, and each item in the tuple is typed.  The first row should
+         represents a row, and each item in the tuple is typed.  The first row will
          contain column names.
+
+        .. code-block:: python
+                
+            result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex')
+
         """
         query = self.parse_query_string(query_string)
         return self._execute_ast(
             query, 
             accuracy=accuracy, 
-            _pre_aggregated=_pre_aggregated, 
-            _no_postprocess=_no_postprocess
+            pre_aggregated=pre_aggregated, 
+            postprocess=postprocess
         )
 
-    def _execute_ast(self, query, *ignore, accuracy:bool=False, _pre_aggregated=None, _no_postprocess=None):
+    def _execute_ast(self, query, *ignore, accuracy:bool=False, pre_aggregated=None, postprocess=True):
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
         subquery, query = self._rewrite_ast(query)
 
-        if _pre_aggregated:
-            exact_aggregates = _pre_aggregated
+        if pre_aggregated:
+            exact_aggregates = pre_aggregated
         else:
             exact_aggregates = self._get_reader(subquery)._execute_ast(subquery)
 
@@ -446,7 +454,21 @@ class PrivateReader(Reader):
         else:
             out = map(randomize_row_values, exact_aggregates[1:])
 
-        if _no_postprocess:
+        # censor infrequent dimensions
+        if self._options.censor_dims:
+            if kc_pos is None:
+                raise ValueError("Query needs a key count column to censor dimensions")
+            else:
+                thresh_mech = mechs[kc_pos]
+                self.tau = thresh_mech.threshold
+            if hasattr(out, "filter"):
+                # it's an RDD
+                tau = self.tau
+                out = out.filter(lambda row: row[kc_pos] > tau)
+            else:
+                out = filter(lambda row: row[kc_pos] > self.tau, out)
+
+        if not postprocess:
             return out
 
         def process_clamp_counts(row_in):
@@ -467,20 +489,6 @@ class PrivateReader(Reader):
                 out = out.map(process_clamp_counts)
             else:
                 out = map(process_clamp_counts, out)
-
-        # censor infrequent dimensions
-        if self._options.censor_dims:
-            if kc_pos is None:
-                raise ValueError("Query needs a key count column to censor dimensions")
-            else:
-                thresh_mech = mechs[kc_pos]
-                self.tau = thresh_mech.threshold
-            if hasattr(out, "filter"):
-                # it's an RDD
-                tau = self.tau
-                out = out.filter(lambda row: row[kc_pos] > tau)
-            else:
-                out = filter(lambda row: row[kc_pos] > self.tau, out)
 
         # get column information for outer query
         out_syms = query._select_symbols
