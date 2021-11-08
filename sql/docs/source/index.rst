@@ -80,6 +80,7 @@ Use ``from_connection`` to wrap a spark session.
   res = private_reader.execute('SELECT COUNT(*) FROM PUMS_large')
   res.show()
 
+When running a query against spark, the result of ``execute`` will be a spark DataFrame or RDD, which represents an execution plan.  The actual spark execution will not happen until the caller requests rows from the DataFrame, as in the ``res.show()`` above.
 
 Metadata
 ========
@@ -91,6 +92,16 @@ The metadata is loaded from a file path, and describes important properties of t
   :maxdepth: 2
 
   Metadata <metadata.rst>
+
+Advanced Usage
+==============
+
+.. toctree::
+  :glob:
+  :maxdepth: 2
+
+  Advanced Usage <advanced.rst>
+
 
 This is version |version| of the guides, last built on |today|.
 
