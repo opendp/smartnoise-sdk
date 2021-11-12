@@ -71,8 +71,10 @@ class DPGAN:
 
             if self.epsilon < eps:
                 if epoch == 0:
-                    raise ValueError("Inputted epsilon and sigma parameters are too small to"
-                                    + " create a private dataset. Try increasing either parameter and rerunning.")
+                    raise ValueError(
+                                "Inputted epsilon and sigma parameters are too small to"
+                                + " create a private dataset. Try increasing either parameter and rerunning."
+                            )
                 break
 
             for i, data in enumerate(dataloader):

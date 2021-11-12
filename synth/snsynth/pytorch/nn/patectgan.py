@@ -260,8 +260,10 @@ class PATECTGAN(CTGANSynthesizer):
 
             if eps.item() > self.epsilon:
                 if iteration == 1:
-                    raise ValueError("Inputted epsilon parameter is too small to"
-                                    + " create a private dataset. Try increasing epsilon and rerunning.")
+                    raise ValueError(
+                                "Inputted epsilon parameter is too small to"
+                                + " create a private dataset. Try increasing epsilon and rerunning."
+                            )
                 break
 
             # train teacher discriminators

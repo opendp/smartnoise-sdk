@@ -270,9 +270,11 @@ class DPCTGAN(CTGANSynthesizer):
                 self.alpha_list.append(best_alpha)
                 if self.epsilon < epsilon:
                     if self._epochs == 1:
-                        raise ValueError("Inputted epsilon and sigma parameters are too small to"
-                                        + " create a private dataset. Try increasing either parameter "
-                                        + "and rerunning.")
+                        raise ValueError(
+                                    "Inputted epsilon and sigma parameters are too small to"
+                                    + " create a private dataset. Try increasing either parameter "
+                                    + "and rerunning."
+                                )
                     else:
                         break
 
