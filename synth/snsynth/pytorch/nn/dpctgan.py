@@ -251,6 +251,31 @@ class DPCTGAN(CTGANSynthesizer):
 
         steps_per_epoch = max(len(train_data) // self._batch_size, 1)
         for i in range(self._epochs):
+            if not self.disabled_dp:
+                # if self.loss == 'cross_entropy':
+                #    autograd_grad_sample.clear_backprops(discriminator)
+                # else:
+                for p in discriminator.parameters():
+                    if hasattr(p, "grad_sample"):
+                        del p.grad_sample
+
+                if self.target_delta is None:
+                    self.target_delta = 1 / train_data.shape[0]
+
+                epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(
+                    self.target_delta
+                )
+
+                self.epsilon_list.append(epsilon)
+                self.alpha_list.append(best_alpha)
+            
+                if self.epsilon < epsilon:
+                    if self._epochs == 1:
+                        raise ValueError("Inputted epsilon and sigma parameters are too small to"
+                        + " create a private dataset. Try increasing either parameter and rerunning.")
+                    else:
+                        break
+            
             for id_ in range(steps_per_epoch):
                 fakez = torch.normal(mean=mean, std=std)
 
@@ -380,28 +405,6 @@ class DPCTGAN(CTGANSynthesizer):
                 loss_g.backward()
                 optimizerG.step()
 
-                if not self.disabled_dp:
-                    # if self.loss == 'cross_entropy':
-                    #    autograd_grad_sample.clear_backprops(discriminator)
-                    # else:
-                    for p in discriminator.parameters():
-                        if hasattr(p, "grad_sample"):
-                            del p.grad_sample
-
-                    if self.target_delta is None:
-                        self.target_delta = 1 / train_data.shape[0]
-
-                    epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(
-                        self.target_delta
-                    )
-
-                    self.epsilon_list.append(epsilon)
-                    self.alpha_list.append(best_alpha)
-                    # if self.verbose:
-
-            if not self.disabled_dp:
-                if self.epsilon < epsilon:
-                    break
             self.loss_d_list.append(loss_d)
             self.loss_g_list.append(loss_g)
             if self.verbose:
