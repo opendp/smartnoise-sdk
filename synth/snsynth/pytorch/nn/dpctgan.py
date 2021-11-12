@@ -268,14 +268,14 @@ class DPCTGAN(CTGANSynthesizer):
 
                 self.epsilon_list.append(epsilon)
                 self.alpha_list.append(best_alpha)
-            
                 if self.epsilon < epsilon:
                     if self._epochs == 1:
                         raise ValueError("Inputted epsilon and sigma parameters are too small to"
-                        + " create a private dataset. Try increasing either parameter and rerunning.")
+                                        + " create a private dataset. Try increasing either parameter "
+                                        + "and rerunning.")
                     else:
                         break
-            
+
             for id_ in range(steps_per_epoch):
                 fakez = torch.normal(mean=mean, std=std)
 

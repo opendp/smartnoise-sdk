@@ -255,19 +255,13 @@ class PATECTGAN(CTGANSynthesizer):
         iteration = 0
         while eps.item() < self.epsilon:
             iteration += 1
-            
+
             eps = min((alphas - math.log(self.delta)) / l_list)
-            if self.verbose:
-                print(
-                    "eps: {:f} \t G: {:f} \t D: {:f}".format(
-                        eps, loss_g.detach().cpu(), loss_s.detach().cpu()
-                    )
-                )
 
             if eps.item() > self.epsilon:
                 if iteration == 1:
                     raise ValueError("Inputted epsilon parameter is too small to"
-                    + " create a private dataset. Try increasing epsilon and rerunning.")
+                                    + " create a private dataset. Try increasing epsilon and rerunning.")
                 break
 
             # train teacher discriminators
@@ -433,6 +427,13 @@ class PATECTGAN(CTGANSynthesizer):
             optimizerG.zero_grad()
             loss_g.backward()
             optimizerG.step()
+
+            if self.verbose:
+                print(
+                    "eps: {:f} \t G: {:f} \t D: {:f}".format(
+                        eps, loss_g.detach().cpu(), loss_s.detach().cpu()
+                    )
+                )
 
     def w_loss(self, output, labels):
         vals = torch.cat([labels[None, :], output[None, :]], axis=1)
