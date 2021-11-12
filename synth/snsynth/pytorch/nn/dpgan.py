@@ -67,6 +67,14 @@ class DPGAN:
         criterion = nn.BCELoss()
 
         for epoch in range(self.epochs):
+            eps, best_alpha = optimizer_d.privacy_engine.get_privacy_spent(self.delta)
+
+            if self.epsilon < eps:
+                if epoch == 0:
+                    raise ValueError("Inputted epsilon and sigma parameters are too small to"
+                        + " create a private dataset. Try increasing either parameter and rerunning.")
+                break
+
             for i, data in enumerate(dataloader):
                 discriminator.zero_grad()
 
@@ -116,11 +124,6 @@ class DPGAN:
 
                 if self.delta is None:
                     self.delta = 1 / data.shape[0]
-
-                eps, best_alpha = optimizer_d.privacy_engine.get_privacy_spent(self.delta)
-
-            if self.epsilon < eps:
-                break
 
     def generate(self, n):
         steps = n // self.batch_size + 1

@@ -91,9 +91,19 @@ class PATEGAN:
         noise_multiplier = 1e-3
         alphas = torch.tensor([0.0 for i in range(100)])
         l_list = 1 + torch.tensor(range(100))
-        eps = 0
+        eps = torch.zeros(1)
 
-        while eps < self.epsilon:
+        iteration = 0
+        while eps.item() < self.epsilon:
+            iteration += 1
+
+            eps = min((alphas - math.log(self.delta)) / l_list)
+
+            if eps.item() > self.epsilon:
+                if iteration == 1:
+                    raise ValueError("Inputted epsilon parameter is too small to"
+                    + " create a private dataset. Try increasing epsilon and rerunning.")
+                break
 
             # train teacher discriminators
             for t_2 in range(self.teacher_iters):
@@ -148,8 +158,6 @@ class PATEGAN:
             optimizer_g.zero_grad()
             loss_g.backward()
             optimizer_g.step()
-
-            eps = min((alphas - math.log(self.delta)) / l_list)
 
     def generate(self, n):
         steps = n // self.batch_size + 1
