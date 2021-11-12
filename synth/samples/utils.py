@@ -1,3 +1,18 @@
+import matplotlib.pyplot as plt
+
+def plot_histo(title,histo):
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(111)
+    ax.set_title(title)
+    plt.imshow(histo)
+    ax.set_aspect('equal')
+    cax = fig.add_axes([0.1, 1.0, 1., 0.1])
+    cax.get_xaxis().set_visible(False)
+    cax.get_yaxis().set_visible(False)
+    cax.set_frame_on(False)
+    plt.colorbar(orientation='horizontal')
+    plt.show()
+
 def test_real_vs_synthetic_data(real, synthetic, model, tsne=False, box=False, describe=False):
     import pandas as pd
     import numpy as np
