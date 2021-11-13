@@ -17,7 +17,7 @@ class PATEGAN:
     def __init__(
         self,
         epsilon,
-        delta=1e-5,
+        delta=None,
         binary=False,
         latent_dim=64,
         batch_size=64,
@@ -45,7 +45,7 @@ class PATEGAN:
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors="ignore")
             self.pd_cols = data.columns
-            self.pd_index = data.pd_index
+            self.pd_index = data.index
             data = data.to_numpy()
         elif not isinstance(data, np.ndarray):
             raise ValueError("Data must be a numpy array or pandas dataframe")
@@ -92,6 +92,9 @@ class PATEGAN:
         alphas = torch.tensor([0.0 for i in range(100)])
         l_list = 1 + torch.tensor(range(100))
         eps = torch.zeros(1)
+
+        if self.delta is None:
+            self.delta = 1 / (data.shape[0] * np.sqrt(data.shape[0]))
 
         iteration = 0
         while eps.item() < self.epsilon:

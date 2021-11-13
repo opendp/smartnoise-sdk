@@ -119,7 +119,7 @@ class PATECTGAN(CTGANSynthesizer):
                  teacher_iters=5,
                  student_iters=5,
                  sample_per_teacher=1000,
-                 delta=1e-5,
+                 delta=None,
                  noise_multiplier=1e-3,
                  moments_order=100
                  ):
@@ -253,6 +253,10 @@ class PATECTGAN(CTGANSynthesizer):
             print("using loss {} and regularization {}".format(self.loss, self.regularization))
 
         iteration = 0
+
+        if self.delta is None:
+            self.delta = 1 / (train_data.shape[0] * np.sqrt(train_data.shape[0]))
+
         while eps.item() < self.epsilon:
             iteration += 1
 

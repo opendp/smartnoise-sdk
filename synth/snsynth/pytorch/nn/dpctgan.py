@@ -260,7 +260,7 @@ class DPCTGAN(CTGANSynthesizer):
                         del p.grad_sample
 
                 if self.target_delta is None:
-                    self.target_delta = 1 / train_data.shape[0]
+                    self.target_delta = 1 / (train_data.shape[0] * np.sqrt(train_data.shape[0]))
 
                 epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(
                     self.target_delta
