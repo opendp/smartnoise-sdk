@@ -10,18 +10,21 @@ class DataSampler(object):
         self._data = data
         self._per_column_epsilon = per_column_epsilon
 
-        bounds = (0, 1)
-        max_contrib = 1
-        enable_features('contrib')
-        bounded_sum = (
-            make_clamp(bounds=bounds) >>
-            make_bounded_sum(bounds=bounds)
-        )
-        discovered_scale = binary_search_param(
-            lambda s: bounded_sum >> make_base_geometric(scale=s),
-            d_in=max_contrib,
-            d_out=(self._per_column_epsilon))
-        self._per_column_scale = discovered_scale
+        if per_column_epsilon:
+            bounds = (0, 1)
+            max_contrib = 1
+            enable_features('contrib')
+            bounded_sum = (
+                make_clamp(bounds=bounds) >>
+                make_bounded_sum(bounds=bounds)
+            )
+            discovered_scale = binary_search_param(
+                lambda s: bounded_sum >> make_base_geometric(scale=s),
+                d_in=max_contrib,
+                d_out=(self._per_column_epsilon))
+            self._per_column_scale = discovered_scale
+        else:
+            self._per_column_epsilon = 0.0
 
         def is_discrete_column(column_info):
             return (len(column_info) == 1
@@ -79,13 +82,14 @@ class DataSampler(object):
                 ed = st + span_info.dim
                 category_freq = np.sum(data[:, st:ed], axis=0)
                 # insert privacy here
-                geom = make_base_geometric(self._per_column_scale)
-                category_freq = [geom(int(v)) for v in category_freq]
-                eps_tot += self._per_column_epsilon
+                if self._per_column_epsilon > 0.0:
+                    geom = make_base_geometric(self._per_column_scale)
+                    category_freq = [geom(int(v)) for v in category_freq]
+                    eps_tot += self._per_column_epsilon
                 category_freq = [0 if v < 0 else v for v in category_freq]
                 if np.sum(category_freq) < 100:
-                    # not enough data; use uniform distribution
-                    category_freq = [1 for _ in category_freq]
+                   # not enough data; use uniform distribution
+                   category_freq = [1 for _ in category_freq]
                 category_freq = np.array(category_freq, dtype='float64')
                 if log_frequency:
                     category_freq = np.log(category_freq + 1)

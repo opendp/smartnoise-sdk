@@ -208,7 +208,7 @@ class PATECTGAN(CTGANSynthesizer):
             self._log_frequency,
             per_col_sampler_eps)
 
-        spent = self._cond_generator.total_spent
+        spent = self.cond_generator.total_spent
         if (
             spent > sampler_eps
             and not np.isclose(spent, sampler_eps)
