@@ -71,6 +71,10 @@ sample = synth.sample(10) # synthesize 10 rows
 print(sample)
 ```
 
+## Note on Inputs
+
+MWEM, DP-CTGAN, and PATE-CTGAN require columns to be categorical. If you have columns with continuous values, you should discretize them before fitting.  Take care to discretize in a way that does not reveal information about the distribution of the data.
+
 ## Communication
 
 - You are encouraged to join us on [GitHub Discussions](https://github.com/opendp/opendp/discussions/categories/smartnoise)
