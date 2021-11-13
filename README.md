@@ -1,4 +1,4 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C3.9%20%7C3.10-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <a href="https://smartnoise.org"><img src="images/SmartNoise/SVG/Logo Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
 
@@ -12,6 +12,8 @@ The SmartNoise SDK includes 2 packages:
 To get started, see the examples below. Click into each project for more detailed examples.
 
 ## SQL
+
+[![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C3.9-blue)](https://www.python.org/)
 
 ### Install
 
@@ -41,6 +43,8 @@ print(result)
 See the [SQL project](sql/README.md)
 
 ## Synthesizers
+
+[![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8-blue)](https://www.python.org/)
 
 ### Install
 ```
