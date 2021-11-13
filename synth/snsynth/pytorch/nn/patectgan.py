@@ -7,7 +7,7 @@ import torch.utils.data
 from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
 from torch.autograd import Variable
 
-from ctgan.data_sampler import DataSampler
+from .data_sampler import DataSampler
 from ctgan.data_transformer import DataTransformer
 from ctgan.synthesizers import CTGANSynthesizer
 
@@ -121,7 +121,8 @@ class PATECTGAN(CTGANSynthesizer):
                  sample_per_teacher=1000,
                  delta=None,
                  noise_multiplier=1e-3,
-                 moments_order=100
+                 moments_order=100,
+                 category_epsilon_pct=0.1
                  ):
 
         assert batch_size % 2 == 0
@@ -142,6 +143,8 @@ class PATECTGAN(CTGANSynthesizer):
         self._epochs = epochs
         self.pac = pac
         self.epsilon = epsilon
+
+        self._category_epsilon_pct = category_epsilon_pct
 
         self.verbose = verbose
         self.loss = loss
@@ -194,11 +197,25 @@ class PATECTGAN(CTGANSynthesizer):
 
         data_dim = self._transformer.output_dimensions
 
+        sampler_eps = 0.0
+        if categorical_columns:
+            sampler_eps = self.epsilon * self._category_epsilon_pct
+            per_col_sampler_eps = sampler_eps / len(categorical_columns)
+            self.epsilon = self.epsilon - sampler_eps
         self.cond_generator = DataSampler(
             train_data,
             self._transformer.output_info_list,
-            self._log_frequency)
+            self._log_frequency,
+            per_col_sampler_eps)
 
+        spent = self._cond_generator.total_spent
+        if (
+            spent > sampler_eps
+            and not np.isclose(spent, sampler_eps)
+        ):
+            raise AssertionError(
+                f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
+            )
         # create conditional generator for each teacher model
 
         # Note: Previously, there existed a ConditionalGenerator object in CTGAN
