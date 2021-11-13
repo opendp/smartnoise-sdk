@@ -119,7 +119,7 @@ class DPCTGAN(CTGANSynthesizer):
                  discriminator_decay=1e-6,
                  batch_size=500,
                  discriminator_steps=1,
-                 log_frequency=True,
+                 log_frequency=False,
                  verbose=True,
                  epochs=300,
                  pac=10,
@@ -457,12 +457,13 @@ class DPCTGAN(CTGANSynthesizer):
             std = mean + 1
             fakez = torch.normal(mean=mean, std=std).to(self._device)
 
-            condvec = self._data_sampler.sample_original_condvec(self._batch_size)
+            condvec = self._data_sampler.sample_condvec(self._batch_size)
+            print(condvec)
 
             if condvec is None:
                 pass
             else:
-                c1 = condvec
+                c1, m1, col, opt = condvec
                 c1 = torch.from_numpy(c1).to(self._device)
                 fakez = torch.cat([fakez, c1], dim=1)
 
