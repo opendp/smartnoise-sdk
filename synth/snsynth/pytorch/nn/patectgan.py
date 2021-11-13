@@ -119,7 +119,7 @@ class PATECTGAN(CTGANSynthesizer):
                  teacher_iters=5,
                  student_iters=5,
                  sample_per_teacher=1000,
-                 delta=1e-5,
+                 delta=None,
                  noise_multiplier=1e-3,
                  moments_order=100
                  ):
@@ -239,7 +239,7 @@ class PATECTGAN(CTGANSynthesizer):
         noise_multiplier = self.noise_multiplier
         alphas = torch.tensor([0.0 for i in range(self.moments_order)], device=self._device)
         l_list = 1 + torch.tensor(range(self.moments_order), device=self._device)
-        eps = 0
+        eps = torch.zeros(1)
 
         mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
         std = mean + 1
@@ -252,7 +252,24 @@ class PATECTGAN(CTGANSynthesizer):
         if self.verbose:
             print("using loss {} and regularization {}".format(self.loss, self.regularization))
 
-        while eps < self.epsilon:
+        iteration = 0
+
+        if self.delta is None:
+            self.delta = 1 / (train_data.shape[0] * np.sqrt(train_data.shape[0]))
+
+        while eps.item() < self.epsilon:
+            iteration += 1
+
+            eps = min((alphas - math.log(self.delta)) / l_list)
+
+            if eps.item() > self.epsilon:
+                if iteration == 1:
+                    raise ValueError(
+                                "Inputted epsilon parameter is too small to"
+                                + " create a private dataset. Try increasing epsilon and rerunning."
+                            )
+                break
+
             # train teacher discriminators
             for t_2 in range(self.teacher_iters):
                 for i in range(self.num_teachers):
@@ -416,8 +433,6 @@ class PATECTGAN(CTGANSynthesizer):
             optimizerG.zero_grad()
             loss_g.backward()
             optimizerG.step()
-
-            eps = min((alphas - math.log(self.delta)) / l_list)
 
             if self.verbose:
                 print(

@@ -17,7 +17,7 @@ class PATEGAN:
     def __init__(
         self,
         epsilon,
-        delta=1e-5,
+        delta=None,
         binary=False,
         latent_dim=64,
         batch_size=64,
@@ -45,7 +45,7 @@ class PATEGAN:
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors="ignore")
             self.pd_cols = data.columns
-            self.pd_index = data.pd_index
+            self.pd_index = data.index
             data = data.to_numpy()
         elif not isinstance(data, np.ndarray):
             raise ValueError("Data must be a numpy array or pandas dataframe")
@@ -91,9 +91,24 @@ class PATEGAN:
         noise_multiplier = 1e-3
         alphas = torch.tensor([0.0 for i in range(100)])
         l_list = 1 + torch.tensor(range(100))
-        eps = 0
+        eps = torch.zeros(1)
 
-        while eps < self.epsilon:
+        if self.delta is None:
+            self.delta = 1 / (data.shape[0] * np.sqrt(data.shape[0]))
+
+        iteration = 0
+        while eps.item() < self.epsilon:
+            iteration += 1
+
+            eps = min((alphas - math.log(self.delta)) / l_list)
+
+            if eps.item() > self.epsilon:
+                if iteration == 1:
+                    raise ValueError(
+                                "Inputted epsilon parameter is too small to"
+                                + " create a private dataset. Try increasing epsilon and rerunning."
+                            )
+                break
 
             # train teacher discriminators
             for t_2 in range(self.teacher_iters):
@@ -148,8 +163,6 @@ class PATEGAN:
             optimizer_g.zero_grad()
             loss_g.backward()
             optimizer_g.step()
-
-            eps = min((alphas - math.log(self.delta)) / l_list)
 
     def generate(self, n):
         steps = n // self.batch_size + 1

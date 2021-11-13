@@ -15,7 +15,7 @@ from ._discriminator import Discriminator
 
 class DPGAN:
     def __init__(
-        self, binary=False, latent_dim=64, batch_size=64, epochs=1000, delta=1e-5, epsilon=1.0
+        self, binary=False, latent_dim=64, batch_size=64, epochs=1000, delta=None, epsilon=1.0
     ):
         self.binary = binary
         self.latent_dim = latent_dim
@@ -37,7 +37,7 @@ class DPGAN:
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors="ignore")
             self.pd_cols = data.columns
-            self.pd_index = data.pd_index
+            self.pd_index = data.index
             data = data.to_numpy()
         elif not isinstance(data, np.ndarray):
             raise ValueError("Data must be a numpy array or pandas dataframe")
@@ -66,7 +66,20 @@ class DPGAN:
 
         criterion = nn.BCELoss()
 
+        if self.delta is None:
+            self.delta = 1 / (data.shape[0] * np.sqrt(data.shape[0]))
+
         for epoch in range(self.epochs):
+            eps, best_alpha = optimizer_d.privacy_engine.get_privacy_spent(self.delta)
+
+            if self.epsilon < eps:
+                if epoch == 0:
+                    raise ValueError(
+                                "Inputted epsilon and sigma parameters are too small to"
+                                + " create a private dataset. Try increasing either parameter and rerunning."
+                            )
+                break
+
             for i, data in enumerate(dataloader):
                 discriminator.zero_grad()
 
@@ -116,11 +129,6 @@ class DPGAN:
 
                 if self.delta is None:
                     self.delta = 1 / data.shape[0]
-
-                eps, best_alpha = optimizer_d.privacy_engine.get_privacy_spent(self.delta)
-
-            if self.epsilon < eps:
-                break
 
     def generate(self, n):
         steps = n // self.batch_size + 1
