@@ -1,11 +1,9 @@
-name: Synthesizers Unit Tests
+name: Lint Synthesizers
 
 on:
   pull_request:
     paths:
-      - 'synth/tests/**'
       - 'synth/snsynth/**'
-      - 'synth/pyproject.toml'
   workflow_dispatch:
 
 jobs:
@@ -30,18 +28,8 @@ jobs:
       run: |
         conda install pip
         conda update pip
-    - name: Install dependencies
+    - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        cd synth
-        pip install --no-cache-dir -r tests/requirements.txt
-    - name: Install smartnoise-synth
-      shell: bash -l {0}
-      run: |
-        cd synth
-        pip install --no-cache-dir .
-    - name: Test SDK
-      shell: bash -l {0}
-      run: |
-        cd synth
-        python -m pytest tests
+        conda install flake8
+        flake8 synth/snsynth -v

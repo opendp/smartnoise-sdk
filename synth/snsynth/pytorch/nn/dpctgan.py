@@ -100,8 +100,6 @@ def _custom_create_or_extend_grad_sample(
     This custom code will not work when using optimizer.virtual_step()
     """
 
-    # print ("now this happen")
-
     if hasattr(param, "grad_sample"):
         param.grad_sample = param.grad_sample + grad_sample
         # param.grad_sample = torch.cat((param.grad_sample, grad_sample), batch_dim)
@@ -127,7 +125,7 @@ class DPCTGAN(CTGANSynthesizer):
                  pac=10,
                  cuda=True,
                  disabled_dp=False,
-                 target_delta=None,
+                 delta=None,
                  sigma=5,
                  max_per_sample_grad_norm=1.0,
                  epsilon=1,
@@ -154,7 +152,7 @@ class DPCTGAN(CTGANSynthesizer):
         # opacus parameters
         self.sigma = sigma
         self.disabled_dp = disabled_dp
-        self.target_delta = target_delta
+        self.delta = delta
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
         self.epsilon = epsilon
         self.epsilon_list = []
@@ -186,6 +184,15 @@ class DPCTGAN(CTGANSynthesizer):
     def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
         if update_epsilon:
             self.epsilon = update_epsilon
+
+        for col in categorical_columns:
+            if str(data[col].dtype).startswith('float'):
+                raise ValueError(
+                    "It looks like you are passing in a vector of continuous values"
+                    f"to a categorical column at [{col}]."
+                    "Please discretize and pass in categorical columns with"
+                    "unsigned integer or string category names."
+                )
 
         self._transformer = DataTransformer()
         self._transformer.fit(data, discrete_columns=categorical_columns)
@@ -259,11 +266,11 @@ class DPCTGAN(CTGANSynthesizer):
                     if hasattr(p, "grad_sample"):
                         del p.grad_sample
 
-                if self.target_delta is None:
-                    self.target_delta = 1 / (train_data.shape[0] * np.sqrt(train_data.shape[0]))
+                if self.delta is None:
+                    self.delta = 1 / (train_data.shape[0] * np.sqrt(train_data.shape[0]))
 
                 epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(
-                    self.target_delta
+                    self.delta
                 )
 
                 self.epsilon_list.append(epsilon)

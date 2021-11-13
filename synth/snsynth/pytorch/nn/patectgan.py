@@ -171,6 +171,15 @@ class PATECTGAN(CTGANSynthesizer):
         if update_epsilon:
             self.epsilon = update_epsilon
 
+        for col in categorical_columns:
+            if str(data[col].dtype).startswith('float'):
+                raise ValueError(
+                    "It looks like you are passing in a vector of continuous values"
+                    f"to a categorical column at [{col}]."
+                    "Please discretize and pass in categorical columns with"
+                    "unsigned integer or string category names."
+                )
+
         sample_per_teacher = (
             self.sample_per_teacher if self.sample_per_teacher < len(data) else 1000
         )
