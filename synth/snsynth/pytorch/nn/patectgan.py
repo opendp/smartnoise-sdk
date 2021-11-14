@@ -198,7 +198,7 @@ class PATECTGAN(CTGANSynthesizer):
         data_dim = self._transformer.output_dimensions
 
         sampler_eps = 0.0
-        if categorical_columns:
+        if categorical_columns and self._category_epsilon_pct:
             sampler_eps = self.epsilon * self._category_epsilon_pct
             per_col_sampler_eps = sampler_eps / len(categorical_columns)
             self.epsilon = self.epsilon - sampler_eps

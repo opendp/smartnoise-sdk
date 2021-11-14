@@ -100,7 +100,7 @@ class DataSampler(object):
                     geom = make_base_geometric(self._per_column_scale)
                     category_freq = [geom(int(v)) for v in category_freq]
                     eps_tot += self._per_column_epsilon
-                category_freq = [0 if v < 0 else v for v in category_freq]
+                category_freq = [1 if v < 1 else v for v in category_freq]
                 if np.sum(category_freq) < 100:
                    # not enough data; use uniform distribution
                    category_freq = [1 for _ in category_freq]
@@ -192,7 +192,11 @@ class DataSampler(object):
 
         idx = []
         for c, o in zip(col, opt):
-            idx.append(np.random.choice(self._rid_by_cat_cols[c][o]))
+            if len(self._rid_by_cat_cols[c][o]) == 0:
+                # if teacher splits result in zero probability for a category value
+                idx.append(np.random.randint(len(self._data)))
+            else:
+                idx.append(np.random.choice(self._rid_by_cat_cols[c][o]))
 
         return self._data[idx]
 
