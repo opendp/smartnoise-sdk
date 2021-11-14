@@ -206,11 +206,14 @@ class DPCTGAN(CTGANSynthesizer):
             sampler_eps = self.epsilon * self._category_epsilon_pct
             per_col_sampler_eps = sampler_eps / len(categorical_columns)
             self.epsilon = self.epsilon - sampler_eps
+        else:
+            per_col_sampler_eps = None
+
         self._data_sampler = DataSampler(
             train_data,
             self._transformer.output_info_list,
             self._log_frequency,
-            per_col_sampler_eps)
+            per_column_epsilon=per_col_sampler_eps)
 
         spent = self._data_sampler.total_spent
         if (

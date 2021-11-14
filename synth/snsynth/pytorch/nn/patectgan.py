@@ -202,11 +202,15 @@ class PATECTGAN(CTGANSynthesizer):
             sampler_eps = self.epsilon * self._category_epsilon_pct
             per_col_sampler_eps = sampler_eps / len(categorical_columns)
             self.epsilon = self.epsilon - sampler_eps
+        else:
+            per_col_sampler_eps = None
+
         self.cond_generator = DataSampler(
             train_data,
             self._transformer.output_info_list,
             self._log_frequency,
-            per_col_sampler_eps)
+            per_column_epsilon=per_col_sampler_eps
+        )
 
         spent = self.cond_generator.total_spent
         if (
@@ -221,8 +225,17 @@ class PATECTGAN(CTGANSynthesizer):
         # Note: Previously, there existed a ConditionalGenerator object in CTGAN
         # - that functionality has been subsumed by DataSampler, but switch is
         # essentially 1 for 1
+        # don't need to count eps for each teacher, because these are disjoint partitions
+        cached_probs = self.cond_generator.discrete_column_category_prob
+
         cond_generator = [
-            DataSampler(d, self._transformer.output_info_list, self._log_frequency)
+            DataSampler(
+                d,
+                self._transformer.output_info_list,
+                self._log_frequency,
+                per_column_epsilon=None,
+                discrete_column_category_prob=cached_probs
+            )
             for d in data_partitions
         ]
 
@@ -300,7 +313,13 @@ class PATECTGAN(CTGANSynthesizer):
             for t_2 in range(self.teacher_iters):
                 for i in range(self.num_teachers):
                     partition_data = data_partitions[i]
-                    data_sampler = DataSampler(partition_data, self._transformer.output_info_list, self._log_frequency)
+                    data_sampler = DataSampler(
+                        partition_data,
+                        self._transformer.output_info_list,
+                        self._log_frequency,
+                        per_column_epsilon=None,
+                        discrete_column_category_prob=cached_probs
+                    )
                     fakez = torch.normal(mean, std=std).to(self._device)
 
                     condvec = cond_generator[i].sample_condvec(self._batch_size)
@@ -358,7 +377,13 @@ class PATECTGAN(CTGANSynthesizer):
             ###
             # train student discriminator
             for t_3 in range(self.student_iters):
-                data_sampler = DataSampler(train_data, self._transformer.output_info_list, self._log_frequency)
+                data_sampler = DataSampler(
+                    train_data,
+                    self._transformer.output_info_list,
+                    self._log_frequency,
+                    per_column_epsilon=None,
+                    discrete_column_category_prob=cached_probs
+                )
                 fakez = torch.normal(mean=mean, std=std)
 
                 condvec = self.cond_generator.sample_condvec(self._batch_size)

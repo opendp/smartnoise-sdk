@@ -1,16 +1,28 @@
+import warnings
 import numpy as np
 from opendp.mod import binary_search_param, enable_features
 from opendp.trans import make_bounded_sum, make_clamp
 from opendp.meas import make_base_geometric
 
 class DataSampler(object):
-    """DataSampler samples the conditional vector and corresponding data for CTGAN."""
+    """DataSampler samples the conditional vector and corresponding data for CTGAN.
 
-    def __init__(self, data, output_info, log_frequency, per_column_epsilon=None):
+    :param data(np.ndarray): The data to be conditionally sampled.
+    :param output_info(list): The output information of the model.
+    :param log_frequency(bool): Whether to use log frequency.
+    :param per_column_epsilon(float): The privacy budget for each column.
+    :param discrete_column_category_prob(list): The category probabilities for each discrete column.
+        Use this to pass in cached noisy probabilities.  Data must match the schema of the original data.
+
+    """
+
+    def __init__(self, data, output_info, log_frequency, *ignore, per_column_epsilon=None, discrete_column_category_prob=None, **kwargs):
         self._data = data
         self._per_column_epsilon = per_column_epsilon
 
         if per_column_epsilon:
+            if per_column_epsilon <= 0.0:
+                raise ValueError("per_column_epsilon must be positive")
             bounds = (0, 1)
             max_contrib = 1
             enable_features('contrib')
@@ -24,7 +36,9 @@ class DataSampler(object):
                 d_out=(self._per_column_epsilon))
             self._per_column_scale = discovered_scale
         else:
-            self._per_column_epsilon = 0.0
+            self._per_column_scale = None
+            if discrete_column_category_prob is None:
+                warnings.warn("per_column_epsilon is not set, and no cached probabilites have been provided.  Sampler will not privatize frequencies, which may cause privacy leaks")
 
         def is_discrete_column(column_info):
             return (len(column_info) == 1
@@ -82,7 +96,7 @@ class DataSampler(object):
                 ed = st + span_info.dim
                 category_freq = np.sum(data[:, st:ed], axis=0)
                 # insert privacy here
-                if self._per_column_epsilon > 0.0:
+                if self._per_column_scale:
                     geom = make_base_geometric(self._per_column_scale)
                     category_freq = [geom(int(v)) for v in category_freq]
                     eps_tot += self._per_column_epsilon
@@ -104,6 +118,16 @@ class DataSampler(object):
             else:
                 st += sum([span_info.dim for span_info in column_info])
         self.total_spent = eps_tot
+
+        if discrete_column_category_prob is not None:
+            assert len(discrete_column_category_prob) == n_discrete_columns
+            for i in range(n_discrete_columns):
+                self._discrete_column_category_prob[i, :] = discrete_column_category_prob[i]
+            self.total_spent = 0.0 # don't have to pay for cached noise
+
+    @property
+    def discrete_column_category_prob(self):
+        return self._discrete_column_category_prob
 
     def _random_choice_prob_index(self, discrete_column_id):
         probs = self._discrete_column_category_prob[discrete_column_id]
