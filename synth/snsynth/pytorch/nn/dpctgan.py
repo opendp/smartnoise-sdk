@@ -461,7 +461,6 @@ class DPCTGAN(CTGANSynthesizer):
             fakez = torch.normal(mean=mean, std=std).to(self._device)
 
             condvec = self._data_sampler.sample_condvec(self._batch_size)
-            print(condvec)
 
             if condvec is None:
                 pass
