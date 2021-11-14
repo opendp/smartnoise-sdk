@@ -4,6 +4,7 @@ from opendp.mod import binary_search_param, enable_features
 from opendp.trans import make_bounded_sum, make_clamp
 from opendp.meas import make_base_geometric
 
+
 class DataSampler(object):
     """DataSampler samples the conditional vector and corresponding data for CTGAN.
 
@@ -13,10 +14,17 @@ class DataSampler(object):
     :param per_column_epsilon(float): The privacy budget for each column.
     :param discrete_column_category_prob(list): The category probabilities for each discrete column.
         Use this to pass in cached noisy probabilities.  Data must match the schema of the original data.
-
     """
 
-    def __init__(self, data, output_info, log_frequency, *ignore, per_column_epsilon=None, discrete_column_category_prob=None, **kwargs):
+    def __init__(
+            self,
+            data,
+            output_info,
+            log_frequency,
+            *ignore,
+            per_column_epsilon=None,
+            discrete_column_category_prob=None,
+            **kwargs):
         self._data = data
         self._per_column_epsilon = per_column_epsilon
 
@@ -38,7 +46,10 @@ class DataSampler(object):
         else:
             self._per_column_scale = None
             if discrete_column_category_prob is None:
-                warnings.warn("per_column_epsilon is not set, and no cached probabilites have been provided.  Sampler will not privatize frequencies, which may cause privacy leaks")
+                warnings.warn(
+                    "per_column_epsilon is not set, and no cached probabilites have been provided."
+                    "Sampler will not privatize frequencies, which may cause privacy leaks"
+                )
 
         def is_discrete_column(column_info):
             return (len(column_info) == 1
@@ -102,8 +113,8 @@ class DataSampler(object):
                     eps_tot += self._per_column_epsilon
                 category_freq = [1 if v < 1 else v for v in category_freq]
                 if np.sum(category_freq) < 100:
-                   # not enough data; use uniform distribution
-                   category_freq = [1 for _ in category_freq]
+                    # not enough data; use uniform distribution
+                    category_freq = [1 for _ in category_freq]
                 category_freq = np.array(category_freq, dtype='float64')
                 if log_frequency:
                     category_freq = np.log(category_freq + 1)
@@ -123,7 +134,7 @@ class DataSampler(object):
             assert len(discrete_column_category_prob) == n_discrete_columns
             for i in range(n_discrete_columns):
                 self._discrete_column_category_prob[i, :] = discrete_column_category_prob[i]
-            self.total_spent = 0.0 # don't have to pay for cached noise
+            self.total_spent = 0.0  # don't have to pay for cached noise
 
     @property
     def discrete_column_category_prob(self):
