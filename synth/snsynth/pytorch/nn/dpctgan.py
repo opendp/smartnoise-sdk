@@ -177,7 +177,7 @@ class DPCTGAN(CTGANSynthesizer):
 
         if self.loss != "cross_entropy":
             # Monkeypatches the _create_or_extend_grad_sample function when calling opacus
-            opacus.supported_layers_grad_samplers._create_or_extend_grad_sample = (
+            opacus.grad_sample.utils.create_or_extend_grad_sample = (
                 _custom_create_or_extend_grad_sample
             )
 
