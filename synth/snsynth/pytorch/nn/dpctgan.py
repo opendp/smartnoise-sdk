@@ -13,7 +13,7 @@ from ctgan.synthesizers import CTGANSynthesizer
 
 
 class Discriminator(Module):
-    def __init__(self, input_dim, discriminator_dim, loss, pac=10):
+    def __init__(self, input_dim, discriminator_dim, loss, pac=1):
         super(Discriminator, self).__init__()
         torch.cuda.manual_seed(0)
         torch.manual_seed(0)
@@ -33,7 +33,7 @@ class Discriminator(Module):
             seq += [Sigmoid()]
         self.seq = Sequential(*seq)
 
-    def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=10, lambda_=10):
+    def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=1, lambda_=10):
         alpha = torch.rand(real_data.size(0) // pac, 1, 1, device=device)
         alpha = alpha.repeat(1, pac, real_data.size(1))
         alpha = alpha.view(-1, real_data.size(1))
@@ -122,7 +122,7 @@ class DPCTGAN(CTGANSynthesizer):
                  log_frequency=True,
                  verbose=True,
                  epochs=300,
-                 pac=10,
+                 pac=1,
                  cuda=True,
                  disabled_dp=False,
                  delta=None,
@@ -177,7 +177,7 @@ class DPCTGAN(CTGANSynthesizer):
 
         if self.loss != "cross_entropy":
             # Monkeypatches the _create_or_extend_grad_sample function when calling opacus
-            opacus.supported_layers_grad_samplers._create_or_extend_grad_sample = (
+            opacus.grad_sample.utils.create_or_extend_grad_sample = (
                 _custom_create_or_extend_grad_sample
             )
 
