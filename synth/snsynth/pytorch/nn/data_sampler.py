@@ -47,7 +47,7 @@ class DataSampler(object):
             self._per_column_scale = None
             if discrete_column_category_prob is None:
                 warnings.warn(
-                    "per_column_epsilon is not set, and no cached probabilites have been provided."
+                    "per_column_epsilon is not set, and no cached probabilites have been provided. "
                     "Sampler will not privatize frequencies, which may cause privacy leaks"
                 )
 

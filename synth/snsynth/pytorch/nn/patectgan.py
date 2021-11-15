@@ -6,6 +6,7 @@ from torch import nn
 import torch.utils.data
 from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
 from torch.autograd import Variable
+import warnings
 
 from .data_sampler import DataSampler
 from ctgan.data_transformer import DataTransformer
@@ -107,7 +108,7 @@ class PATECTGAN(CTGANSynthesizer):
                  discriminator_decay=1e-6,
                  batch_size=500,
                  discriminator_steps=1,
-                 log_frequency=True,
+                 log_frequency=False,
                  verbose=False,
                  epochs=300,
                  pac=1,
@@ -169,6 +170,12 @@ class PATECTGAN(CTGANSynthesizer):
             device = 'cuda'
 
         self._device = torch.device(device)
+
+        if self._log_frequency:
+            warnings.warn(
+                "log_frequency is selected.  This may result in oversampling frequent "
+                "categories, which could cause privacy leaks."
+            )
 
     def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
         if update_epsilon:

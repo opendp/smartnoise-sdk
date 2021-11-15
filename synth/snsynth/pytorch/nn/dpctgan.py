@@ -4,6 +4,7 @@ from torch import optim
 from torch import nn
 import torch.utils.data
 from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
+import warnings
 
 import opacus
 
@@ -181,6 +182,12 @@ class DPCTGAN(CTGANSynthesizer):
             # Monkeypatches the _create_or_extend_grad_sample function when calling opacus
             opacus.supported_layers_grad_samplers._create_or_extend_grad_sample = (
                 _custom_create_or_extend_grad_sample
+            )
+
+        if self._log_frequency:
+            warnings.warn(
+                "log_frequency is selected.  This may result in oversampling frequent "
+                "categories, which could cause privacy leaks."
             )
 
     def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
