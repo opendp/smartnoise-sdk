@@ -1,8 +1,9 @@
 # SmartNoise Synth v0.2.4 Release Notes
 
 * Fixed bug in dpsgd synthesizers where final batch was not being counted against budget, potentially causing privacy leak
-* Alert caller if continuous column is passed as a categorical column
-
+* Alert caller if continuous column is passed as a categorical column to CTGAN
+* Warn if log_frequency for CTGAN is set to unsafe value.  Spend a small fraction of epsilon to estimate frequencies for conditional sampling.
+* Fixed DPCTGAN regression that was impairing utility
 
 # SmartNoise Synth v0.2.3 Release Notes
 
