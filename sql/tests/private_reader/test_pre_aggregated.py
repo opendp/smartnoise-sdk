@@ -21,8 +21,9 @@ class TestPreAggregatedSuccess:
             database="PUMS_pid",
             engine="pandas"
         )
-        res = priv.execute(query, pre_aggregated=pre_aggregated)
-        assert(str(res[1][0]) == '1') # it's sorted
+        if priv:
+            res = priv.execute(query, pre_aggregated=pre_aggregated)
+            assert(str(res[1][0]) == '1') # it's sorted
     def test_pandas_success(self, test_databases):
         # pass in properly formatted dataframe
         pre_aggregated = [
@@ -39,9 +40,10 @@ class TestPreAggregatedSuccess:
             database="PUMS_pid",
             engine="pandas"
         )
-        query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
-        res = priv.execute(query, pre_aggregated=pre_aggregated)
-        assert(str(res[1][0]) == '1') # it's sorted
+        if priv:
+            query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
+            res = priv.execute(query, pre_aggregated=pre_aggregated)
+            assert(str(res[1][0]) == '1') # it's sorted
     def test_pandas_success_df(self, test_databases):
         # pass in properly formatted dataframe
         pre_aggregated = [
@@ -58,9 +60,10 @@ class TestPreAggregatedSuccess:
             database="PUMS_pid",
             engine="pandas"
         )
-        query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
-        res = priv.execute_df(query, pre_aggregated=pre_aggregated)
-        assert(str(res['sex'][0]) == '1') # it's sorted
+        if priv:
+            query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
+            res = priv.execute_df(query, pre_aggregated=pre_aggregated)
+            assert(str(res['sex'][0]) == '1') # it's sorted
     def test_np_ndarray_success(self, test_databases):
         # pass in properly formatted dataframe
         pre_aggregated = [
@@ -78,9 +81,10 @@ class TestPreAggregatedSuccess:
             database="PUMS_pid",
             engine="pandas"
         )
-        query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
-        res = priv.execute(query, pre_aggregated=pre_aggregated)
-        assert(str(res[1][0]) == '1') # it's sorted
+        if priv:
+            query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
+            res = priv.execute(query, pre_aggregated=pre_aggregated)
+            assert(str(res[1][0]) == '1') # it's sorted
     def test_np_array_success(self, test_databases):
         # pass in properly formatted dataframe
         pre_aggregated = [
@@ -95,9 +99,10 @@ class TestPreAggregatedSuccess:
             database="PUMS_pid",
             engine="pandas"
         )
-        query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
-        res = priv.execute(query, pre_aggregated=pre_aggregated)
-        assert(str(res[1][0]) == '1') # it's sorted
+        if priv:
+            query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
+            res = priv.execute(query, pre_aggregated=pre_aggregated)
+            assert(str(res[1][0]) == '1') # it's sorted
     def test_spark_df_success(self, test_databases):
         # pass in properly formatted dataframe
         pre_aggregated = [
@@ -172,11 +177,12 @@ class TestPreAggregatedColumnFail:
             database="PUMS_pid",
             engine="pandas"
         )
-        try:
-            _ = priv.execute(query, pre_aggregated=pre_aggregated)
-        except ValueError:
-            return
-        raise AssertionError("execute should have raised an exception")
+        if priv:
+            try:
+                _ = priv.execute(query, pre_aggregated=pre_aggregated)
+            except ValueError:
+                return
+            raise AssertionError("execute should have raised an exception")
     def test_pandas_col_fail(self, test_databases):
         # pass in wrongly formatted dataframe
         pre_aggregated = [
@@ -193,12 +199,13 @@ class TestPreAggregatedColumnFail:
             database="PUMS_pid",
             engine="pandas"
         )
-        query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
-        try:
-            _ = priv.execute(query, pre_aggregated=pre_aggregated)
-        except ValueError:
-            return
-        raise AssertionError("execute should have raised an exception")
+        if priv:
+            query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
+            try:
+                _ = priv.execute(query, pre_aggregated=pre_aggregated)
+            except ValueError:
+                return
+            raise AssertionError("execute should have raised an exception")
     def test_pandas_col_fail_2(self, test_databases):
         # pass in wrongly formatted dataframe
         pre_aggregated = [
@@ -216,11 +223,12 @@ class TestPreAggregatedColumnFail:
             engine="pandas"
         )
         query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
-        try:
-            _ = priv.execute(query, pre_aggregated=pre_aggregated)
-        except ValueError:
-            return
-        raise AssertionError("execute should have raised an exception")
+        if priv:
+            try:
+                _ = priv.execute(query, pre_aggregated=pre_aggregated)
+            except ValueError:
+                return
+            raise AssertionError("execute should have raised an exception")
     def test_spark_df_col_fail(self, test_databases):
         # pass in wrongly formatted dataframe
         pre_aggregated = [

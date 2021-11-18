@@ -12,13 +12,13 @@ class Reader:
         raise NotImplementedError("Execute must be implemented on the inherited class")
 
     def _to_df(self, rows):
-        # always assumes the first row is column names
-        if hasattr(rows, 'toLocalIterator'): # it's RDD
+        #  always assumes the first row is column names
+        if hasattr(rows, 'toLocalIterator'):  # it's RDD
             if hasattr(rows, 'columns'):
                 colnames = rows.columns
                 try:
                     rows = [colnames] + [[c for c in r] for r in rows.toLocalIterator()]
-                except:
+                except Exception:
                     rows = [colnames]
             else:
                 rows = [[c for c in r] for r in rows.collect()]
