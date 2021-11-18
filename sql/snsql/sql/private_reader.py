@@ -14,6 +14,7 @@ from .reader import PandasReader
 
 from snsql._ast.ast import Query, Top
 from snsql._ast.expressions import sql as ast
+from snsql._ast.expressions.date import parse_datetime
 from snsql.reader import Reader
 
 from ._mechanisms import *
@@ -302,6 +303,64 @@ class PrivateReader(Reader):
 
         return [s.mechanism for s in subquery._select_symbols]
 
+    def _check_pre_aggregated_columns(self, pre_aggregated, subquery: Query):
+        """
+        Checks to make sure the pre_aggregated iterable matches what would be
+        expected if the generated subquery were executed.
+
+        :param pre_aggregated: pre-aggregated values as would have been returned by
+            executing the subquery.
+        :param subquery: the subquery's AST, used to determine the column names and types.
+        :returns: raises an error if the pre_aggregated shape do not match the expected shape.
+            Otherwise, returns the pre_aggregated values suitable for further processing.
+        """
+        subquery_colnames = [s.name.split('_alias_')[0] for s in subquery._select_symbols]
+
+        def normalize_colname(colname):
+            # modify column names to make comparisons more reliable
+            colname = colname.lower().replace(' ', '')
+            colname = colname.split('_alias_')[0]
+            colname = colname.replace('*', '').replace('(', '_').replace(')', '')
+            return colname
+
+        def check_colnames(colnames):
+            if len(colnames) != len(subquery_colnames):
+                raise ValueError(f"pre_aggregated has wrong number of columns, expected [{','.join(subquery_colnames)}], got [{','.join(colnames)}]")
+            if not all([isinstance(c, str) for c in colnames]):
+                raise ValueError(f"pre_aggregated column names must be strings, got {colnames}")
+            colnames = [normalize_colname(c) for c in colnames]
+            if not all([c == normalize_colname(s) for c, s in zip(colnames, subquery_colnames)]):
+                raise ValueError(f"pre_aggregated column names must match subquery column names and order, expected [{','.join(subquery_colnames)}], got [{','.join(colnames)}]")
+
+        if isinstance(pre_aggregated, str):
+            raise ValueError("pre_aggregated must be a list of records")
+        if isinstance(pre_aggregated, list):
+            colnames = pre_aggregated[0]
+            check_colnames(colnames)
+        elif isinstance(pre_aggregated, np.ndarray):
+            pass # ndarray does not have column names
+        else:
+            agg_mod = pre_aggregated.__class__.__module__
+            agg_class = pre_aggregated.__class__.__name__
+            if (
+                agg_mod == 'pandas.core.frame' and
+                agg_class == 'DataFrame'
+            ):
+                colnames = pre_aggregated.columns
+                check_colnames(colnames)
+                pre_aggregated = pre_aggregated.to_numpy()
+            elif (
+                agg_mod == 'pyspark.sql.dataframe' and
+                agg_class == 'DataFrame'
+            ):
+                colnames = pre_aggregated.columns
+                check_colnames(colnames)
+            elif hasattr(pre_aggregated, 'map'):
+                pass # RDD does not have column names
+            else:
+                raise ValueError("pre_aggregated must be a list of records")
+        return pre_aggregated
+
     def execute_with_accuracy(self, query_string:str):
         """Executes a private SQL query, returning accuracy bounds for each column 
         and row.  This should only be used if you need analytic bounds for statistics
@@ -410,8 +469,8 @@ class PrivateReader(Reader):
 
         subquery, query = self._rewrite_ast(query)
 
-        if pre_aggregated:
-            exact_aggregates = pre_aggregated
+        if pre_aggregated is not None:
+            exact_aggregates = self._check_pre_aggregated_columns(pre_aggregated, subquery)
         else:
             exact_aggregates = self._get_reader(subquery)._execute_ast(subquery)
 
@@ -451,8 +510,12 @@ class PrivateReader(Reader):
         elif hasattr(exact_aggregates, "map"):
             # it's an RDD
             out = exact_aggregates.map(randomize_row_values)
-        else:
+        elif isinstance(exact_aggregates, list):
             out = map(randomize_row_values, exact_aggregates[1:])
+        elif isinstance(exact_aggregates, np.ndarray):
+            out = map(randomize_row_values, exact_aggregates)
+        else:
+            raise ValueError("Unexpected type for exact_aggregates")
 
         # censor infrequent dimensions
         if self._options.censor_dims:
@@ -496,6 +559,8 @@ class PrivateReader(Reader):
         out_col_names = [s.name for s in out_syms]
 
         def convert(val, type):
+            if val is None:
+                return None # all columns are nullable
             if type == "string" or type == "unknown":
                 return str(val)
             elif type == "int":
@@ -507,6 +572,11 @@ class PrivateReader(Reader):
                     return val != 0
                 else:
                     return bool(str(val).replace('"', "").replace("'", ""))
+            elif type == "datetime":
+                v = parse_datetime(val)
+                if v is None:
+                    raise ValueError(f"Could not parse datetime: {val}")
+                return v
             else:
                 raise ValueError("Can't convert type " + type)
         
@@ -515,7 +585,13 @@ class PrivateReader(Reader):
         def process_out_row(row):
             bindings = dict((name.lower(), val) for name, val in zip(source_col_names, row))
             out_row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
-            out_row =[convert(val, type) for val, type in zip(out_row, out_types)]
+            try:
+                out_row =[convert(val, type) for val, type in zip(out_row, out_types)]
+            except Exception as e:
+                raise ValueError(
+                    f"Error converting output row: {e}\n"
+                    f"Expecting types {out_types}"
+                )
 
             # compute accuracies
             if accuracy == True and alphas:

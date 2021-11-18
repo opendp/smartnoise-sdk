@@ -44,8 +44,11 @@ You can see which columns are expected by checking the AST of the rewritten quer
     query = 'SELECT sex, COUNT(*) AS n, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
 
     subquery, _ = reader._rewrite(query)
-    expressions = [str(col.expression) for col in subquery.select.namedExpressions]
-    print(expressions)
+    expressions = [
+        f'{str(col.expression)} AS {col.name}' 
+        for col in subquery.select.namedExpressions
+    ]
+    print(', '.join(expressions))
 
 .. code-block:: bash
 

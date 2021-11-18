@@ -1,13 +1,35 @@
 from datetime import date
 import calendar
 
-from numpy.lib.arraysetops import isin
 from snsql._ast.tokens import *
 import datetime
 
 """
     date/time processing expressions
 """
+def parse_datetime(val):
+    if val is None:
+        return None
+    if isinstance(val, (datetime.date, datetime.time, datetime.datetime)):
+        return val
+    pass
+    parsed = None
+    try:
+        parsed = datetime.date.fromisoformat(val)
+    except:
+        pass
+    if not parsed:
+        try:
+            parsed = datetime.time.fromisoformat(val)
+        except:
+            pass
+    if not parsed:
+        try:
+            parsed = datetime.datetime.fromisoformat(val)
+        except:
+            pass
+    return parsed
+
 class CurrentTimeFunction(SqlExpr):
     def children(self):
         return [Token("CURRENT_TIME")]
@@ -64,23 +86,7 @@ class ExtractFunction(SqlExpr):
         if exp is None:
             return None
         if isinstance(exp, str):
-            parsed = None
-            try:
-                parsed = datetime.date.fromisoformat(exp)
-            except:
-                pass
-            if not parsed:
-                try:
-                    parsed = datetime.time.fromisoformat(exp)
-                except:
-                    pass
-            if not parsed:
-                try:
-                    parsed = datetime.datetime.fromisoformat(exp)
-                except:
-                    pass
-            if not parsed:
-                raise ValueError(f"Got unknown date/time format: {exp}")
+            parsed = parse_datetime(exp)
         else:
             parsed = exp
         if not isinstance(parsed, (datetime.date, datetime.time, datetime.datetime)):

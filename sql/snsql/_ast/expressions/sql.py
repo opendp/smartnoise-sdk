@@ -17,6 +17,9 @@ class AllColumns(SqlExpr):
     def __hash__(self):
         return hash(str(self))
 
+    def symbol_name(self):
+        return 'star'
+
     def all_symbols(self, relations):
         sym = [r.all_symbols(self) for r in relations if r.alias_match(str(self))]
         if len(sym) == 0:
