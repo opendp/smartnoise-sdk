@@ -1,5 +1,4 @@
 import logging
-from typing import Iterable
 import numpy as np
 from snsql.metadata import Metadata
 from snsql.sql._mechanisms.accuracy import Accuracy
@@ -11,6 +10,7 @@ from .dpsu import run_dpsu
 from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
+from .reader.base import SortKey
 
 from snsql._ast.ast import Query, Top
 from snsql._ast.expressions import sql as ast
@@ -636,24 +636,14 @@ class PrivateReader(Reader):
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
                     desc = True
-                if desc and not (out_types[colidx] in ["int", "float", "boolean"]):
+                if desc and not (out_types[colidx] in ["int", "float", "boolean", "datetime"]):
                     raise ValueError("We don't know how to sort descending by " + out_types[colidx])
                 sf = (desc, colidx)
                 sort_fields.append(sf)
 
             def sort_func(row):
-                row_value, accuracies = row
-                out_row_value = tuple(
-                    [
-                        row_value[idx]
-                        if not desc
-                        else not row_value[idx]
-                        if out_types[idx] == "boolean"
-                        else -row_value[idx]
-                        for desc, idx in sort_fields
-                    ]
-                )
-                return tuple([out_row_value, accuracies])
+                # use index 0, since index 1 is accuracy
+                return SortKey(row[0], sort_fields)
                 
             if hasattr(out, "sortBy"):
                 out = out.sortBy(sort_func)
