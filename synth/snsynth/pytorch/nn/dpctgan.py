@@ -205,6 +205,9 @@ class DPCTGAN(CTGANSynthesizer):
 
         self._transformer = DataTransformer()
         self._transformer.fit(data, discrete_columns=categorical_columns)
+        for tinfo in self._transformer._column_transform_info_list:
+            if tinfo.column_type == "continuous":
+                raise ValueError("We don't support continuous values on this synthesizer.  Please discretize values.")
 
         train_data = self._transformer.transform(data)
 
