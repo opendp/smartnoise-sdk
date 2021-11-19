@@ -41,3 +41,11 @@ class TestLoadSymbols:
         q = QueryParser(metadata).query(query)
         assert(q._named_symbols['temp'].expression.tablename == 'features')
         assert(q._named_symbols['sales'].expression.xpath_first('//TableColumn').tablename == 'sales')
+
+    def test_same_colname(self):
+        query = 'SELECT sales."Store", features."Store" FROM sales, features'
+        q = QueryParser(metadata).query(query)
+        assert(q._named_symbols['"sales_Store"'].expression.tablename == 'sales')
+        assert(q._named_symbols['"sales_Store"'].expression.colname == 'Store')
+        assert(q._named_symbols['"features_Store"'].expression.tablename == 'features')
+        assert(q._named_symbols['"features_Store"'].expression.colname == 'Store')

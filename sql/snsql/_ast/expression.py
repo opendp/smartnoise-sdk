@@ -85,13 +85,15 @@ class NamedExpression(SqlExpr):
     def column_name(self):
         if self.name is not None:
             return self.name
-        elif type(self.expression) is Column:
+        if type(self.expression) is Column:
             parts = self.expression.name.split(".")
-            return parts[0] if len(parts) == 1 else '_'.join(parts)
-        elif type(self.expression) is AllColumns:
-            return "???"
-        else:
-            return "???"
+            if len(parts) == 1:
+                return parts[0]
+            if self.expression.escaped():
+                parts = [p.replace('"', '').replace('[', '') for p in parts]
+                return f'"{parts[0]}_{parts[1]}"'
+            return f'{parts[0]}_{parts[1]}'
+        return "???"
 
     def type(self):
         return self.expression.type()
