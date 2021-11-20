@@ -1,6 +1,7 @@
 import yaml
 import io
 from os import path
+import warnings
 
 from snsql.sql.reader.base import NameCompare
 
@@ -122,6 +123,15 @@ class Table:
         self.m_columns = dict([(c.name, c) for c in columns])
         self.compare = None
 
+        if clamp_columns:
+            for col in self.m_columns.values():
+                if col.typename() in ["int", "float"] and (col.lower is None or col.upper is None):
+                    if col.sensitivity is not None:
+                        raise ValueError(
+                            f"Column {col.name} has sensitivity and no bounds, but table specifies clamp_columns. "
+                            "clamp_columns should be False, or bounds should be provided."
+                        )
+
     def __getitem__(self, colname):
         for cname in self.m_columns.keys():
             col = self.m_columns[cname]
@@ -165,11 +175,17 @@ class String:
         name, 
         *ignore, 
         card=None, 
-        is_key=False
+        is_key=False,
+        nullable=True, 
+        missing_value=None
     ):
         self.name = name
         self.card = card
         self.is_key = is_key
+        self.nullable = nullable
+        self.missing_value = missing_value
+        if self.missing_value is not None:
+            self.nullable = False
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (card: " + str(self.card) + ")"
     def typename(self):
@@ -184,10 +200,16 @@ class Boolean:
         self, 
         name, 
         *ignore, 
-        is_key=False
+        is_key=False,
+        nullable=True, 
+        missing_value=None
     ):
         self.name = name
         self.is_key = is_key
+        self.nullable = nullable
+        self.missing_value = missing_value
+        if self.missing_value is not None:
+            self.nullable = False
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (boolean)"
     def typename(self):
@@ -202,10 +224,16 @@ class DateTime:
         self, 
         name, 
         *ignore, 
-        is_key=False
+        is_key=False,
+        nullable=True, 
+        missing_value=None
     ):
         self.name = name
         self.is_key = is_key
+        self.nullable = nullable
+        self.missing_value = missing_value
+        if self.missing_value is not None:
+            self.nullable = False
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (datetime)"
     def typename(self):
@@ -225,7 +253,7 @@ class Int:
         is_key=False,
         sensitivity=None, 
         nullable=True, 
-        missing=None
+        missing_value=None
     ):
         self.name = name
         self.lower = lower
@@ -233,9 +261,18 @@ class Int:
         self.is_key = is_key
         self.sensitivity = sensitivity
         self.nullable = nullable
-        self.missing = missing
-        if self.missing is not None:
+        self.missing_value = missing_value
+        if self.missing_value is not None:
             self.nullable = False
+
+        if self.lower is not None and self.upper is not None and self.sensitivity is not None:
+            sens_a = max(abs(self.lower), abs(self.upper))
+            sens_b = abs(self.upper - self.lower)
+            if self.sensitivity != sens_a and self.sensitivity != sens_b:
+                warnings.warn(
+                    f"Sensitivity for {self.name} will override sensitivity derived from bounds"
+                )
+
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.lower) + "," + str(self.upper)
         return ("*" if self.is_key else "") + str(self.name) + " [int] (" + bounds + ")"
@@ -256,7 +293,7 @@ class Float:
         is_key=False,
         sensitivity=None, 
         nullable=True, 
-        missing=None
+        missing_value=None
     ):
         self.name = name
         self.lower = lower
@@ -264,7 +301,16 @@ class Float:
         self.is_key = is_key
         self.sensitivity = sensitivity
         self.nullable = nullable
-        self.missing = missing
+        self.missing_value = missing_value
+
+        if self.lower is not None and self.upper is not None and self.sensitivity is not None:
+            sens_a = max(abs(self.lower), abs(self.upper))
+            sens_b = abs(self.upper - self.lower)
+            if self.sensitivity != sens_a and self.sensitivity != sens_b:
+                warnings.warn(
+                    f"Sensitivity for {self.name} will override sensitivity derived from bounds"
+                )
+
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.lower) + "," + str(self.upper)
         return ("*" if self.is_key else "") + str(self.name) + " [float] (" + bounds + ")"
@@ -381,32 +427,28 @@ class CollectionYamlLoader:
         )
 
     def load_column(self, column, c):
+        lower = float(c["lower"]) if "lower" in c else None
+        upper = float(c["upper"]) if "upper" in c else None
         is_key = False if "private_id" not in c else bool(c["private_id"])
+        nullable = bool(c["nullable"]) if "nullable" in c else True
+        missing_value = c["missing_value"] if "missing_value" in c else None
+        sensitivity = c["sensitivity"] if "sensitivity" in c else None
 
         if c["type"] == "boolean":
-            return Boolean(column, is_key=is_key)
+            return Boolean(column, is_key=is_key, nullable=nullable, missing_value=missing_value)
         elif c["type"] == "datetime":
-            return DateTime(column, is_key=is_key)
+            return DateTime(column, is_key=is_key, nullable=nullable, missing_value=missing_value)
         elif c["type"] == "int":
-            lower = int(c["lower"]) if "lower" in c else None
-            upper = int(c["upper"]) if "upper" in c else None
-            nullable = bool(c["nullable"]) if "nullable" in c else True
-            missing = c["missing"] if "missing" in c else None
-            sensitivity = c["sensitivity"] if "sensitivity" in c else None
             return Int(
                 column, 
-                lower=lower, 
-                upper=upper, 
+                lower=int(lower) if lower is not None else None,
+                upper=int(upper) if upper is not None else None,
                 is_key=is_key,
                 nullable=nullable,
-                missing=missing,
+                missing_value=missing_value,
                 sensitivity=sensitivity
             )
         elif c["type"] == "float":
-            lower = float(c["lower"]) if "lower" in c else None
-            upper = float(c["upper"]) if "upper" in c else None
-            nullable = bool(c["nullable"]) if "nullable" in c else True
-            missing = c["missing"] if "missing" in c else None
             sensitivity = c["sensitivity"] if "sensitivity" in c else None
             return Float(
                 column, 
@@ -414,12 +456,12 @@ class CollectionYamlLoader:
                 upper=upper, 
                 is_key=is_key,
                 nullable=nullable,
-                missing=missing,
+                missing_value=missing_value,
                 sensitivity=sensitivity
             )
         elif c["type"] == "string":
             card = int(c["cardinality"]) if "cardinality" in c else 0
-            return String(column, card=card, is_key=is_key)
+            return String(column, card=card, is_key=is_key, nullable=nullable, missing_value=missing_value)
         else:
             raise ValueError("Unknown column type for column {0}: {1}".format(column, c))
 
@@ -473,8 +515,8 @@ class CollectionYamlLoader:
                     column["upper"] = c.upper
                 if hasattr(c, "nullable") and c.nullable is not None:
                     column["nullable"] = c.nullable
-                if hasattr(c, "missing") and c.missing is not None:
-                    column["missing"] = c.missing
+                if hasattr(c, "missing_value") and c.missing_value is not None:
+                    column["missing_value"] = c.missing_value
                 if hasattr(c, "sensitivity") and c.sensitivity is not None:
                     column["sensitivity"] = c.sensitivity
                 if c.is_key is not None and c.is_key == True:
