@@ -12,8 +12,18 @@ class Reader:
         raise NotImplementedError("Execute must be implemented on the inherited class")
 
     def _to_df(self, rows):
-        # always assumes the first row is column names
-        rows = list(rows)
+        #  always assumes the first row is column names
+        if hasattr(rows, 'toLocalIterator'):  # it's RDD
+            if hasattr(rows, 'columns'):
+                colnames = rows.columns
+                try:
+                    rows = [colnames] + [[c for c in r] for r in rows.toLocalIterator()]
+                except Exception:
+                    rows = [colnames]
+            else:
+                rows = [[c for c in r] for r in rows.collect()]
+        if not isinstance(rows, list):
+            rows = list(rows)
         header = rows[0]
         if len(header) == 2 and isinstance(header[1], (list, tuple)):
             accuracy = True
@@ -40,8 +50,8 @@ class Reader:
                 return [pd.DataFrame(result[1:], columns=result[0]),
                         [pd.DataFrame(a[1:], columns=a[0]) for a in accuracies]]
 
-    def execute_df(self, query, *ignore, accuracy: bool = False):
+    def execute_df(self, query, *ignore, **kwargs):
         if not isinstance(query, str):
             raise ValueError("Please pass a string to this function.")
 
-        return self._to_df(self.execute(query, accuracy=accuracy))
+        return self._to_df(self.execute(query, **kwargs))
