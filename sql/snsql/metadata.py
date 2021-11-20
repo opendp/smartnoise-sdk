@@ -10,7 +10,7 @@ from snsql.sql.reader.base import NameCompare
 class Metadata:
     """Information about a collection of tabular data sources"""
 
-    def __init__(self, tables, engine, compare=None):
+    def __init__(self, tables, engine=None, compare=None):
         """Instantiate a metadata object with information about tabular data sources
 
         :param tables: A list of Table descriptions
@@ -80,15 +80,14 @@ class Metadata:
     Common attributes for a table or a view
 """
 
-
 class Table:
     """Information about a single tabular data source"""
-
     def __init__(
         self,
         schema,
         name,
         columns,
+        *ignore,
         rowcount=0,
         rows_exact=None,
         row_privacy=False,
@@ -156,108 +155,136 @@ class Table:
 
     def __iter__(self):
         return self.columns()
-
     def table_name(self):
         return (self.schema + "." if len(self.schema.strip()) > 0 else "") + self.name
 
-
 class String:
     """A column with string data"""
-
-    def __init__(self, name, card, is_key=False, bounded=False):
+    def __init__(
+        self, 
+        name, 
+        *ignore, 
+        card=None, 
+        is_key=False
+    ):
         self.name = name
         self.card = card
         self.is_key = is_key
-        self.bounded = bounded
-
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (card: " + str(self.card) + ")"
-
     def typename(self):
         return "string"
-
+    @property
+    def unbounded(self):
+        return self.card is None
 
 class Boolean:
     """A column with True/False data"""
-
-    def __init__(self, name, is_key=False, bounded=False):
+    def __init__(
+        self, 
+        name, 
+        *ignore, 
+        is_key=False
+    ):
         self.name = name
         self.is_key = is_key
-        self.bounded = bounded
-
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (boolean)"
-
     def typename(self):
         return "boolean"
-
+    @property
+    def unbounded(self):
+        return False
 
 class DateTime:
     """A date/time column"""
-
-    def __init__(self, name, is_key=False, bounded=False):
+    def __init__(
+        self, 
+        name, 
+        *ignore, 
+        is_key=False
+    ):
         self.name = name
         self.is_key = is_key
-        self.bounded = bounded
-
     def __str__(self):
         return ("*" if self.is_key else "") + str(self.name) + " (datetime)"
-
     def typename(self):
         return "datetime"
-
+    @property
+    def unbounded(self):
+        return True
 
 class Int:
     """A column with integer data"""
-
-    def __init__(self, name, lower=None, upper=None, is_key=False, bounded=False):
+    def __init__(
+        self, 
+        name, 
+        *ignore, 
+        lower=None, 
+        upper=None,
+        is_key=False,
+        sensitivity=None, 
+        nullable=True, 
+        missing=None
+    ):
         self.name = name
         self.lower = lower
         self.upper = upper
         self.is_key = is_key
-        self.unbounded = lower is None or upper is None
-        self.bounded = bounded
-
+        self.sensitivity = sensitivity
+        self.nullable = nullable
+        self.missing = missing
+        if self.missing is not None:
+            self.nullable = False
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.lower) + "," + str(self.upper)
         return ("*" if self.is_key else "") + str(self.name) + " [int] (" + bounds + ")"
-
     def typename(self):
         return "int"
-
+    @property
+    def unbounded(self):
+        return self.lower is None or self.upper is None
 
 class Float:
     """A floating point column"""
-
-    def __init__(self, name, lower=None, upper=None, is_key=False, bounded=False):
+    def __init__(
+        self, 
+        name, 
+        *ignore,
+        lower=None, 
+        upper=None, 
+        is_key=False,
+        sensitivity=None, 
+        nullable=True, 
+        missing=None
+    ):
         self.name = name
         self.lower = lower
         self.upper = upper
         self.is_key = is_key
-        self.unbounded = lower is None or upper is None
-        self.bounded = bounded
-
+        self.sensitivity = sensitivity
+        self.nullable = nullable
+        self.missing = missing
     def __str__(self):
         bounds = "unbounded" if self.unbounded else str(self.lower) + "," + str(self.upper)
         return ("*" if self.is_key else "") + str(self.name) + " [float] (" + bounds + ")"
-
     def typename(self):
         return "float"
-
+    @property
+    def unbounded(self):
+        return self.lower is None or self.upper is None
 
 class Unknown:
     """Column is unknown type.  Will be ignored.  May not be used in queries."""
-
     def __init__(self, name):
         self.name = name
         self.is_key = False
-
     def __str__(self):
         return str(self.name) + " (unknown)"
-
     def typename(self):
         return "unknown"
-
+    def unbounded(self):
+        return True
 
 class CollectionYamlLoader:
     def __init__(self, file):
@@ -342,36 +369,57 @@ class CollectionYamlLoader:
             schema,
             table,
             columns,
-            rowcount,
-            rows_exact,
-            row_privacy,
-            max_ids,
-            sample_max_ids,
-            clamp_counts,
-            clamp_columns,
-            use_dpsu,
-            censor_dims,
+            rowcount=rowcount,
+            rows_exact=rows_exact,
+            row_privacy=row_privacy,
+            max_ids=max_ids,
+            sample_max_ids=sample_max_ids,
+            clamp_counts=clamp_counts,
+            clamp_columns=clamp_columns,
+            use_dpsu=use_dpsu,
+            censor_dims=censor_dims,
         )
 
     def load_column(self, column, c):
         is_key = False if "private_id" not in c else bool(c["private_id"])
-        bounded = False if "bounded" not in c else bool(c["bounded"])
 
         if c["type"] == "boolean":
-            return Boolean(column, is_key, bounded)
+            return Boolean(column, is_key=is_key)
         elif c["type"] == "datetime":
-            return DateTime(column, is_key, bounded)
+            return DateTime(column, is_key=is_key)
         elif c["type"] == "int":
             lower = int(c["lower"]) if "lower" in c else None
             upper = int(c["upper"]) if "upper" in c else None
-            return Int(column, lower, upper, is_key, bounded)
+            nullable = bool(c["nullable"]) if "nullable" in c else True
+            missing = c["missing"] if "missing" in c else None
+            sensitivity = c["sensitivity"] if "sensitivity" in c else None
+            return Int(
+                column, 
+                lower=lower, 
+                upper=upper, 
+                is_key=is_key,
+                nullable=nullable,
+                missing=missing,
+                sensitivity=sensitivity
+            )
         elif c["type"] == "float":
             lower = float(c["lower"]) if "lower" in c else None
             upper = float(c["upper"]) if "upper" in c else None
-            return Float(column, lower, upper, is_key, bounded)
+            nullable = bool(c["nullable"]) if "nullable" in c else True
+            missing = c["missing"] if "missing" in c else None
+            sensitivity = c["sensitivity"] if "sensitivity" in c else None
+            return Float(
+                column, 
+                lower=lower, 
+                upper=upper, 
+                is_key=is_key,
+                nullable=nullable,
+                missing=missing,
+                sensitivity=sensitivity
+            )
         elif c["type"] == "string":
             card = int(c["cardinality"]) if "cardinality" in c else 0
-            return String(column, card, is_key, bounded)
+            return String(column, card=card, is_key=is_key)
         else:
             raise ValueError("Unknown column type for column {0}: {1}".format(column, c))
 
@@ -417,14 +465,18 @@ class CollectionYamlLoader:
                     )
                 table[cname] = {}
                 column = table[cname]
-                if hasattr(c, "bounded") and c.bounded == True:
-                    column["bounded"] = c.bounded
                 if hasattr(c, "card"):
                     column["cardinality"] = c.card
                 if hasattr(c, "lower") and c.lower is not None:
                     column["lower"] = c.lower
                 if hasattr(c, "upper") and c.upper is not None:
                     column["upper"] = c.upper
+                if hasattr(c, "nullable") and c.nullable is not None:
+                    column["nullable"] = c.nullable
+                if hasattr(c, "missing") and c.missing is not None:
+                    column["missing"] = c.missing
+                if hasattr(c, "sensitivity") and c.sensitivity is not None:
+                    column["sensitivity"] = c.sensitivity
                 if c.is_key is not None and c.is_key == True:
                     column["private_id"] = c.is_key
                 if type(c) is String:
