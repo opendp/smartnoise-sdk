@@ -60,11 +60,28 @@ class Query(SqlRel):
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
             self.row_privacy = any(tc.row_privacy for tc in tables)
             self.censor_dims = any(tc.censor_dims for tc in tables)
-            
+
         # get grouping expression symbols
         self._grouping_symbols = []
         if self.agg:
-            self._grouping_symbols = [Symbol(ge.expression.symbol(relations)) for ge in self.agg.groupingExpressions]
+            self._grouping_symbols = []
+            for ge in self.agg.groupingExpressions:
+                try:
+                    symb = ge.expression.symbol(relations)
+                except ValueError as err: # Check if the expression has been aliased in the SELECT clause
+                    if isinstance(ge.expression, Column):
+                        expr = [
+                            ne.expression for ne in self.select.namedExpressions
+                            if ne.name and metadata.compare.identifier_match(ge.expression.name, ne.name)
+                        ]
+                        if len(expr) == 1:
+                            symb = expr[0].symbol(relations)
+                        else:
+                            raise err
+                    else:
+                        raise err
+                self._grouping_symbols.append(Symbol(symb))
+
 
         # get namedExpression symbols
         _symbols = []
@@ -546,7 +563,7 @@ class TableColumn(SqlExpr):
         return self.tablename + "." + self.colname
 
     def __eq__(self, other):
-        return self.tablename == other.tablename and self.colname == other.colname
+        return isinstance(self, type(other)) and self.tablename == other.tablename and self.colname == other.colname
 
     def __hash__(self):
         return hash((self.tablename, self.colname))
