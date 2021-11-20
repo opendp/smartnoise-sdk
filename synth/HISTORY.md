@@ -1,3 +1,7 @@
+# SmartNoise Synth v0.2.5 Release Notes
+
+Bug fix where CTGAN synthesizers could silently use continuous column if called without PytorchDPSynthesizer wrapper.
+
 # SmartNoise Synth v0.2.4 Release Notes
 
 * Fixed bug in dpsgd synthesizers where final batch was not being counted against budget, potentially causing privacy leak
