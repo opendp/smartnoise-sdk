@@ -64,12 +64,11 @@ class Privacy:
     :param alphas: A list of floats representing desired accuracy bounds.  Only set this parameter if you plan
         to use execute_with_accuracy for row-based accuracy.  For simple column accuracy bounds, you can pass
         an alpha directly to get_simple_accuracy, which ignores these alphas.
-    :param neighboring: The neighboring definition to use when computing sensitivity.  Can be "AddRemove" or "Substitute".
     :param mechanisms: A property bag specifying which mechanisms to use for which
         types of statistics.  You will only set this parameter if you want to override
         default mechanism mapping.
     """
-    def __init__(self, *ignore, epsilon:float=1.0, delta:float=10E-16, alphas:List[float]=[], neighboring:str="addremove", mechanisms:Mechanisms=Mechanisms()):
+    def __init__(self, *ignore, epsilon:float=1.0, delta:float=10E-16, alphas:List[float]=[], mechanisms:Mechanisms=Mechanisms()):
         """Privacy params.
         
         """
@@ -77,6 +76,3 @@ class Privacy:
         self.delta = delta
         self.alphas = alphas
         self.mechanisms = mechanisms
-        if neighboring.lower() not in ["addremove", "substitute"]:
-            raise ValueError("Neighboring definition must be 'addremove' or 'substitute'")
-        self.neighboring = neighboring.lower()

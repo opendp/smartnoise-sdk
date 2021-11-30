@@ -95,10 +95,13 @@ These overrides should be used with caution, because they may affect privacy if 
 Column Options
 --------------
 
-* ``type``: Required. This type attribute indicates the simple type for all values in the column. Type may be one of “int”, “float”, “string”, “boolean”, or “date”. The “date” type includes date or time types.  If type is set to "unknown", the column will be ignored by the system.
+* ``type``: Required. The type attribute indicates the simple type for all values in the column. Type may be one of “int”, “float”, “string”, “boolean”, or “date”. The “date” type includes date or time types.  If type is set to "unknown", the column will be ignored by the system.
 * ``private_id``: Boolean.  Default is ``False``.  indicates that this column is the private identifier (e.g. “UserID”, “Household”).  This column is optional.  Only columns which have private_id set to true are treated as individuals subject to privacy protection.
 * ``lower``: Valid on numeric columns.  Specifies the lower bound for values in this column.
 * ``upper``: Valid on numeric columns.  Specifies the upper bound for values in this column.
+* ``nullable``: Boolean.  Default is ``True``.  Indicates that this column can contain null values.  If set to ``False``, the system will assume that all values are set.  This is useful when the data curator knows that all values are set, and will allow some budget to be preserved by sharing counts across columns.
+* ``missing_value``: A value of the same type as the ``type`` for this column.  Default is ``None``.  If set, the system will replace NULL with the specified value, ensuring that all values are set.  If set, ``nullable`` will be treated as ``False``, regardless of its value.
+* ``sensitivity``: The sensitivity to be used when releasing sums from this column.  Default is ``None``.  If not set, the system will compute the sensitivity from upper and lower bounds.  If ``sensitivity`` is set, the upper and lower bounds will be ignored for sensitivity, and this value will be used.  The upper and lower bounds will still be used to clamp the columns. If this value is set, and no bounds are provided, the metadata must specify ``clamp_columns`` as ``False``. Note that counts will always use a sensitivity of 1, regardless of the value of this attribute.
 
 
 Other Considerations
@@ -196,4 +199,3 @@ The following is an example of a collection containing 3 tables, representing Cr
         type: datetime
       TrialGroup:
         type: int
-
