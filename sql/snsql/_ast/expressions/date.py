@@ -80,7 +80,7 @@ class ExtractFunction(SqlExpr):
         self.date_part = date_part
         self.expression = expression
     def children(self):
-        return [Token("EXTRACT"), Token("("), Token(self.date_part.upper()), Token('FROM'), self.expression, Token(")")]
+        return [Token("EXTRACT"), Token("("), Token(str(self.date_part).upper()), Token('FROM'), self.expression, Token(")")]
     def evaluate(self, bindings):
         exp = self.expression.evaluate(bindings)
         if exp is None:
