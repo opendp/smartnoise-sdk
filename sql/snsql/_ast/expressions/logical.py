@@ -184,7 +184,7 @@ class IsCondition(SqlExpr):
         self.is_not = is_not
 
     def children(self):
-        pre = [Token("IS")] + [Token("NOT")] if self.is_not else []
+        pre = [Token("IS")] + ([Token("NOT")] if self.is_not else [])
         return pre + [self.value]
 
 
