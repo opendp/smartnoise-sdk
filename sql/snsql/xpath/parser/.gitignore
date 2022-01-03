@@ -1,6 +1,0 @@
-.antlr/
-*.class
-*.java
-*.tokens
-*.interp
-XPathListener.py

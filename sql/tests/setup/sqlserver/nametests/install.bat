@@ -1,1 +1,0 @@
-sqlcmd -i nametests.sql

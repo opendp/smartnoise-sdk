@@ -1,1 +1,0 @@
-SELECT SUM(Temperature) FROM Telemetry.Crashes;

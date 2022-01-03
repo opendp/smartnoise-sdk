@@ -1,1 +1,0 @@
-psql -U postgres < nametests.sql
