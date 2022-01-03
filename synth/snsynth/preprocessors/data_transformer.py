@@ -11,7 +11,7 @@ from diffprivlib.models import StandardScaler
 SpanInfo = namedtuple("SpanInfo", ["dim", "activation_fn"])
 ColumnTransformInfo = namedtuple(
     "ColumnTransformInfo", ["column_name", "column_type",
-                            "transform", 
+                            "transform", "transform_aux",
                             "output_info", "output_dimensions"])
 
 class DataTransformer(object):
@@ -38,13 +38,14 @@ class DataTransformer(object):
         """Fit DP Standard Scaler for continuous column."""
      
         
-        scaler = StandardScaler(self.epsilon)
+        scaler = StandardScaler(epsilon=self.epsilon)
         scaler.fit(raw_column_data.reshape(-1,1))
 
         
 
         return ColumnTransformInfo(
             column_name=column_name, column_type="continuous", transform=scaler,
+            transform_aux = None,
             output_info=[SpanInfo(1, 'tanh')],
             output_dimensions=1)
 
