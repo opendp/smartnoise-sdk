@@ -1,9 +1,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![CI](https://github.com/opendp/opendp-documentation/actions/workflows/main.yml/badge.svg)
 
-# SmartNoise SQL Documentation
+# SmartNoise Documentation
 
-This folder contains the source for building the detailed documentation for Smartnoise SQL.
+This folder contains the source for building the top-level SmartNoise documentation, [docs.smartnoise.org](https://docs.smartnoise.org), landing page and general information about deploying differential privacy.  Detailed documentation about the SQL and Synthesizer functionality is built from the `docs` folders in their respective project folders.
+
+If you are extending or altering the SDK, you should update documentation as appropriate.
 
 ## Building the Docs
 
