@@ -174,7 +174,7 @@ class BetweenCondition(SqlExpr):
         self.is_not = is_not
 
     def children(self):
-        pre = [Token("NOT")] if self.is_not else [] + [Token("BETWEEN")]
+        pre = ([Token("NOT")] if self.is_not else []) + [Token("BETWEEN")]
         return pre + [self.lower, Token("AND"), self.upper]
 
 
@@ -184,7 +184,7 @@ class IsCondition(SqlExpr):
         self.is_not = is_not
 
     def children(self):
-        pre = [Token("IS")] + [Token("NOT")] if self.is_not else []
+        pre = [Token("IS")] + ([Token("NOT")] if self.is_not else [])
         return pre + [self.value]
 
 

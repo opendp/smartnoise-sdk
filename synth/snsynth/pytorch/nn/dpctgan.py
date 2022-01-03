@@ -4,11 +4,12 @@ from torch import optim
 from torch import nn
 import torch.utils.data
 from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
+import warnings
 
 import opacus
 
-from ctgan.data_sampler import DataSampler
 from snsynth.preprocessors.data_transformer import  DataTransformer
+from .data_sampler import DataSampler
 from ctgan.synthesizers import CTGANSynthesizer
 
 
@@ -119,7 +120,7 @@ class DPCTGAN(CTGANSynthesizer):
                  discriminator_decay=1e-6,
                  batch_size=500,
                  discriminator_steps=1,
-                 log_frequency=True,
+                 log_frequency=False,
                  verbose=True,
                  epochs=300,
                  pac=1,
@@ -129,7 +130,8 @@ class DPCTGAN(CTGANSynthesizer):
                  sigma=5,
                  max_per_sample_grad_norm=1.0,
                  epsilon=1,
-                 loss="cross_entropy",):
+                 loss="cross_entropy",
+                 category_epsilon_pct=0.1):
 
         assert batch_size % 2 == 0
 
@@ -147,6 +149,7 @@ class DPCTGAN(CTGANSynthesizer):
         self._log_frequency = log_frequency
         self._verbose = verbose
         self._epochs = epochs
+        self._category_epsilon_pct = category_epsilon_pct
         self.pac = pac
 
         # opacus parameters
@@ -181,6 +184,12 @@ class DPCTGAN(CTGANSynthesizer):
                 _custom_create_or_extend_grad_sample
             )
 
+        if self._log_frequency:
+            warnings.warn(
+                "log_frequency is selected.  This may result in oversampling frequent "
+                "categories, which could cause privacy leaks."
+            )
+
     def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
         if update_epsilon:
             self.epsilon = update_epsilon
@@ -196,13 +205,34 @@ class DPCTGAN(CTGANSynthesizer):
 
         self._transformer = DataTransformer()
         self._transformer.fit(data, discrete_columns=categorical_columns)
+        for tinfo in self._transformer._column_transform_info_list:
+            if tinfo.column_type == "continuous":
+                raise ValueError("We don't support continuous values on this synthesizer.  Please discretize values.")
 
         train_data = self._transformer.transform(data)
+
+        sampler_eps = 0.0
+        if categorical_columns and self._category_epsilon_pct:
+            sampler_eps = self.epsilon * self._category_epsilon_pct
+            per_col_sampler_eps = sampler_eps / len(categorical_columns)
+            self.epsilon = self.epsilon - sampler_eps
+        else:
+            per_col_sampler_eps = None
 
         self._data_sampler = DataSampler(
             train_data,
             self._transformer.output_info_list,
-            self._log_frequency)
+            self._log_frequency,
+            per_column_epsilon=per_col_sampler_eps)
+
+        spent = self._data_sampler.total_spent
+        if (
+            spent > sampler_eps
+            and not np.isclose(spent, sampler_eps)
+        ):
+            raise AssertionError(
+                f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
+            )
 
         data_dim = self._transformer.output_dimensions
 
@@ -440,12 +470,12 @@ class DPCTGAN(CTGANSynthesizer):
             std = mean + 1
             fakez = torch.normal(mean=mean, std=std).to(self._device)
 
-            condvec = self._data_sampler.sample_original_condvec(self._batch_size)
+            condvec = self._data_sampler.sample_condvec(self._batch_size)
 
             if condvec is None:
                 pass
             else:
-                c1 = condvec
+                c1, m1, col, opt = condvec
                 c1 = torch.from_numpy(c1).to(self._device)
                 fakez = torch.cat([fakez, c1], dim=1)
 

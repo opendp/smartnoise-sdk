@@ -25,6 +25,7 @@ meta_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.yaml"))
 csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
 df = pd.read_csv(csv_path)
+del df['income']
 
 @pytest.mark.torch
 class TestQUAIL:
@@ -39,11 +40,13 @@ class TestQUAIL:
         self.quail = QUAILSynthesizer(3.0, QuailSynth, QuailClassifier, 'married', eps_split=0.8)
 
     def test_fit(self):
-        self.quail.fit(df)
+        categorical_columns = [col for col in df.columns if col != 'married']
+        self.quail.fit(df, categorical_columns=categorical_columns)
         assert self.quail.private_synth
 
     def test_sample(self):
-        self.quail.fit(df)
+        categorical_columns = [col for col in df.columns if col != 'married']
+        self.quail.fit(df, categorical_columns=categorical_columns)
         sample_size = len(df)
         synth_data = self.quail.sample(sample_size)
         assert synth_data.shape == df.shape

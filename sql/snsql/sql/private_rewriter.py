@@ -1,5 +1,6 @@
 import random
 import string
+from snsql._ast.expressions.string import CoalesceFunction
 
 from snsql.metadata import Metadata
 
@@ -304,19 +305,23 @@ class Rewriter:
         if type(exp) is Column:
             cols += [exp]
         for col in cols:
+            sym = col.symbol(relations)
+            missing = sym.missing_value if hasattr(sym, 'missing_value') else None
             colname = col.name
+            column_expression = Column(colname)
+            if missing is not None:
+                column_expression = CoalesceFunction([Column(colname), Literal(missing)])
             lower, upper = bounds_clamp(colname)
-            if lower == None:
-                cexpr = Column(colname)
-                ce_name = scope.push_name(cexpr, str(colname))
+            if lower is None:
+                ce_name = scope.push_name(column_expression, str(colname))
             else:
                 when_min = WhenExpression(
-                    BooleanCompare(col, Op("<"), Literal(lower)), Literal(lower)
+                    BooleanCompare(column_expression, Op("<"), Literal(lower)), Literal(lower)
                     )
                 when_max = WhenExpression(
-                    BooleanCompare(col, Op(">"), Literal(upper)), Literal(upper)
+                    BooleanCompare(column_expression, Op(">"), Literal(upper)), Literal(upper)
                     )
-                cexpr = CaseExpression(None, [when_min, when_max], col)
+                cexpr = CaseExpression(None, [when_min, when_max], column_expression)
                 ce_name = scope.push_name(cexpr, str(colname))
             col.name = ce_name
         return ne

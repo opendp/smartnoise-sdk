@@ -1,5 +1,6 @@
 import pytest
 import sys
+from snsql import metadata
 
 from snsql.sql.privacy import Privacy
 
@@ -88,4 +89,22 @@ class TestDbCounts:
                     upper = 990
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(DISTINCT pid) rows in {reader.engine}")
                 assert(n > lower and n < upper)
-
+    @pytest.mark.skipif(sys.version_info < (3, 8), reason="Skip because older PRNG")
+    def test_count_null_impute(self, test_databases):
+        # Replace missing values for age, so count should equal count(*)
+        # Actual is ~1000
+        for dbname in ['PUMS_null']:
+            overrides = {'max_ids': 1, 'censor_dims': False}
+            readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
+            for reader in readers:
+                metadata = reader.metadata
+                metadata['PUMS.PUMS']['age'].missing_value = 30
+                tablename = 'PUMS'
+                query = f'SELECT COUNT(age) AS n FROM PUMS.{tablename}'
+                res = reader.execute(query)
+                res = test_databases.to_tuples(res)
+                n = res[1][0]
+                lower = 950
+                upper = 1050
+                print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(*) rows in {reader.engine}")
+                assert(n > lower and n < upper)

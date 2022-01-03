@@ -14,7 +14,7 @@ class LowerFunction(SqlExpr):
         return str(exp).lower()
     def symbol(self, relations):
         return LowerFunction(self.expression.symbol(relations))
-    
+
 class UpperFunction(SqlExpr):
     def __init__(self, expression):
         self.expression = expression
@@ -70,7 +70,7 @@ class PositionFunction(SqlExpr):
         else:
             return source.index(search) + 1
     def symbol(self, relations):
-        return PositionFunction(self.expression.symbol(relations), self.source.symbol(relations))
+        return PositionFunction(self.search.symbol(relations), self.source.symbol(relations))
 
 class SubstringFunction(SqlExpr):
     def __init__(self, source, start, length):
@@ -106,7 +106,7 @@ class SubstringFunction(SqlExpr):
                 return None
             return source[start:start+length]
     def symbol(self, relations):
-        return PositionFunction(self.expression.symbol(relations), self.source.symbol(relations))
+        return SubstringFunction(self.source.symbol(relations), self.start.symbol(relations), self.length.symbol(relations))
 
 class ConcatFunction(SqlExpr):
     def __init__(self, expressions):

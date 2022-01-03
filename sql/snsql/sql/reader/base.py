@@ -148,3 +148,39 @@ class Serializer:
 
     def serialize(self, query):
         return str(query)
+
+class SortKey:
+    def __init__(self, obj, sort_fields, *args):
+        self.obj = obj
+        self.sort_fields = sort_fields
+    def mycmp(self, a, b, sort_fields):
+        for desc, colidx in sort_fields:
+            if desc:
+                if a[colidx] < b[colidx]:
+                    return 1
+                elif a[colidx] > b[colidx]:
+                    return -1
+            else:
+                if a[colidx] < b[colidx]:
+                    return -1
+                elif a[colidx] > b[colidx]:
+                    return 1
+        return 0
+
+    def __lt__(self, other):
+        return self.mycmp(self.obj, other.obj, self.sort_fields) < 0
+
+    def __gt__(self, other):
+        return self.mycmp(self.obj, other.obj, self.sort_fields) > 0
+
+    def __eq__(self, other):
+        return self.mycmp(self.obj, other.obj, self.sort_fields) == 0
+
+    def __le__(self, other):
+        return self.mycmp(self.obj, other.obj, self.sort_fields) <= 0
+
+    def __ge__(self, other):
+        return self.mycmp(self.obj, other.obj, self.sort_fields) >= 0
+
+    def __ne__(self, other):
+        return self.mycmp(self.obj, other.obj, self.sort_fields) != 0

@@ -60,11 +60,28 @@ class Query(SqlRel):
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
             self.row_privacy = any(tc.row_privacy for tc in tables)
             self.censor_dims = any(tc.censor_dims for tc in tables)
-            
+
         # get grouping expression symbols
         self._grouping_symbols = []
         if self.agg:
-            self._grouping_symbols = [Symbol(ge.expression.symbol(relations)) for ge in self.agg.groupingExpressions]
+            self._grouping_symbols = []
+            for ge in self.agg.groupingExpressions:
+                try:
+                    symb = ge.expression.symbol(relations)
+                except ValueError as err: # Check if the expression has been aliased in the SELECT clause
+                    if isinstance(ge.expression, Column):
+                        expr = [
+                            ne.expression for ne in self.select.namedExpressions
+                            if ne.name and metadata.compare.identifier_match(ge.expression.name, ne.name)
+                        ]
+                        if len(expr) == 1:
+                            symb = expr[0].symbol(relations)
+                        else:
+                            raise err
+                    else:
+                        raise err
+                self._grouping_symbols.append(Symbol(symb))
+
 
         # get namedExpression symbols
         _symbols = []
@@ -414,8 +431,11 @@ class Table(SqlRel):
                     colname=name,
                     valtype=tc[name].typename(),
                     is_key=tc[name].is_key,
-                    lower=tc[name].lower if tc[name].typename() in ["int", "float"] else None,
-                    upper=tc[name].upper if tc[name].typename() in ["int", "float"] else None,
+                    lower=tc[name].lower if hasattr(tc[name], "lower") else None,
+                    upper=tc[name].upper if hasattr(tc[name], "upper") else None,
+                    nullable=tc[name].nullable if hasattr(tc[name], "nullable") else True,
+                    missing_value=tc[name].missing_value if hasattr(tc[name], "missing_value") else None,
+                    sensitivity=tc[name].sensitivity if hasattr(tc[name], "sensitivity") else None,
                     max_ids=table.max_ids,
                     sample_max_ids=table.sample_max_ids,
                     row_privacy=table.row_privacy,
@@ -510,6 +530,7 @@ class TableColumn(SqlExpr):
         tablename,
         colname,
         valtype="unknown",
+        *ignore,
         is_key=False,
         lower=None,
         upper=None,
@@ -518,6 +539,9 @@ class TableColumn(SqlExpr):
         row_privacy=False,
         censor_dims=False,
         compare=None,
+        nullable = True,
+        missing_value = None,
+        sensitivity = None
     ):
         self.tablename = tablename
         self.colname = colname
@@ -530,13 +554,16 @@ class TableColumn(SqlExpr):
         self.row_privacy = row_privacy
         self.censor_dims = censor_dims
         self.unbounded = lower is None or upper is None
+        self.nullable = nullable
+        self.missing_value = missing_value
+        self._sensitivity = sensitivity
         self.compare = compare
 
     def __str__(self):
         return self.tablename + "." + self.colname
 
     def __eq__(self, other):
-        return self.tablename == other.tablename and self.colname == other.colname
+        return isinstance(self, type(other)) and self.tablename == other.tablename and self.colname == other.colname
 
     def __hash__(self):
         return hash((self.tablename, self.colname))
@@ -547,9 +574,16 @@ class TableColumn(SqlExpr):
     def sensitivity(self):
         if self.valtype in ["int", "float"]:
             if self.lower is not None and self.upper is not None:
-                return max(abs(self.upper), abs(self.lower))
+                bounds_sensitivity = max(abs(self.upper), abs(self.lower))
+                if self._sensitivity is not None:
+                    return self._sensitivity
+                else:
+                    return bounds_sensitivity
             else:
-                return np.inf  # unbounded
+                if self._sensitivity is not None:
+                    return self._sensitivity
+                else:
+                    return np.inf  # unbounded
         elif self.valtype == "boolean":
             return 1
         else:

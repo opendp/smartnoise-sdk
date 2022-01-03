@@ -435,7 +435,13 @@ class Column(SqlExpr):
         return self.name
 
     def symbol(self, relations):
-        sym_exprs = [r.symbol(self) for r in relations if r.alias_match(self.name)]
+        sym_exprs = []
+        for r in relations:
+            if r.alias_match(self.name):
+                try:
+                    sym_exprs.append(r.symbol(self))
+                except ValueError:
+                    continue
         if len(sym_exprs) == 0:
             raise ValueError("Column cannot be found " + str(self))
         elif len(sym_exprs) > 1:
