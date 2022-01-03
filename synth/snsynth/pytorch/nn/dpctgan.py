@@ -8,7 +8,7 @@ from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequ
 import opacus
 
 from ctgan.data_sampler import DataSampler
-from ctgan.data_transformer import DataTransformer
+from snsynth.preprocessors.data_transformer import  DataTransformer
 from ctgan.synthesizers import CTGANSynthesizer
 
 
