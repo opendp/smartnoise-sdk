@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>SmartNoise SQL &#8212; OpenDP SmartNoise SQL</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/blank.css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SQL API Reference" href="api/index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+
+<a class="navbar-brand" href="http://docs.smartnoise.org">
+  <img src="_static/smartnoise-logo.svg" class="logo" alt="logo">
+</a>
+
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="api/index.html">
+  API index
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="metadata.html">
+  Metadata
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="advanced.html">
+  Advanced Usage
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/smartnoise-sdk" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://twitter.com/opendp_org" rel="noopener" target="_blank" title="Twitter">
+            <span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/opendp/discussions" rel="noopener" target="_blank" title="GitHub Discussions">
+            <span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   SmartNoise SQL
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#api-reference">
+     API Reference
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#getting-started">
+   Getting Started
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#querying-a-pandas-dataframe">
+     Querying a Pandas DataFrame
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#querying-a-sql-database">
+     Querying a SQL Database
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#querying-a-spark-dataframe">
+     Querying a Spark DataFrame
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#metadata">
+   Metadata
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#advanced-usage">
+   Advanced Usage
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="smartnoise-sql">
+<h1>SmartNoise SQL<a class="headerlink" href="#smartnoise-sql" title="Permalink to this headline">¶</a></h1>
+<section id="api-reference">
+<h2>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API index</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#privatereader">PrivateReader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#privacy">Privacy</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>SmartNoise applies differential privacy by wrapping an existing database connection, intercepting queries, and ensuring results are private before returning results to the caller.</p>
+<section id="querying-a-pandas-dataframe">
+<h2>Querying a Pandas DataFrame<a class="headerlink" href="#querying-a-pandas-dataframe" title="Permalink to this headline">¶</a></h2>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">from_df</span></code> method to create a private reader that can issue queries against a pandas dataframe.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsql</span>
+<span class="kn">from</span> <span class="nn">snsql</span> <span class="kn">import</span> <span class="n">Privacy</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="n">privacy</span> <span class="o">=</span> <span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+<span class="n">csv_path</span> <span class="o">=</span> <span class="s1">&#39;PUMS.csv&#39;</span>
+<span class="n">meta_path</span> <span class="o">=</span> <span class="s1">&#39;PUMS.yaml&#39;</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+<span class="n">reader</span> <span class="o">=</span> <span class="n">snsql</span><span class="o">.</span><span class="n">from_df</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">privacy</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta_path</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="querying-a-sql-database">
+<h2>Querying a SQL Database<a class="headerlink" href="#querying-a-sql-database" title="Permalink to this headline">¶</a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">from_connection</span></code> to wrap an existing database connection.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsql</span>
+<span class="kn">from</span> <span class="nn">snsql</span> <span class="kn">import</span> <span class="n">Privacy</span>
+<span class="kn">import</span> <span class="nn">psycopg2</span>
+
+<span class="n">privacy</span> <span class="o">=</span> <span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">meta_path</span> <span class="o">=</span> <span class="s1">&#39;PUMS.yaml&#39;</span>
+
+<span class="n">pumsdb</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="s1">&#39;postgres&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">database</span><span class="o">=</span><span class="s1">&#39;PUMS&#39;</span><span class="p">)</span>
+<span class="n">reader</span> <span class="o">=</span> <span class="n">snsql</span><span class="o">.</span><span class="n">from_connection</span><span class="p">(</span><span class="n">pumsdb</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">privacy</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta_path</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="querying-a-spark-dataframe">
+<h2>Querying a Spark DataFrame<a class="headerlink" href="#querying-a-spark-dataframe" title="Permalink to this headline">¶</a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">from_connection</span></code> to wrap a spark session.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspark</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">snsql</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># load a Spark DataFrame</span>
+<span class="n">pums</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;PUMS_large&quot;</span><span class="p">)</span>
+
+<span class="n">metadata</span> <span class="o">=</span> <span class="s1">&#39;PUMS_large.yaml&#39;</span>
+
+<span class="n">private_reader</span> <span class="o">=</span> <span class="n">from_connection</span><span class="p">(</span>
+    <span class="n">spark</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+    <span class="n">privacy</span><span class="o">=</span><span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">1_000_000</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">private_reader</span><span class="o">.</span><span class="n">reader</span><span class="o">.</span><span class="n">compare</span><span class="o">.</span><span class="n">search_path</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PUMS&quot;</span><span class="p">]</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">private_reader</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT COUNT(*) FROM PUMS_large&#39;</span><span class="p">)</span>
+<span class="n">res</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>When running a query against spark, the result of <code class="docutils literal notranslate"><span class="pre">execute</span></code> will be a spark DataFrame or RDD, which represents an execution plan.  The actual spark execution will not happen until the caller requests rows from the DataFrame, as in the <code class="docutils literal notranslate"><span class="pre">res.show()</span></code> above.</p>
+</section>
+</section>
+<section id="metadata">
+<h1>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h1>
+<p>The metadata is loaded from a file path, and describes important properties of the data source.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#yaml-format">YAML Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#dictionary-format">Dictionary Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#table-options">Table Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#column-options">Column Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#other-considerations">Other Considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#example-metadata">Example Metadata</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="advanced-usage">
+<h1>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#pre-aggregated">pre_aggregated</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#postprocess">postprocess</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>This is version 0.2.4 of the guides, last built on Jan 04, 2022.</p>
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='right-next' id="next-link" href="api/index.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">SQL API Reference</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2022.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.1.2.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>
