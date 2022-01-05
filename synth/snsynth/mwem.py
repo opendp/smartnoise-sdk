@@ -250,15 +250,16 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 count_retries = 0
                 while qi in measurements:
                     if count_retries > self.max_retries_exp_mechanism:
-                        raise ValueError("Did not find a different query to measure via exponential mechanism. Try "
-                                         + "decreasing the number of iterations or increasing the number of allowed "
-                                         + "retries.")
+                        raise ValueError(
+                            "Did not find a different query to measure via exponential mechanism. Try "
+                            + "decreasing the number of iterations or increasing the number of allowed "
+                            + "retries.")
 
                     qi = self._exponential_mechanism(
                         hist, synth_hist, queries, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
                     )
-                    count_retries+=1
-                    
+                    count_retries += 1
+
                 # NOTE: Add laplace noise here with budget
                 evals = self._evaluate(queries[qi], hist)
                 lap = self._laplace(
