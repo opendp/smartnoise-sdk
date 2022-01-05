@@ -6,7 +6,6 @@ SQL API Reference
 
 .. automethod:: snsql.connect.from_df
 
-
 PrivateReader
 -------------
 
@@ -18,7 +17,7 @@ PrivateReader
 Privacy
 -------
 
-.. autoclass:: snsql.Privacy
+.. autoclass:: snsql.sql.privacy.Privacy
     :members:
     :undoc-members:
     :show-inheritance:
