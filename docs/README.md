@@ -5,7 +5,7 @@
 
 This folder contains the source for building the top-level SmartNoise documentation, [docs.smartnoise.org](https://docs.smartnoise.org), landing page and general information about deploying differential privacy.  Detailed documentation about the SQL and Synthesizer functionality is built from the `docs` folders in their respective project folders.
 
-If you are extending or altering the SDK, you should update documentation as appropriate.
+If you are extending or altering the SDK, you should update documentation as appropriate.  To quickly run a test build of the documentation, you can run `source make_docs.sh` from this folder.
 
 ## Building the Docs
 

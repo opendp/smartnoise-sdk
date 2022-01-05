@@ -75,6 +75,7 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
 html_theme_options = {
+    "logo_link": "http://docs.smartnoise.org",
     "icon_links": [
         {
             "name": "GitHub Discussions",
@@ -83,15 +84,17 @@ html_theme_options = {
         },
     ],
     "twitter_url": "https://twitter.com/opendp_org",
-    "github_url": "https://github.com/opendp/smartnoise"
+    "github_url": "https://github.com/opendp/smartnoise-sdk"
 }
 
+html_theme_options = {
+}
 html_theme = 'pydata_sphinx_theme'
 
 # See https://pydata-sphinx-theme.readthedocs.io/en/v0.6.3/user_guide/configuring.html#configure-the-sidebar
 # Note: Overridden in the Makefile for local builds. Be sure to update both places.
 html_sidebars = {
-   '**': ['search-field.html', 'sidebar-nav-bs.html', 'versioning.html'],
+   '**': ['sidebar-nav-bs.html', 'versioning.html'],
 }
 
 # SPHINX-MULTIVERSION STUFF
@@ -127,7 +130,7 @@ smv_prebuild_command = '&&'.join([version_cmd, sphinx_apidoc_cmd])
 #html_file_suffix = None
 htmlhelp_basename = 'OpenDPdoc'
 
-# html_logo = "_static/images/opendp-logo.png"
+html_logo = "_static/images/smartnoise-logo.svg"
 
 rst_prolog = """
 .. |toctitle| replace:: Contents:
