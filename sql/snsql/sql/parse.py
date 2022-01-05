@@ -387,7 +387,7 @@ class ExpressionVisitor(SqlSmallVisitor):
         return CharLengthFunction(
             ExpressionVisitor().visit(ctx.expression())
         )
-    
+
     def visitPositionFunction(self, ctx: SqlSmallParser.PositionFunctionContext):
         return PositionFunction(
             ExpressionVisitor().visit(ctx.searchString),
@@ -508,6 +508,13 @@ class BooleanExpressionVisitor(SqlSmallVisitor):
 
     def visitQualifiedColumnName(self, ctx):
         return ColumnBoolean(Column(ctx.getText()))
+
+    def visitLikeCondition(self, ctx: SqlSmallParser.LikeConditionContext):
+        value = ExpressionVisitor().visit(ctx.value)
+        pattern = ExpressionVisitor().visit(ctx.pattern)
+        return LikeExpression(value, pattern)
+
+
 
 
 def allText(ctx):

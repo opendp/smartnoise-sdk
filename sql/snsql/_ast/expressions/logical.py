@@ -119,6 +119,28 @@ class NestedBoolean(SqlExpr):
         return parse_bool(self.expression.evaluate(bindings))
 
 
+class LikeExpression(SqlExpr):
+    """A like expression"""
+    def __init__(self, value, pattern):
+        self.value = value
+        self.pattern = pattern
+
+    def symbol(self, relations):
+        return LikeExpression(self.value.symbol(relations), self.pattern.symbol(relations))
+
+    def type(self):
+        return "boolean"
+
+    def sensitivity(self):
+        return 1
+
+    def children(self):
+        return [self.value, Token("LIKE"), self.pattern]
+
+    def evaluate(self, bindings):
+        raise NotImplementedError("Cannot evaluate LIKE expression")
+
+
 class LogicalNot(SqlExpr):
     """Negation of a boolean expression"""
 

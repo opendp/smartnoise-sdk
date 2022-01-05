@@ -324,6 +324,11 @@ class SqlSmallVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlSmallParser#likeCondition.
+    def visitLikeCondition(self, ctx:SqlSmallParser.LikeConditionContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlSmallParser#nestedBoolean.
     def visitNestedBoolean(self, ctx:SqlSmallParser.NestedBooleanContext):
         return self.visitChildren(ctx)

@@ -159,6 +159,7 @@ booleanExpression
     | '(' booleanExpression ')' #nestedBoolean
     | expression predicate #predicated
     | name=qualifiedColumnName #boolColumn
+    | value=expression LIKE pattern=literal # likeCondition
     ;
 
 castExpression: CAST '(' fromExpr=expression AS dbType ')';
@@ -344,6 +345,7 @@ IS: I S;
 JOIN: J O I N;
 LEFT: L E F T;
 LIMIT: L I M I T;
+LIKE: L I K E;
 LN: L N;
 LOG: L O G;
 LOG10: L O G '1' '0';
