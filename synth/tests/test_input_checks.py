@@ -16,13 +16,6 @@ np_data_xy = np.array([
 
 
 class TestDPGANInputChecks:
-    def test_train_dpctgan_continuous(self):
-        dpgan = DPCTGAN(epsilon=eps, batch_size=batch_size)
-        try:
-            dpgan.train(np_data_xy, categorical_columns=[0])
-        except ValueError:
-            return
-        raise AssertionError('DPCTGAN should have raised a ValueError')
 
     def test_train_patectgan_continuous(self):
         dpgan = PATECTGAN(epsilon=eps, batch_size=batch_size)
