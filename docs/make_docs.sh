@@ -5,7 +5,9 @@ mkdir /tmp/docs
 # landing page
 pip install -r requirements.txt
 make html
-cp -R build/html/* /tmp/docs/
+cp redirect.html /tmp/docs/index.html
+mkdir /tmp/docs/en
+cp -R build/html /tmp/docs/en/stable
 make clean
 cd ..
 
@@ -14,7 +16,7 @@ cd sql
 pip install -e .
 cd docs
 make html
-cp -R build/html /tmp/docs/sql
+cp -R build/html /tmp/docs/en/stable/sql
 make clean
 cd ../..
 
@@ -23,7 +25,7 @@ cd synth
 pip install -e .
 cd docs
 make html
-cp -R build/html /tmp/docs/synth
+cp -R build/html /tmp/docs/en/stable/synth
 make clean
 cd ../..
 
