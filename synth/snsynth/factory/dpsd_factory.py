@@ -54,10 +54,7 @@ class DPSD:
                 as there were in the original table.
         Returns:
             pandas.DataFrame:
-                Returns a ``pandas.DataFrame`` when ``sample_children`` is ``False``.
-        Raises:
-            NotFittedError:
-                A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.
+                Returns a ``pandas.DataFrame``
         """
         if self._model_instance is None:
             raise ValueError('SDV instance has not been fitted')
@@ -66,6 +63,7 @@ class DPSD:
             num_rows
         )
 
+    @classmethod
     def save(self, path):
         """Save this DPSD instance to the given path using pickle.
         Args:
