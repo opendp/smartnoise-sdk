@@ -46,7 +46,7 @@ copyright = u'%d' % datetime.now().year
 # built documents.
 #
 # The short X.Y version.
-version = open('../../VERSION').read()
+#version = open('../VERSION').read()
 #version = '0.2'
 # The full version, including alpha/beta/rc tags.
 #release = ''
@@ -62,7 +62,7 @@ pygments_style = 'sphinx'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> Documentation".
-html_title = 'OpenDP SmartNoise SQL'
+html_title = 'OpenDP SmartNoise'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -87,12 +87,14 @@ html_theme_options = {
     "github_url": "https://github.com/opendp/smartnoise-sdk"
 }
 
+html_theme_options = {
+}
 html_theme = 'pydata_sphinx_theme'
 
 # See https://pydata-sphinx-theme.readthedocs.io/en/v0.6.3/user_guide/configuring.html#configure-the-sidebar
 # Note: Overridden in the Makefile for local builds. Be sure to update both places.
 html_sidebars = {
-   '**': ['search-field.html', 'sidebar-nav-bs.html', 'versioning.html'],
+   '**': ['sidebar-nav-bs.html', 'versioning.html'],
 }
 
 # SPHINX-MULTIVERSION STUFF
