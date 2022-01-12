@@ -1,4 +1,4 @@
-"""Wrapper around PATECTGAN model."""
+"""Wrapper around PATECTGAN and DPCTGAN models."""
 
 import numpy as np
 from snsynth import MWEMSynthesizer
@@ -27,7 +27,9 @@ class SmartnoiseCTGANModel(BaseDPTabularModel):
     }
 
     def _build_model(self):
-        return self._MODEL_CLASS(**self._model_kwargs)
+        # TODO: Update with new Transformers
+        inner_model = self._MODEL_CLASS(**self._model_kwargs)
+        return PytorchDPSynthesizer(self._model_kwargs['epsilon'], inner_model, GeneralTransformer())
 
     def _fit(self, data):
         """Fit the model to the table.
@@ -62,7 +64,7 @@ class SmartnoiseCTGANModel(BaseDPTabularModel):
 
         self._model.fit(
             data,
-            discrete_columns=categoricals
+            categorical_columns=categoricals
         )
 
     def _sample(self, num_rows, conditions=None):
@@ -97,7 +99,7 @@ class PATECTGAN(SmartnoiseCTGANModel):
                  cuda=True,
                  epsilon=1,
                  binary=False,
-                 regularization=None,
+                 regularization=None, #dragan
                  loss="cross_entropy",
                  teacher_iters=5,
                  student_iters=5,
