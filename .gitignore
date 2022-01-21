@@ -133,3 +133,6 @@ PUMS_large.csv
 PUMS_dup.csv
 PUMS_null.csv
 *.db
+
+# files
+synth/snsynth/factory/rdt/test.ipynb
