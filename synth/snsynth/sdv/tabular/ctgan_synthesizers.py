@@ -1,20 +1,19 @@
 """Wrapper around PATECTGAN and DPCTGAN models."""
 
 import numpy as np
-from snsynth import MWEMSynthesizer
 from snsynth.pytorch.nn import DPCTGAN, PATECTGAN
 from snsynth.preprocessors import GeneralTransformer
 from snsynth.pytorch import PytorchDPSynthesizer
 
-from snsynth.factory.model_wrappers.base import BaseDPTabularModel
+from snsynth.sdv.tabular.base import BaseTabularModel
 
 # NOTE: Adding this as optional import, may need adjusting
 try: 
-    from sdv.metadata import Table
+    from snsynth.sdv.metadata import Table
 except ImportError: 
     Table = None
 
-class SmartnoiseCTGANModel(BaseDPTabularModel):
+class SmartnoiseCTGANModel(BaseTabularModel):
     """Base class for all the CTGAN models.
     The ``CTGANModel`` class provides a wrapper for all the CTGAN models.
     """

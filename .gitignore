@@ -135,4 +135,6 @@ PUMS_null.csv
 *.db
 
 # files
-synth/snsynth/factory/rdt/test.ipynb
+synth/snsynth/factory
+synth/snsynth/sdv/test.ipynb
+synth/test.ipynb

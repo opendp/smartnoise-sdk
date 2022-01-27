@@ -6,10 +6,10 @@ from copy import deepcopy
 
 import yaml
 
-from .transformers.categorical import LabelEncodingTransformer, OneHotEncodingTransformer
-from .transformers import get_transformer_instance
+from snsynth.sdv.rdt.transformers.categorical import LabelEncodingTransformer, OneHotEncodingTransformer
+from snsynth.sdv.rdt.transformers import get_transformer_instance
 
-from errors import NotFittedError
+from snsynth.sdv.rdt.errors import NotFittedError
 
 class HyperTransformer:
     """HyperTransformer class.

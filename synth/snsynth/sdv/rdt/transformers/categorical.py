@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.base import BaseTransformer
+from snsynth.sdv.rdt.transformers.base import BaseTransformer
 
 class OneHotEncodingTransformer(BaseTransformer):
     """OneHotEncoding for categorical data.

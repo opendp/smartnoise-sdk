@@ -1,7 +1,7 @@
 import numpy as np
 from snsynth import MWEMSynthesizer
 
-from snsynth.factory.model_wrappers.base import BaseDPTabularModel
+from snsynth.sdv.tabular.base import BaseTabularModel
 
 # NOTE: Adding this as optional import, may need adjusting
 try: 
@@ -10,7 +10,7 @@ except ImportError:
     Table = None
 
 
-class SmartnoiseMWEMModel(BaseDPTabularModel):
+class SmartnoiseMWEMModel(BaseTabularModel):
 
     """Base class for all the CTGAN models.
     The ``CTGANModel`` class provides a wrapper for all the CTGAN models.
