@@ -644,5 +644,3 @@ class TestPredicateExpression:
         assert(c.evaluate(bindings) == False)
         bindings = dict([('x', None)])
         assert(c.evaluate(bindings) == True)
-
-TestPredicateExpression().test_is_not_condition()
