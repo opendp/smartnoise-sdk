@@ -566,6 +566,12 @@ class TestPredicateExpression:
         bindings = dict([('x', None)])
         assert(c.evaluate(bindings) == True)
 
+        c = PredicatedExpression(Column("x"), IsCondition(Literal(None), False))
+        bindings = dict([('x', 2)])
+        assert(c.evaluate(bindings) == False)
+        bindings = dict([('x', None)])
+        assert(c.evaluate(bindings) == True)
+
         c = PredicatedExpression(Column("x"), IsCondition(Literal("TRUE"), False))
         bindings = dict([('x', "True")])
         assert(c.evaluate(bindings) == True)

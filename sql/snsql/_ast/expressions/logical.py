@@ -176,9 +176,9 @@ class PredicatedExpression(SqlExpr):
                     (val < self.predicate.upper.value)
                 )
         elif isinstance(self.predicate, IsCondition):
-            if self.predicate.value.value == "NULL":
+            if self.predicate.value.text == "NULL":
                 res = val == None
-            elif self.predicate.value.value.upper() == "TRUE":
+            elif self.predicate.value.text.upper() == "TRUE":
                 if not isinstance(val, str) or val is None:
                     res = False
                 else:
@@ -190,7 +190,7 @@ class PredicatedExpression(SqlExpr):
                         (val == 'on') or
                         (val == '1')
                     )
-            elif self.predicate.value.value.upper() == "FALSE":
+            elif self.predicate.value.text.upper() == "FALSE":
                 if not isinstance(val, str) or val is None:
                     res = False
                 else:
@@ -205,7 +205,7 @@ class PredicatedExpression(SqlExpr):
             else:
                 raise ValueError (
                 "IS condition must by of type IS (NOT) NULL or IS (NOT)"
-                f" TRUE or IS (NOT) FALSE. Got : {self.predicate.value.value}"
+                f" TRUE or IS (NOT) FALSE. Got : {self.predicate.value.text}"
                 )
 
         else:
