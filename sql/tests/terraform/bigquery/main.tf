@@ -54,40 +54,7 @@ resource "google_bigquery_table" "pums" {
       skip_leading_rows = 1
     }
 
-    schema = <<EOF
-[
-  {
-    "name": "age",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "sex",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "educ",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "race",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "income",
-    "type": "FLOAT",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "married",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  }
-]
-EOF
+    schema = file("${path.root}/schema/pums.json")
 
     source_uris = [
         "gs://smartnoise-ci-bucket/PUMS.csv"
@@ -124,42 +91,9 @@ resource "google_bigquery_table" "pums_large" {
       skip_leading_rows = 1
     }
 
-    schema = <<EOF
-[
-  {
-    "name": "age",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "sex",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "educ",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "race",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "income",
-    "type": "FLOAT",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "married",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  }
-]
-EOF
+    schema = file("${path.root}/schema/pums.json")
 
-  source_uris = [
+    source_uris = [
         "gs://smartnoise-ci-bucket/PUMS_large.csv"
     ]
   }
@@ -194,42 +128,9 @@ resource "google_bigquery_table" "pums_pid" {
       skip_leading_rows = 1
     }
 
-    schema = <<EOF
-[
-  {
-    "name": "age",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "sex",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "educ",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "race",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "income",
-    "type": "FLOAT",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "married",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  }
-]
-EOF
+    schema = file("${path.root}/schema/pums.json")
 
-  source_uris = [
+    source_uris = [
         "gs://smartnoise-ci-bucket/PUMS_pid.csv"
     ]
   }
@@ -264,42 +165,9 @@ resource "google_bigquery_table" "pums_dup" {
       skip_leading_rows = 1
     }
 
-    schema = <<EOF
-[
-  {
-    "name": "age",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "sex",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "educ",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "race",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "income",
-    "type": "FLOAT",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "married",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  }
-]
-EOF
+    schema = file("${path.root}/schema/pums.json")
 
-  source_uris = [
+    source_uris = [
         "gs://smartnoise-ci-bucket/PUMS_dup.csv"
     ]
   }
@@ -333,42 +201,9 @@ resource "google_bigquery_table" "pums_null" {
       skip_leading_rows = 1
     }
 
-    schema = <<EOF
-[
-  {
-    "name": "age",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "sex",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "educ",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "race",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "income",
-    "type": "FLOAT",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "married",
-    "type": "INTEGER",
-    "mode": "NULLABLE"
-  }
-]
-EOF
+    schema = file("${path.root}/schema/pums.json")
 
-  source_uris = [
+    source_uris = [
         "gs://smartnoise-ci-bucket/PUMS_null.csv"
     ]
   }
