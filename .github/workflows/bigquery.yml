@@ -1,0 +1,98 @@
+name: GCP BigQuery Integration Tests
+on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9]
+      max-parallel: 5
+    env:
+      GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_CREDENTIALS }}"
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.0
+
+      - name: Set up miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          auto-update-conda: true
+          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        shell: bash -l {0}
+        run: |
+          conda install pip
+          conda update pip
+
+      - name: Setup SDK
+        shell: bash -l {0}
+        run: |
+          cd sql
+          pip install --no-cache-dir -r tests/requirements.txt
+          pip install --no-cache-dir -r tests/setup/postgres/requirements.txt
+          pip install --no-cache-dir  .
+          pip install --no-cache-dir opendp-smartnoise-core # temporary
+
+      - name: Download test datasets
+        shell: bash -l {0}
+        run: |
+          cd sql
+          python tests/setup/download.py
+
+      - name: Terraform Init - BigQuery dataset
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform init \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}'
+
+      - name: Terraform Plan - BigQuery dataset
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform plan \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}'
+
+      - name: Terraform Apply - BigQuery dataset
+        continue-on-error: true
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform apply \
+          -auto-approve \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}'
+
+      - name: Verify database counts
+        continue-on-error: true
+        run: |
+          echo "TODO: Verify dataset counts"
+      
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          echo "Here is where BigQuery Tests run"
+      
+      - name: Terraform Destroy - BigQuery dataset
+        id: destroy
+        continue-on-error: true
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform destroy \
+          -auto-approve \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}'
