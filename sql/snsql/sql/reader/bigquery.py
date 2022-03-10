@@ -1,0 +1,93 @@
+import os
+
+from .base import SqlReader, NameCompare, Serializer
+from .engine import Engine
+
+
+class BigQueryReader(SqlReader):
+    """
+        A dumb pipe that gets a rowset back from a database using
+        a SQL string, and converts types to some useful subset
+    """
+
+    ENGINE = Engine.BIGQUERY
+
+    def __init__(self, credentials_path=None, conn=None, **kwargs):
+        super().__init__(self.ENGINE)
+
+        self.conn = None
+        if conn is not None:
+            self.conn = conn
+        else:
+            if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+                pass
+            elif credentials_path is not None:
+                self.credentials_path = credentials_path
+            else:
+                raise ValueError(
+                    "No GCP service account credentials found. Provide the path to the JSON file in either:\n"
+                    "a. credentials_path argument or\n"
+                    "b. GOOGLE_APPLICATION_CREDENTIALS environment variable"
+                )
+            
+            try:
+                from google.cloud import bigquery
+                from google.oauth2 import service_account
+                self.api = google
+            except:
+                pass
+
+    def execute(self, query, *ignore, accuracy:bool=False):
+        if not isinstance(query, str):
+            raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
+        cnxn = self.conn
+        if cnxn is None:
+            if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+                cnxn = self.api.cloud.bigquery.Client()
+            else:
+                credentials = self.api.oauth2.service_account.Credentials.from_service_account_file(
+                    self.credentials_path, scopes=["https://www.googleapis.com/auth/cloud-platform"],
+                )
+                cnxn = self.api.cloud.bigquery.Client(credentials=credentials, project=credentials.project_id)
+        result = cnxn.query(str(query)).result()
+        if result.total_rows == 0:
+            return []
+        else:
+            df = result.to_dataframe()
+            col_names = df.columns.to_list()
+            rows = df.values.tolist()
+            return col_names + rows
+
+    # def switch_database(self, dbname):
+    #     sql = "\\c " + dbname
+    #     self.execute(sql)
+
+class BigQueryNameCompare(NameCompare):
+    def __init__(self, search_path=None):
+        self.search_path = search_path if search_path is not None else ["public"]
+
+    def identifier_match(self, query, meta):
+        query = self.clean_escape(query)
+        meta = self.clean_escape(meta)
+        if query == meta:
+            return True
+        if self.is_escaped(meta) and meta.lower() == meta:
+            meta = meta.lower().replace('"', "")
+        if self.is_escaped(query) and query.lower() == query:
+            query = query.lower().replace('`', "")
+        return meta == query
+
+    def should_escape(self, identifier):
+        if self.is_escaped(identifier):
+            return False
+        if identifier.lower() in self.reserved():
+            return True
+        if identifier.replace(" ", "") == identifier.lower():
+            return False
+        else:
+            return True
+
+class BigQuerySerializer(Serializer):
+    def __init__(self):
+        super().__init__()
+
