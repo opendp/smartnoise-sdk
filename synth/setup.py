@@ -12,7 +12,25 @@ package_data = \
 {'': ['*']}
 
 install_requires = \
-['ctgan>=0.4.3,<0.5.0', 'opacus>=0.14.0,<0.15.0', 'opendp>=0.3.0,<0.4.0']
+['ctgan>=0.4.3,<0.6.0', 'opacus>=0.14.0,<0.15.0', 'opendp>=0.3.0,<0.4.0'
+
+    'Faker>=3.0.0,<10',
+    'graphviz>=0.13.2,<1',
+    "numpy>=1.18.0,<1.20.0;python_version<'3.7'",
+    "numpy>=1.20.0,<2;python_version>='3.7'",
+    'pandas>=1.1.3,<2',
+    'tqdm>=4.15,<5',
+    'copulas>=0.6.0,<0.7',
+    'ctgan>=0.5.0,<0.6',
+    'deepecho>=0.3.0.post1,<0.4',
+    'rdt>=0.6.1,<0.7',
+    'sdmetrics>=0.4.1,<0.5',
+]
+
+pomegranate_requires = [
+    "pomegranate>=0.13.4,<0.14.2;python_version<'3.7'",
+    "pomegranate>=0.14.1,<0.15;python_version>='3.7'",
+]
 
 setup_kwargs = {
     'name': 'smartnoise-synth',
