@@ -54,17 +54,18 @@ class BigQueryReader(SqlReader):
             return []
         else:
             df = result.to_dataframe()
-            col_names = df.columns.to_list()
-            rows = df.values.tolist()
+            col_names = [tuple(df.columns)]
+            rows = [tuple(row) for row in df.values]
             return col_names + rows
-
-    # def switch_database(self, dbname):
-    #     sql = "\\c " + dbname
-    #     self.execute(sql)
 
 class BigQueryNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["public"]
+
+    def schema_match(self, query, meta):
+        if query.strip() == "" and meta in self.search_path:
+            return True
+        return self.identifier_match(query, meta)
 
     def identifier_match(self, query, meta):
         query = self.clean_escape(query)
@@ -73,9 +74,13 @@ class BigQueryNameCompare(NameCompare):
             return True
         if self.is_escaped(meta) and meta.lower() == meta:
             meta = meta.lower().replace('"', "")
-        if self.is_escaped(query) and query.lower() == query:
-            query = query.lower().replace('`', "")
+        #if self.is_escaped(query) and query.lower() == query:
+        if query.lower() == query:
+            query = query.lower().replace('"', "") # TODO: Replace Single quote replacement to backtick `
         return meta == query
+
+    def strip_escapes(self, value):
+        return value.replace('"', "").replace("`", "").replace("[", "").replace("]", "")
 
     def should_escape(self, identifier):
         if self.is_escaped(identifier):
