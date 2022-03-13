@@ -350,6 +350,8 @@ class HyperTransformer:
 
         for (field, data_type) in self.field_data_types.items():
             if not self._field_in_set(field, self._fitted_fields):
+                print(field)
+                print(self._fitted_fields)
                 transformer = self.default_data_type_transformers[data_type]
 
                 data = self._fit_field_transformer(data, field, transformer)
