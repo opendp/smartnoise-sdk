@@ -3,7 +3,7 @@ gym
 mlflow
 sklearn
 numpy
-ctgan
+ctgan>=0.5.1
 opacus
 torch
 pytest

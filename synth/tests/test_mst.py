@@ -13,11 +13,13 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 
 df = pd.read_csv(csv_path, index_col=0)
 df = df.drop(["income"], axis=1)
+df = df[df > 0].dropna()
+df = df.sample(frac=0.05, random_state=42)
 
 class TestMST:
 
     Domains = {
-        "test": "test-domain.json"
+        "test": "synth/tests/test-domain.json"
     }
 
     def setup(self):
@@ -29,6 +31,7 @@ class TestMST:
         assert self.mst
 
     def test_sample(self):
+        self.df_non_continuous = df[['sex','educ','race','married']]
         self.mst.fit(self.df_non_continuous)
         sample_size = len(df)
         synth_data = self.mst.sample(sample_size)

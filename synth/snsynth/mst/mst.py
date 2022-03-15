@@ -135,8 +135,7 @@ class MSTSynthesizer(SDGYMBaseSynthesizer):
                 I2 = sparse.diags(I2)
                 new_measurements.append((I2, y2, sigma, proj))
 
-        def undo_compress_fn(data):
-            self.reverse_data(data, supports)
+        undo_compress_fn = lambda data: self.reverse_data(data, supports)  # noqa: E731
 
         return self.transform_data(data, supports), new_measurements, undo_compress_fn
 
