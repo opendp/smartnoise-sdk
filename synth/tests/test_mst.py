@@ -9,17 +9,16 @@ from snsynth.mst import MSTSynthesizer
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
-csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
+csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
-df = pd.read_csv(csv_path, index_col=0)
+df = pd.read_csv(csv_path)
 df = df.drop(["income"], axis=1)
-df = df[df > 0].dropna()
-df = df.sample(frac=0.05, random_state=42)
+df = df.sample(frac=1, random_state=42)
 
 class TestMST:
 
     Domains = {
-        "test": "synth/tests/test-domain.json"
+        "test": "tests/test-domain.json"
     }
 
     def setup(self):

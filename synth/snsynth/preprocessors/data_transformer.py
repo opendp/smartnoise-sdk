@@ -17,16 +17,13 @@ ColumnTransformInfo = namedtuple(
 class DataTransformer(object):
 
     """Data Transformer.
-
     Based on CTGAN's transformer https://github.com/sdv-dev/CTGAN/blob/master/ctgan/data_transformer.py.
-
     Model continuous columns with a DPStandardScaler and normalized to a scalar [0, 1] and a vector.
     Discrete columns are encoded using a scikit-learn OneHotEncoder.
     """
 
     def __init__(self, epsilon):
         """Create a data transformer.
-
         Args:
             max_clusters (int):
                 Maximum number of Gaussian distributions in Bayesian GMM.
@@ -48,42 +45,44 @@ class DataTransformer(object):
             output_info=[SpanInfo(1, 'tanh')],
             output_dimensions=1)
 
-    def _fit_discrete(self, data):
+    def _fit_discrete(self, column_name, raw_column_data):
         """Fit one hot encoder for discrete column."""
-        column_name = data.columns[0]
         ohe = OneHotEncodingTransformer()
-        ohe.fit(data, [column_name])
+        ohe.fit(raw_column_data)
         num_categories = len(ohe.dummies)
 
         return ColumnTransformInfo(
-            column_name=column_name, column_type='discrete', transform=ohe,
-            transform_aux = None,
+            column_name=column_name,
+            column_type="discrete",
+            transform=ohe,
+            transform_aux=None,
             output_info=[SpanInfo(num_categories, 'softmax')],
             output_dimensions=num_categories)
 
     def fit(self, raw_data, discrete_columns=tuple()):
         """Fit DP StandardScaler for continuous columns and One hot encoder for discrete columns.
-
         This step also counts the #columns in matrix data, and span information.
         """
         self.output_info_list = []
         self.output_dimensions = 0
-        self.dataframe = True
 
         if not isinstance(raw_data, pd.DataFrame):
             self.dataframe = False
-            # work around for RDT issue #328 Fitting with numerical column names fails
-            discrete_columns = [str(column) for column in discrete_columns]
-            column_names = [str(num) for num in range(raw_data.shape[1])]
-            raw_data = pd.DataFrame(raw_data, columns=column_names)
+            raw_data = pd.DataFrame(raw_data)
+        else:
+            self.dataframe = True
 
         self._column_raw_dtypes = raw_data.infer_objects().dtypes
+
         self._column_transform_info_list = []
         for column_name in raw_data.columns:
+            raw_column_data = raw_data[column_name].values
             if column_name in discrete_columns:
-                column_transform_info = self._fit_discrete(raw_data[[column_name]])
+                column_transform_info = self._fit_discrete(
+                    column_name, raw_column_data)
             else:
-                column_transform_info = self._fit_continuous(raw_data[[column_name]])
+                column_transform_info = self._fit_continuous(
+                    column_name, raw_column_data)
 
             self.output_info_list.append(column_transform_info.output_info)
             self.output_dimensions += column_transform_info.output_dimensions
@@ -104,19 +103,19 @@ class DataTransformer(object):
     def transform(self, raw_data):
         """Take raw data and output a matrix data."""
         if not isinstance(raw_data, pd.DataFrame):
-            column_names = [str(num) for num in range(raw_data.shape[1])]
-            raw_data = pd.DataFrame(raw_data, columns=column_names)
+            raw_data = pd.DataFrame(raw_data)
 
         column_data_list = []
         for column_transform_info in self._column_transform_info_list:
-            column_name = column_transform_info.column_name
-            data = raw_data[[column_name]]
-            if column_transform_info.column_type == 'continuous':
-                column_data_list.append(self._transform_continuous(column_transform_info, data))
+            column_data = raw_data[[column_transform_info.column_name]].values
+            if column_transform_info.column_type == "continuous":
+                column_data_list += self._transform_continuous(
+                    column_transform_info, column_data)
             else:
-                column_data_list.append(self._transform_discrete(column_transform_info, data))
+                assert column_transform_info.column_type == "discrete"
+                column_data_list += self._transform_discrete(
+                    column_transform_info, column_data)
 
-        print(column_data_list)
         return np.concatenate(column_data_list, axis=1).astype(float)
 
     def _inverse_transform_continuous(self, column_transform_info, column_data, sigmas, st):
@@ -132,12 +131,10 @@ class DataTransformer(object):
 
     def _inverse_transform_discrete(self, column_transform_info, column_data):
         ohe = column_transform_info.transform
-        data = pd.DataFrame(column_data, columns=list(ohe.get_output_types()))
-        return ohe.reverse_transform(data)[column_transform_info.column_name]
+        return ohe.reverse_transform(column_data)
 
     def inverse_transform(self, data, sigmas=None):
         """Take matrix data and output raw data.
-
         Output uses the same type as input to the transform function.
         Either np array or pd dataframe.
         """
@@ -147,10 +144,13 @@ class DataTransformer(object):
         for column_transform_info in self._column_transform_info_list:
             dim = column_transform_info.output_dimensions
             column_data = data[:, st:st + dim]
+
             if column_transform_info.column_type == 'continuous':
                 recovered_column_data = self._inverse_transform_continuous(
                     column_transform_info, column_data, sigmas, st)
+
             else:
+                assert column_transform_info.column_type == 'discrete'
                 recovered_column_data = self._inverse_transform_discrete(
                     column_transform_info, column_data)
 
@@ -162,7 +162,7 @@ class DataTransformer(object):
         recovered_data = (pd.DataFrame(recovered_data, columns=column_names)
                           .astype(self._column_raw_dtypes))
         if not self.dataframe:
-            recovered_data = recovered_data.to_numpy()
+            recovered_data = recovered_data.values
 
         return recovered_data
 
