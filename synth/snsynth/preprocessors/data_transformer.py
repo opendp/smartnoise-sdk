@@ -17,16 +17,13 @@ ColumnTransformInfo = namedtuple(
 class DataTransformer(object):
 
     """Data Transformer.
-
     Based on CTGAN's transformer https://github.com/sdv-dev/CTGAN/blob/master/ctgan/data_transformer.py.
-
     Model continuous columns with a DPStandardScaler and normalized to a scalar [0, 1] and a vector.
     Discrete columns are encoded using a scikit-learn OneHotEncoder.
     """
 
     def __init__(self, epsilon):
         """Create a data transformer.
-
         Args:
             max_clusters (int):
                 Maximum number of Gaussian distributions in Bayesian GMM.
@@ -64,7 +61,6 @@ class DataTransformer(object):
 
     def fit(self, raw_data, discrete_columns=tuple()):
         """Fit DP StandardScaler for continuous columns and One hot encoder for discrete columns.
-
         This step also counts the #columns in matrix data, and span information.
         """
         self.output_info_list = []
@@ -139,7 +135,6 @@ class DataTransformer(object):
 
     def inverse_transform(self, data, sigmas=None):
         """Take matrix data and output raw data.
-
         Output uses the same type as input to the transform function.
         Either np array or pd dataframe.
         """

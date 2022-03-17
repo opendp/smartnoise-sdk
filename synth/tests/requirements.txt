@@ -7,3 +7,4 @@ ctgan
 opacus
 torch
 pytest
+git+https://github.com/ryan112358/private-pgm.git
