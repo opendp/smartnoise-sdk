@@ -18,7 +18,7 @@ package_data = \
 
 install_requires = \
 ['PyYAML>=5.4.1,<6.0.0',
- 'antlr4-python3-runtime==4.8',
+ 'antlr4-python3-runtime==4.9.3',
  'graphviz>=0.17,<0.18',
  'opendp>=0.3.0,<0.4.0',
  'pandasql>=0.7.3,<0.8.0']
