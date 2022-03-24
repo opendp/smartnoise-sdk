@@ -5,30 +5,40 @@ import warnings
 
 from snsql.sql.reader.base import NameCompare
 
-# implements spec at https://docs.google.com/document/d/1Q4lUKyEu2W9qQKq6A0dbo0dohgSUxitbdGhX97sUNOM/
-
+# implements spec at https://docs.smartnoise.org/en/stable/sql/metadata.html
 
 class Metadata:
     """Information about a collection of tabular data sources"""
 
-    def __init__(self, tables, engine=None, compare=None):
+    def __init__(self, tables, engine=None, compare=None, dbname=None):
         """Instantiate a metadata object with information about tabular data sources
 
         :param tables: A list of Table descriptions
         :param engine: The name of the database engine used to query these tables.  Used for engine-
             specific name escaping and comparison.  Set to None to use default semantics.
+        :param compare: A NameCompare object used to compare table names.  Set to None to use comparison rules
+            associated with engine.
+        :param dbname: The name of the database.  Used to match 3-part object names like dbname.schema.table.  Set to None to match any database name.
         """
         self.m_tables = dict([(t.table_name(), t) for t in tables])
         self.engine = engine if engine is not None else "Unknown"
         self.compare = NameCompare.get_name_compare(engine) if compare is None else compare
+        self.dbname = dbname if dbname else None
 
     def __getitem__(self, tablename):
         schema_name = ""
+        dbname = ""
         parts = tablename.split(".")
-        if len(parts) == 2:
+        if len(parts) == 3:
+            dbname, schema_name, tablename = parts
+        elif len(parts) == 2:
             schema_name, tablename = parts
         for tname in self.m_tables.keys():
             table = self.m_tables[tname]
+            if dbname and self.dbname and not self.compare.identifier_match(dbname, self.dbname):
+                # we only fail to match if caller specifies dbname that doesn't match
+                # if dbname not provided, we match any database
+                return None
             if self.compare.schema_match(
                 schema_name, table.schema
             ) and self.compare.identifier_match(tablename, table.name):
@@ -37,7 +47,8 @@ class Metadata:
         return None
 
     def __str__(self):
-        return "\n\n".join([str(self.m_tables[table]) for table in self.m_tables.keys()])
+        desc = f"{self.dbname if self.dbname else '(no database name)'} using engine {self.engine}\n"
+        return  desc + "\n".join([str(self.m_tables[table]) for table in self.m_tables.keys()])
 
     def tables(self):
         return [self.m_tables[tname] for tname in self.m_tables.keys()]
@@ -61,12 +72,8 @@ class Metadata:
     def from_(cls, val):
         if isinstance(val, Metadata):
             return val
-        elif isinstance(val, str):
-            if path.exists(val):
-                return cls.from_file(val)
-            else:
-                # could allow YAML strings here.  Throw for now
-                raise ValueError(f"Unable to load metadata path {val}")
+        elif isinstance(val, (str, io.IOBase)):
+            return cls.from_file(val)
         elif isinstance(val, dict):
             return cls.from_dict(val)
         else:
@@ -144,13 +151,14 @@ class Table:
 
     def __str__(self):
         return (
-            str(self.schema)
+            "  "
+            + str(self.schema)
             + "."
             + str(self.name)
             + " ["
             + str(self.rowcount)
-            + " rows]\n\t"
-            + "\n\t".join([str(self.m_columns[col]) for col in self.m_columns.keys()])
+            + " rows]\n    "
+            + "\n    ".join([str(self.m_columns[col]) for col in self.m_columns.keys()])
         )
 
     def key_cols(self):
@@ -344,6 +352,8 @@ class CollectionYamlLoader:
                 raise
             return self._create_metadata_object(c_s)
         else:
+            if not path.exists(self.file):
+                raise ValueError(f"Unable to load metadata path {self.file}")
             with open(self.file, "r") as stream:
                 try:
                     c_s = yaml.safe_load(stream)
@@ -352,6 +362,8 @@ class CollectionYamlLoader:
             return self._create_metadata_object(c_s)
 
     def _create_metadata_object(self, c_s):
+        if not hasattr(c_s, "keys"):
+            raise ValueError("Metadata must be a YAML dictionary")
         keys = list(c_s.keys())
         engine = "Unknown"
 
@@ -378,7 +390,7 @@ class CollectionYamlLoader:
                 t = s[table]
                 tables.append(self.load_table(schema, table, t))
 
-        return Metadata(tables, engine)
+        return Metadata(tables, engine, dbname=collection)
 
     def load_table(self, schema, table, t):
         rowcount = int(t["rows"]) if "rows" in t else 0
