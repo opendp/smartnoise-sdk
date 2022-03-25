@@ -22,7 +22,7 @@ YAML Format
 The YAML metadata format looks like this:
 
 .. code-block:: yaml
-
+"":
   MySchema:
       MyTable:
           max_ids: 1
@@ -154,7 +154,7 @@ Example Metadata
 The following is an example of a collection containing 3 tables, representing Crashes, Rollouts, and Census for a population of devices.  The collection name is “Telemetry”, and names are serialized as headings.
 
 .. code-block:: yaml
-
+Collection:
   Telemetry:
     Crashes:
       rows: 103000
