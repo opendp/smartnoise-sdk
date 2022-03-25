@@ -153,7 +153,7 @@ class Table:
         return (
             "  "
             + str(self.schema)
-            + "."
+            + "." if self.schema else ""
             + str(self.name)
             + " ["
             + str(self.rowcount)

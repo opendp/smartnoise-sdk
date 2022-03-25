@@ -1,5 +1,7 @@
 from snsql.metadata import Metadata
-from snsql.sql.reader.postgres import PostgresNameCompare
+from snsql.sql.privacy import Privacy
+from snsql.sql.private_reader import PrivateReader
+from snsql.sql.reader.postgres import PostgresNameCompare, PostgresReader
 import io
 
 meta_str_db_escaped_schema = """
@@ -39,6 +41,15 @@ meta_str_no_schema = """
         type: int
 """
 
+meta_str_mixed_escape = """
+engine: postgres
+'"My-Database"':
+  "`My-Schema`":
+    "`My-Table`":
+      row_privacy: True
+      person-age:
+        type: int
+"""
 
 class TestTableNameMatch:
     def test_with_dbname_escaped_schema(self):
@@ -69,3 +80,18 @@ class TestTableNameMatch:
         meta.compare = PostgresNameCompare()
         assert(not meta["My-DB.My-Schema.My-Table"])
         assert(meta["My-Table"])
+
+class TestRewriterTableNameMatch:
+    def test_with_dbname_escaped_schema(self):
+      meta = Metadata.from_(io.StringIO(meta_str_mixed_escape))
+      query = 'SELECT SUM(`person-age`) FROM `My-Database`.[My-Schema]."My-Table"'
+      privacy = Privacy(epsilon=1.0, delta=1.0)
+      reader = PostgresReader()
+      priv = PrivateReader(reader, meta, privacy=privacy)
+      subq, _ = priv._rewrite(query)
+      cols = subq.xpath('//Column')
+      assert(len(cols) == 2)
+      for col in cols:
+          assert(col.name == '`person-age`')
+      tab = subq.xpath_first('//Table')
+      assert(tab.name == '`My-Database`.[My-Schema]."My-Table"')
