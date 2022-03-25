@@ -22,17 +22,18 @@ YAML Format
 The YAML metadata format looks like this:
 
 .. code-block:: yaml
-"":
-  MySchema:
-      MyTable:
-          max_ids: 1
-          user_id:
-              private_id: True
-              type: int
-          age:
-              type: int
-              lower: 0
-              upper: 100
+
+  "":
+    MySchema:
+        MyTable:
+            max_ids: 1
+            user_id:
+                private_id: True
+                type: int
+            age:
+                type: int
+                lower: 0
+                upper: 100
 
 The root node is a collection of tables that all exist in the same namespace. The root node can also be referred to as a "database" or a "schema".
 
@@ -103,6 +104,129 @@ Column Options
 * ``missing_value``: A value of the same type as the ``type`` for this column.  Default is ``None``.  If set, the system will replace NULL with the specified value, ensuring that all values are set.  If set, ``nullable`` will be treated as ``False``, regardless of its value.
 * ``sensitivity``: The sensitivity to be used when releasing sums from this column.  Default is ``None``.  If not set, the system will compute the sensitivity from upper and lower bounds.  If ``sensitivity`` is set, the upper and lower bounds will be ignored for sensitivity, and this value will be used.  The upper and lower bounds will still be used to clamp the columns. If this value is set, and no bounds are provided, the metadata must specify ``clamp_columns`` as ``False``. Note that counts will always use a sensitivity of 1, regardless of the value of this attribute.
 
+Database Names
+--------------
+
+Any table or column objects referenced in queries must resolve to objects described in the metadata.  For example, the following describes a table named "Sales" in a database named "Finance"
+
+.. code-block:: yaml
+
+  Finance:
+    Sales:
+        Orders:
+            row_privacy: True
+            SaleAmount:
+                type: int
+                lower: 0
+                upper: 100000
+
+The following two queries will work, and are equivalent:
+
+.. code-block:: sql
+
+  SELECT SUM(SaleAmount) FROM Sales.Orders;
+  SELECT SUM(SaleAmount) FROM Finance.Sales.Orders;
+
+If the database engine being used is not case-sensitive, the query can also use lower case.
+
+.. code-block:: sql
+
+  SELECT SUM(saleamount) FROM sales.orders;
+
+Note that the object names used in the SQL query must match the metadata, but the database name need not match the database name of the underlying connection.  For example, if the the existing connection is to a database named "FinanceTest", the following query will work:
+
+.. code-block:: sql
+
+  SELECT SUM(SaleAmount) FROM Sales.Orders;
+
+despite the database name in the metadata being "Finance".  However, in this scenario, the following query will not work:
+
+.. code-block:: sql
+
+  SELECT SUM(SaleAmount) FROM Finance.Sales.Orders;
+
+because the query will be executed against the connection using a database name that doesn't match the currently connected database.
+
+Data curators may choose to leave the database name blank, in which case any database name will match.  To make a blank key in YAML, use double quotes:
+
+.. code-block:: yaml
+
+  "":
+    Sales:
+        Orders:
+            row_privacy: True
+            SaleAmount:
+                type: int
+                lower: 0
+                upper: 100000
+
+With the above YAML, all three queries will work:
+
+.. code-block:: sql
+
+  SELECT SUM(SaleAmount) FROM Sales.Orders;
+  SELECT SUM(SaleAmount) FROM Finance.Sales.Orders;
+  SELECT SUM(SaleAmount) FROM FinanceTest.Sales.Orders;
+
+
+Special Characters
+------------------
+
+The SQL-92 specification allows object identifiers to include special characters such as hyphens or spaces.  For example:
+
+.. code-block:: yaml
+
+  "":
+    Sales:
+        Backlog-Orders:
+            row_privacy: True
+            Sale-Amount:
+                type: int
+                lower: 0
+                upper: 100000
+
+A query against this table would look like:
+
+.. code-block:: sql
+
+  SELECT SUM("Sale-Amount") FROM Sales."Backlog-Orders";
+
+In the above example, ``Backlog-Orders`` and ``Sale-Amount`` are not escaped in the metadata, which might give unexpected results.  For example, the lowercase versions of these identifiers would also work.  When specifying objects in metadata that need to be escaped in the SQL query, it's a good idea to escape the objects in the metadata:
+
+.. code-block:: yaml
+
+  "":
+    Sales:
+        '"Backlog-Orders"':
+            row_privacy: True
+            '"Sale-Amount"':
+                type: int
+                lower: 0
+                upper: 100000
+
+Note the single-quotes wrapping the identifiers escaped with double-quotes.  This is necessary to ensure the YAML parser preserves the escaping.
+
+The above uses the SQL-92 syntax for quoting identifiers with special characters.  Some engines may not support this syntax, and may instead use backticks or square brackets.  You can use whatever syntax is appropriate for your engine.  For example, the following YAML is suitable when backticks are the preferred escape character:
+
+.. code-block:: yaml
+
+  "":
+    Sales:
+        "`Backlog-Orders`":
+            row_privacy: True
+            '`Sale-Amount`':
+                type: int
+                lower: 0
+                upper: 100000
+
+Since our escape character is not a double quote in this case, we can wrap the string for the YAML parser equivalently using either single or double quotes.
+
+It's good practice to use the same escape character in the metadata as is preferred by your database engine, but it's not strictly necessary.  As long as the escape character used in the queries is approproate for the engine, the system should be able to fine the correct metadata.  For example, the following query will work fine against SQL Server, using square bracket escaping, despite the fact that the metadata uses backticks:
+
+.. code-block:: sql
+
+  SELECT SUM([Sale-Amount]) FROM Sales.[Backlog-Orders];
+
 
 Other Considerations
 --------------------
@@ -154,48 +278,49 @@ Example Metadata
 The following is an example of a collection containing 3 tables, representing Crashes, Rollouts, and Census for a population of devices.  The collection name is “Telemetry”, and names are serialized as headings.
 
 .. code-block:: yaml
-Collection:
-  Telemetry:
-    Crashes:
-      rows: 103000
-      Refurbished:
-        type: boolean
-      Temperature:
-        type: float
-        lower:  25.0
-        upper:  65.0
-      Building:
-        type: string
-      Region:
-        type: string
-      DeviceID:
-        type: int
-        private_id: True
+
+  Collection:
+    Telemetry:
       Crashes:
-        type: int
-        lower:  0
-        upper:  10
-    Census:
-      DeviceID:
-        type: int
-        private_id: true
-      OEM:
-        type: string
-      Memory:
-        type: string
-      Disk:
-        type: int
-        lower:  100
-        upper:  10000
-    Rollouts:
-      DeviceID:
-        type: int
-        private_id: true
-      RolloutID:
-        type: int
-      StartTrial:
-        type: datetime
-      EndTrial:
-        type: datetime
-      TrialGroup:
-        type: int
+        rows: 103000
+        Refurbished:
+          type: boolean
+        Temperature:
+          type: float
+          lower:  25.0
+          upper:  65.0
+        Building:
+          type: string
+        Region:
+          type: string
+        DeviceID:
+          type: int
+          private_id: True
+        Crashes:
+          type: int
+          lower:  0
+          upper:  10
+      Census:
+        DeviceID:
+          type: int
+          private_id: true
+        OEM:
+          type: string
+        Memory:
+          type: string
+        Disk:
+          type: int
+          lower:  100
+          upper:  10000
+      Rollouts:
+        DeviceID:
+          type: int
+          private_id: true
+        RolloutID:
+          type: int
+        StartTrial:
+          type: datetime
+        EndTrial:
+          type: datetime
+        TrialGroup:
+          type: int

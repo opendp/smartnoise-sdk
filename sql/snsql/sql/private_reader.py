@@ -68,7 +68,7 @@ class PrivateReader(Reader):
 
         :param conn: An established database connection.  Can be pyodbc, psycopg2, SparkSession, Pandas DataFrame, or Presto.
         :param privacy:  A Privacy object with epsilon, delta, and other privacy properties.  Keyword-only.
-        :param metadata: The metadata describing the database.  `Metadata documentation is here <https://github.com/opendp/smartnoise-sdk/blob/new_opendp/sdk/Metadata.md>`_.  Keyword-only.
+        :param metadata: The metadata describing the database.  `Metadata documentation is here <https://docs.smartnoise.org/en/stable/sql/metadata.html>`_.  Keyword-only.
         :param engine: Optional keyword-only argument that can be used to specify engine-specific rules if automatic detection fails.  This should only be necessary when using an uncommon database or middleware.
         :returns: A `PrivateReader` object initialized to process queries against the supplied connection, using the supplied `Privacy` properties.
 
