@@ -22,6 +22,11 @@ class Probe:
         ):
             return "postgres"
         if (
+            conn_mod == 'google.cloud.bigquery.client' and
+            conn_class == 'Client'
+        ):
+            return "bigquery"
+        if (
             conn_mod == 'pyodbc' and
             conn_class == 'Connection'
         ):

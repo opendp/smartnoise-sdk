@@ -4,6 +4,7 @@ from snsql.sql.reader.postgres import PostgresReader, PostgresNameCompare, Postg
 from snsql.sql.reader.sql_server import SqlServerReader, SqlServerNameCompare, SqlServerSerializer
 from snsql.sql.reader.spark import SparkReader, SparkNameCompare, SparkSerializer
 from snsql.sql.reader.presto import PrestoReader, PrestoNameCompare, PrestoSerializer
+from snsql.sql.reader.bigquery import BigQueryReader, BigQueryNameCompare, BigQuerySerializer
 
 import os
 import subprocess
@@ -114,3 +115,12 @@ class TestWithoutConn:
         assert(isinstance(reader.compare, PrestoNameCompare))
         assert(isinstance(reader.serializer, Serializer))
         assert(isinstance(reader.serializer, PrestoSerializer))
+    def test_bigquery(self):
+        engine = "bigquery"
+        reader = BigQueryReader("credentials_path", "conn")
+        assert(isinstance(reader, SqlReader))
+        assert(isinstance(reader, BigQueryReader))
+        assert(isinstance(reader.compare, NameCompare))
+        assert(isinstance(reader.compare, BigQueryNameCompare))
+        assert(isinstance(reader.serializer, Serializer))
+        assert(isinstance(reader.serializer, BigQuerySerializer))

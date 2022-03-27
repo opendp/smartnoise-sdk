@@ -2,9 +2,9 @@ import pytest
 
 from snsql.reader.base import Reader
 from snsql.sql.reader.engine import Engine
-from snsql.sql.reader import PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
+from snsql.sql.reader import BigQueryReader, PandasReader, PostgresReader, PrestoReader, SqlServerReader, SparkReader
 
-READERS = PandasReader, PrestoReader, PostgresReader, SqlServerReader, SparkReader
+READERS = BigQueryReader, PandasReader, PostgresReader, PrestoReader, SqlServerReader, SparkReader
 
 """
 Test Coverage:

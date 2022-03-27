@@ -1,0 +1,10 @@
+bigquery:
+  host: 
+  port: 
+  user: 
+  databases:
+    PUMS: PUMS
+    PUMS_large: PUMS_LARGE
+    PUMS_pid: PUMS_PID
+    PUMS_dup: PUMS_DUP
+    PUMS_null: PUMS_NULL
