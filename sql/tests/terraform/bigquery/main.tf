@@ -19,9 +19,9 @@ resource "google_storage_bucket" "smartnoise_ci_bucket" {
   location      = var.region
 }
 
-resource "google_bigquery_dataset" "smartnoise_ci" {
+resource "google_bigquery_dataset" "pums" {
   project    = var.project_id
-  dataset_id = "smartnoise_ci"
+  dataset_id = "PUMS"
   location   = var.region
   labels = {
     "environment" = "smartnoise-sdk-ci"
@@ -37,8 +37,8 @@ resource "google_storage_bucket_object" "pums" {
 }
 
 resource "google_bigquery_table" "pums" {
-  dataset_id = google_bigquery_dataset.smartnoise_ci.dataset_id
-  table_id   = "pums"
+  dataset_id = google_bigquery_dataset.pums.dataset_id
+  table_id   = "PUMS"
   deletion_protection = false
 
   labels = {
@@ -62,7 +62,7 @@ resource "google_bigquery_table" "pums" {
   }
 
   depends_on = [
-      google_bigquery_dataset.smartnoise_ci,
+      google_bigquery_dataset.pums,
     ]
 }
 
@@ -74,8 +74,8 @@ resource "google_storage_bucket_object" "pums_large" {
 }
 
 resource "google_bigquery_table" "pums_large" {
-  dataset_id = google_bigquery_dataset.smartnoise_ci.dataset_id
-  table_id   = "pums_large"
+  dataset_id = google_bigquery_dataset.pums.dataset_id
+  table_id   = "PUMS_LARGE"
   deletion_protection = false
 
   labels = {
@@ -99,7 +99,7 @@ resource "google_bigquery_table" "pums_large" {
   }
 
   depends_on = [
-      google_bigquery_dataset.smartnoise_ci,
+      google_bigquery_dataset.pums,
     ]
 }
 
@@ -111,8 +111,8 @@ resource "google_storage_bucket_object" "pums_pid" {
 }
 
 resource "google_bigquery_table" "pums_pid" {
-  dataset_id = google_bigquery_dataset.smartnoise_ci.dataset_id
-  table_id   = "pums_pid"
+  dataset_id = google_bigquery_dataset.pums.dataset_id
+  table_id   = "PUMS_PID"
   deletion_protection = false
 
   labels = {
@@ -136,7 +136,7 @@ resource "google_bigquery_table" "pums_pid" {
   }
 
   depends_on = [
-      google_bigquery_dataset.smartnoise_ci,
+      google_bigquery_dataset.pums,
     ]
 }
 
@@ -148,8 +148,8 @@ resource "google_storage_bucket_object" "pums_dup" {
 }
 
 resource "google_bigquery_table" "pums_dup" {
-  dataset_id = google_bigquery_dataset.smartnoise_ci.dataset_id
-  table_id   = "pums_dup"
+  dataset_id = google_bigquery_dataset.pums.dataset_id
+  table_id   = "PUMS_DUP"
   deletion_protection = false
 
   labels = {
@@ -173,7 +173,7 @@ resource "google_bigquery_table" "pums_dup" {
   }
 
   depends_on = [
-      google_bigquery_dataset.smartnoise_ci,
+      google_bigquery_dataset.pums,
     ]
 }
 # PUMS_null dataset 'datasets/PUMS_null.csv'
@@ -184,8 +184,8 @@ resource "google_storage_bucket_object" "pums_null" {
 }
 
 resource "google_bigquery_table" "pums_null" {
-  dataset_id = google_bigquery_dataset.smartnoise_ci.dataset_id
-  table_id   = "pums_null"
+  dataset_id = google_bigquery_dataset.pums.dataset_id
+  table_id   = "PUMS_NULL"
   deletion_protection = false
 
   labels = {
@@ -209,6 +209,6 @@ resource "google_bigquery_table" "pums_null" {
   }
 
   depends_on = [
-      google_bigquery_dataset.smartnoise_ci,
+      google_bigquery_dataset.pums,
     ]
 }
