@@ -95,7 +95,7 @@ These overrides should be used with caution, because they may affect privacy if 
 Column Options
 --------------
 
-* ``type``: Required. The type attribute indicates the simple type for all values in the column. Type may be one of “int”, “float”, “string”, “boolean”, or “date”. The “date” type includes date or time types.  If type is set to "unknown", the column will be ignored by the system.
+* ``type``: Required. The type attribute indicates the simple type for all values in the column. Type may be one of “int”, “float”, “string”, “boolean”, or “datetime”. The “datetime” type includes date or time types.  If type is set to "unknown", the column will be ignored by the system.
 * ``private_id``: Boolean.  Default is ``False``.  indicates that this column is the private identifier (e.g. “UserID”, “Household”).  This column is optional.  Only columns which have private_id set to true are treated as individuals subject to privacy protection.
 * ``lower``: Valid on numeric columns.  Specifies the lower bound for values in this column.
 * ``upper``: Valid on numeric columns.  Specifies the upper bound for values in this column.
