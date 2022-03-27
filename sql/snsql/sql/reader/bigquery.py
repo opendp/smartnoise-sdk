@@ -1,4 +1,5 @@
 import os
+import json
 
 from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
@@ -43,12 +44,15 @@ class BigQueryReader(SqlReader):
         cnxn = self.conn
         if cnxn is None:
             if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
-                cnxn = self.api.cloud.bigquery.Client()
+                creds = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS"], strict=False)
+                credentials = self.api.oauth2.service_account.Credentials.from_service_account_info(
+                    creds
+                )
             else:
                 credentials = self.api.oauth2.service_account.Credentials.from_service_account_file(
                     self.credentials_path, scopes=["https://www.googleapis.com/auth/cloud-platform"],
                 )
-                cnxn = self.api.cloud.bigquery.Client(credentials=credentials, project=credentials.project_id)
+            cnxn = self.api.cloud.bigquery.Client(credentials=credentials, project=credentials.project_id)
         result = cnxn.query(str(query)).result()
         if result.total_rows == 0:
             return []

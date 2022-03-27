@@ -16,7 +16,7 @@ jobs:
         python-version: [3.9]
       max-parallel: 5
     env:
-      GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_CREDENTIALS }}"
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
     steps:
       - uses: actions/checkout@v2
@@ -56,6 +56,8 @@ jobs:
           python tests/setup/download.py
 
       - name: Terraform Init - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
           cd sql/tests/terraform/bigquery
           terraform init \
@@ -63,6 +65,8 @@ jobs:
           -var 'region=${{ secrets.GOOGLE_REGION }}'
 
       - name: Terraform Plan - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
           cd sql/tests/terraform/bigquery
           terraform plan \
@@ -70,6 +74,8 @@ jobs:
           -var 'region=${{ secrets.GOOGLE_REGION }}'
 
       - name: Terraform Apply - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
         continue-on-error: true
         run: |
           cd sql/tests/terraform/bigquery
@@ -82,14 +88,20 @@ jobs:
         continue-on-error: true
         run: |
           echo "TODO: Verify dataset counts"
-      
-      - name: Run tests
+
+      - name: Test SDK
         continue-on-error: true
+        shell: bash -l {0}
         run: |
-          echo "Here is where BigQuery Tests run"
-      
+          cd sql
+          mkdir ~/.smartnoise
+          cp tests/setup/bigquery/connections-unit.yaml ~/.smartnoise
+          export SKIP_PANDAS=1
+          pytest tests
+
       - name: Terraform Destroy - BigQuery dataset
-        id: destroy
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
         continue-on-error: true
         run: |
           cd sql/tests/terraform/bigquery

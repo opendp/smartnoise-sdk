@@ -125,6 +125,20 @@ class DbEngine:
                     pums_large.createOrReplaceTempView("PUMS_large")
             except:
                 print("Unable to connect to Spark test databases.  Make sure pyspark is installed.")
+        elif self.engine.lower() == "bigquery":
+            from google.cloud import bigquery
+            from google.oauth2 import service_account
+            import json
+            print("Running bigquery tests and looking for credentials.")
+            if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+                creds = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+                info = json.loads(creds, strict=False)
+                credentials = service_account.Credentials.from_service_account_info(
+                    info
+                )
+                self.connections[database] = bigquery.Client(credentials=credentials, project=credentials.project_id)
+            else:
+                print("No credentials found")
         else:
             print(f"Unable to connect to databases for engine {self.engine}")
     @property
