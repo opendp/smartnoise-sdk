@@ -45,7 +45,7 @@ jobs:
         run: |
           cd sql
           pip install --no-cache-dir -r tests/requirements.txt
-          pip install --no-cache-dir -r tests/setup/postgres/requirements.txt
+          pip install --no-cache-dir -r tests/setup/bigquery/requirements.txt
           pip install --no-cache-dir  .
           pip install --no-cache-dir opendp-smartnoise-core # temporary
 
