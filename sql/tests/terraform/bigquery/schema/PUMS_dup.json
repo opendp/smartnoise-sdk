@@ -28,5 +28,10 @@
     "name": "married",
     "type": "STRING",
     "mode": "NULLABLE"
+  },
+  {
+    "name": "pid",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
   }
 ]

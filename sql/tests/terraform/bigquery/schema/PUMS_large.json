@@ -1,0 +1,57 @@
+[
+  {
+    "name": "PersonID",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "state",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "puma",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "sex",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "age",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "educ",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "latino",
+    "type": "BOOL",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "black",
+    "type": "BOOL",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "asian",
+    "type": "BOOL",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "married",
+    "type": "BOOL",
+    "mode": "NULLABLE"
+  }
+]
