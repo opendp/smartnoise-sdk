@@ -47,7 +47,7 @@ class Laplace(AdditiveNoiseMechanism):
         delta = self.delta
         epsilon = self.epsilon
         if delta == 0.0:
-            return "censor_dims requires delta to be > 0.0  Try delta=1/n*sqrt(n) where n is the number of individuals"
+            raise ValueError("censor_dims requires delta to be > 0.0  Try delta=1/n*sqrt(n) where n is the number of individuals")
         log_term = math.log(2 * delta / max_contrib) 
         thresh = max_contrib * (1 - ( log_term / epsilon))
         return thresh

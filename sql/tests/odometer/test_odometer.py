@@ -93,13 +93,13 @@ class TestOdometer:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv.execute("SELECT SUM(age) FROM PUMS.PUMS GROUP BY educ")
         assert(priv.odometer.k == 2)
-    def test_two_var(self):
-        meta_obj['PUMS.PUMS'].row_privacy = True
-        meta_obj['PUMS.PUMS']['pid'].is_key = False
-        meta_obj['PUMS.PUMS'].censor_dims = True
-        priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        res = priv.execute("SELECT VAR(age), VAR(income) FROM PUMS.PUMS GROUP BY sex")
-        assert(priv.odometer.k == 5)
+    # def test_two_var(self):
+    #     meta_obj['PUMS.PUMS'].row_privacy = True
+    #     meta_obj['PUMS.PUMS']['pid'].is_key = False
+    #     meta_obj['PUMS.PUMS'].censor_dims = True
+    #     priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
+    #     res = priv.execute("SELECT VAR(age), VAR(income) FROM PUMS.PUMS GROUP BY sex")
+    #     assert(priv.odometer.k == 5)
     def test_odo_hom(self):
         privacy = Privacy(epsilon=0.1, delta = 1/(1000))
         odo = Odometer(privacy)
@@ -199,14 +199,14 @@ class TestMultiplier:
         res = priv._get_mechanism_costs("SELECT SUM(age) FROM PUMS.PUMS GROUP BY educ")
         res = [r for r in res if r]
         assert(len(res) == 2)
-    def test_two_var(self):
-        meta_obj['PUMS.PUMS'].row_privacy = True
-        meta_obj['PUMS.PUMS']['pid'].is_key = False
-        meta_obj['PUMS.PUMS'].censor_dims = True
-        priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
-        query = "SELECT VAR(age), VAR(income) FROM PUMS.PUMS GROUP BY sex"
-        res = priv._get_mechanism_costs(query)
-        res = [r for r in res if r]
-        assert(len(res) == 5)
-        eps, _ = priv.get_privacy_cost(query)
-        assert(eps <= 5.0)
+    # def test_two_var(self):
+    #     meta_obj['PUMS.PUMS'].row_privacy = True
+    #     meta_obj['PUMS.PUMS']['pid'].is_key = False
+    #     meta_obj['PUMS.PUMS'].censor_dims = True
+    #     priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
+    #     query = "SELECT VAR(age), VAR(income) FROM PUMS.PUMS GROUP BY sex"
+    #     res = priv._get_mechanism_costs(query)
+    #     res = [r for r in res if r]
+    #     assert(len(res) == 5)
+    #     eps, _ = priv.get_privacy_cost(query)
+    #     assert(eps <= 5.0)
