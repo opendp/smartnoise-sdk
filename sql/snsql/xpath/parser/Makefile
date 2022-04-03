@@ -1,5 +1,6 @@
-ANTLR := java -jar /usr/local/lib/antlr-4.8-complete.jar
-GRUN := java org.antlr.v4.gui.TestRig
+ANTLR_LIB := /usr/local/lib/antlr-4.9.3-complete.jar
+ANTLR := java -jar $(ANTLR_LIB)
+GRUN := java -classpath ".:$(ANTLR_LIB)" org.antlr.v4.gui.TestRig
 PYTHON := python3
 
 XPathVisitor.py: XPath.g4

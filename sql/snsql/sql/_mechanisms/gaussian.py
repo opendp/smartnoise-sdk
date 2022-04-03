@@ -29,16 +29,26 @@ class Gaussian(AdditiveNoiseMechanism):
         upper = self.upper
         max_contrib = self.max_contrib
         bounds = (float(lower), float(upper))
-        sensitivity = upper - lower
+
+        rough_scale = float(upper - lower) * max_contrib * math.sqrt(2.0 * math.log(1.25 / self.delta)) / self.epsilon
+        if rough_scale > 10_000_000:
+            raise ValueError(f"Noise scale is too large using epsilon={self.epsilon} and bounds ({lower}, {upper}) with {self.mechanism}.  Try preprocessing to reduce senstivity, or try different privacy parameters.")
+        search_upper = rough_scale * 10E+6
+        search_lower = rough_scale / 10E+6
+
         enable_features('floating-point', 'contrib')
         bounded_sum = (
             make_clamp(bounds=bounds) >>
             make_bounded_sum(bounds=bounds)
         )
-        discovered_scale = binary_search_param(
-            lambda s: bounded_sum >> make_base_gaussian(scale=s),
-            d_in=max_contrib,
-            d_out=(self.epsilon, self.delta))
+        try:
+            discovered_scale = binary_search_param(
+                lambda s: bounded_sum >> make_base_gaussian(scale=s),
+                bounds=(search_lower, search_upper),
+                d_in=max_contrib,
+                d_out=(self.epsilon, self.delta))
+        except Exception as e:
+            raise ValueError(f"Unable to find appropriate noise scale for {self.mechanism} with epsilon={self.epsilon} and bounds ({lower}, {upper}).  Try preprocessing to reduce senstivity, or try different privacy parameters.\n{e}")
         self.scale = discovered_scale
     @property
     def threshold(self):
