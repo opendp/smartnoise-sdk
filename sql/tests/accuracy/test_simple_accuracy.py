@@ -83,36 +83,36 @@ class TestSimpleAccuracy:
     #             assert(mech.mechanism == Mechanism.gaussian)
     #             acc = reader.get_simple_accuracy(query, alpha)
     #             assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    # def test_gauss_count(self, test_databases):
-    #     query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
-    #     sensitivity = 1
-    #     for alpha, epsilon, delta, max_contrib in grid:
-    #         if delta == 0.0:
-    #             delta = 1/100_000
-    #         privacy = Privacy(epsilon=epsilon, delta=delta)
-    #         privacy.mechanisms.map[Stat.count] = Mechanism.gaussian
-    #         reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-    #         if reader:
-    #             mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
-    #             mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-    #             assert(mech.mechanism == Mechanism.gaussian)
-    #             acc = reader.get_simple_accuracy(query, alpha)
-    #             assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    # def test_lap_count(self, test_databases):
-    #     query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
-    #     sensitivity = 1
-    #     for alpha, epsilon, delta, max_contrib in grid:
-    #         if delta == 0.0:
-    #             delta = 1/100_000
-    #         privacy = Privacy(epsilon=epsilon, delta=delta)
-    #         privacy.mechanisms.map[Stat.count] = Mechanism.laplace
-    #         reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-    #         if reader:
-    #             mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
-    #             mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-    #             assert(mech.mechanism == Mechanism.laplace)
-    #             acc = reader.get_simple_accuracy(query, alpha)
-    #             assert(np.isclose(acc[0], mech.accuracy(alpha)))
+    def test_gauss_count(self, test_databases):
+        query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
+        sensitivity = 1
+        for alpha, epsilon, delta, max_contrib in grid:
+            if delta == 0.0:
+                delta = 1/100_000
+            privacy = Privacy(epsilon=epsilon, delta=delta)
+            privacy.mechanisms.map[Stat.count] = Mechanism.gaussian
+            reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.gaussian)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
+    def test_lap_count(self, test_databases):
+        query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
+        sensitivity = 1
+        for alpha, epsilon, delta, max_contrib in grid:
+            if delta == 0.0:
+                delta = 1/100_000
+            privacy = Privacy(epsilon=epsilon, delta=delta)
+            privacy.mechanisms.map[Stat.count] = Mechanism.laplace
+            reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'count', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.laplace)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
 
 class TestSimpleMatch:
     """
