@@ -1,4 +1,4 @@
-# Generated from SqlSmall.g4 by ANTLR 4.8
+# Generated from SqlSmall.g4 by ANTLR 4.9.3
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -733,7 +733,7 @@ class SqlSmallParser ( Parser ):
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
-        self.checkVersion("4.8")
+        self.checkVersion("4.9.3")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
@@ -741,6 +741,7 @@ class SqlSmallParser ( Parser ):
 
 
     class BatchContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -818,6 +819,7 @@ class SqlSmallParser ( Parser ):
 
 
     class QueryContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -932,6 +934,7 @@ class SqlSmallParser ( Parser ):
 
 
     class SubqueryContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1038,6 +1041,7 @@ class SqlSmallParser ( Parser ):
 
 
     class ExpressionSubqueryContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1085,6 +1089,7 @@ class SqlSmallParser ( Parser ):
 
 
     class SelectClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1150,6 +1155,7 @@ class SqlSmallParser ( Parser ):
 
 
     class FromClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1218,6 +1224,7 @@ class SqlSmallParser ( Parser ):
 
 
     class WhereClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1270,6 +1277,7 @@ class SqlSmallParser ( Parser ):
 
 
     class AggregationClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1347,6 +1355,7 @@ class SqlSmallParser ( Parser ):
 
 
     class HavingClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1399,6 +1408,7 @@ class SqlSmallParser ( Parser ):
 
 
     class OrderClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1476,6 +1486,7 @@ class SqlSmallParser ( Parser ):
 
 
     class LimitClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1529,6 +1540,7 @@ class SqlSmallParser ( Parser ):
 
 
     class TopClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1582,6 +1594,7 @@ class SqlSmallParser ( Parser ):
 
 
     class JoinRelationContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1654,6 +1667,7 @@ class SqlSmallParser ( Parser ):
 
 
     class JoinTypeContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1811,6 +1825,7 @@ class SqlSmallParser ( Parser ):
 
 
     class JoinCriteriaContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1938,6 +1953,7 @@ class SqlSmallParser ( Parser ):
 
 
     class SortItemContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2007,6 +2023,7 @@ class SqlSmallParser ( Parser ):
 
 
     class SetQuantifierContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2078,6 +2095,7 @@ class SqlSmallParser ( Parser ):
 
 
     class RelationContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2143,6 +2161,7 @@ class SqlSmallParser ( Parser ):
 
 
     class RelationPrimaryContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2327,6 +2346,7 @@ class SqlSmallParser ( Parser ):
 
 
     class CaseExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2507,6 +2527,7 @@ class SqlSmallParser ( Parser ):
 
 
     class NamedExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2573,6 +2594,7 @@ class SqlSmallParser ( Parser ):
 
 
     class NamedExpressionSeqContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2636,6 +2658,7 @@ class SqlSmallParser ( Parser ):
 
 
     class WhenExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2701,6 +2724,7 @@ class SqlSmallParser ( Parser ):
 
 
     class WhenBaseExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -2765,6 +2789,7 @@ class SqlSmallParser ( Parser ):
 
 
     class ExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -3490,6 +3515,7 @@ class SqlSmallParser ( Parser ):
 
 
     class PredicateContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -3706,6 +3732,7 @@ class SqlSmallParser ( Parser ):
 
 
     class FunctionExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4077,6 +4104,7 @@ class SqlSmallParser ( Parser ):
 
 
     class BooleanExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4417,6 +4445,7 @@ class SqlSmallParser ( Parser ):
 
 
     class CastExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4485,6 +4514,7 @@ class SqlSmallParser ( Parser ):
 
 
     class DbTypeContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4597,6 +4627,7 @@ class SqlSmallParser ( Parser ):
 
 
     class VariableStringContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4678,6 +4709,7 @@ class SqlSmallParser ( Parser ):
 
 
     class FixedStringContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4749,6 +4781,7 @@ class SqlSmallParser ( Parser ):
 
 
     class BareFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4801,6 +4834,7 @@ class SqlSmallParser ( Parser ):
 
 
     class RankingFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4859,6 +4893,7 @@ class SqlSmallParser ( Parser ):
 
 
     class ComparisonOperatorContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4932,6 +4967,7 @@ class SqlSmallParser ( Parser ):
 
 
     class BooleanValueContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -4987,6 +5023,7 @@ class SqlSmallParser ( Parser ):
 
 
     class AllExpressionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5054,6 +5091,7 @@ class SqlSmallParser ( Parser ):
 
 
     class LiteralContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5242,6 +5280,7 @@ class SqlSmallParser ( Parser ):
 
 
     class ExtractFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5310,6 +5349,7 @@ class SqlSmallParser ( Parser ):
 
 
     class DayNameFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5367,6 +5407,7 @@ class SqlSmallParser ( Parser ):
 
 
     class DatePartContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5440,6 +5481,7 @@ class SqlSmallParser ( Parser ):
 
 
     class GetTimeContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5498,6 +5540,7 @@ class SqlSmallParser ( Parser ):
 
 
     class StringFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5616,6 +5659,7 @@ class SqlSmallParser ( Parser ):
 
 
     class StringUpperContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5673,6 +5717,7 @@ class SqlSmallParser ( Parser ):
 
 
     class StringLowerContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5730,6 +5775,7 @@ class SqlSmallParser ( Parser ):
 
 
     class StringConcatContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5802,6 +5848,7 @@ class SqlSmallParser ( Parser ):
 
 
     class CoalesceFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5874,6 +5921,7 @@ class SqlSmallParser ( Parser ):
 
 
     class TrimFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -5931,6 +5979,7 @@ class SqlSmallParser ( Parser ):
 
 
     class SubstringFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6014,6 +6063,7 @@ class SqlSmallParser ( Parser ):
 
 
     class PositionFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6082,6 +6132,7 @@ class SqlSmallParser ( Parser ):
 
 
     class CharLengthFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6139,6 +6190,7 @@ class SqlSmallParser ( Parser ):
 
 
     class TruncFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6220,6 +6272,7 @@ class SqlSmallParser ( Parser ):
 
 
     class RoundFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6292,6 +6345,7 @@ class SqlSmallParser ( Parser ):
 
 
     class PowerFunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6356,6 +6410,7 @@ class SqlSmallParser ( Parser ):
 
 
     class MathFunctionNameContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6465,6 +6520,7 @@ class SqlSmallParser ( Parser ):
 
 
     class BareFunctionNameContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6526,6 +6582,7 @@ class SqlSmallParser ( Parser ):
 
 
     class RankingFunctionNameContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6584,6 +6641,7 @@ class SqlSmallParser ( Parser ):
 
 
     class AggregateFunctionNameContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6669,6 +6727,7 @@ class SqlSmallParser ( Parser ):
 
 
     class OverClauseContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6754,6 +6813,7 @@ class SqlSmallParser ( Parser ):
 
 
     class AliasedSubqueryContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6820,6 +6880,7 @@ class SqlSmallParser ( Parser ):
 
 
     class AliasedTableOrSubquerySeqContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6914,6 +6975,7 @@ class SqlSmallParser ( Parser ):
 
 
     class AliasedTableSeqContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -6977,6 +7039,7 @@ class SqlSmallParser ( Parser ):
 
 
     class AliasedTableNameContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -7043,6 +7106,7 @@ class SqlSmallParser ( Parser ):
 
 
     class QualifiedTableNameContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -7101,6 +7165,7 @@ class SqlSmallParser ( Parser ):
 
 
     class QualifiedColumnNameContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -7175,6 +7240,7 @@ class SqlSmallParser ( Parser ):
 
 
     class IdentifierContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -7221,6 +7287,7 @@ class SqlSmallParser ( Parser ):
 
 
     class NumberContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)

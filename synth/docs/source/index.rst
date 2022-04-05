@@ -1,9 +1,13 @@
+=======================
 SmartNoise Synthesizers
 =======================
 
+.. contents:: Table of Contents
+  :local:
+  :depth: 3
 
 API Reference
--------------
+=============
 .. toctree::
   :glob:
   :maxdepth: 2

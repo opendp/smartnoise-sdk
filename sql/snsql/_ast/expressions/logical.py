@@ -155,6 +155,69 @@ class PredicatedExpression(SqlExpr):
             self.expression.symbol(relations), self.predicate.symbol(relations)
         )
 
+    def evaluate(self, bindings):
+        val = self.expression.evaluate(bindings)
+        if isinstance(self.predicate, InCondition):
+            if val is None:
+                return None
+            else:
+                values = [
+                    v.evaluate(bindings) for v in
+                    self.predicate.expressions.seq
+                ]
+                res = val in values
+        elif isinstance(self.predicate, BetweenCondition):
+            if val is None:
+                return None
+            else:
+                res = (
+                    (val > self.predicate.lower.value)
+                    and
+                    (val < self.predicate.upper.value)
+                )
+        elif isinstance(self.predicate, IsCondition):
+            if self.predicate.value.text == "NULL":
+                res = val == None
+            elif self.predicate.value.text.upper() == "TRUE":
+                if not isinstance(val, str) or val is None:
+                    res = False
+                else:
+                    res = (
+                        (val.lower() == 'true') or
+                        (val == 't') or
+                        (val == 'y') or
+                        (val == 'yes') or
+                        (val == 'on') or
+                        (val == '1')
+                    )
+            elif self.predicate.value.text.upper() == "FALSE":
+                if not isinstance(val, str) or val is None:
+                    res = False
+                else:
+                    res = (
+                        (val.lower() == 'false') or
+                        (val == 'f') or
+                        (val == 'n') or
+                        (val == 'no') or
+                        (val == 'off') or
+                        (val == '0')
+                    )
+            else:
+                raise ValueError (
+                "IS condition must by of type IS (NOT) NULL or IS (NOT)"
+                f" TRUE or IS (NOT) FALSE. Got : {self.predicate.value.text}"
+                )
+
+        else:
+            raise ValueError (
+            "Predicate must by of type InCondition, BetweenCondition or "
+            f"IsCondition. Got : {type(self.predicate)}"
+            )
+        if self.predicate.is_not:
+            return not res
+        return res
+
+
 
 class InCondition(SqlExpr):
     def __init__(self, expressions, is_not=False):
@@ -165,6 +228,10 @@ class InCondition(SqlExpr):
         pre = ([Token("NOT")] if self.is_not else []) + [Token("IN"), Token("(")]
         post = [Token(")")]
         return pre + [self.expressions] + post
+
+    def symbol(self, relations):
+        return InCondition(self.expressions.symbol(relations), self.is_not)
+
 
 
 class BetweenCondition(SqlExpr):
@@ -177,6 +244,10 @@ class BetweenCondition(SqlExpr):
         pre = ([Token("NOT")] if self.is_not else []) + [Token("BETWEEN")]
         return pre + [self.lower, Token("AND"), self.upper]
 
+    def symbol(self, relations):
+        return BetweenCondition(self.lower.symbol(relations), self.upper.symbol(relations), self.is_not)
+
+
 
 class IsCondition(SqlExpr):
     def __init__(self, value, is_not=False):
@@ -186,6 +257,10 @@ class IsCondition(SqlExpr):
     def children(self):
         pre = [Token("IS")] + ([Token("NOT")] if self.is_not else [])
         return pre + [self.value]
+
+    def symbol(self, relations):
+        return BetweenCondition(self.value.symbol(relations), self.is_not)
+
 
 
 class CaseExpression(SqlExpr):
@@ -313,6 +388,10 @@ class IIFFunction(SqlExpr):
         if (self.test.evaluate(bindings) == True):
             return self.yes.evaluate(bindings)
         return self.no.evaluate(bindings)
+
+    def symbol(self, relations):
+        return IIFFunction(self.test.symbol(relations), self.yes.symbol(relations), self.no.symbol(relations))
+
 
 def parse_bool(v):
     if isinstance(v, bool):

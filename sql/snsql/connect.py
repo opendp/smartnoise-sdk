@@ -5,14 +5,14 @@ def from_df(df, *ignore, privacy, metadata, **kwargs):
 
     .. code-block:: python
 
-        import snsql
+        from snsql import from_df, Privacy
 
         csv = 'datasets/PUMS.csv'
         pums = pd.read_csv(csv)
         metadata = 'datasets/PUMS.yaml'
 
-        privacy = snsql.Privacy(epsilon=0.1, delta=1/10000)
-        reader = snsql.from_df(pums, metadata=metadata, privacy=privacy)
+        privacy = Privacy(epsilon=0.1, delta=1/10000)
+        reader = from_df(pums, metadata=metadata, privacy=privacy)
 
         result = reader.execute('SELECT educ, COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
 
@@ -31,12 +31,12 @@ def from_connection(conn, *ignore, privacy, metadata, engine=None, **kwargs):
 
     .. code-block:: python
 
-        import snsql
+        from snsql import from_connection, Privacy
 
         conn = pyodbc.connect(dsn)
         metadata = 'datasets/PUMS.yaml'
-        privacy = snsql.Privacy(epsilon=0.1, delta=1/10000)
-        reader = snsql.from_connection(conn, metadata=metadata, privacy=privacy)
+        privacy = Privacy(epsilon=0.1, delta=1/10000)
+        reader = from_connection(conn, metadata=metadata, privacy=privacy)
 
         result = reader.execute('SELECT educ, COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ')
 

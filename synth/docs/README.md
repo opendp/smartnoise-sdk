@@ -1,9 +1,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![CI](https://github.com/opendp/opendp-documentation/actions/workflows/main.yml/badge.svg)
 
-# SmartNoise Documentation
+# SmartNoise Synthesizers Documentation
 
-Note: The SmartNoise documentation, [docs.smartnoise.org](https://docs.opendp.org), is currently under development.
+This folder contains the source for building the detailed documentation from SmartNoise Synthesizers.
 
 ## Building the Docs
 
@@ -12,31 +12,15 @@ The steps below assume the use of [Homebrew] on a Mac.
 [Homebrew]: https://brew.sh
 
 ```shell
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 make html
 open build/html/index.html
 ```
 
-To make html and run python doctests:
-
-```shell
-make doctest-python
-```
-
 ## Deployment
 
-Docs are deployed to http://docs.opendp.org using GitHub Actions.
+Docs are deployed to http://docs.martnoise.org using GitHub Actions.
 
-Note that `make html` is replaced with `make versions` to build multiple versions (branches, tags) using the [sphinx-multiversion][] extension.
-Be sure you have installed sphinx-multiversion from the fork in requirements.txt. 
-Otherwise, you will get an error that includes: 
-
-    /docs/source/api/index.rst:4:toctree contains reference to nonexisting document 'api/python/index'
-
-
-[sphinx-multiversion]: https://holzhaus.github.io/sphinx-multiversion/
 
 ## Join the Discussion
 

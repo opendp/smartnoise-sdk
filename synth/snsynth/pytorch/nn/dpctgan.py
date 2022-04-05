@@ -8,7 +8,7 @@ import warnings
 
 import opacus
 
-from snsynth.preprocessors.data_transformer import  DataTransformer
+from snsynth.preprocessors.data_transformer import DataTransformer
 from .data_sampler import DataSampler
 from ctgan.synthesizers import CTGANSynthesizer
 
@@ -209,14 +209,13 @@ class DPCTGAN(CTGANSynthesizer):
 
         self._transformer = DataTransformer(self.preprocessor_eps)
         self._transformer.fit(data, discrete_columns=categorical_columns)
-        #for tinfo in self._transformer._column_transform_info_list:
+        # for tinfo in self._transformer._column_transform_info_list:
         #    if tinfo.column_type == "continuous":
         #        raise ValueError("We don't support continuous values on this synthesizer.  Please discretize values.")
 
         train_data = self._transformer.transform(data)
 
         sampler_eps = 0.0
-       
         if categorical_columns and self._category_epsilon_pct:
             sampler_eps = self.epsilon * self._category_epsilon_pct
             per_col_sampler_eps = sampler_eps / len(categorical_columns)
