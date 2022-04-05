@@ -11,6 +11,7 @@ import warnings
 from .data_sampler import DataSampler
 from ctgan.data_transformer import DataTransformer
 from ctgan.synthesizers import CTGANSynthesizer
+from snsynth.preprocessors.data_transformer import BaseTransformer
 
 from .privacy_utils import weights_init, pate, moments_acc
 
@@ -122,6 +123,7 @@ class PATECTGAN(CTGANSynthesizer):
                  sample_per_teacher=1000,
                  delta=None,
                  noise_multiplier=1e-3,
+                 preprocessor_eps=1,
                  moments_order=100,
                  category_epsilon_pct=0.1
                  ):
@@ -143,7 +145,9 @@ class PATECTGAN(CTGANSynthesizer):
         self._verbose = verbose
         self._epochs = epochs
         self.pac = pac
-        self.epsilon = epsilon
+        self.preprocessor_eps = preprocessor_eps
+        self.epsilon = epsilon - preprocessor_eps
+        
 
         self._category_epsilon_pct = category_epsilon_pct
 
@@ -177,9 +181,9 @@ class PATECTGAN(CTGANSynthesizer):
                 "categories, which could cause privacy leaks."
             )
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None, transformer=BaseTransformer, continuous_columns_lower_upper=None):
         if update_epsilon:
-            self.epsilon = update_epsilon
+            self.epsilon = update_epsilon - self.preprocessor_eps
 
         for col in categorical_columns:
             if str(data[col].dtype).startswith('float'):
@@ -195,12 +199,9 @@ class PATECTGAN(CTGANSynthesizer):
         )
         self.num_teachers = int(len(data) / sample_per_teacher) + 1
 
-        self._transformer = DataTransformer()
-        self._transformer.fit(data, discrete_columns=categorical_columns)
-        for tinfo in self._transformer._column_transform_info_list:
-            if tinfo.column_type == "continuous":
-                raise ValueError("We don't support continuous values on this synthesizer.  Please discretize values.")
-
+        self._transformer = transformer(self.preprocessor_eps)
+        self._transformer.fit(data, discrete_columns=categorical_columns, continuous_columns_lower_upper=continuous_columns_lower_upper)
+        
         train_data = self._transformer.transform(data)
 
         data_partitions = np.array_split(train_data, self.num_teachers)

@@ -35,7 +35,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             return self.preprocessor.transform(data)
 
     @wraps(SDGYMBaseSynthesizer.fit)
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple()):
+    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(),  transformer=None, continuous_columns_lower_upper=None):
         def column_names(n_items, prefix='col'):
             names = []
             for i in range(n_items):
@@ -65,6 +65,8 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             categorical_columns=categorical_columns,
             ordinal_columns=ordinal_columns,
             update_epsilon=self.epsilon,
+            transformer=transformer,
+            continuous_columns_lower_upper=continuous_columns_lower_upper
         )
 
     @wraps(SDGYMBaseSynthesizer.sample)

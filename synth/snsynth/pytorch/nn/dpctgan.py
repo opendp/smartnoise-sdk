@@ -8,7 +8,7 @@ import warnings
 
 import opacus
 
-from snsynth.preprocessors.data_transformer import DataTransformer
+from snsynth.preprocessors.data_transformer import BaseTransformer
 from .data_sampler import DataSampler
 from ctgan.synthesizers import CTGANSynthesizer
 
@@ -130,7 +130,7 @@ class DPCTGAN(CTGANSynthesizer):
                  sigma=5,
                  max_per_sample_grad_norm=1.0,
                  epsilon=1,
-                 preprocessor_eps=0.1,
+                 preprocessor_eps=1,
                  loss="cross_entropy",
                  category_epsilon_pct=0.1):
 
@@ -194,9 +194,9 @@ class DPCTGAN(CTGANSynthesizer):
                 "categories, which could cause privacy leaks."
             )
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None, transformer=BaseTransformer, continuous_columns_lower_upper={}):
         if update_epsilon:
-            self.epsilon = update_epsilon
+            self.epsilon = update_epsilon - self.preprocessor_eps
 
         for col in categorical_columns:
             if str(data[col].dtype).startswith('float'):
@@ -207,15 +207,17 @@ class DPCTGAN(CTGANSynthesizer):
                     "unsigned integer or string category names."
                 )
 
-        self._transformer = DataTransformer(self.preprocessor_eps)
-        self._transformer.fit(data, discrete_columns=categorical_columns)
+        self._transformer = transformer(self.preprocessor_eps)
+        self._transformer.fit(data, discrete_columns=categorical_columns, continuous_columns_lower_upper=continuous_columns_lower_upper)
         # for tinfo in self._transformer._column_transform_info_list:
         #    if tinfo.column_type == "continuous":
         #        raise ValueError("We don't support continuous values on this synthesizer.  Please discretize values.")
 
         train_data = self._transformer.transform(data)
+        
 
         sampler_eps = 0.0
+
         if categorical_columns and self._category_epsilon_pct:
             sampler_eps = self.epsilon * self._category_epsilon_pct
             per_col_sampler_eps = sampler_eps / len(categorical_columns)

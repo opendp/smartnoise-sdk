@@ -29,7 +29,7 @@ class DPGAN:
         self.pd_cols = None
         self.pd_index = None
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None, transformer=None, continuous_columns_lower_upper=None):
         if update_epsilon:
             self.epsilon = update_epsilon
 
