@@ -14,15 +14,15 @@ ColumnTransformInfo = namedtuple(
                             "output_info", "output_dimensions"])
 
 
-class DataTransformer(object):
+class BaseTransformer(object):
 
     """Data Transformer.
     Based on CTGAN's transformer https://github.com/sdv-dev/CTGAN/blob/master/ctgan/data_transformer.py.
-    Model continuous columns with a DPStandardScaler and normalized to a scalar [0, 1] and a vector.
+    Continuous columns remain the same.
     Discrete columns are encoded using a scikit-learn OneHotEncoder.
     """
 
-    def __init__(self, epsilon):
+    def __init__(self, epsilon=None):
         """Create a data transformer.
         Args:
             max_clusters (int):
@@ -33,14 +33,13 @@ class DataTransformer(object):
         self.epsilon = epsilon
 
     def _fit_continuous(self, column_name, raw_column_data):
-        """Fit DP Standard Scaler for continuous column."""
-        scaler = StandardScaler(epsilon=self.epsilon)
-        scaler.fit(raw_column_data.reshape(-1, 1))
+        """No preprocessing for continuous columns, just intialize ColumnTransformInfo object"""
+        
 
         return ColumnTransformInfo(
             column_name=column_name,
             column_type="continuous",
-            transform=scaler,
+            transform=None,
             transform_aux=None,
             output_info=[SpanInfo(1, 'tanh')],
             output_dimensions=1)
@@ -59,7 +58,7 @@ class DataTransformer(object):
             output_info=[SpanInfo(num_categories, 'softmax')],
             output_dimensions=num_categories)
 
-    def fit(self, raw_data, discrete_columns=tuple()):
+    def fit(self, raw_data, discrete_columns=tuple(),continuous_columns_lower_upper={} ):
         """Fit DP StandardScaler for continuous columns and One hot encoder for discrete columns.
         This step also counts the #columns in matrix data, and span information.
         """
@@ -90,11 +89,9 @@ class DataTransformer(object):
 
     def _transform_continuous(self, column_transform_info, raw_column_data):
 
-        scaler = column_transform_info.transform
-        normalized_values = scaler.transform(raw_column_data)
-        normalized_values = normalized_values/4
 
-        return [normalized_values]
+
+        return [raw_column_data]
 
     def _transform_discrete(self, column_transform_info, raw_column_data):
         ohe = column_transform_info.transform
@@ -119,15 +116,9 @@ class DataTransformer(object):
         return np.concatenate(column_data_list, axis=1).astype(float)
 
     def _inverse_transform_continuous(self, column_transform_info, column_data, sigmas, st):
-        scaler = column_transform_info.transform
-        selected_normalized_value = column_data[:, 0]
+        
 
-        stds = np.sqrt(scaler.var_)
-        # print(f"stds is {stds}")
-        means = scaler.mean_
-        column = selected_normalized_value * 4 * stds + means
-
-        return column
+        return column_data
 
     def _inverse_transform_discrete(self, column_transform_info, column_data):
         ohe = column_transform_info.transform
@@ -148,6 +139,7 @@ class DataTransformer(object):
             if column_transform_info.column_type == 'continuous':
                 recovered_column_data = self._inverse_transform_continuous(
                     column_transform_info, column_data, sigmas, st)
+
             else:
                 assert column_transform_info.column_type == 'discrete'
                 recovered_column_data = self._inverse_transform_discrete(
