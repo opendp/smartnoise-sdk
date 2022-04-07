@@ -1,8 +1,6 @@
 import os
 import subprocess
 import sys
-from dataloader.db import download_data_files
-
 
 git_root_dir = (
     subprocess.check_output("git rev-parse --show-toplevel".split(" "))
@@ -12,5 +10,6 @@ git_root_dir = (
 setup_path = os.path.abspath(os.path.join(git_root_dir, "sql", "tests", "setup"))
 sys.path.insert(0, setup_path)
 
+from dataloader.db import download_data_files
 
 download_data_files()
