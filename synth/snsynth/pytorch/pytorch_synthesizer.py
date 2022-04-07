@@ -35,11 +35,18 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             return self.preprocessor.transform(data)
 
     @wraps(SDGYMBaseSynthesizer.fit)
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(),  transformer=None, continuous_columns_lower_upper=None):
-        def column_names(n_items, prefix='col'):
+    def fit(
+        self,
+        data,
+        categorical_columns=tuple(),
+        ordinal_columns=tuple(),
+        transformer=None,
+        continuous_columns_lower_upper=None,
+    ):
+        def column_names(n_items, prefix="col"):
             names = []
             for i in range(n_items):
-                names.append(prefix + '_' + str(i))
+                names.append(prefix + "_" + str(i))
             return names
 
         if isinstance(data, pd.DataFrame):
@@ -49,16 +56,19 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             data = pd.DataFrame(data, columns=placeholder_columns).infer_objects()
             self._data_columns = placeholder_columns
             warnings.warn(
-                    "Data is numpy array, converting to pandas dataframe with default "
-                    + "column names. Inferring data types. Note: for best performance, "
-                    + "pandas dataframe should be constructed by user and "
-                    + "data_types should be specified beforehand. Dtypes: " + str(data.dtypes),
-                    Warning,
-                )
+                "Data is numpy array, converting to pandas dataframe with default "
+                + "column names. Inferring data types. Note: for best performance, "
+                + "pandas dataframe should be constructed by user and "
+                + "data_types should be specified beforehand. Dtypes: "
+                + str(data.dtypes),
+                Warning,
+            )
 
         self.dtypes = data.dtypes
 
-        training_data = self._get_training_data(data, categorical_columns, ordinal_columns)
+        training_data = self._get_training_data(
+            data, categorical_columns, ordinal_columns
+        )
 
         self.gan.train(
             training_data,
@@ -66,7 +76,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             ordinal_columns=ordinal_columns,
             update_epsilon=self.epsilon,
             transformer=transformer,
-            continuous_columns_lower_upper=continuous_columns_lower_upper
+            continuous_columns_lower_upper=continuous_columns_lower_upper,
         )
 
     @wraps(SDGYMBaseSynthesizer.sample)

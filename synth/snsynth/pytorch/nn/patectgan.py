@@ -4,12 +4,20 @@ import torch
 from torch import optim
 from torch import nn
 import torch.utils.data
-from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
+from torch.nn import (
+    BatchNorm1d,
+    Dropout,
+    LeakyReLU,
+    Linear,
+    Module,
+    ReLU,
+    Sequential,
+    Sigmoid,
+)
 from torch.autograd import Variable
 import warnings
 
 from .data_sampler import DataSampler
-from ctgan.data_transformer import DataTransformer
 from ctgan.synthesizers import CTGANSynthesizer
 from snsynth.preprocessors.data_transformer import BaseTransformer
 
@@ -17,7 +25,6 @@ from .privacy_utils import weights_init, pate, moments_acc
 
 
 class Discriminator(Module):
-
     def __init__(self, input_dim, discriminator_dim, loss, pac=10):
         super(Discriminator, self).__init__()
         torch.cuda.manual_seed(0)
@@ -38,13 +45,20 @@ class Discriminator(Module):
             seq += [Sigmoid()]
         self.seq = Sequential(*seq)
 
-    def dragan_penalty(self, real_data, device='cpu', pac=10, lambda_=10):
+    def dragan_penalty(self, real_data, device="cpu", pac=10, lambda_=10):
         # real_data = torch.from_numpy(real_data).to(device)
-        alpha = torch.rand(real_data.shape[0], 1, device=device).squeeze().expand(real_data.shape[0])
+        alpha = (
+            torch.rand(real_data.shape[0], 1, device=device)
+            .squeeze()
+            .expand(real_data.shape[0])
+        )
         delta = torch.normal(
             mean=0.0, std=float(pac), size=real_data.shape, device=device
         )  # 0.5 * real_data.std() * torch.rand(real_data.shape)
-        x_hat = Variable((alpha * real_data.T + (1 - alpha) * (real_data + delta).T).T, requires_grad=True)
+        x_hat = Variable(
+            (alpha * real_data.T + (1 - alpha) * (real_data + delta).T).T,
+            requires_grad=True,
+        )
 
         pred_hat = self(x_hat.float())
 
@@ -66,7 +80,6 @@ class Discriminator(Module):
 
 
 class Residual(Module):
-
     def __init__(self, i, o):
         super(Residual, self).__init__()
         self.fc = Linear(i, o)
@@ -81,7 +94,6 @@ class Residual(Module):
 
 
 class Generator(Module):
-
     def __init__(self, embedding_dim, generator_dim, data_dim):
         super(Generator, self).__init__()
         dim = embedding_dim
@@ -98,35 +110,35 @@ class Generator(Module):
 
 
 class PATECTGAN(CTGANSynthesizer):
-
-    def __init__(self,
-                 embedding_dim=128,
-                 generator_dim=(256, 256),
-                 discriminator_dim=(256, 256),
-                 generator_lr=2e-4,
-                 generator_decay=1e-6,
-                 discriminator_lr=2e-4,
-                 discriminator_decay=1e-6,
-                 batch_size=500,
-                 discriminator_steps=1,
-                 log_frequency=False,
-                 verbose=False,
-                 epochs=300,
-                 pac=1,
-                 cuda=True,
-                 epsilon=1,
-                 binary=False,
-                 regularization=None,
-                 loss="cross_entropy",
-                 teacher_iters=5,
-                 student_iters=5,
-                 sample_per_teacher=1000,
-                 delta=None,
-                 noise_multiplier=1e-3,
-                 preprocessor_eps=1,
-                 moments_order=100,
-                 category_epsilon_pct=0.1
-                 ):
+    def __init__(
+        self,
+        embedding_dim=128,
+        generator_dim=(256, 256),
+        discriminator_dim=(256, 256),
+        generator_lr=2e-4,
+        generator_decay=1e-6,
+        discriminator_lr=2e-4,
+        discriminator_decay=1e-6,
+        batch_size=500,
+        discriminator_steps=1,
+        log_frequency=False,
+        verbose=False,
+        epochs=300,
+        pac=1,
+        cuda=True,
+        epsilon=1,
+        binary=False,
+        regularization=None,
+        loss="cross_entropy",
+        teacher_iters=5,
+        student_iters=5,
+        sample_per_teacher=1000,
+        delta=None,
+        noise_multiplier=1e-3,
+        preprocessor_eps=1,
+        moments_order=100,
+        category_epsilon_pct=0.1,
+    ):
 
         assert batch_size % 2 == 0
 
@@ -147,7 +159,6 @@ class PATECTGAN(CTGANSynthesizer):
         self.pac = pac
         self.preprocessor_eps = preprocessor_eps
         self.epsilon = epsilon - preprocessor_eps
-        
 
         self._category_epsilon_pct = category_epsilon_pct
 
@@ -167,11 +178,11 @@ class PATECTGAN(CTGANSynthesizer):
         self.delta = delta
 
         if not cuda or not torch.cuda.is_available():
-            device = 'cpu'
+            device = "cpu"
         elif isinstance(cuda, str):
             device = cuda
         else:
-            device = 'cuda'
+            device = "cuda"
 
         self._device = torch.device(device)
 
@@ -181,12 +192,20 @@ class PATECTGAN(CTGANSynthesizer):
                 "categories, which could cause privacy leaks."
             )
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None, transformer=BaseTransformer, continuous_columns_lower_upper=None):
+    def train(
+        self,
+        data,
+        categorical_columns=None,
+        ordinal_columns=None,
+        update_epsilon=None,
+        transformer=BaseTransformer,
+        continuous_columns_lower_upper=None,
+    ):
         if update_epsilon:
             self.epsilon = update_epsilon - self.preprocessor_eps
 
         for col in categorical_columns:
-            if str(data[col].dtype).startswith('float'):
+            if str(data[col].dtype).startswith("float"):
                 raise ValueError(
                     "It looks like you are passing in a vector of continuous values"
                     f"to a categorical column at [{col}]."
@@ -200,8 +219,12 @@ class PATECTGAN(CTGANSynthesizer):
         self.num_teachers = int(len(data) / sample_per_teacher) + 1
 
         self._transformer = transformer(self.preprocessor_eps)
-        self._transformer.fit(data, discrete_columns=categorical_columns, continuous_columns_lower_upper=continuous_columns_lower_upper)
-        
+        self._transformer.fit(
+            data,
+            discrete_columns=categorical_columns,
+            continuous_columns_lower_upper=continuous_columns_lower_upper,
+        )
+
         train_data = self._transformer.transform(data)
 
         data_partitions = np.array_split(train_data, self.num_teachers)
@@ -220,14 +243,11 @@ class PATECTGAN(CTGANSynthesizer):
             train_data,
             self._transformer.output_info_list,
             self._log_frequency,
-            per_column_epsilon=per_col_sampler_eps
+            per_column_epsilon=per_col_sampler_eps,
         )
 
         spent = self.cond_generator.total_spent
-        if (
-            spent > sampler_eps
-            and not np.isclose(spent, sampler_eps)
-        ):
+        if spent > sampler_eps and not np.isclose(spent, sampler_eps):
             raise AssertionError(
                 f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
             )
@@ -245,7 +265,7 @@ class PATECTGAN(CTGANSynthesizer):
                 self._transformer.output_info_list,
                 self._log_frequency,
                 per_column_epsilon=None,
-                discrete_column_category_prob=cached_probs
+                discrete_column_category_prob=cached_probs,
             )
             for d in data_partitions
         ]
@@ -253,14 +273,14 @@ class PATECTGAN(CTGANSynthesizer):
         self._generator = Generator(
             self._embedding_dim + self.cond_generator.dim_cond_vec(),
             self._generator_dim,
-            data_dim
+            data_dim,
         ).to(self._device)
 
         discriminator = Discriminator(
             data_dim + self.cond_generator.dim_cond_vec(),
             self._discriminator_dim,
             self.loss,
-            self.pac
+            self.pac,
         ).to(self._device)
 
         student_disc = discriminator
@@ -274,20 +294,24 @@ class PATECTGAN(CTGANSynthesizer):
             self._generator.parameters(),
             lr=self._generator_lr,
             betas=(0.5, 0.9),
-            weight_decay=self._generator_decay
+            weight_decay=self._generator_decay,
         )
 
         optimizer_s = optim.Adam(student_disc.parameters(), lr=2e-4, betas=(0.5, 0.9))
         optimizer_t = [
             optim.Adam(
-                teacher_disc[i].parameters(), lr=self._discriminator_lr,
-                betas=(0.5, 0.9), weight_decay=self._discriminator_decay
+                teacher_disc[i].parameters(),
+                lr=self._discriminator_lr,
+                betas=(0.5, 0.9),
+                weight_decay=self._discriminator_decay,
             )
             for i in range(self.num_teachers)
         ]
 
         noise_multiplier = self.noise_multiplier
-        alphas = torch.tensor([0.0 for i in range(self.moments_order)], device=self._device)
+        alphas = torch.tensor(
+            [0.0 for i in range(self.moments_order)], device=self._device
+        )
         l_list = 1 + torch.tensor(range(self.moments_order), device=self._device)
         eps = torch.zeros(1)
 
@@ -300,7 +324,11 @@ class PATECTGAN(CTGANSynthesizer):
         criterion = nn.BCELoss() if (self.loss == "cross_entropy") else self.w_loss
 
         if self.verbose:
-            print("using loss {} and regularization {}".format(self.loss, self.regularization))
+            print(
+                "using loss {} and regularization {}".format(
+                    self.loss, self.regularization
+                )
+            )
 
         iteration = 0
 
@@ -315,9 +343,9 @@ class PATECTGAN(CTGANSynthesizer):
             if eps.item() > self.epsilon:
                 if iteration == 1:
                     raise ValueError(
-                                "Inputted epsilon parameter is too small to"
-                                + " create a private dataset. Try increasing epsilon and rerunning."
-                            )
+                        "Inputted epsilon parameter is too small to"
+                        + " create a private dataset. Try increasing epsilon and rerunning."
+                    )
                 break
 
             # train teacher discriminators
@@ -329,7 +357,7 @@ class PATECTGAN(CTGANSynthesizer):
                         self._transformer.output_info_list,
                         self._log_frequency,
                         per_column_epsilon=None,
-                        discrete_column_category_prob=cached_probs
+                        discrete_column_category_prob=cached_probs,
                     )
                     fakez = torch.normal(mean, std=std).to(self._device)
 
@@ -345,7 +373,9 @@ class PATECTGAN(CTGANSynthesizer):
                         fakez = torch.cat([fakez, c1], dim=1)
                         perm = np.arange(self._batch_size)
                         np.random.shuffle(perm)
-                        real = data_sampler.sample_data(self._batch_size, col[perm], opt[perm])
+                        real = data_sampler.sample_data(
+                            self._batch_size, col[perm], opt[perm]
+                        )
                         c2 = c1[perm]
 
                     fake = self._generator(fakez)
@@ -362,7 +392,9 @@ class PATECTGAN(CTGANSynthesizer):
 
                     optimizer_t[i].zero_grad()
 
-                    y_all = torch.cat([teacher_disc[i](fake_cat), teacher_disc[i](real_cat)])
+                    y_all = torch.cat(
+                        [teacher_disc[i](fake_cat), teacher_disc[i](real_cat)]
+                    )
                     label_fake = torch.full(
                         (int(self._batch_size / self.pac), 1),
                         fake_label,
@@ -381,7 +413,9 @@ class PATECTGAN(CTGANSynthesizer):
                     error_d.backward()
 
                     if self.regularization == "dragan":
-                        pen = teacher_disc[i].dragan_penalty(real_cat, device=self._device)
+                        pen = teacher_disc[i].dragan_penalty(
+                            real_cat, device=self._device
+                        )
                         pen.backward(retain_graph=True)
 
                     optimizer_t[i].step()
@@ -393,7 +427,7 @@ class PATECTGAN(CTGANSynthesizer):
                     self._transformer.output_info_list,
                     self._log_frequency,
                     per_column_epsilon=None,
-                    discrete_column_category_prob=cached_probs
+                    discrete_column_category_prob=cached_probs,
                 )
                 fakez = torch.normal(mean=mean, std=std)
 
@@ -411,7 +445,8 @@ class PATECTGAN(CTGANSynthesizer):
                     perm = np.arange(self._batch_size)
                     np.random.shuffle(perm)
                     real = data_sampler.sample_data(
-                        self._batch_size, col[perm], opt[perm])
+                        self._batch_size, col[perm], opt[perm]
+                    )
                     c2 = c1[perm]
 
                 fake = self._generator(fakez)
@@ -433,10 +468,16 @@ class PATECTGAN(CTGANSynthesizer):
 
                 # update moments accountant
                 alphas = alphas + moments_acc(
-                    self.num_teachers, votes, noise_multiplier, l_list, device=self._device
+                    self.num_teachers,
+                    votes,
+                    noise_multiplier,
+                    l_list,
+                    device=self._device,
                 )
 
-                loss_s = criterion(output.squeeze(), predictions.float().to(self._device).squeeze())
+                loss_s = criterion(
+                    output.squeeze(), predictions.float().to(self._device).squeeze()
+                )
 
                 optimizer_s.zero_grad()
                 loss_s.backward()
