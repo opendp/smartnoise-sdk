@@ -4,7 +4,6 @@ from collections import namedtuple
 
 import numpy as np
 import pandas as pd
-from rdt.transformers import OneHotEncodingTransformer
 from snsynth.preprocessors.data_transformer import BaseTransformer
 
 SpanInfo = namedtuple("SpanInfo", ["dim", "activation_fn"])
@@ -19,6 +18,7 @@ ColumnTransformInfo = namedtuple(
         "output_dimensions",
     ],
 )
+
 
 # from: http://cs-people.bu.edu/ads22/pubs/2011/stoc194-smith.pdf
 def quantile(vals, alpha, epsilon, lower, upper):
@@ -165,4 +165,3 @@ class DPMinMaxTransformer(BaseTransformer):
         column = scaler.inverse_transform(selected_normalized_value)
 
         return column
-

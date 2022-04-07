@@ -22,7 +22,7 @@ class PATEGAN:
         latent_dim=64,
         batch_size=64,
         teacher_iters=5,
-        student_iters=5
+        student_iters=5,
     ):
         self.epsilon = epsilon
         self.delta = delta
@@ -37,7 +37,15 @@ class PATEGAN:
         self.pd_cols = None
         self.pd_index = None
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None, transformer=None, continuous_columns_lower_upper=None):
+    def train(
+        self,
+        data,
+        categorical_columns=None,
+        ordinal_columns=None,
+        update_epsilon=None,
+        transformer=None,
+        continuous_columns_lower_upper=None,
+    ):
         if update_epsilon:
             self.epsilon = update_epsilon
 
@@ -63,11 +71,17 @@ class PATEGAN:
         loader = []
         for teacher_id in range(self.num_teachers):
             loader.append(
-                DataLoader(tensor_partitions[teacher_id], batch_size=self.batch_size, shuffle=True)
+                DataLoader(
+                    tensor_partitions[teacher_id],
+                    batch_size=self.batch_size,
+                    shuffle=True,
+                )
             )
 
         self.generator = (
-            Generator(self.latent_dim, data_dim, binary=self.binary).double().to(self.device)
+            Generator(self.latent_dim, data_dim, binary=self.binary)
+            .double()
+            .to(self.device)
         )
         self.generator.apply(weights_init)
 
@@ -75,7 +89,8 @@ class PATEGAN:
         student_disc.apply(weights_init)
 
         teacher_disc = [
-            Discriminator(data_dim).double().to(self.device) for i in range(self.num_teachers)
+            Discriminator(data_dim).double().to(self.device)
+            for i in range(self.num_teachers)
         ]
         for i in range(self.num_teachers):
             teacher_disc[i].apply(weights_init)
@@ -83,7 +98,8 @@ class PATEGAN:
         optimizer_g = optim.Adam(self.generator.parameters(), lr=1e-4)
         optimizer_s = optim.Adam(student_disc.parameters(), lr=1e-4)
         optimizer_t = [
-            optim.Adam(teacher_disc[i].parameters(), lr=1e-4) for i in range(self.num_teachers)
+            optim.Adam(teacher_disc[i].parameters(), lr=1e-4)
+            for i in range(self.num_teachers)
         ]
 
         criterion = nn.BCELoss()
@@ -105,9 +121,9 @@ class PATEGAN:
             if eps.item() > self.epsilon:
                 if iteration == 1:
                     raise ValueError(
-                                "Inputted epsilon parameter is too small to"
-                                + " create a private dataset. Try increasing epsilon and rerunning."
-                            )
+                        "Inputted epsilon parameter is too small to"
+                        + " create a private dataset. Try increasing epsilon and rerunning."
+                    )
                 break
 
             # train teacher discriminators
@@ -129,7 +145,9 @@ class PATEGAN:
                     loss_t_real.backward()
 
                     # train with fake data
-                    noise = torch.rand(self.batch_size, self.latent_dim, device=self.device)
+                    noise = torch.rand(
+                        self.batch_size, self.latent_dim, device=self.device
+                    )
                     label_fake = torch.full(
                         (self.batch_size,), 0, dtype=torch.float, device=self.device
                     )
@@ -147,15 +165,21 @@ class PATEGAN:
                 output = student_disc(fake_data.detach())
 
                 # update moments accountant
-                alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
+                alphas = alphas + moments_acc(
+                    self.num_teachers, votes, noise_multiplier, l_list
+                )
 
-                loss_s = criterion(output.squeeze(), predictions.to(self.device).squeeze())
+                loss_s = criterion(
+                    output.squeeze(), predictions.to(self.device).squeeze()
+                )
                 optimizer_s.zero_grad()
                 loss_s.backward()
                 optimizer_s.step()
 
             # train generator
-            label_g = torch.full((self.batch_size,), 1, dtype=torch.float, device=self.device)
+            label_g = torch.full(
+                (self.batch_size,), 1, dtype=torch.float, device=self.device
+            )
             noise = torch.rand(self.batch_size, self.latent_dim, device=self.device)
             gen_data = self.generator(noise.double())
             output_g = student_disc(gen_data)
