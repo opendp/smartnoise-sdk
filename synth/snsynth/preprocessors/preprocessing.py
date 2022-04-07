@@ -124,7 +124,7 @@ class GeneralTransformer:
         for id_, info in enumerate(self.meta):
             if info["type"] == "continuous":
                 u = data[:, st]
-                v = data[:, st + 1 : st + 1 + np.sum(self.components[id_])]
+                v = data[:, st + 1:st + 1 + np.sum(self.components[id_])]
 
                 if sigmas is not None:
                     sig = sigmas[st]
@@ -144,7 +144,7 @@ class GeneralTransformer:
                 data_t[:, id_] = tmp
 
             else:
-                current = data[:, st : st + info["size"]]
+                current = data[:, st:st + info["size"]]
                 st += info["size"]
                 idx = np.nanargmax(current, axis=1)
                 data_t[:, id_] = list(map(info["bins"].__getitem__, idx))
