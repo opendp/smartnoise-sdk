@@ -5,6 +5,7 @@ from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.meas import make_base_analytic_gaussian
 from opendp.accuracy import gaussian_scale_to_accuracy
+from .normal import _normal_dist_inv_cdf
 
 class AnalyticGaussian(AdditiveNoiseMechanism):
     def __init__(
@@ -54,19 +55,9 @@ class AnalyticGaussian(AdditiveNoiseMechanism):
     def threshold(self):
         max_contrib = self.max_contrib
         delta = self.delta
-        epsilon = self.epsilon
         if delta == 0.0:
             raise ValueError("censor_dims requires delta to be > 0.0  Try delta=1/n*sqrt(n) where n is the number of individuals")
-        thresh_scale = math.sqrt(max_contrib) * (
-            (
-                math.sqrt(math.log(1 / delta))
-                + math.sqrt(math.log(1 / delta) + epsilon)
-            )
-        / (math.sqrt(2) * epsilon)
-        )
-        thresh = 1 + thresh_scale * math.sqrt(
-            2 * math.log(max_contrib / math.sqrt(2 * math.pi * delta))
-        )
+        thresh = 1 + self.scale * _normal_dist_inv_cdf((1 - delta / 2) ** (1 / max_contrib))
         return thresh
     def release(self, vals):
         enable_features('floating-point', 'contrib')

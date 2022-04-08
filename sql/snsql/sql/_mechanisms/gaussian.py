@@ -50,24 +50,6 @@ class Gaussian(AdditiveNoiseMechanism):
         except Exception as e:
             raise ValueError(f"Unable to find appropriate noise scale for {self.mechanism} with epsilon={self.epsilon} and bounds ({lower}, {upper}).  Try preprocessing to reduce senstivity, or try different privacy parameters.\n{e}")
         self.scale = discovered_scale
-    @property
-    def threshold(self):
-        max_contrib = self.max_contrib
-        delta = self.delta
-        epsilon = self.epsilon
-        if delta == 0.0:
-            raise ValueError("censor_dims requires delta to be > 0.0  Try delta=1/n*sqrt(n) where n is the number of individuals")
-        thresh_scale = math.sqrt(max_contrib) * (
-            (
-                math.sqrt(math.log(1 / delta))
-                + math.sqrt(math.log(1 / delta) + epsilon)
-            )
-        / (math.sqrt(2) * epsilon)
-        )
-        thresh = 1 + thresh_scale * math.sqrt(
-            2 * math.log(max_contrib / math.sqrt(2 * math.pi * delta))
-        )
-        return thresh
     def release(self, vals):
         enable_features('floating-point', 'contrib')
         meas = make_base_gaussian(self.scale)

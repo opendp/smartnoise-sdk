@@ -67,22 +67,22 @@ class TestSimpleAccuracy:
                 assert(mech.mechanism == Mechanism.laplace)
                 acc = reader.get_simple_accuracy(query, alpha)
                 assert(np.isclose(acc[0], mech.accuracy(alpha)))
-    # def test_geom_key_count_gauss(self, test_databases):
-    #     # reverts to gaussian because we need a threshold
-    #     query = 'SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS'
-    #     sensitivity = 1
-    #     for alpha, epsilon, delta, max_contrib in grid:
-    #         if delta == 0.0: # not permitted when thresholding
-    #             delta = 1/100_000
-    #         privacy = Privacy(epsilon=epsilon, delta=delta)
-    #         privacy.mechanisms.map[Stat.threshold] = Mechanism.gaussian
-    #         reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
-    #         if reader:
-    #             mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'threshold', 'int')
-    #             mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
-    #             assert(mech.mechanism == Mechanism.gaussian)
-    #             acc = reader.get_simple_accuracy(query, alpha)
-    #             assert(np.isclose(acc[0], mech.accuracy(alpha)))
+    def test_geom_key_count_gauss(self, test_databases):
+        # reverts to gaussian because we need a threshold
+        query = 'SELECT COUNT(DISTINCT pid) FROM PUMS.PUMS'
+        sensitivity = 1
+        for alpha, epsilon, delta, max_contrib in grid:
+            if delta == 0.0: # not permitted when thresholding
+                delta = 1/100_000
+            privacy = Privacy(epsilon=epsilon, delta=delta)
+            privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
+            reader = test_databases.get_private_reader(database='PUMS_pid', engine="pandas", privacy=privacy, overrides={'max_contrib': max_contrib})
+            if reader:
+                mech_class = privacy.mechanisms.get_mechanism(sensitivity, 'threshold', 'int')
+                mech = mech_class(epsilon, delta=delta, sensitivity=sensitivity, max_contrib=max_contrib)
+                assert(mech.mechanism == Mechanism.analytic_gaussian)
+                acc = reader.get_simple_accuracy(query, alpha)
+                assert(np.isclose(acc[0], mech.accuracy(alpha)))
     def test_gauss_count(self, test_databases):
         query = 'SELECT COUNT(educ) FROM PUMS.PUMS'
         sensitivity = 1
@@ -123,7 +123,7 @@ class TestSimpleMatch:
         max_ids = 2
         alpha = 0.05
         privacy = Privacy(alphas=[alpha], epsilon=1.5, delta=1/100_000)
-        privacy.mechanisms.map[Stat.threshold] = Mechanism.gaussian
+        privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
         query = 'SELECT COUNT(DISTINCT pid), COUNT(*), COUNT(educ), SUM(age) FROM PUMS.PUMS'
         reader = test_databases.get_private_reader(
             database='PUMS_pid', 
