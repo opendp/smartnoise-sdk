@@ -1,9 +1,9 @@
-import logging
+import warnings
 import numpy as np
 from snsql.metadata import Metadata
 from snsql.sql._mechanisms.accuracy import Accuracy
 from snsql.sql.odometer import OdometerHeterogeneous
-from snsql.sql.privacy import Privacy
+from snsql.sql.privacy import Privacy, Stat
 
 from snsql.sql.reader.base import SqlReader
 from .dpsu import run_dpsu
@@ -18,8 +18,6 @@ from snsql._ast.expressions.date import parse_datetime
 from snsql.reader import Reader
 
 from ._mechanisms import *
-
-module_logger = logging.getLogger(__name__)
 
 import itertools
 
@@ -60,6 +58,7 @@ class PrivateReader(Reader):
         self.odometer = OdometerHeterogeneous(self.privacy)
 
         self._refresh_options()
+        self._warn_mechanisms()
 
     @classmethod
     def from_connection(cls, conn, *ignore, privacy, metadata, engine=None, **kwargs):
@@ -111,6 +110,45 @@ class PrivateReader(Reader):
         self.rewriter.options.clamp_columns = self._options.clamp_columns
         self.rewriter.options.max_contrib = self._options.max_contrib
         self.rewriter.options.censor_dims = self._options.censor_dims
+
+    def _warn_mechanisms(self):
+        """
+        Warn if any of the current settings could result in unsafe floating point mechanisms.
+        """
+        if self._options.censor_dims:
+            warnings.warn(
+f"""Dimension censoring is enabled, with {self.privacy.mechanisms.map[Stat.threshold]} as the thresholding mechanism. 
+This is an unsafe floating point mechanism.  Counts used for censoring will be revealed in any queries that request COUNT DISTINCT(person), 
+leading to potential privacy leaks. If your query workload needs to reveal distinct counts of individuals, consider doing the dimesion
+censoring as a preprocessing step.  See the documentation for more information."""
+            )
+
+        mechs = self.privacy.mechanisms
+        tables = self.metadata.tables()
+        floats = []
+        large_ints = []
+        large = mechs.large
+        for table in tables:
+            for col in table.columns():
+                if col.typename() == 'float':
+                    floats.append(col.name)
+                elif col.typename() == 'int' and not col.unbounded:
+                    if col.sensitivity and col.sensitivity >= large:
+                        large_ints.append(col.name)
+                    elif col.upper - col.lower >= large:
+                        large_ints.append(col.name)
+        if floats:
+            warnings.warn(
+f"""The following columns are of type float: {', '.join(floats)}. 
+summary statistics over floats will use {mechs.map[Stat.sum_float]}, which is not floating-point safe, 
+This could lead to privacy leaks."""
+            )
+        if large_ints and not mechs.map[Stat.sum_large_int] in mechs.safe:
+            warnings.warn(
+f"""The following integer columns have large sensitivity: {', '.join(large_ints)}. 
+Summary statistics over large integers will use {mechs.map[Stat.sum_large_int]}, which is not floating-point safe,
+This could lead to privacy leaks."""
+            )
 
     def _grouping_columns(self, query: Query):
         """

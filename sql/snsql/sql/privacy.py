@@ -52,6 +52,9 @@ class Mechanisms:
             raise ValueError(f"Unable to determine which mechanism to use for {stat}")
         mech = self.map[stat]
         return self.classes[mech]
+    @property
+    def safe(self):
+        return [Mechanism.geometric]
 
 class Privacy:
     """Privacy parameters.  The Privacy object is passed in when creating
