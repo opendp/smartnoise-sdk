@@ -15,7 +15,13 @@ from ._discriminator import Discriminator
 
 class DPGAN:
     def __init__(
-        self, binary=False, latent_dim=64, batch_size=64, epochs=1000, delta=None, epsilon=1.0
+        self,
+        binary=False,
+        latent_dim=64,
+        batch_size=64,
+        epochs=1000,
+        delta=None,
+        epsilon=1.0,
     ):
         self.binary = binary
         self.latent_dim = latent_dim
@@ -29,7 +35,15 @@ class DPGAN:
         self.pd_cols = None
         self.pd_index = None
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+    def train(
+        self,
+        data,
+        categorical_columns=None,
+        ordinal_columns=None,
+        update_epsilon=None,
+        transformer=None,
+        continuous_columns_lower_upper=None,
+    ):
         if update_epsilon:
             self.epsilon = update_epsilon
 
@@ -42,12 +56,16 @@ class DPGAN:
         elif not isinstance(data, np.ndarray):
             raise ValueError("Data must be a numpy array or pandas dataframe")
 
-        dataset = TensorDataset(torch.from_numpy(data.astype("float32")).to(self.device))
-        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-
-        self.generator = Generator(self.latent_dim, data.shape[1], binary=self.binary).to(
-            self.device
+        dataset = TensorDataset(
+            torch.from_numpy(data.astype("float32")).to(self.device)
         )
+        dataloader = DataLoader(
+            dataset, batch_size=self.batch_size, shuffle=True, drop_last=True
+        )
+
+        self.generator = Generator(
+            self.latent_dim, data.shape[1], binary=self.binary
+        ).to(self.device)
         discriminator = Discriminator(data.shape[1]).to(self.device)
         optimizer_d = optim.Adam(discriminator.parameters(), lr=4e-4)
 
@@ -75,9 +93,9 @@ class DPGAN:
             if self.epsilon < eps:
                 if epoch == 0:
                     raise ValueError(
-                                "Inputted epsilon and sigma parameters are too small to"
-                                + " create a private dataset. Try increasing either parameter and rerunning."
-                            )
+                        "Inputted epsilon and sigma parameters are too small to"
+                        + " create a private dataset. Try increasing either parameter and rerunning."
+                    )
                 break
 
             for i, data in enumerate(dataloader):
@@ -86,7 +104,9 @@ class DPGAN:
                 real_data = data[0].to(self.device)
 
                 # train with fake data
-                noise = torch.randn(self.batch_size, self.latent_dim, 1, 1, device=self.device)
+                noise = torch.randn(
+                    self.batch_size, self.latent_dim, 1, 1, device=self.device
+                )
                 noise = noise.view(-1, self.latent_dim)
                 fake_data = self.generator(noise)
                 label_fake = torch.full(
@@ -115,7 +135,9 @@ class DPGAN:
 
                 # train generator
                 self.generator.zero_grad()
-                label_g = torch.full((self.batch_size,), 1, dtype=torch.float, device=self.device)
+                label_g = torch.full(
+                    (self.batch_size,), 1, dtype=torch.float, device=self.device
+                )
                 output_g = discriminator(fake_data)
                 loss_g = criterion(output_g.squeeze(), label_g)
                 loss_g.backward()
@@ -134,7 +156,9 @@ class DPGAN:
         steps = n // self.batch_size + 1
         data = []
         for i in range(steps):
-            noise = torch.randn(self.batch_size, self.latent_dim, 1, 1, device=self.device)
+            noise = torch.randn(
+                self.batch_size, self.latent_dim, 1, 1, device=self.device
+            )
             noise = noise.view(-1, self.latent_dim)
 
             fake_data = self.generator(noise)
