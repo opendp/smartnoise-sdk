@@ -5,6 +5,7 @@ class Mechanism(Enum):
     gaussian = 1
     laplace = 2
     geometric = 3
+    analytic_gaussian = 4
 
 class AdditiveNoiseMechanism:
     """
@@ -45,7 +46,7 @@ class AdditiveNoiseMechanism:
         raise NotImplementedError("Implement _compute_noise_scale in inherited class")
     @property
     def threshold(self):
-        raise NotImplementedError(f"Threshold not implemented for {self.mechanism}")
+        raise ValueError(f"We do not support threshold censoring of rare dimensions for {self.mechanism}.  If you need thresholding, use laplace or analytic gaussian")
     def release(self, vals):
         """
         Adds noise and releases values.

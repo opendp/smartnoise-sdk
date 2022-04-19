@@ -16,7 +16,8 @@ class Mechanisms:
         self.classes = {
             Mechanism.laplace: Laplace,
             Mechanism.geometric: Geometric,
-            Mechanism.gaussian: Gaussian
+            Mechanism.gaussian: Gaussian,
+            Mechanism.analytic_gaussian: AnalyticGaussian
         }
         self.large = 1000
         self.map = {
@@ -51,6 +52,9 @@ class Mechanisms:
             raise ValueError(f"Unable to determine which mechanism to use for {stat}")
         mech = self.map[stat]
         return self.classes[mech]
+    @property
+    def safe(self):
+        return [Mechanism.geometric]
 
 class Privacy:
     """Privacy parameters.  The Privacy object is passed in when creating
@@ -68,11 +72,11 @@ class Privacy:
         types of statistics.  You will only set this parameter if you want to override
         default mechanism mapping.
     """
-    def __init__(self, *ignore, epsilon:float=1.0, delta:float=10E-16, alphas:List[float]=[], mechanisms:Mechanisms=Mechanisms()):
+    def __init__(self, *ignore, epsilon:float=1.0, delta:float=10E-16, alphas:List[float]=[], mechanisms:Mechanisms=None):
         """Privacy params.
         
         """
         self.epsilon = epsilon
         self.delta = delta
         self.alphas = alphas
-        self.mechanisms = mechanisms
+        self.mechanisms = mechanisms if mechanisms else Mechanisms()
