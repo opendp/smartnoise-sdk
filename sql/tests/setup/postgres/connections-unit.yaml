@@ -2,9 +2,19 @@ postgres:
   host: localhost
   port: 5432
   user: postgres
-  databases:
-    PUMS: pums
-    PUMS_large: pums
-    PUMS_pid: pums_pid
-    PUMS_dup: pums_dup
-    PUMS_null: pums_null
+  datasets:
+    PUMS: 
+      dbname: pums
+      table: pums.pums
+    PUMS_large: 
+      dbname: pums
+      table: pums.pums_large
+    PUMS_pid: 
+      dbname: pums_pid
+      table: pums.pums
+    PUMS_dup: 
+      dbname: pums_dup
+      table: pums.pums
+    PUMS_null: 
+      dbname: pums_null
+      table: pums.pums

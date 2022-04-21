@@ -27,7 +27,7 @@ The fixture will cache connections for multiple database engines and databases, 
 If you want to access the cached connections outside of pytest, you can instantiate the `test_databases` manually:
 
 ```python
-from .tests.setup.dataloader import DbCollection
+from tests.setup.dataloader.db import DbCollection
 test_databases = DbCollection()
 print(test_databases)
 ```
