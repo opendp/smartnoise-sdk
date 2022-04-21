@@ -11,7 +11,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">3.6,<3.11"
-opendp = "^0.3.0"
+opendp = "^0.4.0"
 antlr4-python3-runtime = "4.9.3"
 pandasql = "^0.7.3"
 PyYAML = "^5.4.1"
