@@ -57,16 +57,17 @@ class DbFactory:
         if dataset not in self.connections:
             return None
         else:
-            from snsql.sql import PrivateReader
+            from .fixture_private_reader import FixturePrivateReader
             dbdataset = self.connections[dataset]
             conn = dbdataset.connection
             table_name = dbdataset.table_name
             if self.engine.lower() == "spark":
                 conn = self.session
-            priv = PrivateReader.from_connection(
+            priv = FixturePrivateReader.from_connection(
                 conn, 
                 metadata=metadata, 
-                privacy=privacy
+                privacy=privacy,
+                table_name=table_name
             )
             return priv
     def get_connection(self, *ignore, dataset, **kwargs):

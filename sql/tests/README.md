@@ -32,7 +32,7 @@ test_databases = DbCollection()
 print(test_databases)
 ```
 
-From the command line, you can get the same status by issuing `python tests/setup/download.py` from a command prompt in the repository root.  Output will look like this.  If there are problems connecting to any of the configured test databases, these will print an error and display without the "connected" status:
+From the command line, you can get the same status by issuing `python tests/check_databases.py` from a command prompt in the SQL project.  Output will look like this.  If there are problems connecting to any of the configured test databases, these will print an error and display without the "connected" status:
 
 ```
 None@pandas://None:None
@@ -64,9 +64,11 @@ The current supported engines are:
 * `sqlserver`
 * `spark` - can use all datasets, but requires `export TEST_SPARK=1`
 
-The service-hosted SQL engines, `pandas` and `sqlserver`, will be connected, if the connections are configured locally.  See this [for more information](tests/sdk/engines/README.md).
+The service-hosted SQL engines, `pandas` and `sqlserver`, will be connected, if the connections are configured locally.  See this [for more information](tests/engines/README.md).
 
-The GitHub Actions CI runners for SQL Server and Postgres will automatically install and run these engines.
+The GitHub Actions CI runners for SQL Server, Postgres, and Spark will automatically install and run these engines.
+
+Note that the `connections-unit.yml` can be configured to use different table names in the database, and the unit test fixture will automatically update test queries and metadata to use the appropriate table name.  In the default local and CI builds for Postgres, we map `PUMS_dup` to `pums.pums.pums_dup` to test three part names, and we install `PUMS_null` in postgres `public` schema and point to `pums` (with no schema) to test public schema search path resolution.  You can check the `connections-unit.yaml` under `tests/setup/postgres` to see the syntax.
 
 ## Test Against Multiple Engines
 

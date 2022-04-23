@@ -35,15 +35,30 @@ class Metadata:
             schema_name, tablename = parts
         for tname in self.m_tables.keys():
             table = self.m_tables[tname]
+
+            # check if table name matches
+            if not self.compare.identifier_match(tablename, table.name):
+                # should this really check tablename?  or just the final part?
+                continue
+
+            # check if schema name matches
+            if not schema_name:
+                if table.schema:
+                    if not self.compare.schema_match(schema_name, table.schema):
+                        continue
+                else:
+                    pass
+            else:
+                if not self.compare.schema_match(schema_name, table.schema):
+                    continue
+
+            # check if dbname matches
             if dbname and self.dbname and not self.compare.identifier_match(dbname, self.dbname):
-                # we only fail to match if caller specifies dbname that doesn't match
-                # if dbname not provided, we match any database
-                return None
-            if self.compare.schema_match(
-                schema_name, table.schema
-            ) and self.compare.identifier_match(tablename, table.name):
-                table.compare = self.compare
-                return table
+                continue
+
+            # all check passed, return table
+            table.compare = self.compare
+            return table
         return None
 
     def __str__(self):

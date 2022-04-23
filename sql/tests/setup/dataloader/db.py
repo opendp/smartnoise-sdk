@@ -4,12 +4,12 @@ import pandas as pd
 import copy
 import yaml
 import copy
-from tests.setup.dataloader.factories.mysql import MySqlFactory
 
-from tests.setup.dataloader.factories.pandas import PandasFactory
-from tests.setup.dataloader.factories.postgres import PostgresFactory
-from tests.setup.dataloader.factories.spark import SparkFactory
-from tests.setup.dataloader.factories.sqlserver import SqlServerFactory
+from .factories.mysql import MySqlFactory
+from .factories.pandas import PandasFactory
+from .factories.postgres import PostgresFactory
+from .factories.spark import SparkFactory
+from .factories.sqlserver import SqlServerFactory
 
 root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 

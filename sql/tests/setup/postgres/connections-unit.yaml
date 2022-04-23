@@ -14,7 +14,7 @@ postgres:
       table: pums.pums
     PUMS_dup: 
       dbname: pums_dup
-      table: pums.pums
+      table: pums_dup.pums.pums
     PUMS_null: 
       dbname: pums_null
-      table: pums.pums
+      table: pums
