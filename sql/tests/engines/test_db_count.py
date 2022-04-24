@@ -98,7 +98,8 @@ class TestDbCounts:
             readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
             for reader in readers:
                 metadata = reader.metadata
-                metadata['PUMS.PUMS']['age'].missing_value = 30
+                first_key = list(metadata.m_tables.keys())[0]
+                metadata[first_key]['age'].missing_value = 30
                 tablename = 'PUMS'
                 query = f'SELECT COUNT(age) AS n FROM PUMS.{tablename}'
                 res = reader.execute(query)

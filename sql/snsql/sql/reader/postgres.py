@@ -69,16 +69,16 @@ class PostgresNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["public"]
 
-    def identifier_match(self, query, meta):
-        query = self.clean_escape(query)
-        meta = self.clean_escape(meta)
-        if query == meta:
+    def identifier_match(self, from_query, from_meta):
+        from_query = self.clean_escape(from_query)
+        from_meta = self.clean_escape(from_meta)
+        if from_query == from_meta:
             return True
-        if self.is_escaped(meta) and meta.lower() == meta:
-            meta = meta.lower().replace('"', "")
-        if self.is_escaped(query) and query.lower() == query:
-            query = query.lower().replace('"', "")
-        return meta == query
+        if self.is_escaped(from_meta) and from_meta.lower() == from_meta:
+            from_meta = from_meta.lower().replace('"', "")
+        if self.is_escaped(from_query) and from_query.lower() == from_query:
+            from_query = from_query.lower().replace('"', "")
+        return from_meta == from_query
 
     def should_escape(self, identifier):
         if self.is_escaped(identifier):

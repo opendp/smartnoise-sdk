@@ -84,8 +84,8 @@ class PrestoNameCompare(NameCompare):
     def __init__(self, search_path=None):
         self.search_path = search_path if search_path is not None else ["dbo"]
 
-    def identifier_match(self, query, meta):
-        return self.strip_escapes(query).lower() == self.strip_escapes(meta).lower()
+    def identifier_match(self, from_query, from_meta):
+        return self.strip_escapes(from_query).lower() == self.strip_escapes(from_meta).lower()
 
 class PrestoSerializer(Serializer):
     def __init__(self):
