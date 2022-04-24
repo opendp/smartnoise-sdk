@@ -53,6 +53,9 @@ class BigQueryReader(SqlReader):
                     self.credentials_path, scopes=["https://www.googleapis.com/auth/cloud-platform"],
                 )
             cnxn = self.api.cloud.bigquery.Client(credentials=credentials, project=credentials.project_id)
+
+        # use AST for this; just using string replace for now
+        query = query.replace("RANDOM", "rand")
         result = cnxn.query(str(query)).result()
         if result.total_rows == 0:
             return []

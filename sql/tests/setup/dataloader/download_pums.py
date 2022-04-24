@@ -38,17 +38,16 @@ def download_pums():
         print("Generating PUMS small with 1-3X duplicate IDs")
         random.seed(1011)
         df_pid = pd.read_csv(pums_pid_csv_path)
-        new_records = []
         for _ in range(2):
-            for _, row in df_pid.iterrows():
+            n_rows = df_pid.shape[0]
+            for n in range(n_rows):
+                row = df_pid.iloc[n]
                 if row['sex'] == 1.0:
                     p = 0.22
                 else:
                     p = 0.56
                 if random.random() < p:
-                    new_records.append(row)
-        for row in new_records:
-            df_pid = df_pid.append(row)
+                    df_pid.loc[df_pid.shape[0]] = row
         df_pid = df_pid.astype(int)
         df_pid.to_csv(pums_dup_csv_path, index=False)
     if not os.path.exists(pums_null_csv_path):

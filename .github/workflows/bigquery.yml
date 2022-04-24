@@ -46,14 +46,16 @@ jobs:
           cd sql
           pip install --no-cache-dir -r tests/requirements.txt
           pip install --no-cache-dir -r tests/setup/bigquery/requirements.txt
-          pip install --no-cache-dir  .
-          pip install --no-cache-dir opendp-smartnoise-core # temporary
+          pip install --no-cache-dir  . # sdk
 
       - name: Download test datasets
         shell: bash -l {0}
         run: |
           cd sql
-          python tests/setup/download.py
+          python tests/check_databases.py
+          cd ..
+          cp datasets/PUMS_large.csv datasets/PUMS_large.csv.bak
+          sed 's/"//g' datasets/PUMS_large.csv.bak > datasets/PUMS_large.csv
 
       - name: Terraform Init - BigQuery dataset
         env:
@@ -91,20 +93,23 @@ jobs:
 
       - name: Test SDK
         continue-on-error: true
+        env:
+          GOOGLE_PROJECT_ID: "${{ secrets.GOOGLE_PROJECT_ID }}"
         shell: bash -l {0}
         run: |
           cd sql
           mkdir ~/.smartnoise
-          cp tests/setup/bigquery/connections-unit.yaml ~/.smartnoise
+          cp tests/setup/bigquery/connections-unit.yaml ~/.smartnoise/connections-unit-template.yaml
+          sed "s/{secrets.GOOGLE_PROJECT_ID}/$GOOGLE_PROJECT_ID/g" ~/.smartnoise/connections-unit-template.yaml > ~/.smartnoise/connections-unit.yaml
           export SKIP_PANDAS=1
-          pytest tests/engines/test_db_count.py
+          pytest tests
 
-      # - name: Terraform Destroy - BigQuery dataset
-      #   env:
-      #     GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
-      #   continue-on-error: true
-      #   run: |
-      #     cd sql/tests/terraform/bigquery
-      #     terraform destroy \
-      #     -auto-approve \
-      #     -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}'
+      - name: Terraform Destroy - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
+        continue-on-error: true
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform destroy \
+          -auto-approve \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}'

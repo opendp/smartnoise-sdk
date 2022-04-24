@@ -11,7 +11,7 @@
   },
   {
     "name": "educ",
-    "type": "STRING",
+    "type": "INTEGER",
     "mode": "NULLABLE"
   },
   {
