@@ -2,9 +2,19 @@ sqlserver:
   host: (localdb)\MSSQLLocalDB
   port: 1433
   user: sa
-  databases:
-    PUMS: PUMS
-    PUMS_large: PUMS
-    PUMS_pid: PUMS_pid
-    PUMS_null: PUMS_null
-    PUMS_dup: PUMS_dup
+  datasets:
+    PUMS:
+      dbname: PUMS
+      table: PUMS.PUMS
+    PUMS_large: 
+      dbname: PUMS
+      table: PUMS.PUMS_large
+    PUMS_pid: 
+      dbname: PUMS_pid
+      table: PUMS.PUMS
+    PUMS_null: 
+      dbname: PUMS_null
+      table: PUMS.PUMS
+    PUMS_dup: 
+      dbname: PUMS_dup
+      table: PUMS.PUMS

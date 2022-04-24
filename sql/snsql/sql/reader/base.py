@@ -78,6 +78,8 @@ class NameCompare:
     def schema_match(self, from_query, from_meta):
         if from_query.strip() == "" and from_meta in self.search_path:
             return True
+        if from_meta.strip() == "" and from_query in self.search_path:
+            return True
         return self.identifier_match(from_query, from_meta)
 
     """

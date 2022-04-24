@@ -11,7 +11,7 @@ tail -n +2 $PUMS_PID > PUMS_pid.csv
 tail -n +2 $PUMS_DUP > PUMS_dup.csv
 tail -n +2 $PUMS_NULL > PUMS_null.csv
 ls -l
-psql -h localhost -U postgres < pums.sql
+psql -h localhost -U postgres -f pums.sql
 echo "Done!"
 rm PUMS.csv
 rm PUMS_pid.csv

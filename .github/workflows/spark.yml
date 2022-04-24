@@ -50,7 +50,7 @@ jobs:
         pip install --no-cache-dir .
         export TEST_SPARK=1
         export SKIP_PANDAS=1
-        python tests/setup/download.py
+        python tests/check_databases.py
     - name: Test SDK
       shell: bash -l {0}
       run: |

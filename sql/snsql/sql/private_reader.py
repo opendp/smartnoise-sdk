@@ -79,7 +79,7 @@ class PrivateReader(Reader):
             reader = PrivateReader.from_connection(pums, privacy=privacy, metadata=metadata)
         """
         _reader = SqlReader.from_connection(conn, engine=engine, metadata=metadata, **kwargs)
-        return PrivateReader(_reader, metadata, privacy=privacy)
+        return cls(_reader, metadata, privacy=privacy)
 
     @property
     def engine(self) -> str:

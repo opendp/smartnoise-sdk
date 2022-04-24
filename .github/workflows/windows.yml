@@ -27,7 +27,7 @@ jobs:
         shell: cmd
         run: |
           cd sql
-          python tests\setup\download.py
+          python tests\check_databases.py
       - name: copy connections-unit.yaml
         shell: cmd
         run: |
@@ -44,7 +44,7 @@ jobs:
         shell: cmd
         run: |
           cd sql
-          python tests\setup\download.py
+          python tests\check_databases.py
       - name: Unit tests
         shell: cmd
         run: |
