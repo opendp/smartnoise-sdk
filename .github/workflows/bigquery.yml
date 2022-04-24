@@ -97,14 +97,14 @@ jobs:
           mkdir ~/.smartnoise
           cp tests/setup/bigquery/connections-unit.yaml ~/.smartnoise
           export SKIP_PANDAS=1
-          pytest tests
+          pytest tests/engines/test_db_count.py
 
-      - name: Terraform Destroy - BigQuery dataset
-        env:
-          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
-        continue-on-error: true
-        run: |
-          cd sql/tests/terraform/bigquery
-          terraform destroy \
-          -auto-approve \
-          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}'
+      # - name: Terraform Destroy - BigQuery dataset
+      #   env:
+      #     GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
+      #   continue-on-error: true
+      #   run: |
+      #     cd sql/tests/terraform/bigquery
+      #     terraform destroy \
+      #     -auto-approve \
+      #     -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}'
