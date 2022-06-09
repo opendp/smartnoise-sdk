@@ -64,7 +64,8 @@ jobs:
           cd sql/tests/terraform/bigquery
           terraform init \
           -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
-          -var 'region=${{ secrets.GOOGLE_REGION }}'
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
       - name: Terraform Plan - BigQuery dataset
         env:
@@ -73,7 +74,8 @@ jobs:
           cd sql/tests/terraform/bigquery
           terraform plan \
           -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
-          -var 'region=${{ secrets.GOOGLE_REGION }}'
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
       - name: Terraform Apply - BigQuery dataset
         env:
@@ -84,7 +86,8 @@ jobs:
           terraform apply \
           -auto-approve \
           -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
-          -var 'region=${{ secrets.GOOGLE_REGION }}'
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
       - name: Verify database counts
         continue-on-error: true
@@ -95,6 +98,7 @@ jobs:
         continue-on-error: true
         env:
           GOOGLE_PROJECT_ID: "${{ secrets.GOOGLE_PROJECT_ID }}"
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
         shell: bash -l {0}
         run: |
           cd sql
