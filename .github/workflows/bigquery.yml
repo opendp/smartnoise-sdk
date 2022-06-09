@@ -15,8 +15,6 @@ jobs:
       matrix:
         python-version: [3.9]
       max-parallel: 5
-    env:
-      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
     steps:
       - uses: actions/checkout@v2
@@ -98,7 +96,6 @@ jobs:
         continue-on-error: true
         env:
           GOOGLE_PROJECT_ID: "${{ secrets.GOOGLE_PROJECT_ID }}"
-          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
         shell: bash -l {0}
         run: |
           cd sql
