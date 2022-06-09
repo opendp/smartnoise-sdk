@@ -27,8 +27,7 @@ DELETE FROM pums.pums;
 
 CREATE DATABASE pums_null;
 \c pums_null
-CREATE SCHEMA pums
-CREATE TABLE pums.pums (age int, sex char(2), educ int, race char(2), income float, married boolean, pid int);
+CREATE TABLE pums (age int, sex char(2), educ int, race char(2), income float, married boolean, pid int);
 
-DELETE FROM pums.pums;
-\copy pums.pums FROM 'PUMS_null.csv' CSV;
+DELETE FROM pums;
+\copy pums FROM 'PUMS_null.csv' CSV;

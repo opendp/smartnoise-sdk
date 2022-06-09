@@ -27,15 +27,27 @@ class Geometric(AdditiveNoiseMechanism):
         max_contrib = self.max_contrib
         # should probably just check and throw if not int
         bounds = (int(lower), int(upper))
+
+        rough_scale = (float(upper - lower) * max_contrib) / self.epsilon
+        if rough_scale > 10_000_000:
+            raise ValueError(f"Noise scale is too large using epsilon={self.epsilon} and bounds ({lower}, {upper}) with {self.mechanism}.  Try preprocessing to reduce senstivity, or try different privacy parameters.")
+        search_upper = rough_scale * 10E+6
+        search_lower = rough_scale / 10E+6
+
         enable_features('floating-point', 'contrib')
         bounded_sum = (
             make_clamp(bounds=bounds) >>
             make_bounded_sum(bounds=bounds)
         )
-        discovered_scale = binary_search_param(
-            lambda s: bounded_sum >> make_base_geometric(scale=s),
-            d_in=max_contrib,
-            d_out=(self.epsilon))
+        try:
+            discovered_scale = binary_search_param(
+                lambda s: bounded_sum >> make_base_geometric(scale=s),
+                bounds=(search_lower, search_upper),
+                d_in=max_contrib,
+                d_out=(self.epsilon))
+        except Exception as e:
+            raise ValueError(f"Unable to find appropriate noise scale for {self.mechanism} with epsilon={self.epsilon} and bounds ({lower}, {upper}).  Try preprocessing to reduce senstivity, or try different privacy parameters.\n{e}")
+
         self.scale = discovered_scale
     def release(self, vals):
         enable_features('floating-point', 'contrib')

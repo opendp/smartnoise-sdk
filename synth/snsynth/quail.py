@@ -13,7 +13,14 @@ logger = logging.getLogger(__name__)
 
 class QUAILSynthesizer(SDGYMBaseSynthesizer):
     def __init__(
-        self, epsilon, dp_synthesizer, dp_classifier, target, test_size=0.2, seed=None, eps_split=0.9
+        self,
+        epsilon,
+        dp_synthesizer,
+        dp_classifier,
+        target,
+        test_size=0.2,
+        seed=None,
+        eps_split=0.9,
     ):
         """
         Quailified Architecture to Improve Labeling.
@@ -66,7 +73,15 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         self.pd_index = None
 
     @wraps(SDGYMBaseSynthesizer.fit)
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(), verbose=None):
+    def fit(
+        self,
+        data,
+        categorical_columns=tuple(),
+        ordinal_columns=tuple(),
+        transformer=None,
+        continuous_columns_lower_upper=None,
+        verbose=None,
+    ):
         """
         Takes a dataset and fits the synthesizer/learning model to it, using the epsilon split
         specified in the init.
@@ -94,7 +109,10 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         private_features = data.loc[:, data.columns != self.target]
         private_target = data.loc[:, data.columns == self.target]
         x_train, x_test, y_train, y_test = train_test_split(
-            private_features, private_target, test_size=self.test_size, random_state=self.seed
+            private_features,
+            private_target,
+            test_size=self.test_size,
+            random_state=self.seed,
         )
 
         # Here we train a differentially private model on the real
@@ -116,11 +134,15 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         logging.log(log_level, self.target_accuracy)
 
         # We use the features in our synthesis.
-        self.private_synth = self.dp_synthesizer(epsilon=(self.epsilon * (1 - self.eps_split)))
+        self.private_synth = self.dp_synthesizer(
+            epsilon=(self.epsilon * (1 - self.eps_split))
+        )
         self.private_synth.fit(
             data=private_features,
             categorical_columns=categorical_columns,
             ordinal_columns=ordinal_columns,
+            transformer=transformer,
+            continuous_columns_lower_upper=continuous_columns_lower_upper,
         )
 
         if hasattr(self.private_model, "coef_"):

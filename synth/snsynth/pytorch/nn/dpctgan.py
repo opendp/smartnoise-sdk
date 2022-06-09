@@ -3,12 +3,21 @@ import torch
 from torch import optim
 from torch import nn
 import torch.utils.data
-from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, Sigmoid
+from torch.nn import (
+    BatchNorm1d,
+    Dropout,
+    LeakyReLU,
+    Linear,
+    Module,
+    ReLU,
+    Sequential,
+    Sigmoid,
+)
 import warnings
 
 import opacus
 
-from snsynth.preprocessors.data_transformer import DataTransformer
+from snsynth.preprocessors.data_transformer import BaseTransformer
 from .data_sampler import DataSampler
 from ctgan.synthesizers import CTGANSynthesizer
 
@@ -34,7 +43,9 @@ class Discriminator(Module):
             seq += [Sigmoid()]
         self.seq = Sequential(*seq)
 
-    def calc_gradient_penalty(self, real_data, fake_data, device='cpu', pac=1, lambda_=10):
+    def calc_gradient_penalty(
+        self, real_data, fake_data, device="cpu", pac=1, lambda_=10
+    ):
         alpha = torch.rand(real_data.size(0) // pac, 1, 1, device=device)
         alpha = alpha.repeat(1, pac, real_data.size(1))
         alpha = alpha.view(-1, real_data.size(1))
@@ -44,14 +55,17 @@ class Discriminator(Module):
         disc_interpolates = self(interpolates)
 
         gradients = torch.autograd.grad(
-            outputs=disc_interpolates, inputs=interpolates,
+            outputs=disc_interpolates,
+            inputs=interpolates,
             grad_outputs=torch.ones(disc_interpolates.size(), device=device),
-            create_graph=True, retain_graph=True, only_inputs=True
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True,
         )[0]
 
-        gradient_penalty = ((
-            gradients.view(-1, pac * real_data.size(1)).norm(2, dim=1) - 1
-        ) ** 2).mean() * lambda_
+        gradient_penalty = (
+            (gradients.view(-1, pac * real_data.size(1)).norm(2, dim=1) - 1) ** 2
+        ).mean() * lambda_
 
         return gradient_penalty
 
@@ -75,7 +89,6 @@ class Residual(Module):
 
 
 class Generator(Module):
-
     def __init__(self, embedding_dim, generator_dim, data_dim):
         super(Generator, self).__init__()
         dim = embedding_dim
@@ -109,30 +122,31 @@ def _custom_create_or_extend_grad_sample(
 
 
 class DPCTGAN(CTGANSynthesizer):
-
-    def __init__(self,
-                 embedding_dim=128,
-                 generator_dim=(256, 256),
-                 discriminator_dim=(256, 256),
-                 generator_lr=2e-4,
-                 generator_decay=1e-6,
-                 discriminator_lr=2e-4,
-                 discriminator_decay=1e-6,
-                 batch_size=500,
-                 discriminator_steps=1,
-                 log_frequency=False,
-                 verbose=True,
-                 epochs=300,
-                 pac=1,
-                 cuda=True,
-                 disabled_dp=False,
-                 delta=None,
-                 sigma=5,
-                 max_per_sample_grad_norm=1.0,
-                 epsilon=1,
-                 preprocessor_eps=0.1,
-                 loss="cross_entropy",
-                 category_epsilon_pct=0.1):
+    def __init__(
+        self,
+        embedding_dim=128,
+        generator_dim=(256, 256),
+        discriminator_dim=(256, 256),
+        generator_lr=2e-4,
+        generator_decay=1e-6,
+        discriminator_lr=2e-4,
+        discriminator_decay=1e-6,
+        batch_size=500,
+        discriminator_steps=1,
+        log_frequency=False,
+        verbose=True,
+        epochs=300,
+        pac=1,
+        cuda=True,
+        disabled_dp=False,
+        delta=None,
+        sigma=5,
+        max_per_sample_grad_norm=1.0,
+        epsilon=1,
+        preprocessor_eps=1,
+        loss="cross_entropy",
+        category_epsilon_pct=0.1,
+    ):
 
         assert batch_size % 2 == 0
 
@@ -170,11 +184,11 @@ class DPCTGAN(CTGANSynthesizer):
         self.loss = loss
 
         if not cuda or not torch.cuda.is_available():
-            device = 'cpu'
+            device = "cpu"
         elif isinstance(cuda, str):
             device = cuda
         else:
-            device = 'cuda'
+            device = "cuda"
 
         self._device = torch.device(device)
 
@@ -194,12 +208,20 @@ class DPCTGAN(CTGANSynthesizer):
                 "categories, which could cause privacy leaks."
             )
 
-    def train(self, data, categorical_columns=None, ordinal_columns=None, update_epsilon=None):
+    def train(
+        self,
+        data,
+        categorical_columns=None,
+        ordinal_columns=None,
+        update_epsilon=None,
+        transformer=BaseTransformer,
+        continuous_columns_lower_upper={},
+    ):
         if update_epsilon:
-            self.epsilon = update_epsilon
+            self.epsilon = update_epsilon - self.preprocessor_eps
 
         for col in categorical_columns:
-            if str(data[col].dtype).startswith('float'):
+            if str(data[col].dtype).startswith("float"):
                 raise ValueError(
                     "It looks like you are passing in a vector of continuous values"
                     f"to a categorical column at [{col}]."
@@ -207,8 +229,12 @@ class DPCTGAN(CTGANSynthesizer):
                     "unsigned integer or string category names."
                 )
 
-        self._transformer = DataTransformer(self.preprocessor_eps)
-        self._transformer.fit(data, discrete_columns=categorical_columns)
+        self._transformer = transformer(self.preprocessor_eps)
+        self._transformer.fit(
+            data,
+            discrete_columns=categorical_columns,
+            continuous_columns_lower_upper=continuous_columns_lower_upper,
+        )
         # for tinfo in self._transformer._column_transform_info_list:
         #    if tinfo.column_type == "continuous":
         #        raise ValueError("We don't support continuous values on this synthesizer.  Please discretize values.")
@@ -228,13 +254,11 @@ class DPCTGAN(CTGANSynthesizer):
             train_data,
             self._transformer.output_info_list,
             self._log_frequency,
-            per_column_epsilon=per_col_sampler_eps)
+            per_column_epsilon=per_col_sampler_eps,
+        )
 
         spent = self._data_sampler.total_spent
-        if (
-            spent > sampler_eps
-            and not np.isclose(spent, sampler_eps)
-        ):
+        if spent > sampler_eps and not np.isclose(spent, sampler_eps):
             raise AssertionError(
                 f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
             )
@@ -244,27 +268,27 @@ class DPCTGAN(CTGANSynthesizer):
         self._generator = Generator(
             self._embedding_dim + self._data_sampler.dim_cond_vec(),
             self._generator_dim,
-            data_dim
+            data_dim,
         ).to(self._device)
 
         discriminator = Discriminator(
             data_dim + self._data_sampler.dim_cond_vec(),
             self._discriminator_dim,
             self.loss,
-            self.pac
+            self.pac,
         ).to(self._device)
 
         optimizerG = optim.Adam(
             self._generator.parameters(),
             lr=self._generator_lr,
             betas=(0.5, 0.9),
-            weight_decay=self._generator_decay
+            weight_decay=self._generator_decay,
         )
         optimizerD = optim.Adam(
             discriminator.parameters(),
             lr=self._discriminator_lr,
             betas=(0.5, 0.9),
-            weight_decay=self._discriminator_decay
+            weight_decay=self._discriminator_decay,
         )
 
         privacy_engine = opacus.PrivacyEngine(
@@ -302,7 +326,9 @@ class DPCTGAN(CTGANSynthesizer):
                         del p.grad_sample
 
                 if self.delta is None:
-                    self.delta = 1 / (train_data.shape[0] * np.sqrt(train_data.shape[0]))
+                    self.delta = 1 / (
+                        train_data.shape[0] * np.sqrt(train_data.shape[0])
+                    )
 
                 epsilon, best_alpha = optimizerD.privacy_engine.get_privacy_spent(
                     self.delta
@@ -313,10 +339,10 @@ class DPCTGAN(CTGANSynthesizer):
                 if self.epsilon < epsilon:
                     if self._epochs == 1:
                         raise ValueError(
-                                    "Inputted epsilon and sigma parameters are too small to"
-                                    + " create a private dataset. Try increasing either parameter "
-                                    + "and rerunning."
-                                )
+                            "Inputted epsilon and sigma parameters are too small to"
+                            + " create a private dataset. Try increasing either parameter "
+                            + "and rerunning."
+                        )
                     else:
                         break
 
@@ -336,7 +362,8 @@ class DPCTGAN(CTGANSynthesizer):
                     perm = np.arange(self._batch_size)
                     np.random.shuffle(perm)
                     real = self._data_sampler.sample_data(
-                        self._batch_size, col[perm], opt[perm])
+                        self._batch_size, col[perm], opt[perm]
+                    )
                     c2 = c1[perm]
 
                 fake = self._generator(fakez)

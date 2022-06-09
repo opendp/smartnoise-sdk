@@ -22,15 +22,29 @@ def _get_metadata(data, categorical_columns=tuple(), ordinal_columns=tuple()):
 
         if categorical_columns and col_name in categorical_columns:
             bins = column.value_counts().index.tolist()
-            meta.append({"name": col_name, "type": "categorical", "size": len(bins), "bins": bins})
+            meta.append(
+                {
+                    "name": col_name,
+                    "type": "categorical",
+                    "size": len(bins),
+                    "bins": bins,
+                }
+            )
         elif ordinal_columns and col_name in ordinal_columns:
             value_count = list(dict(column.value_counts()).items())
             value_count = sorted(value_count, key=lambda x: -x[1])
             bins = list(map(lambda x: x[0], value_count))
-            meta.append({"name": col_name, "type": "ordinal", "size": len(bins), "bins": bins})
+            meta.append(
+                {"name": col_name, "type": "ordinal", "size": len(bins), "bins": bins}
+            )
         else:
             meta.append(
-                {"name": col_name, "type": "continuous", "min": column.min(), "max": column.max()}
+                {
+                    "name": col_name,
+                    "type": "continuous",
+                    "min": column.min(),
+                    "max": column.max(),
+                }
             )
 
     return meta
@@ -71,7 +85,9 @@ class GeneralTransformer:
                 current = current.values.reshape([-1, 1])
 
                 means = self.model[id_].means_.reshape((1, self.n_clusters))
-                stds = np.sqrt(self.model[id_].covariances_).reshape((1, self.n_clusters))
+                stds = np.sqrt(self.model[id_].covariances_).reshape(
+                    (1, self.n_clusters)
+                )
                 features = (current - means) / (4 * stds)
 
                 probs = self.model[id_].predict_proba(current.reshape([-1, 1]))

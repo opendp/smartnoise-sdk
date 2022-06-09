@@ -29,40 +29,27 @@ class Gaussian(AdditiveNoiseMechanism):
         upper = self.upper
         max_contrib = self.max_contrib
         bounds = (float(lower), float(upper))
-        sensitivity = upper - lower
-        if sensitivity > 1000:
-            self.scale = (
-            float(sensitivity) * max_contrib * math.sqrt(2.0 * math.log(1.25 / self.delta)) / self.epsilon
+
+        rough_scale = float(upper - lower) * max_contrib * math.sqrt(2.0 * math.log(1.25 / self.delta)) / self.epsilon
+        if rough_scale > 10_000_000:
+            raise ValueError(f"Noise scale is too large using epsilon={self.epsilon} and bounds ({lower}, {upper}) with {self.mechanism}.  Try preprocessing to reduce senstivity, or try different privacy parameters.")
+        search_upper = rough_scale * 10E+6
+        search_lower = rough_scale / 10E+6
+
+        enable_features('floating-point', 'contrib')
+        bounded_sum = (
+            make_clamp(bounds=bounds) >>
+            make_bounded_sum(bounds=bounds)
         )
-        else:
-            enable_features('floating-point', 'contrib')
-            bounded_sum = (
-                make_clamp(bounds=bounds) >>
-                make_bounded_sum(bounds=bounds)
-            )
+        try:
             discovered_scale = binary_search_param(
                 lambda s: bounded_sum >> make_base_gaussian(scale=s),
+                bounds=(search_lower, search_upper),
                 d_in=max_contrib,
                 d_out=(self.epsilon, self.delta))
-            self.scale = discovered_scale
-    @property
-    def threshold(self):
-        max_contrib = self.max_contrib
-        delta = self.delta
-        epsilon = self.epsilon
-        if delta == 0.0:
-            return "censor_dims requires delta to be > 0.0  Try delta=1/n*sqrt(n) where n is the number of individuals"
-        thresh_scale = math.sqrt(max_contrib) * (
-            (
-                math.sqrt(math.log(1 / delta))
-                + math.sqrt(math.log(1 / delta) + epsilon)
-            )
-        / (math.sqrt(2) * epsilon)
-        )
-        thresh = 1 + thresh_scale * math.sqrt(
-            2 * math.log(max_contrib / math.sqrt(2 * math.pi * delta))
-        )
-        return thresh
+        except Exception as e:
+            raise ValueError(f"Unable to find appropriate noise scale for {self.mechanism} with epsilon={self.epsilon} and bounds ({lower}, {upper}).  Try preprocessing to reduce senstivity, or try different privacy parameters.\n{e}")
+        self.scale = discovered_scale
     def release(self, vals):
         enable_features('floating-point', 'contrib')
         meas = make_base_gaussian(self.scale)

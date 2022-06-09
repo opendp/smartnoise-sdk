@@ -5,13 +5,13 @@ import copy
 import yaml
 import copy
 
-root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+from .factories.mysql import MySqlFactory
+from .factories.pandas import PandasFactory
+from .factories.postgres import PostgresFactory
+from .factories.spark import SparkFactory
+from .factories.sqlserver import SqlServerFactory
 
-pums_csv_path = os.path.join(root_url,"datasets", "PUMS.csv")
-pums_pid_csv_path = os.path.join(root_url,"datasets", "PUMS_pid.csv")
-pums_large_csv_path = os.path.join(root_url,"datasets", "PUMS_large.csv")
-pums_dup_csv_path = os.path.join(root_url,"datasets", "PUMS_dup.csv")
-pums_null_csv_path = os.path.join(root_url,"datasets", "PUMS_null.csv")
+root_url = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 pums_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
 pums_large_schema_path = os.path.join(root_url,"datasets", "PUMS_large.yaml")
@@ -20,145 +20,7 @@ pums_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
 pums_dup_schema_path = os.path.join(root_url,"datasets", "PUMS_dup.yaml")
 pums_null_schema_path = os.path.join(root_url,"datasets", "PUMS_dup.yaml")
 
-class DbEngine:
-    # Connections to a list of test databases sharing connection info
-    def __init__(self, engine, user=None, host=None, port=None, databases={}):
-        self.engine = engine
-        self.user = user
-        self.host = host
-        self.port = port
-        if databases == {}:
-            if self.engine.lower() == "pandas":
-                databases={'PUMS': 'PUMS', 'PUMS_pid': 'PUMS_pid', 'PUMS_dup': 'PUMS_dup', 'PUMS_null' : 'PUMS_null'}
-            elif self.engine.lower() == "spark":
-                databases = {'PUMS': 'PUMS', 'PUMS_pid': 'PUMS_pid', 'PUMS_dup': 'PUMS_dup', 'PUMS_large': 'PUMS_large', 'PUMS_null' : 'PUMS_null'}
-        self.databases = databases
-        env_passwd = engine.upper() + "_" + "PASSWORD"
-        password = os.environ.get(env_passwd)
-        if password is not None:
-            self.password = password
-        else:
-            conn = f"{engine}://{host}:{port}"
-            try:
-                import keyring
-                password = keyring.get_password(conn, user)
-                self.password = password
-            except:
-                print(f"Connecting to {conn} with no password")
-                self.password = ""
-        self.connections = {}
-        for database in self.databases:
-            self.connect(database)
-    def connect(self, database):
-        host = self.host
-        user = self.user
-        port = self.port
-        engine = self.engine
-        password = self.password
-        if database not in self.databases:
-            raise ValueError(f"Database {database} is not available for {engine}")
-        dbname = self.databases[database]
-        if self.engine.lower() == "postgres":
-            try:
-                import psycopg2
-                self.connections[database] = psycopg2.connect(host=host, port=port, user=user, password=password, database=dbname)
-                print(f'Postgres: Connected {database} to {dbname}')
-            except Exception as e:
-                print(str(e))
-                print(f"Unable to connect to postgres database {database}.  Ensure connection info is correct and psycopg2 is installed")
-        elif self.engine.lower() == "pandas":
-            if 'PUMS' not in self.connections:
-                self.connections['PUMS'] = pd.read_csv(pums_csv_path)
-            if 'PUMS_pid' not in self.connections:
-                self.connections['PUMS_pid'] = pd.read_csv(pums_pid_csv_path)
-            if 'PUMS_dup' not in self.connections:
-                self.connections['PUMS_dup'] = pd.read_csv(pums_dup_csv_path)
-            if 'PUMS_null' not in self.connections:
-                self.connections['PUMS_null'] = pd.read_csv(pums_null_csv_path)
-        elif self.engine.lower() == "sqlserver":
-            try:
-                import pyodbc
-                if host.startswith('(localdb)'):
-                    dsn = f"Driver={{ODBC Driver 17 for SQL Server}};Server={host};Database={dbname}"
-                else:
-                    dsn = f"Driver={{ODBC Driver 17 for SQL Server}};Server={host},{port};UID={user};Database={dbname};PWD={password}"
-                self.connections[database] = pyodbc.connect(dsn)
-                print(f'SQL Server: Connected {database} to {dbname}')
-            except:
-                print(f"Unable to connect to SQL Server database {database}.  Ensure connection info is correct and pyodbc is installed.")
-        elif self.engine.lower() == "mysql":
-            try:
-                import pymysql
-                self.connections[database] = pymysql.connect(
-                    host = host,
-                    password = password,
-                    user = user,
-                    database = dbname
-                )
-            except:
-                print(f"Unable to connect to MySQL database {database}.  Ensure connection info is correct and pymysql is installed.")
-        elif self.engine.lower() == "sqlite":
-            pass
-        elif self.engine.lower() == "spark":
-            try:
-                from pyspark.sql import SparkSession
-                spark = SparkSession.builder.getOrCreate()
-                self.session = spark
-                if 'PUMS' not in self.connections:
-                    pums = spark.read.load(pums_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                    self.connections['PUMS'] = pums
-                if 'PUMS_pid' not in self.connections:
-                    pums_pid = spark.read.load(pums_pid_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                    self.connections['PUMS_pid'] = pums_pid
-                if 'PUMS_dup' not in self.connections:
-                    pums_dup = spark.read.load(pums_dup_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                    self.connections['PUMS_dup'] = pums_dup
-                if 'PUMS_null' not in self.connections:
-                    pums_null = spark.read.load(pums_null_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                    self.connections['PUMS_null'] = pums_null
-                if 'PUMS_large' not in self.connections:
-                    pums_large = spark.read.load(pums_large_csv_path, format="csv", sep=",",inferSchema="true", header="true")
-                    colnames = list(pums_large.columns)
-                    colnames[0] = "PersonID"
-                    pums_large = pums_large.toDF(*colnames)
-                    self.connections['PUMS_large'] = pums_large
-                    pums_large.createOrReplaceTempView("PUMS_large")
-            except:
-                print("Unable to connect to Spark test databases.  Make sure pyspark is installed.")
-        else:
-            print(f"Unable to connect to databases for engine {self.engine}")
-    @property
-    def dialect(self):
-        engine = self.engine
-        dialects = {
-            'postgres': 'postgresql+psycopg2',
-            'sqlserver': 'mssql+pyodbc',
-            'mysql': 'mysql+pymysql'
-        }
-        return None if engine not in dialects else dialects[engine]
-    def get_private_reader(self, *ignore, metadata, privacy, database, **kwargs):
-        if database not in self.connections:
-            return None
-        else:
-            from snsql.sql import PrivateReader
-            conn = self.connections[database]
-            if self.engine.lower() == "spark":
-                if database.lower() != 'pums_large':
-                    conn.createOrReplaceTempView("PUMS")
-                conn = self.session
-            priv = PrivateReader.from_connection(
-                conn, 
-                metadata=metadata, 
-                privacy=privacy
-            )
-            if self.engine.lower() == "spark":
-                priv.reader.compare.search_path = ["PUMS"]
-            return priv
-    def get_connection(self, *ignore, database, **kwargs):
-        if database not in self.connections:
-            return None
-        else:
-            return self.connections[database]
+
 
 class DbCollection:
     # Collection of test databases keyed by engine and database name.
@@ -175,12 +37,13 @@ class DbCollection:
         self.engines = {}
         home = os.path.expanduser("~")
         p = os.path.join(home, ".smartnoise", "connections-unit.yaml")
+
         if not os.environ.get('SKIP_PANDAS'):
-            self.engines['pandas'] = DbEngine('pandas')
+            self.engines['pandas'] = PandasFactory()
         else:
             print("Skipping pandas database tests")
         if os.environ.get('TEST_SPARK'):
-            self.engines['spark'] = DbEngine('spark')
+            self.engines['spark'] = SparkFactory()
         else:
             print("TEST_SPARK not set, so skipping Spark tests")
         if not os.path.exists(p):
@@ -196,17 +59,25 @@ class DbCollection:
                     host = conns[engine]["host"]
                     port = conns[engine]["port"]
                     user = conns[engine]["user"]
-                    databases = eng['databases']
-                    self.engines[engine] = DbEngine(engine, user, host, port, databases)
+                    if 'databases' in eng:
+                        raise ValueError(f"connections-unit.yaml has a 'databases' section for engine {engine}.  Please update to use 'datasets' syntax.")
+                    datasets = eng['datasets']
+
+                    if engine == "postgres":
+                        self.engines[engine] = PostgresFactory(engine, user, host, port, datasets)
+                    elif engine == "sqlserver":
+                        self.engines[engine] = SqlServerFactory(engine, user, host, port, datasets)
+                    elif engine == "mysql":
+                        self.engines[engine] = MySqlFactory(engine, user, host, port, datasets)
     def __str__(self):
         description = ""
         for engine in self.engines:
             eng = self.engines[engine]
             description += f"{eng.user}@{engine}://{eng.host}:{eng.port}\n"
-            for database in eng.databases:
-                dbdest = eng.databases[database]
-                connected = "(connected)" if database in eng.connections else ""
-                description += f"\t{database} -> {dbdest} {connected}\n"
+            for dataset in eng.datasets:
+                dbdest = eng.datasets[dataset]
+                connected = "(connected)" if dataset in eng.connections else ""
+                description += f"\t{dataset} -> {dbdest} {connected}\n"
         return description
     def get_private_readers(self, *ignore, metadata=None, privacy, database, engine=None, overrides={}, **kwargs):
         readers = []
@@ -245,9 +116,10 @@ class DbCollection:
                 eng = self.engines[engine]
                 reader = None
                 try:
-                    reader = eng.get_private_reader(metadata=metadata, privacy=privacy, database=database)
-                except:
-                    pass
+                    reader = eng.get_private_reader(metadata=metadata, privacy=privacy, dataset=database)
+                except Exception as e:
+                    print(str(e))
+                    raise ValueError(f"Unable to get a private reader for dataset {database} using {engine}")
                 finally:
                     if reader:
                         readers.append(reader)

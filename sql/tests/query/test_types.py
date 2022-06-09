@@ -18,7 +18,6 @@ class TestTypes:
     def test_s12(self):
             q = qp("SELECT Refurbished FROM Telemetry.Crashes;")
             q.load_symbols(metadata)
-            print(str(q["Refurbished"]))
             assert q["Refurbished"].expression.type() == "boolean"
             assert q["Refurbished"].expression.sensitivity() == 1
 

@@ -76,6 +76,11 @@ class QueryParser:
         ev = ExpressionVisitor()
         return ev.visit(parser.expression())
 
+    def parse_table_name(self, expression_string):
+        istream = InputStream(expression_string)
+        parser = self.start_parser(istream)
+        return Identifier(parser.qualifiedTableName().getText())
+
 
 class BatchVisitor(SqlSmallVisitor):
     def visitBatch(self, ctx):
