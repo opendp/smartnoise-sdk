@@ -5,6 +5,7 @@ import copy
 import yaml
 import copy
 
+from .factories.bigquery import BigQueryFactory
 from .factories.mysql import MySqlFactory
 from .factories.pandas import PandasFactory
 from .factories.postgres import PostgresFactory
@@ -19,8 +20,6 @@ pums_pid_schema_path = os.path.join(root_url,"datasets", "PUMS_pid.yaml")
 pums_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
 pums_dup_schema_path = os.path.join(root_url,"datasets", "PUMS_dup.yaml")
 pums_null_schema_path = os.path.join(root_url,"datasets", "PUMS_dup.yaml")
-
-
 
 class DbCollection:
     # Collection of test databases keyed by engine and database name.
@@ -69,6 +68,9 @@ class DbCollection:
                         self.engines[engine] = SqlServerFactory(engine, user, host, port, datasets)
                     elif engine == "mysql":
                         self.engines[engine] = MySqlFactory(engine, user, host, port, datasets)
+                    elif engine == "bigquery":
+                        self.engines[engine] = BigQueryFactory(engine, user, host, port, datasets)
+
     def __str__(self):
         description = ""
         for engine in self.engines:

@@ -13,7 +13,7 @@ provider "google" {
  region  = var.region
 }
 
-resource "google_storage_bucket" "smartnoise_ci_bucket" {
+resource "google_storage_bucket" "smartnoise_ci_bucket_jsa" {
   name          = var.bucket_name
   force_destroy = true
   location      = var.region
@@ -33,7 +33,7 @@ resource "google_bigquery_dataset" "pums" {
 resource "google_storage_bucket_object" "pums" {
   name   = "PUMS.csv"
   source = "../../../../datasets/PUMS.csv"
-  bucket = google_storage_bucket.smartnoise_ci_bucket.name
+  bucket = google_storage_bucket.smartnoise_ci_bucket_jsa.name
 }
 
 resource "google_bigquery_table" "pums" {
@@ -57,7 +57,7 @@ resource "google_bigquery_table" "pums" {
     schema = file("${path.root}/schema/PUMS.json")
 
     source_uris = [
-        "gs://smartnoise-ci-bucket/PUMS.csv"
+        "gs://smartnoise-ci-bucket-jsa/PUMS.csv"
     ]
   }
 
@@ -70,7 +70,7 @@ resource "google_bigquery_table" "pums" {
 resource "google_storage_bucket_object" "pums_large" {
   name   = "PUMS_large.csv"
   source = "../../../../datasets/PUMS_large.csv"
-  bucket = google_storage_bucket.smartnoise_ci_bucket.name
+  bucket = google_storage_bucket.smartnoise_ci_bucket_jsa.name
 }
 
 resource "google_bigquery_table" "pums_large" {
@@ -94,7 +94,7 @@ resource "google_bigquery_table" "pums_large" {
     schema = file("${path.root}/schema/PUMS_large.json")
 
     source_uris = [
-        "gs://smartnoise-ci-bucket/PUMS_large.csv"
+        "gs://smartnoise-ci-bucket-jsa/PUMS_large.csv"
     ]
   }
 
@@ -107,7 +107,7 @@ resource "google_bigquery_table" "pums_large" {
 resource "google_storage_bucket_object" "pums_pid" {
   name   = "PUMS_pid.csv"
   source = "../../../../datasets/PUMS_pid.csv"
-  bucket = google_storage_bucket.smartnoise_ci_bucket.name
+  bucket = google_storage_bucket.smartnoise_ci_bucket_jsa.name
 }
 
 resource "google_bigquery_table" "pums_pid" {
@@ -131,7 +131,7 @@ resource "google_bigquery_table" "pums_pid" {
     schema = file("${path.root}/schema/PUMS_pid.json")
 
     source_uris = [
-        "gs://smartnoise-ci-bucket/PUMS_pid.csv"
+        "gs://smartnoise-ci-bucket-jsa/PUMS_pid.csv"
     ]
   }
 
@@ -144,7 +144,7 @@ resource "google_bigquery_table" "pums_pid" {
 resource "google_storage_bucket_object" "pums_dup" {
   name   = "PUMS_dup.csv"
   source = "../../../../datasets/PUMS_dup.csv"
-  bucket = google_storage_bucket.smartnoise_ci_bucket.name
+  bucket = google_storage_bucket.smartnoise_ci_bucket_jsa.name
 }
 
 resource "google_bigquery_table" "pums_dup" {
@@ -168,7 +168,7 @@ resource "google_bigquery_table" "pums_dup" {
     schema = file("${path.root}/schema/PUMS_dup.json")
 
     source_uris = [
-        "gs://smartnoise-ci-bucket/PUMS_dup.csv"
+        "gs://smartnoise-ci-bucket-jsa/PUMS_dup.csv"
     ]
   }
 
@@ -180,7 +180,7 @@ resource "google_bigquery_table" "pums_dup" {
 resource "google_storage_bucket_object" "pums_null" {
   name   = "PUMS_null.csv"
   source = "../../../../datasets/PUMS_null.csv"
-  bucket = google_storage_bucket.smartnoise_ci_bucket.name
+  bucket = google_storage_bucket.smartnoise_ci_bucket_jsa.name
 }
 
 resource "google_bigquery_table" "pums_null" {
@@ -204,7 +204,7 @@ resource "google_bigquery_table" "pums_null" {
     schema = file("${path.root}/schema/PUMS_null.json")
 
     source_uris = [
-        "gs://smartnoise-ci-bucket/PUMS_null.csv"
+        "gs://smartnoise-ci-bucket-jsa/PUMS_null.csv"
     ]
   }
 
