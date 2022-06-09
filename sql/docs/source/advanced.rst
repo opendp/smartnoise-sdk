@@ -4,6 +4,24 @@ Advanced Usage
 
 This section covers some advanced usage scenarios.
 
+Overriding Mechanisms
+---------------------
+
+You can override the default mechanisms used for differentially private summary statistics.  The mechanisms are specified in the ``mechanisms.map`` dictionary on the ``Privacy`` object.
+
+.. code-block:: python
+
+    from snsql import Privacy, Stat, Mechanism
+
+    privacy = Privacy(epsilon=1.0)
+    print(f"We default to using {privacy.mechanisms.map[Stat.count]} for counts.")
+    print("Switching to use gaussian")
+    privacy.mechanisms.map[Stat.count] = Mechanism.gaussian
+
+The list of statistics that can be mapped is in the ``Stat`` enumeration, and the mechanisms available are listed in the ``Mechanism`` enumeration.  The ``AVG`` sumamry statistic is computed from a sum and a count, each of which can be overriden.
+
+For integer sums, you can specify ``Stat.sum_int``, and specify ``Stat.sum_large_int`` separately for large integer sums.  A "large" integer sum is any sum that is greater than the value set in ``mechanisms.large``, which defaults to 1000.  This is primarily useful when using geometric mechanism for integer sums, since the geometric mechanism slows down for large integer sums.
+
 pre_aggregated
 --------------
 

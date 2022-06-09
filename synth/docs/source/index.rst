@@ -24,6 +24,7 @@ Multiplicative Weights Exponential Mechanism.
 
 .. code-block:: python
 
+  import snsynth
   import pandas as pd
   import numpy as np
 
@@ -44,8 +45,10 @@ Conditional tabular GAN with differentially private stochastic gradient descent.
 
 .. code-block:: python
 
+  imprt snsynth
   import pandas as pd
   import numpy as np
+
   from snsynth.pytorch.nn import DPCTGAN
   from snsynth.pytorch import PytorchDPSynthesizer
 
@@ -65,8 +68,10 @@ Conditional tabular GAN using Private Aggregation of Teacher Ensembles.
 
 .. code-block:: python
 
+  imprt snsynth
   import pandas as pd
   import numpy as np
+
   from snsynth.pytorch.nn import PATECTGAN
   from snsynth.pytorch import PytorchDPSynthesizer
 

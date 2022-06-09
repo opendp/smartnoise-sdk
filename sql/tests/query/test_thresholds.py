@@ -46,7 +46,7 @@ class TestQueryThresholds:
     def test_yes_tau_gauss(self, test_databases):
         # should drop approximately half of educ bins
         privacy = Privacy(epsilon=1.0, delta=1/1000)
-        privacy.mechanisms.map[Stat.threshold] = Mechanism.gaussian
+        privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
         readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
         assert(len(readers) > 0)
         for reader in readers:
@@ -55,7 +55,7 @@ class TestQueryThresholds:
     def test_yes_tau_gauss_row(self, test_databases):
         # should drop approximately half of educ bins
         privacy = Privacy(epsilon=1.0, delta=1/1000)
-        privacy.mechanisms.map[Stat.threshold] = Mechanism.gaussian
+        privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
         readers = test_databases.get_private_readers(database='PUMS', privacy=privacy)
         assert(len(readers) > 0)
         for reader in readers:
@@ -101,9 +101,9 @@ class TestQueryThresholds:
             for d in max_contribs:
                 for delta in deltas:
                     privacy = Privacy(epsilon=eps, delta=delta)
-                    privacy.mechanisms.map[Stat.threshold] = Mechanism.gaussian
-                    # using slightly different formulations of same formula from different papers
-                    # make sure private_reader round-trips
+                    privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
+                    # crude smoke test; compare threshold from analytical gaussian to threshold from gaussian,
+                    # and check that the threshold isn't widly different
                     gaus_scale = math.sqrt(d) * math.sqrt(2 * math.log(1.25/delta))/eps
                     gaus_rho = 1 + gaus_scale * math.sqrt(2 * math.log(d / math.sqrt(2 * math.pi * delta)))
                     schema_c = copy.copy(schema)
@@ -111,7 +111,7 @@ class TestQueryThresholds:
                     private_reader = PrivateReader(reader, metadata=schema_c, privacy=privacy)
                     assert(private_reader._options.max_contrib == d)
                     r = private_reader._execute_ast(q)
-                    assert(math.isclose(private_reader.tau, gaus_rho, rel_tol=0.03, abs_tol=2))
+                    assert(private_reader.tau < gaus_rho * 3 and private_reader.tau > gaus_rho / 3)
     def test_empty_result_count_typed_notau_prepost(self):
         schema_all = copy.deepcopy(schema)
         schema_all['PUMS.PUMS'].censor_dims = False
@@ -120,10 +120,7 @@ class TestQueryThresholds:
         private_reader = PrivateReader(reader, schema_all, privacy=Privacy(epsilon=1.0))
         private_reader._execute_ast(query, True)
         for i in range(3):
-            print(private_reader._options)
             trs = private_reader._execute_ast(query, True)
-            print("empty query")
-            print(trs)
             assert(len(trs) == 2)
     def test_no_tau(self, test_databases):
         # should never drop rows

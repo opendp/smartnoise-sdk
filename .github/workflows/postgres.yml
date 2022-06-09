@@ -58,7 +58,7 @@ jobs:
         shell: bash -l {0}
         run: |
           cd sql
-          python tests/setup/download.py
+          python tests/check_databases.py
       - name: Install PUMS
         shell: bash -l {0}
         run: |
@@ -76,7 +76,7 @@ jobs:
           psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums.pums_large"
           psql -U postgres -h $POSTGRES_HOST -d pums_pid -c "select count(*) FROM pums.pums"
           psql -U postgres -h $POSTGRES_HOST -d pums_dup -c "select count(*) FROM pums.pums"
-          psql -U postgres -h $POSTGRES_HOST -d pums_null -c "select count(*) FROM pums.pums"
+          psql -U postgres -h $POSTGRES_HOST -d pums_null -c "select count(*) FROM pums"
         env:
           POSTGRES_HOST: localhost
       - name: Check database connections test fixture
@@ -86,7 +86,7 @@ jobs:
           cd sql
           mkdir ~/.smartnoise
           cp tests/setup/postgres/connections-unit.yaml ~/.smartnoise
-          python tests/setup/download.py
+          python tests/check_databases.py
       - name: Test SDK
         shell: bash -l {0}
         run: |

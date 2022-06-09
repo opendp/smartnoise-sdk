@@ -469,9 +469,9 @@ IDENTIFIER
     ;
 
 ESCAPED_IDENTIFIER
-    : '[' (LETTER | DIGIT | '_' | ' ')*? ']'
-    | '"' (LETTER | DIGIT | '_' | ' ')*? '"'
-    | '`' (LETTER | DIGIT | '_' | ' ')*? '`'
+    : '[' (LETTER | DIGIT | '_' | ' ' | '-')*? ']'
+    | '"' (LETTER | DIGIT | '_' | ' ' | '-')*? '"'
+    | '`' (LETTER | DIGIT | '_' | ' ' | '-')*? '`'
     ;
 
 LETTER : (UCASE | LCASE);
