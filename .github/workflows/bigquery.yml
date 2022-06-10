@@ -109,4 +109,6 @@ jobs:
           cd sql/tests/terraform/bigquery
           terraform destroy \
           -auto-approve \
-          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}'
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
