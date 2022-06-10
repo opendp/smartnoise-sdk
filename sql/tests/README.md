@@ -63,16 +63,17 @@ The current supported engines are:
 * `postgres` 
 * `sqlserver`
 * `spark` - can use all datasets, but requires `export TEST_SPARK=1`
+* `bigquery`
 
 The service-hosted SQL engines, `pandas` and `sqlserver`, will be connected, if the connections are configured locally.  See this [for more information](tests/engines/README.md).
 
-The GitHub Actions CI runners for SQL Server, Postgres, and Spark will automatically install and run these engines.
+The GitHub Actions CI runners for SQL Server, Postgres, Spark and BigQuery will automatically install and run these engines.
 
 Note that the `connections-unit.yml` can be configured to use different table names in the database, and the unit test fixture will automatically update test queries and metadata to use the appropriate table name.  In the default local and CI builds for Postgres, we map `PUMS_dup` to `pums.pums.pums_dup` to test three part names, and we install `PUMS_null` in postgres `public` schema and point to `pums` (with no schema) to test public schema search path resolution.  You can check the `connections-unit.yaml` under `tests/setup/postgres` to see the syntax.
 
 ## Test Against Multiple Engines
 
-Unit tests which check query outputs should run on all available engines.  In normal development, this will be `pandas` only, but in CI will include `spark`, `postgres`, and `sqlserver`.  Developers can have all of these installed locally, and `pandas` can be disabled with `export SKIP_PANDAS=1`.  If you have a unit test that requests pandas only, make sure the test checks for `None` from the reader, since `DbCollection` will not return pandas readers when `SKIP_PANDAS` is set.
+Unit tests which check query outputs should run on all available engines.  In normal development, this will be `pandas` only, but in CI will include `spark`, `postgres`, `sqlserver` and `bigquery`.  Developers can have all of these installed locally (except `bigquery` which will require GCP credentials), and `pandas` can be disabled with `export SKIP_PANDAS=1`.  If you have a unit test that requests pandas only, make sure the test checks for `None` from the reader, since `DbCollection` will not return pandas readers when `SKIP_PANDAS` is set.
 
 Runs a test against all available engines that have PUMS_pid:
 
