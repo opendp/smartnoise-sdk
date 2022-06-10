@@ -12,5 +12,4 @@ variable "region" {
 variable "bucket_name" {
   description = "The zone in the europe-west region for resources"
   type        = string
-  default     = "smartnoise-ci-bucket-jsa"
 }
