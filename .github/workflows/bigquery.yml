@@ -87,11 +87,6 @@ jobs:
           -var 'region=${{ secrets.GOOGLE_REGION }}' \
           -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
-      - name: Verify database counts
-        continue-on-error: true
-        run: |
-          echo "TODO: Verify dataset counts"
-
       - name: Test SDK
         continue-on-error: true
         env:
