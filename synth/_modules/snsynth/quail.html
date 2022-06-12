@@ -1,0 +1,353 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snsynth.quail &#8212; OpenDP SmartNoise Synthesizers</title>
+    
+  <link href="../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/blank.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+
+<a class="navbar-brand" href="http://docs.smartnoise.org">
+  <img src="../../_static/smartnoise-logo.svg" class="logo" alt="logo">
+</a>
+
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../api/index.html">
+  API index
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/smartnoise-sdk" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://twitter.com/opendp_org" rel="noopener" target="_blank" title="Twitter">
+            <span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/opendp/discussions" rel="noopener" target="_blank" title="GitHub Discussions">
+            <span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for snsynth.quail</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">SDGYMBaseSynthesizer</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="QUAILSynthesizer"><a class="viewcode-back" href="../../api/index.html#snsynth.QUAILSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">QUAILSynthesizer</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">epsilon</span><span class="p">,</span>
+        <span class="n">dp_synthesizer</span><span class="p">,</span>
+        <span class="n">dp_classifier</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">,</span>
+        <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">eps_split</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Quailified Architecture to Improve Labeling.</span>
+<span class="sd">        Divide epsilon in a known classification task</span>
+<span class="sd">        between a differentially private synthesizer and</span>
+<span class="sd">        classifier. Train DP classifier on real, fit DP synthesizer</span>
+<span class="sd">        to features (excluding the target label),</span>
+<span class="sd">        and use synthetic data from the DP synthesizer with</span>
+<span class="sd">        the DP classifier to create artificial labels. Produces</span>
+<span class="sd">        complete synthetic data.</span>
+
+<span class="sd">        More information here:</span>
+<span class="sd">        Differentially Private Synthetic Data: Applied Evaluations and Enhancements</span>
+<span class="sd">        https://arxiv.org/abs/2011.05537</span>
+
+<span class="sd">        :param epsilon: Total epsilon used across the DP Synthesizer and DP Classifier</span>
+<span class="sd">        :type epsilon: float</span>
+<span class="sd">        :param dp_synthesizer: A function that returns an instance of a DP Synthesizer</span>
+<span class="sd">            for a specified epsilon value</span>
+<span class="sd">        :type dp_synthesizer: function (epsilon) -&gt; SDGYMBaseSynthesizer</span>
+<span class="sd">        :param dp_classifier: A function that returns an instance of a DP Classifier</span>
+<span class="sd">            for a specified epsilon value</span>
+<span class="sd">        :type dp_classifier: function (epsilon) -&gt; classifier</span>
+<span class="sd">        :param target: The column name of the target column</span>
+<span class="sd">        :type target: str</span>
+<span class="sd">        :param test_size: Percent of the data that should be used for the test set,</span>
+<span class="sd">            defaults to 0.2</span>
+<span class="sd">        :type test_size: float, optional</span>
+<span class="sd">        :param seed: Seed for controlling randomness for testing, defaults to None</span>
+<span class="sd">        :type seed: int, optional</span>
+<span class="sd">        :param eps_split: Percent of epsilon used for the classifier.</span>
+<span class="sd">            1 - eps_split is used for the Synthesizer., defaults to 0.9</span>
+<span class="sd">        :type eps_split: float, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps_split</span> <span class="o">=</span> <span class="n">eps_split</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp_synthesizer</span> <span class="o">=</span> <span class="n">dp_synthesizer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp_classifier</span> <span class="o">=</span> <span class="n">dp_classifier</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">=</span> <span class="n">test_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+
+        <span class="c1"># Model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_synth</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Pandas check</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pd_cols</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pd_index</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="o">.</span><span class="n">fit</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">,</span>
+        <span class="n">categorical_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span>
+        <span class="n">ordinal_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span>
+        <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">continuous_columns_lower_upper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Takes a dataset and fits the synthesizer/learning model to it, using the epsilon split</span>
+<span class="sd">        specified in the init.</span>
+
+<span class="sd">        :param data: Data</span>
+<span class="sd">        :type data: pd.DataFrame or np.array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;verbose is deprecated. Use logging.setLevel instead&quot;</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+        <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">classification_report</span>
+        <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pd_cols</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pd_index</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="p">(</span><span class="s2">&quot;Only pandas dataframes for data as of now.&quot;</span><span class="p">)</span>
+
+        <span class="n">private_features</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">]</span>
+        <span class="n">private_target</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">]</span>
+        <span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+            <span class="n">private_features</span><span class="p">,</span>
+            <span class="n">private_target</span><span class="p">,</span>
+            <span class="n">test_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_size</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Here we train a differentially private model on the real</span>
+        <span class="c1"># data. We report on the accuracy for now to give a sense of</span>
+        <span class="c1"># the upper bound on performance in the sampling step.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp_classifier</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_split</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_report</span> <span class="o">=</span> <span class="n">classification_report</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">y_test</span><span class="p">),</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">y_test</span><span class="p">),</span> <span class="n">predictions</span><span class="p">)</span>
+        <span class="n">log_level</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">level</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="s2">&quot;Internal model report: &quot;</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_report</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_accuracy</span><span class="p">)</span>
+
+        <span class="c1"># We use the features in our synthesis.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_synth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp_synthesizer</span><span class="p">(</span>
+            <span class="n">epsilon</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_split</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">private_features</span><span class="p">,</span>
+            <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span>
+            <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span>
+            <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span>
+            <span class="n">continuous_columns_lower_upper</span><span class="o">=</span><span class="n">continuous_columns_lower_upper</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="p">,</span> <span class="s2">&quot;coef_&quot;</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="o">.</span><span class="n">coef_</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="p">,</span> <span class="s2">&quot;intercept_&quot;</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="o">.</span><span class="n">intercept_</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="p">,</span> <span class="s2">&quot;classes_&quot;</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="o">.</span><span class="n">classes_</span><span class="p">)</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample from the synthesizer model.</span>
+
+<span class="sd">        :param samples: The number of samples to create</span>
+<span class="sd">        :type samples: int</span>
+<span class="sd">        :return: A dataframe of length samples</span>
+<span class="sd">        :rtype: pd.Dataframe</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sampled_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+        <span class="n">y_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">sampled_features</span><span class="p">)</span>
+
+        <span class="n">sampled_features</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_values</span>
+        <span class="k">return</span> <span class="n">sampled_features</span></div>
+</pre></div>
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2022.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.1.2.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>
