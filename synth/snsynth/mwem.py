@@ -263,7 +263,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 # NOTE: Add laplace noise here with budget
                 evals = self._evaluate(queries[qi], hist)
                 lap = self._laplace(
-                    (2 * self.iterations * len(self.histograms)) / (self.epsilon * len(dimensions))
+                    (2 * self.iterations * len(self.histograms)) / (self.epsilon)
                 )
                 measurements[qi] = evals + lap
                 # Improve approximation with Multiplicative Weights
