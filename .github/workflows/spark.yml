@@ -42,7 +42,7 @@ jobs:
         cd sql
         pip install --no-cache-dir -r tests/requirements.txt
         pip install --no-cache-dir pyspark
-        pip install --no-cache-dir opendp-smartnoise-core # temporary
+        pip install --no-cache-dir opendp-smartnoise-core
     - name: Install smartnoise-sql
       shell: bash -l {0}
       run: |

@@ -1,0 +1,15 @@
+bigquery:
+  host: 
+  port: 
+  user: 
+  datasets:
+    PUMS: 
+      table: "`{secrets.GOOGLE_PROJECT_ID}`.PUMS.PUMS"
+    PUMS_large: 
+      table: "`{secrets.GOOGLE_PROJECT_ID}`.PUMS.PUMS_LARGE"
+    PUMS_pid: 
+      table: "`{secrets.GOOGLE_PROJECT_ID}`.PUMS.PUMS_PID"
+    PUMS_dup: 
+      table: "`{secrets.GOOGLE_PROJECT_ID}`.PUMS.PUMS_DUP"
+    PUMS_null: 
+      table: "`{secrets.GOOGLE_PROJECT_ID}`.PUMS.PUMS_NULL"

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "age",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "sex",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "educ",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "race",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "married",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

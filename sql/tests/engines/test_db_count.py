@@ -54,7 +54,7 @@ class TestDbCounts:
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(*) rows in {reader.engine}")
                 assert(n > lower and n < upper)
     def test_db_counts_no_max_ids(self, test_databases):
-        # Actual is ~1690
+        # Actual is ~1690 or ~1950 depending on PRNG
         for dbname in ['PUMS_dup', 'PUMS_null']:
             overrides = {'max_ids': 9, 'censor_dims': False}
             readers = test_databases.get_private_readers(privacy=privacy, database=dbname, overrides=overrides)
@@ -65,7 +65,7 @@ class TestDbCounts:
                 res = test_databases.to_tuples(res)
                 n = res[1][0]
                 lower = 1650
-                upper = 1800
+                upper = 2200
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(*) rows in {reader.engine} with no max_ids")
                 assert(n > lower and n < upper)
     @pytest.mark.skipif(sys.version_info < (3, 8), reason="Skip because older PRNG")

@@ -1,0 +1,114 @@
+name: GCP BigQuery Integration Tests
+on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9]
+      max-parallel: 5
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.0
+
+      - name: Set up miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          auto-update-conda: true
+          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        shell: bash -l {0}
+        run: |
+          conda install pip
+          conda update pip
+
+      - name: Setup SDK
+        shell: bash -l {0}
+        run: |
+          cd sql
+          pip install --no-cache-dir -r tests/requirements.txt
+          pip install --no-cache-dir -r tests/setup/bigquery/requirements.txt
+          pip install --no-cache-dir  . # sdk
+
+      - name: Download test datasets
+        shell: bash -l {0}
+        run: |
+          cd sql
+          python tests/check_databases.py
+          cd ..
+          cp datasets/PUMS_large.csv datasets/PUMS_large.csv.bak
+          sed 's/"//g' datasets/PUMS_large.csv.bak > datasets/PUMS_large.csv
+
+      - name: Terraform Init - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform init \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
+
+      - name: Terraform Plan - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform plan \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
+
+      - name: Terraform Apply - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
+        continue-on-error: true
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform apply \
+          -auto-approve \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
+
+      - name: Test SDK
+        continue-on-error: true
+        env:
+          GOOGLE_PROJECT_ID: "${{ secrets.GOOGLE_PROJECT_ID }}"
+          GOOGLE_APPLICATION_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
+        shell: bash -l {0}
+        run: |
+          cd sql
+          mkdir ~/.smartnoise
+          cp tests/setup/bigquery/connections-unit.yaml ~/.smartnoise/connections-unit-template.yaml
+          sed "s/{secrets.GOOGLE_PROJECT_ID}/$GOOGLE_PROJECT_ID/g" ~/.smartnoise/connections-unit-template.yaml > ~/.smartnoise/connections-unit.yaml
+          export SKIP_PANDAS=1
+          pytest tests
+
+      - name: Terraform Destroy - BigQuery dataset
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
+        continue-on-error: true
+        run: |
+          cd sql/tests/terraform/bigquery
+          terraform destroy \
+          -auto-approve \
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'

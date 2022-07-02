@@ -10,6 +10,7 @@ Differentially private SQL queries.  Tested with:
 * Spark
 * Pandas (SQLite)
 * PrestoDB
+* BigQuery
 
 SmartNoise is intended for scenarios where the analyst is trusted by the data owner.  SmartNoise uses the [OpenDP](https://github.com/opendp/opendp) library of differential privacy algorithms.
 
