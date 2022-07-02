@@ -60,11 +60,8 @@ jobs:
       - name: Terraform Init - BigQuery dataset
         env:
           GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
-          TF_LOG: TRACE
         run: |
-          echo $TF_LOG
           cd sql/tests/terraform/bigquery
-          terraform -help
           terraform init \
           -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
           -var 'region=${{ secrets.GOOGLE_REGION }}' \
@@ -89,13 +86,6 @@ jobs:
           terraform apply \
           -auto-approve \
           -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
-          -var 'region=${{ secrets.GOOGLE_REGION }}' \
-          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
-
-      - name: Verify database counts
-        continue-on-error: true
-        run: |
-          echo "TODO: Verify dataset counts"
           -var 'region=${{ secrets.GOOGLE_REGION }}' \
           -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
