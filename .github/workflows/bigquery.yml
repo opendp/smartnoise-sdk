@@ -64,7 +64,8 @@ jobs:
           cd sql/tests/terraform/bigquery
           terraform init \
           -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
-          -var 'region=${{ secrets.GOOGLE_REGION }}'
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
       - name: Terraform Plan - BigQuery dataset
         env:
@@ -73,7 +74,8 @@ jobs:
           cd sql/tests/terraform/bigquery
           terraform plan \
           -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
-          -var 'region=${{ secrets.GOOGLE_REGION }}'
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
       - name: Terraform Apply - BigQuery dataset
         env:
@@ -90,11 +92,14 @@ jobs:
         continue-on-error: true
         run: |
           echo "TODO: Verify dataset counts"
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'
 
       - name: Test SDK
         continue-on-error: true
         env:
           GOOGLE_PROJECT_ID: "${{ secrets.GOOGLE_PROJECT_ID }}"
+          GOOGLE_APPLICATION_CREDENTIALS: "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"
         shell: bash -l {0}
         run: |
           cd sql
@@ -112,4 +117,6 @@ jobs:
           cd sql/tests/terraform/bigquery
           terraform destroy \
           -auto-approve \
-          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}'
+          -var 'project_id=${{ secrets.GOOGLE_PROJECT_ID }}' \
+          -var 'region=${{ secrets.GOOGLE_REGION }}' \
+          -var 'bucket_name=${{ secrets.GOOGLE_BUCKET_NAME }}'

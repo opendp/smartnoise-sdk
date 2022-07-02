@@ -16,7 +16,6 @@ antlr4-python3-runtime = "4.9.3"
 pandasql = "^0.7.3"
 PyYAML = "^5.4.1"
 graphviz = "^0.17"
-google-cloud-bigquery = {extras = ["bqstorage", "pandas"], version = "^2.34.0"}
 
 [tool.poetry.dev-dependencies]
 

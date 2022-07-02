@@ -71,6 +71,7 @@ class DbCollection:
                         self.engines[engine] = MySqlFactory(engine, user, host, port, datasets)
                     elif engine == "bigquery":
                         self.engines[engine] = BigQueryFactory(engine, user, host, port, datasets)
+
     def __str__(self):
         description = ""
         for engine in self.engines:
