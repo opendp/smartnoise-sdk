@@ -39,9 +39,7 @@ class MSTSynthesizer(SDGYMBaseSynthesizer):
                  domain="test",
                  epsilon=0.1,
                  delta=1e-9,
-                 degree=2,
                  num_marginals=None,
-                 max_cells=10000,
                  domain_path=None,
                  domains_dict=None):
 
@@ -59,25 +57,17 @@ class MSTSynthesizer(SDGYMBaseSynthesizer):
         if dict_domain is None:
             raise ValueError("Domain file not found for: " + domain + " and " + domain_name)
         self.domain = Domain.fromdict(dict_domain)
-        self.degree = degree
         self.epsilon = epsilon
         self.delta = delta
         self.num_marginals = num_marginals
-        self.max_cells = max_cells
 
         self.synthesizer = None
         self.num_rows = None
 
     def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(), prng=np.random):
         self.num_rows = len(data)
-        print(self.domain)
-        print(data.columns)
-        data = Dataset(df=data, domain=self.domain)
 
-        workload = list(itertools.combinations(data.domain, self.degree))
-        workload = [cl for cl in workload if data.domain.size(cl) <= self.max_cells]
-        if self.num_marginals is not None:
-            workload = [workload[i] for i in prng.choice(len(workload), self.num_marginals, replace=False)]
+        data = Dataset(df=data, domain=self.domain)
 
         self.MST(data, self.epsilon, self.delta)
 

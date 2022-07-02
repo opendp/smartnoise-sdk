@@ -22,6 +22,7 @@ pip install smartnoise-synth
 ### MWEM
 
 ```python
+import snsynth
 import pandas as pd
 import numpy as np
 
@@ -38,8 +39,10 @@ print(sample)
 ### DP-CTGAN
 
 ```python
+import snsynth
 import pandas as pd
 import numpy as np
+
 from snsynth.pytorch.nn import DPCTGAN
 from snsynth.pytorch import PytorchDPSynthesizer
 
@@ -56,8 +59,10 @@ print(sample)
 ### PATE-CTGAN
 
 ```python
+import snsynth
 import pandas as pd
 import numpy as np
+
 from snsynth.pytorch.nn import PATECTGAN
 from snsynth.pytorch import PytorchDPSynthesizer
 

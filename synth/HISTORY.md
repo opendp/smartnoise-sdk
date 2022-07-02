@@ -1,3 +1,9 @@
+# SmartNoise Synth v0.2.6 Release Notes
+
+* Support for MST synthesizer.
+* Re-enabled support for continuous values in GAN synthesizers.
+* Fixed bug where MWEM was adding too much noise
+
 # SmartNoise Synth v0.2.5 Release Notes
 
 Bug fix where CTGAN synthesizers could silently use continuous column if called without PytorchDPSynthesizer wrapper.

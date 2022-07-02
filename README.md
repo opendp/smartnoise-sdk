@@ -80,7 +80,7 @@ pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
 pums = pums.drop(['income'], axis=1)
 
 synth = PytorchDPSynthesizer(1.0, PATECTGAN(regularization='dragan'), None)
-synth.fit(pums, categorical_columns=pums.columns)
+synth.fit(pums, categorical_columns=pums.columns.values.tolist())
 
 sample = synth.sample(10) # synthesize 10 rows
 print(sample)
