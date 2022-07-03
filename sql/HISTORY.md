@@ -1,5 +1,6 @@
 # SmartNoise SQL v0.2.4 Release Notes
 
+* Support for BigQuery (thanks, @oskarkocol!)
 * Support for nullable and fixed imputation
 * Allow override of sensitivity via metadata
 
