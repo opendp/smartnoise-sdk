@@ -6,7 +6,6 @@ variable "project_id" {
 variable "region" {
   description = "The region where resources are created => europe-west2"
   type        = string
-  default     = "us-west1"
 }
 
 variable "bucket_name" {

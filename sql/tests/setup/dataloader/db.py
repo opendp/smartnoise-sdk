@@ -21,6 +21,7 @@ pums_schema_path = os.path.join(root_url,"datasets", "PUMS.yaml")
 pums_dup_schema_path = os.path.join(root_url,"datasets", "PUMS_dup.yaml")
 pums_null_schema_path = os.path.join(root_url,"datasets", "PUMS_dup.yaml")
 
+
 class DbCollection:
     # Collection of test databases keyed by engine and database name.
     # Automatically connects to databases listed in connections-unit.yaml
