@@ -44,4 +44,28 @@ PyTorch
 
     .. automethod:: __init__
 
+============
+Transformers
+============
+
+Column Transformers
+-------------------
+
+.. autoclass:: snsynth.transform.minmax.MinMaxTransformer
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: snsynth.transform.label.LabelTransformer
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: snsynth.transform.onehot.OneHotEncoder
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
 

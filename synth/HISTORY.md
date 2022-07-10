@@ -1,3 +1,8 @@
+# SmartNoise Synth v0.2.7 Release Notes
+
+* Factory Interface
+* Differentially Private Reversible Transforms
+
 # SmartNoise Synth v0.2.6 Release Notes
 
 * Support for MST synthesizer.
