@@ -4,7 +4,10 @@ class TableTransformer:
     def __init__(self, transformers):
         # one transformer per column
         self.transformers = transformers
-        self.output_width = 0  # will be zero until fit is called
+        if self.fit_complete:
+            self.output_width = sum([t.output_width for t in self.transformers])
+        else:
+            self.output_width = 0
     @property
     def fit_complete(self):
         return all([t.fit_complete for t in self.transformers])
@@ -38,6 +41,8 @@ class TableTransformer:
     def inverse_transform(self, data):
         return [self._inverse_transform(row) for row in data]
     def _inverse_transform(self, row):
+        if len(row) != self.output_width:
+            raise ValueError(f"Row has wrong length: got {len(row)}, expected {self.output_width}")
         out_row = []
         row = list(row)
         for t in self.transformers:

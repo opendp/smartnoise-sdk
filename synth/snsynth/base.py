@@ -1,3 +1,23 @@
+from enum import Enum
+
+
+class Synthesizer:
+    def fit(self, data, transformer=None):
+        raise NotImplementedError()
+    def sample(self, samples):
+        raise NotImplementedError()
+    def fit_sample(self, data, transformer=None):
+        raise NotImplementedError()
+    @property
+    def fit_complete(self):
+        raise NotImplementedError()
+    @property
+    def output_width(self):
+        raise NotImplementedError()
+    @property
+    def requires(self):
+        raise NotImplementedError()
+
 class SDGYMBaseSynthesizer:
 
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
