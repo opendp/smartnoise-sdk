@@ -1,6 +1,7 @@
 import math
 import random
 import warnings
+from itertools import combinations
 
 from functools import wraps
 
@@ -143,7 +144,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.q_values = []
         for h in self.histograms:
             # h[1] is dimensions for each histogram
-            self.q_values.append(self._compose_arbitrary_slices(self.q_count, h[1]))
+            #self.q_values.append(self._compose_arbitrary_slices(self.q_count, h[1]))
+            self.q_values.append(self._compose_marginal_slices(self.q_count, h[1]))
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
 
@@ -242,9 +244,18 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 )
 
             for i in range(self.iterations):
+                eps = ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
                 # print("Iteration: " + str(i))
+                #errors = [
+                #    abs(self._evaluate(queries[i], hist) - self._evaluate(queries[i], synth_hist)) * (eps / 2.0)
+                #    for i in range(len(queries))
+                #]
+                #maxi = max(errors)
+                #meani = np.mean(errors)
+
+                ###
                 qi = self._exponential_mechanism(
-                    hist, synth_hist, queries, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
+                    hist, synth_hist, queries, eps
                 )
                 # Make sure we get a different query to measure:
                 count_retries = 0
@@ -256,20 +267,26 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                             + "retries.")
 
                     qi = self._exponential_mechanism(
-                        hist, synth_hist, queries, ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
+                        hist, synth_hist, queries, eps
                     )
                     count_retries += 1
 
                 # NOTE: Add laplace noise here with budget
-                evals = self._evaluate(queries[qi], hist)
+                selected_query = queries[qi]
+                actual = self._evaluate(selected_query, hist)
+                #pre_estimate = self._evaluate(selected_query, synth_hist)
+                #error = abs(actual - pre_estimate)
                 lap = self._laplace(
                     (2 * self.iterations * len(self.histograms)) / (self.epsilon)
                 )
-                measurements[qi] = evals + lap
+                measurements[qi] = actual + lap
                 # Improve approximation with Multiplicative Weights
                 synth_hist = self._multiplicative_weights(
                     synth_hist, queries, measurements, hist, self.mult_weights_iterations
                 )
+                #post_estimate = self._evaluate(selected_query, synth_hist)
+                #print(f"Max error: {maxi}, mean error {meani}, error: {error}")
+                #print(f"Selected query {qi} with error {error}.  Pre-estimate {pre_estimate}. Post-estimate {post_estimate}.  Post-error {abs(post_estimate - actual)}")
             a_values.append((synth_hist, hist, split))
         return a_values
 
@@ -374,6 +391,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             for i in range(len(queries))
         ]
         maxi = max(errors)
+        #meani = np.mean(errors)
+        #errors_noscale = errors
         errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
         r = random.random()
         e_s = sum(errors)
@@ -381,6 +400,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for i in range(len(errors)):
             c += errors[i]
             if c > r * e_s:
+                # print(f"Avg error: {meani}, max error: {maxi}, selected query {i} with error {errors_noscale[i]}")
                 return i
         return len(errors) - 1
 
@@ -419,6 +439,31 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 count_a = np.sum(synth_hist)
                 synth_hist = synth_hist * (sum_a / count_a)
         return synth_hist
+
+    def _compose_marginal_slices(self, num_s, dimensions):
+        slices_list = []
+
+        while len(slices_list) < num_s:
+            # one-way marginals
+            for i, d in enumerate(dimensions):
+                for j in range(d):
+                    slice_arr = [np.s_[:] if p != i else np.s_[j] for p, _ in enumerate(dimensions)]
+                    slices_list.append(list(reversed(slice_arr)))
+                    if len(slices_list) >= num_s:
+                        return slices_list
+
+            for pair in combinations(range(len(dimensions)), 2):
+                x, y = pair
+                for i in range(dimensions[x]):
+                    for j in range(dimensions[y]):
+                        slice_arr = [np.s_[:] for _ in range(len(dimensions))]
+                        slice_arr[x] = np.s_[i]
+                        slice_arr[y] = np.s_[j]
+                        slices_list.append(list(reversed(slice_arr)))
+                        if len(slices_list) >= num_s:
+                            return slices_list
+            return slices_list
+
 
     def _compose_arbitrary_slices(self, num_s, dimensions):
         """
