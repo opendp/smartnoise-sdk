@@ -169,6 +169,11 @@
      PATE-CTGAN
     </a>
    </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#mst">
+     MST
+    </a>
+   </li>
   </ul>
  </li>
 </ul>
@@ -197,18 +202,19 @@
 <div class="contents local topic" id="table-of-contents">
 <p class="topic-title">Table of Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#api-reference" id="id1">API Reference</a></p></li>
-<li><p><a class="reference internal" href="#getting-started" id="id2">Getting Started</a></p>
+<li><p><a class="reference internal" href="#api-reference" id="id2">API Reference</a></p></li>
+<li><p><a class="reference internal" href="#getting-started" id="id3">Getting Started</a></p>
 <ul>
-<li><p><a class="reference internal" href="#mwem" id="id3">MWEM</a></p></li>
-<li><p><a class="reference internal" href="#dp-ctgan" id="id4">DP-CTGAN</a></p></li>
-<li><p><a class="reference internal" href="#pate-ctgan" id="id5">PATE-CTGAN</a></p></li>
+<li><p><a class="reference internal" href="#mwem" id="id4">MWEM</a></p></li>
+<li><p><a class="reference internal" href="#dp-ctgan" id="id5">DP-CTGAN</a></p></li>
+<li><p><a class="reference internal" href="#pate-ctgan" id="id6">PATE-CTGAN</a></p></li>
+<li><p><a class="reference internal" href="#mst" id="id7">MST</a></p></li>
 </ul>
 </li>
 </ul>
 </div>
 <section id="api-reference">
-<h2><a class="toc-backref" href="#id1">API Reference</a><a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id2">API Reference</a><a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">API index</a><ul>
@@ -221,10 +227,10 @@
 </div>
 </section>
 <section id="getting-started">
-<h2><a class="toc-backref" href="#id2">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id3">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <section id="mwem">
-<h3><a class="toc-backref" href="#id3">MWEM</a><a class="headerlink" href="#mwem" title="Permalink to this headline">¶</a></h3>
-<p>Multiplicative Weights Exponential Mechanism.</p>
+<h3><a class="toc-backref" href="#id4">MWEM</a><a class="headerlink" href="#mwem" title="Permalink to this headline">¶</a></h3>
+<p>Multiplicative Weights Exponential Mechanism.  From “<a class="reference external" href="https://www.cs.huji.ac.il/~katrina//papers/mwem-nips.pdf">A Simple and Practical Algorithm for Differentially Private Data Release</a>”.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsynth</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -242,20 +248,21 @@
 </div>
 </section>
 <section id="dp-ctgan">
-<h3><a class="toc-backref" href="#id4">DP-CTGAN</a><a class="headerlink" href="#dp-ctgan" title="Permalink to this headline">¶</a></h3>
-<p>Conditional tabular GAN with differentially private stochastic gradient descent.</p>
+<h3><a class="toc-backref" href="#id5">DP-CTGAN</a><a class="headerlink" href="#dp-ctgan" title="Permalink to this headline">¶</a></h3>
+<p>Conditional tabular GAN with differentially private stochastic gradient descent.  From “<a class="reference external" href="https://arxiv.org/abs/1907.00503">Modeling Tabular data using Conditional GAN</a>”.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsynth</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">snsynth.pytorch.nn</span> <span class="kn">import</span> <span class="n">DPCTGAN</span>
 <span class="kn">from</span> <span class="nn">snsynth.pytorch</span> <span class="kn">import</span> <span class="n">PytorchDPSynthesizer</span>
+<span class="kn">from</span> <span class="nn">snsynth.preprocessors.data_transformer</span> <span class="kn">import</span> <span class="n">BaseTransformer</span>
 
 <span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">pums_csv_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
 <span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">synth</span> <span class="o">=</span> <span class="n">PytorchDPSynthesizer</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">DPCTGAN</span><span class="p">(),</span> <span class="kc">None</span><span class="p">)</span>
-<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">PytorchDPSynthesizer</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">DPCTGAN</span><span class="p">())</span>
+<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="n">transformer</span><span class="o">=</span><span class="n">BaseTransformer</span><span class="p">)</span>
 
 <span class="n">sample</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># synthesize 10 rows</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
@@ -263,26 +270,47 @@
 </div>
 </section>
 <section id="pate-ctgan">
-<h3><a class="toc-backref" href="#id5">PATE-CTGAN</a><a class="headerlink" href="#pate-ctgan" title="Permalink to this headline">¶</a></h3>
-<p>Conditional tabular GAN using Private Aggregation of Teacher Ensembles.</p>
+<h3><a class="toc-backref" href="#id6">PATE-CTGAN</a><a class="headerlink" href="#pate-ctgan" title="Permalink to this headline">¶</a></h3>
+<p>Conditional tabular GAN using Private Aggregation of Teacher Ensembles.  From “<a class="reference external" href="https://openreview.net/pdf?id=S1zk9iRqF7">PATE-GAN: Generating Synthetic Data with Differential Privacy Guarantees</a>” and “<a class="reference external" href="https://arxiv.org/abs/1907.00503">Modeling Tabular data using Conditional GAN</a>”.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsynth</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">snsynth.pytorch.nn</span> <span class="kn">import</span> <span class="n">PATECTGAN</span>
 <span class="kn">from</span> <span class="nn">snsynth.pytorch</span> <span class="kn">import</span> <span class="n">PytorchDPSynthesizer</span>
+<span class="kn">from</span> <span class="nn">snsynth.preprocessors.data_transformer</span> <span class="kn">import</span> <span class="n">BaseTransformer</span>
 
 <span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">pums_csv_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
 <span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">synth</span> <span class="o">=</span> <span class="n">PytorchDPSynthesizer</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">PATECTGAN</span><span class="p">(</span><span class="n">regularization</span><span class="o">=</span><span class="s1">&#39;dragan&#39;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
-<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">PytorchDPSynthesizer</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">PATECTGAN</span><span class="p">(</span><span class="n">regularization</span><span class="o">=</span><span class="s1">&#39;dragan&#39;</span><span class="p">))</span>
+<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="n">transformer</span><span class="o">=</span><span class="n">BaseTransformer</span><span class="p">)</span>
 
 <span class="n">sample</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># synthesize 10 rows</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This is version 0.2.6 of the guides, last built on Jun 11, 2022.</p>
+</section>
+<section id="mst">
+<h3><a class="toc-backref" href="#id7">MST</a><a class="headerlink" href="#mst" title="Permalink to this headline">¶</a></h3>
+<p>MST achieves state of the art results for marginals over categorical data, and does well even with small source data.  From McKenna et al. “<a class="reference external" href="https://arxiv.org/abs/2108.04978">Winning the NIST Contest: A scalable and general approach to differentially private synthetic data</a>”</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsynth</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">pums_csv_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">Domains</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pums&quot;</span><span class="p">:</span> <span class="s2">&quot;samples/mst_sample/pums-domain.json&quot;</span><span class="p">}</span> <span class="c1"># in samples/mst_sample</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">snsynth</span><span class="o">.</span><span class="n">MSTSynthesizer</span><span class="p">(</span><span class="n">domains_dict</span><span class="o">=</span><span class="n">Domains</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;pums&quot;</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
+
+<span class="n">sample</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># synthesize 10 rows</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For more, see the <a class="reference external" href="https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/mst_sample">sample notebook</a></p>
+<p>This is version 0.2.6 of the guides, last built on Jul 27, 2022.</p>
 </section>
 </section>
 </section>
