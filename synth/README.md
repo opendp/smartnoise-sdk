@@ -6,6 +6,7 @@
 
 Differentially private synthesizers for tabular data.  Package includes:
 * MWEM
+* MST
 * QUAIL
 * DP-CTGAN
 * PATE-CTGAN
@@ -19,68 +20,11 @@ pip install smartnoise-synth
 
 ## Using
 
-### MWEM
-
-```python
-import snsynth
-import pandas as pd
-import numpy as np
-
-pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
-pums = pums.drop(['income'], axis=1)
-nf = pums.to_numpy().astype(int)
-
-synth = snsynth.MWEMSynthesizer(epsilon=1.0, split_factor=nf.shape[1]) 
-synth.fit(nf)
-
-sample = synth.sample(10)
-print(sample)
-```
-### DP-CTGAN
-
-```python
-import snsynth
-import pandas as pd
-import numpy as np
-
-from snsynth.pytorch.nn import DPCTGAN
-from snsynth.pytorch import PytorchDPSynthesizer
-from snsynth.preprocessors.data_transformer import BaseTransformer
-
-pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
-pums = pums.drop(['income'], axis=1)
-
-synth = PytorchDPSynthesizer(1.0, DPCTGAN())
-synth.fit(pums, categorical_columns=list(pums.columns), transformer=BaseTransformer)
-
-sample = synth.sample(10) # synthesize 10 rows
-print(sample)
-```
-
-### PATE-CTGAN
-
-```python
-import snsynth
-import pandas as pd
-import numpy as np
-
-from snsynth.pytorch.nn import PATECTGAN
-from snsynth.pytorch import PytorchDPSynthesizer
-from snsynth.preprocessors.data_transformer import BaseTransformer
-
-pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
-pums = pums.drop(['income'], axis=1)
-
-synth = PytorchDPSynthesizer(1.0, PATECTGAN(regularization='dragan'))
-synth.fit(pums, categorical_columns=list(pums.columns), transformer=BaseTransformer)
-
-sample = synth.sample(10) # synthesize 10 rows
-print(sample)
-```
+Please see the [SmartNoise synthesizers documentation](https://docs.smartnoise.org/synth/index.html) for usage examples.
 
 ## Note on Inputs
 
-MWEM, DP-CTGAN, and PATE-CTGAN require columns to be categorical. If you have columns with continuous values, you should discretize them before fitting.  Take care to discretize in a way that does not reveal information about the distribution of the data.
+MWEM and MST require columns to be categorical. If you have columns with continuous values, you should discretize them before fitting.  Take care to discretize in a way that does not reveal information about the distribution of the data.
 
 ## Communication
 
