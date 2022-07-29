@@ -1,7 +1,7 @@
 import math
 import random
 import warnings
-from itertools import combinations
+from itertools import combinations, product
 
 from functools import wraps
 
@@ -10,9 +10,99 @@ import pandas as pd
 
 from snsynth.base import SDGYMBaseSynthesizer
 
+class Query:
+    def __init__(self, query):
+        self.query = query
+    def evaluate(self, hist):
+        e = hist.T[tuple(self.query)]
+        if isinstance(e, np.ndarray):
+            return np.sum(e)
+        else:
+            return e
+    def error(self, hist, synth_hist):
+        return np.abs(self.evaluate(hist) - self.evaluate(synth_hist))
+    def mask(self, hist):
+        data = np.zeros_like(hist.copy())
+        view = data.copy()
+        view.T[tuple(self.query)] = 1.0
+        return view
+    @classmethod
+    def make_arbitrary(cls, dims):
+        inds = []
+        for _, s in np.ndenumerate(dims):
+            # Random linear sample, within dimensions
+            a = np.random.randint(s)
+            b = np.random.randint(s)
+            l_b = min(a, b)
+            u_b = max(a, b) + 1
+            pre = []
+            pre.append(l_b)
+            pre.append(u_b)
+            inds.append(pre)
+        # Compose slice
+        sl = []
+        for ind in inds:
+            sl.append(np.s_[ind[0]: ind[1]])
+        return Query(sl)    
+    @classmethod
+    def make_marginals(cls, dims_mask):
+        # Makes all marginal slices matching the dimensions
+        # Some should be set to None to marginalize.  For example,
+        # if dims = (2,None,7), then the middle dimension is marginalized,
+        # and slices for all of 2x7 are made.
+        dims_mask = list(reversed(dims_mask))
+        mask = [1 if v is not None else 0 for v in dims_mask]
+        mask = np.cumsum(mask) - 1
+        mask = [x if y is not None else None for x, y in zip(mask, dims_mask)]
+
+        dims = [d for d in dims_mask if d is not None]
+        ranges = [range(d) for d in dims]
+        prod = product(*ranges) # cartesian product
+
+        return [
+            Query([
+                np.s_[:] if v is None else np.s_[p[v]] for v in mask
+            ]) for p in prod
+        ]
+
+class Cuboid:
+    def __init__(self, queries):
+        self.queries = queries
+
+class Histogram:
+    def __init__(self, data, dimensions, bins, split):
+        self.data = data
+        self.dimensions = dimensions
+        self.bins = bins
+        self.split = split
+        self.queries = []
+        assert(len(self.dimensions) == len(self.bins))
+        assert(len(self.dimensions) == len(self.split))
+        assert(all([a == b for a, b in zip(self.data.shape, self.dimensions)]))
+    @property
+    def dimensionality(self):
+        return np.prod(self.dimensions)
+    @property
+    def n_cols(self):
+        return len(self.dimensions)
+    def make_arbitrary_queries(self, n):
+        for _ in range(n):
+            self.queries.append(Query.make_arbitrary(self.dimensions))
+    def make_marginal_queries(self, n):
+        dims = self.dimensions
+
+        # one-way
+        for idx in range(len(dims)):
+            dims_mask = [d if i == idx else None for i, d in enumerate(dims)]
+            self.queries.extend(Query.make_marginals(dims_mask))
+
+        # two-way
+        for a, b in combinations(list(range(len(dims))), 2):
+            dims_mask = [d if i == a or i == b else None for i, d in enumerate(dims)]
+            self.queries.extend(Query.make_marginals(dims_mask))
+
 
 class MWEMSynthesizer(SDGYMBaseSynthesizer):
-
     def __init__(
         self,
         epsilon=3.0,
@@ -23,7 +113,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         split_factor=None,
         max_bin_count=500,
         custom_bin_count={},
-        max_retries_exp_mechanism=1000
+        max_retries_exp_mechanism=1000,
+        debug=False
     ):
         """
          N-Dimensional numpy implementation of MWEM.
@@ -90,6 +181,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.mins_maxes = {}
         self.scale = {}
         self.custom_bin_count = custom_bin_count
+        self.debug = debug
 
         # Pandas check
         self.pandas = False
@@ -141,11 +233,23 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             )
         else:
             self.histograms = self._histogram_from_data_attributes(self.data, self.splits)
-        self.q_values = []
-        for h in self.histograms:
-            # h[1] is dimensions for each histogram
-            #self.q_values.append(self._compose_arbitrary_slices(self.q_count, h[1]))
-            self.q_values.append(self._compose_marginal_slices(self.q_count, h[1]))
+        if self.debug:
+            print(f"Processing {len(self.histograms)} histograms")
+            print()
+        #self.q_values = [[]] * len(self.histograms)
+        for idx, h in enumerate(self.histograms):
+            h.make_marginal_queries(self.q_count)
+            #h.make_arbritrary_queries(self.q_count)
+
+            if self.debug:
+                print(f"Histogram #{idx} split: {h.split}")
+                print(f"Columns: {h.n_cols}")
+                print(f"Dimensionality: {h.dimensionality}")
+                print(f"Cuboids: {2**h.n_cols}")
+                print(f"1-2-way cuboids: {math.comb(h.n_cols, 2) + h.n_cols}")
+                print(f"Number of queries: {len(h.queries)}")
+                print()
+
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
 
@@ -215,11 +319,11 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :rtype: np.ndarray, np.ndarray
         """
         a_values = []
-        for i, h in enumerate(self.histograms):
-            hist = h[0]
-            dimensions = h[1]
-            split = h[3]
-            queries = self.q_values[i]
+        for idx, h in enumerate(self.histograms):
+            hist = h.data
+            dimensions = h.dimensions
+            split = h.split
+            queries = h.queries
             synth_hist = self._initialize_a(hist, dimensions)
             measurements = {}
             # NOTE: Here we perform a privacy check,
@@ -245,16 +349,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
 
             for i in range(self.iterations):
                 eps = ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
-                # print("Iteration: " + str(i))
-                #errors = [
-                #    abs(self._evaluate(queries[i], hist) - self._evaluate(queries[i], synth_hist)) * (eps / 2.0)
-                #    for i in range(len(queries))
-                #]
-                #maxi = max(errors)
-                #meani = np.mean(errors)
-
-                ###
-                qi = self._exponential_mechanism(
+                qi, mean_err = self._exponential_mechanism(
                     hist, synth_hist, queries, eps
                 )
                 # Make sure we get a different query to measure:
@@ -266,16 +361,23 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                             + "decreasing the number of iterations or increasing the number of allowed "
                             + "retries.")
 
-                    qi = self._exponential_mechanism(
+                    qi, mean_err = self._exponential_mechanism(
                         hist, synth_hist, queries, eps
                     )
                     count_retries += 1
 
                 # NOTE: Add laplace noise here with budget
                 selected_query = queries[qi]
-                actual = self._evaluate(selected_query, hist)
-                #pre_estimate = self._evaluate(selected_query, synth_hist)
-                #error = abs(actual - pre_estimate)
+                actual = selected_query.evaluate(hist)
+
+                if self.debug:
+                    log = int(np.floor(np.log10(self.iterations)))
+                    skip = 0 if log < 2 else 10 ** (log - 1)
+                    if i % skip == 0:
+                        pre_estimate = selected_query.evaluate(synth_hist)
+                        error = abs(actual - pre_estimate)
+                        print(f"[{idx}] {i} - Average error: {mean_err:.3f}. Selected query error: {error:.3f}")
+
                 lap = self._laplace(
                     (2 * self.iterations * len(self.histograms)) / (self.epsilon)
                 )
@@ -366,7 +468,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             # our ranges above
             histogram, bins = np.histogramdd(split_data, bins=dims_sizes)
             # Return histogram, dimensions
-            histograms.append((histogram, dims_sizes, bins, split))
+            h = Histogram(histogram, dims_sizes, bins, split)
+            histograms.append(h)
+            #histograms.append((histogram, dims_sizes, bins, split))
         return histograms
 
     def _exponential_mechanism(self, hist, synth_hist, queries, eps):
@@ -386,13 +490,13 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :return: # of errors
         :rtype: int
         """
-        errors = [
-            abs(self._evaluate(queries[i], hist) - self._evaluate(queries[i], synth_hist)) * (eps / 2.0)
+        errors = [queries[i].error(hist, synth_hist) * (eps / 2.0)
             for i in range(len(queries))
         ]
+
         maxi = max(errors)
-        #meani = np.mean(errors)
-        #errors_noscale = errors
+        mean_err = np.mean(errors)
+        
         errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
         r = random.random()
         e_s = sum(errors)
@@ -400,9 +504,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         for i in range(len(errors)):
             c += errors[i]
             if c > r * e_s:
-                # print(f"Avg error: {meani}, max error: {maxi}, selected query {i} with error {errors_noscale[i]}")
-                return i
-        return len(errors) - 1
+                return (i, mean_err)
+        return (len(errors) - 1, mean_err)
 
     def _multiplicative_weights(self, synth_hist, queries, m, hist, iterate):
         """
@@ -426,10 +529,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         sum_a = np.sum(synth_hist)
         for _ in range(iterate):
             for qi in m:
-                error = m[qi] - self._evaluate(queries[qi], synth_hist)
+                error = m[qi] - queries[qi].evaluate(synth_hist)
                 # Perform the weights update
-                query_update = self._binary_replace_in_place_slice(
-                                   np.zeros_like(synth_hist.copy()), queries[qi])
+                query_update = queries[qi].mask(synth_hist)
 
                 # Apply the update
                 a_multiplier = np.exp(query_update * error / (2.0 * sum_a))
@@ -439,109 +541,6 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 count_a = np.sum(synth_hist)
                 synth_hist = synth_hist * (sum_a / count_a)
         return synth_hist
-
-    def _compose_marginal_slices(self, num_s, dimensions):
-        slices_list = []
-
-        while len(slices_list) < num_s:
-            # one-way marginals
-            for i, d in enumerate(dimensions):
-                for j in range(d):
-                    slice_arr = [np.s_[:] if p != i else np.s_[j] for p, _ in enumerate(dimensions)]
-                    slices_list.append(list(reversed(slice_arr)))
-                    if len(slices_list) >= num_s:
-                        return slices_list
-
-            for pair in combinations(range(len(dimensions)), 2):
-                x, y = pair
-                for i in range(dimensions[x]):
-                    for j in range(dimensions[y]):
-                        slice_arr = [np.s_[:] for _ in range(len(dimensions))]
-                        slice_arr[x] = np.s_[i]
-                        slice_arr[y] = np.s_[j]
-                        slices_list.append(list(reversed(slice_arr)))
-                        if len(slices_list) >= num_s:
-                            return slices_list
-            return slices_list
-
-
-    def _compose_arbitrary_slices(self, num_s, dimensions):
-        """
-        Here, dimensions is the shape of the histogram
-        We want to return a list of length num_s, containing
-        random slice objects, given the dimensions
-        These are our linear queries
-
-        :param num_s: Number of queries (slices) to generate
-        :type num_s: int
-        :param dimensions: Dimensions of histogram to be sliced
-        :type dimensions: np.shape
-        :return: Collection of random np.s_ (linear queries) for
-        a dataset with dimensions
-        :rtype: list
-        """
-        slices_list = []
-        # TODO: For analysis, generate a distribution of slice sizes,
-        # by running the list of slices on a dimensional array
-        # and plotting the bucket size
-        slices_list = []
-        for _ in range(num_s):
-            inds = []
-            for _, s in np.ndenumerate(dimensions):
-                # Random linear sample, within dimensions
-                a = np.random.randint(s)
-                b = np.random.randint(s)
-                l_b = min(a, b)
-                u_b = max(a, b) + 1
-                pre = []
-                pre.append(l_b)
-                pre.append(u_b)
-                inds.append(pre)
-            # Compose slices
-            sl = []
-            for ind in inds:
-                sl.append(np.s_[ind[0]: ind[1]])
-            slices_list.append(sl)
-        return slices_list
-
-    def _evaluate(self, a_slice, data):
-        """
-        Evaluate a count query i.e. an arbitrary slice
-
-        :param a_slice: Random slice within bounds of flattened data length
-        :type a_slice: np.s_
-        :param data: Data to evaluate from (synthetic dset)
-        :type data: np.ndarray
-        :return: Count from data within slice
-        :rtype: float
-        """
-        # We want to count the number of objects in an
-        # arbitrary slice of our collection
-        # We use np.s_[arbitrary slice] as our queries
-        e = data.T[tuple(a_slice)]
-
-        if isinstance(e, np.ndarray):
-            return np.sum(e)
-        else:
-            return e
-
-    def _binary_replace_in_place_slice(self, data, a_slice):
-        """
-        We want to create a binary copy of the data,
-        so that we can easily perform our error multiplication
-        in MW. Convenience function.
-
-        :param data: Data
-        :type data: np.ndarray
-        :param a_slice: Slice
-        :type a_slice: np.s_
-        :return: Return data, where the range specified
-        by a_slice is all 1s.
-        :rtype: np.ndarray
-        """
-        view = data.copy()
-        view.T[tuple(a_slice)] = 1.0
-        return view
 
     def _reorder(self, splits):
         """
