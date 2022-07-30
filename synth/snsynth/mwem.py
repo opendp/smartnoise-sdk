@@ -26,6 +26,9 @@ class Query:
         view = data.copy()
         view.T[tuple(self.query)] = 1.0
         return view
+    @property
+    def queries(self):
+        return [self]
     @classmethod
     def make_arbitrary(cls, dims):
         inds = []
@@ -66,8 +69,35 @@ class Query:
         ]
 
 class Cuboid:
-    def __init__(self, queries):
+    # A cuboid is a collection of marginal queries that are mutually disjoint
+    def __init__(self, queries, dims_mask):
         self.queries = queries
+        dims_mask = dims_mask
+    @property
+    def n_cells(self):
+        return len(self.queries)
+    @property
+    def n_cols(self):
+        return np.sum([1 if c is not None else 0 for c in self.dims_mask])
+    def error(self, hist, synth_hist):
+        err = np.sum([q.error(hist, synth_hist) for q in self.queries])
+        #err = err - self.n_cells
+        err = err / self.n_cells
+        return err if err > 0.0 else 0.0
+    @classmethod
+    def make_cuboid (cls, dimensions, columns):
+        assert max(columns) < len(dimensions)
+        dims_mask = [d if c in columns else None for c, d in enumerate(dimensions)]
+        queries = Query.make_marginals(dims_mask)
+        return Cuboid(queries, dims_mask)
+    @classmethod
+    def make_n_way(cls, dimensions, n):
+        n_dims = len(dimensions)
+        if n_dims < n:
+            return []
+        indices = list(np.arange(n_dims))
+        combos = list(combinations(indices, n))
+        return [cls.make_cuboid(dimensions, c) for c in combos]
 
 class Histogram:
     def __init__(self, data, dimensions, bins, split):
@@ -85,35 +115,43 @@ class Histogram:
     @property
     def n_cols(self):
         return len(self.dimensions)
-    def make_arbitrary_queries(self, n):
-        for _ in range(n):
+    @property
+    def n_cuboids(self):
+        return 2 ** self.n_cols - 1
+    @property
+    def n_queries(self):
+        return len(self.queries)
+    @property
+    def n_slices(self):
+        return np.sum([len(q.queries) for q in self.queries])
+    def add_arbitrary_queries(self, n_queries):
+        for _ in range(n_queries):
             self.queries.append(Query.make_arbitrary(self.dimensions))
-    def make_marginal_queries(self, n):
+    def add_marginal_queries(self, max_cols=2):
         dims = self.dimensions
-
-        # one-way
-        for idx in range(len(dims)):
-            dims_mask = [d if i == idx else None for i, d in enumerate(dims)]
-            self.queries.extend(Query.make_marginals(dims_mask))
-
-        # two-way
-        for a, b in combinations(list(range(len(dims))), 2):
-            dims_mask = [d if i == a or i == b else None for i, d in enumerate(dims)]
-            self.queries.extend(Query.make_marginals(dims_mask))
-
+        for n in range(1, max_cols + 1):
+            cuboids = Cuboid.make_n_way(dims, n)
+            for c in cuboids:
+                self.queries.extend(c.queries)
+    def add_cuboid_queries(self, max_cols):
+        dims = self.dimensions
+        max_cols = max_cols if max_cols <= len(dims) else len(dims)
+        for n in range(1, max_cols + 1):
+            cuboids = Cuboid.make_n_way(dims, n)
+            self.queries.extend(cuboids)
 
 class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def __init__(
         self,
         epsilon=3.0,
-        q_count=400,
-        iterations=30,
+        q_count=None,
+        iterations=None,
         mult_weights_iterations=20,
         splits=[],
         split_factor=None,
-        max_bin_count=500,
-        custom_bin_count={},
-        max_retries_exp_mechanism=1000,
+        max_retries_exp_mechanism=10,
+        max_marginal_width=None,
+        measure_only=False,
         debug=False
     ):
         """
@@ -155,18 +193,6 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             Note: this will likely make synthetic data worse.
             defaults to None
         :type split_factor: int, optional
-        :param max_bin_count: MWEM is not good at continuous features, and
-            is not purpose built for the feature. We can, however,
-            fudge it by turning a continuous feature into a discrete feature with
-            artificial binning. This is the maximum number
-            of bins that MWEM will create. More bins leads to a huge slow down in
-            MWEM due to dimensionality exploding the histogram
-            size. Note, defaults to 500
-        :type max_bin_count: int, optional
-        :param custom_bin_count: If you have a specific bin assignment for
-            continuous features (i.e. column 3 -> 20 bins), specify it with
-            a dict here, defaults to {}
-        :type custom_bin_count: dict, optional
         """
         self.epsilon = epsilon
         self.q_count = q_count
@@ -177,10 +203,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.real_data = None
         self.splits = splits
         self.split_factor = split_factor
-        self.max_bin_count = max_bin_count
         self.mins_maxes = {}
         self.scale = {}
-        self.custom_bin_count = custom_bin_count
+        self.max_marginal_width = max_marginal_width
         self.debug = debug
 
         # Pandas check
@@ -191,6 +216,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # Query trackers
         self.q_values = None
         self.max_retries_exp_mechanism = max_retries_exp_mechanism
+        self.accountant = []
+        self.measure_only = measure_only
 
     @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
@@ -218,12 +245,6 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         elif self.split_factor is None and self.splits == []:
             # Set split factor to default to shape[1]
             self.split_factor = data.shape[1]
-            warnings.warn(
-                    "Unset split_factor and splits, defaulting to include all columns "
-                    + "- this can lead to slow performance or out of memory error. "
-                    + " split_factor: " + str(self.split_factor),
-                    Warning,
-                )
             self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
 
         self.splits = np.array(self.splits)
@@ -236,19 +257,49 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         if self.debug:
             print(f"Processing {len(self.histograms)} histograms")
             print()
-        #self.q_values = [[]] * len(self.histograms)
+
+        # load queries into each split
+        n_histograms = len(self.histograms)
         for idx, h in enumerate(self.histograms):
-            h.make_marginal_queries(self.q_count)
-            #h.make_arbritrary_queries(self.q_count)
+            marginal_width = self.max_marginal_width
+            scale = np.sum(h.data)
+            if marginal_width is None:
+                if scale > 10_000:
+                    marginal_width = 3
+                else:
+                    marginal_width = 2
+            h.add_cuboid_queries(marginal_width)
+
+            # revise iterations
+            iterations = self.iterations if self.iterations is not None else h.n_queries
+            h.iterations = iterations
+
+            if self.q_count and h.n_queries < self.q_count:
+                h.add_arbitrary_queries(self.q_count - h.n_queries)
+            if not self.q_count and not self.measure_only:
+                h.add_arbitrary_queries(h.n_queries)
+                if h.n_queries < h.iterations:
+                    h.add_arbitrary_queries(h.iterations - h.n_queries)
+            if h.iterations > h.n_queries:
+                h.iterations = h.n_queries
+
+            meas_eps = self.epsilon / 2.0 / n_histograms / iterations
+            meas_err = -np.log(2*(0.05)) * (1 / meas_eps)  # 95% confidence
+            h.iterations = iterations
+            h.meas_eps = meas_eps
+            h.meas_err = meas_err
 
             if self.debug:
                 print(f"Histogram #{idx} split: {h.split}")
                 print(f"Columns: {h.n_cols}")
                 print(f"Dimensionality: {h.dimensionality}")
-                print(f"Cuboids: {2**h.n_cols}")
-                print(f"1-2-way cuboids: {math.comb(h.n_cols, 2) + h.n_cols}")
-                print(f"Number of queries: {len(h.queries)}")
+                print(f"Cuboids possible: {h.n_cuboids}")
+                print(f"1-2-way cuboids possible: {math.comb(h.n_cols, 2) + h.n_cols}")
+                print(f"Number of queries: {h.n_queries}")
+                print(f"Number of slices in queries: {h.n_slices}")
                 print()
+
+        self.max_iterations = max([h.iterations for h in self.histograms])
 
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
@@ -258,7 +309,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         Creates samples from the histogram data.
         Follows sdgym schema to be compatible with their benchmark system.
-        NOTE: We are sampleing from each split dimensional
+        NOTE: We are sampling from each split dimensional
         group as though they are *independent* from one another.
         We have essentially created len(splits) DP histograms as
         if they are separate databases, and combine the results into
@@ -310,7 +361,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         """
         Runner for the mwem algorithm.
         Initializes the synthetic histogram, and updates it
-        for self.iterations using the exponential mechanism and
+        for up to self.max_iterations using the exponential mechanism and
         multiplicative weights. Draws from the initialized query store
         for measurements.
 
@@ -334,10 +385,9 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             # distribution)
             # This usually occurs with a split factor of 1,
             # so that each attribute is independent of the other
-            flat_dim = 1
-            for j in dimensions:
-                flat_dim *= j
-            if 2 * flat_dim <= self.iterations:
+            flat_dim = h.dimensionality
+            iterations = h.iterations
+            if 2 * flat_dim <= iterations:
                 warnings.warn(
                     "Flattened dimensionality of synthetic histogram is less than"
                     + " the number of iterations. This is a privacy risk."
@@ -347,48 +397,24 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                     Warning,
                 )
 
-            for i in range(self.iterations):
-                eps = ((self.epsilon / (2 * self.iterations)) / len(self.histograms))
-                qi, mean_err = self._exponential_mechanism(
-                    hist, synth_hist, queries, eps
+            eps = h.meas_eps if not self.measure_only else 2 * h.meas_eps
+            for i in range(iterations):
+                qi = self._exponential_mechanism(
+                    hist, synth_hist, queries, eps, measurements, i
                 )
-                # Make sure we get a different query to measure:
-                count_retries = 0
-                while qi in measurements:
-                    if count_retries > self.max_retries_exp_mechanism:
-                        raise ValueError(
-                            "Did not find a different query to measure via exponential mechanism. Try "
-                            + "decreasing the number of iterations or increasing the number of allowed "
-                            + "retries.")
 
-                    qi, mean_err = self._exponential_mechanism(
-                        hist, synth_hist, queries, eps
-                    )
-                    count_retries += 1
-
-                # NOTE: Add laplace noise here with budget
-                selected_query = queries[qi]
-                actual = selected_query.evaluate(hist)
-
-                if self.debug:
-                    log = int(np.floor(np.log10(self.iterations)))
-                    skip = 0 if log < 2 else 10 ** (log - 1)
-                    if i % skip == 0:
-                        pre_estimate = selected_query.evaluate(synth_hist)
-                        error = abs(actual - pre_estimate)
-                        print(f"[{idx}] {i} - Average error: {mean_err:.3f}. Selected query error: {error:.3f}")
-
-                lap = self._laplace(
-                    (2 * self.iterations * len(self.histograms)) / (self.epsilon)
-                )
-                measurements[qi] = actual + lap
-                # Improve approximation with Multiplicative Weights
+                for query in queries[qi].queries:
+                    assert(isinstance(query, Query))
+                    actual = query.evaluate(hist)
+                    lap = self._laplace(1.0/eps)
+                    if qi in measurements:
+                        measurements[qi].append(actual + lap)
+                    else:
+                        measurements[qi] = [actual + lap]
+                self.accountant.append(eps)
                 synth_hist = self._multiplicative_weights(
                     synth_hist, queries, measurements, hist, self.mult_weights_iterations
                 )
-                #post_estimate = self._evaluate(selected_query, synth_hist)
-                #print(f"Max error: {maxi}, mean error {meani}, error: {error}")
-                #print(f"Selected query {qi} with error {error}.  Pre-estimate {pre_estimate}. Post-estimate {post_estimate}.  Post-error {abs(post_estimate - actual)}")
             a_values.append((synth_hist, hist, split))
         return a_values
 
@@ -405,9 +431,6 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         reference histogram
         :rtype: np.ndarray
         """
-        # NOTE: Could actually use a distribution from real data with some budget,
-        # as opposed to using this uniform dist (would take epsilon as argument,
-        # and detract from it)
         n = np.sum(histogram)
         value = n / np.prod(dimensions)
         synth_hist = np.zeros_like(histogram)
@@ -434,7 +457,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             for i, column in enumerate(split_data.T):
                 min_c = min(column)
                 max_c = max(column)
-                # TODO: Make these noisy min/max
+                # TODO: just use integer bins and assume 0 base
                 mins_data.append(min_c)
                 maxs_data.append(max_c)
                 # Dimension size (number of bins)
@@ -442,38 +465,21 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 # Here we track the min and max for the column,
                 # for sampling
                 self.mins_maxes[str(split[i])] = (min_c, max_c)
-                if bin_count > self.max_bin_count:
-                    # Note the limitations of MWEM here, specifically in the case of continuous data.
-                    warnings.warn(
-                        "Bin count "
-                        + str(bin_count)
-                        + " in column: "
-                        + str(split[i])
-                        + " exceeds max_bin_count, defaulting to: "
-                        + str(self.max_bin_count)
-                        + ". Is this a continuous variable?",
-                        Warning,
-                    )
-                    bin_count = self.max_bin_count
-                    # We track a scaling factor per column, for sampling
-                    self.scale[str(split[i])] = (max_c - min_c + 1) / self.max_bin_count
-                else:
-                    self.scale[str(split[i])] = 1
-                if str(split[i]) in self.custom_bin_count:
-                    bin_count = int(self.custom_bin_count[str(split[i])])
-                    self.scale[str(split[i])] = 1
+                self.scale[str(split[i])] = 1
                 dims_sizes.append(bin_count)
             # Produce an N,D dimensional histogram, where
             # we pre-specify the bin sizes to correspond with
             # our ranges above
+            dimensionality = np.product(dims_sizes)
+            if dimensionality > 1e8:
+                warnings.warn(f"Dimensionality of histogram is {dimensionality:,}, consider using splits.")
             histogram, bins = np.histogramdd(split_data, bins=dims_sizes)
             # Return histogram, dimensions
             h = Histogram(histogram, dims_sizes, bins, split)
             histograms.append(h)
-            #histograms.append((histogram, dims_sizes, bins, split))
         return histograms
 
-    def _exponential_mechanism(self, hist, synth_hist, queries, eps):
+    def _exponential_mechanism(self, hist, synth_hist, queries, eps, measurements, iteration):
         """
         Refer to paper for in depth description of
         Exponential Mechanism.
@@ -493,19 +499,38 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         errors = [queries[i].error(hist, synth_hist) * (eps / 2.0)
             for i in range(len(queries))
         ]
-
         maxi = max(errors)
         mean_err = np.mean(errors)
-        
-        errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
-        r = random.random()
-        e_s = sum(errors)
-        c = 0
-        for i in range(len(errors)):
-            c += errors[i]
-            if c > r * e_s:
-                return (i, mean_err)
-        return (len(errors) - 1, mean_err)
+        exp_errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
+
+        count_retries = 0
+        qi = None
+        while qi is None or qi in measurements:
+            if self.measure_only or count_retries > self.max_retries_exp_mechanism:
+                # grab one uniformly random, wastes epsilon, but is safe
+                options = [i for i in range(len(queries))]
+                options = [i for i in options if i not in measurements]
+                qi = np.random.choice(options)
+            else:
+                r = random.random()
+                e_s = sum(exp_errors)
+                c = 0
+                qi = len(exp_errors) - 1
+                for i in range(len(exp_errors)):
+                    c += exp_errors[i]
+                    if c > r * e_s:
+                        qi = i
+                        break
+                count_retries += 1
+
+        if self.debug:
+            log = int(np.floor(np.log10(self.max_iterations)))
+            skip = 1 if log < 2 else 10 ** (log - 1)
+            if iteration % skip == 0:
+                print(f"[{iteration}] - Average error: {mean_err:.3f}. Selected {len(queries[qi].queries)} slices")
+        if not self.measure_only:
+            self.accountant.append(eps)
+        return qi
 
     def _multiplicative_weights(self, synth_hist, queries, m, hist, iterate):
         """
@@ -529,17 +554,21 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         sum_a = np.sum(synth_hist)
         for _ in range(iterate):
             for qi in m:
-                error = m[qi] - queries[qi].evaluate(synth_hist)
-                # Perform the weights update
-                query_update = queries[qi].mask(synth_hist)
+                measurements = m[qi]
+                queries_list = queries[qi].queries
+                assert(len(measurements) == len(queries_list))
 
-                # Apply the update
-                a_multiplier = np.exp(query_update * error / (2.0 * sum_a))
-                a_multiplier[a_multiplier == 0.0] = 1.0
-                synth_hist = synth_hist * a_multiplier
-                # Normalize again
-                count_a = np.sum(synth_hist)
-                synth_hist = synth_hist * (sum_a / count_a)
+                for measurement, query in zip(measurements, queries_list):
+                    error = measurement - query.evaluate(synth_hist)
+                    query_update = query.mask(synth_hist)
+
+                    # Apply the update
+                    a_multiplier = np.exp(query_update * error / (2.0 * sum_a))
+                    a_multiplier[a_multiplier == 0.0] = 1.0
+                    synth_hist = synth_hist * a_multiplier
+                    # Normalize again
+                    count_a = np.sum(synth_hist)
+                    synth_hist = synth_hist * (sum_a / count_a)
         return synth_hist
 
     def _reorder(self, splits):

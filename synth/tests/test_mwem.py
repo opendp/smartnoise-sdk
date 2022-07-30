@@ -20,9 +20,7 @@ synth = MWEMSynthesizer(3., split_factor=3)
 
 synth_df = MWEMSynthesizer(3., split_factor=3)
 
-synth_default_params = MWEMSynthesizer()
-
-faux_synth = MWEMSynthesizer(3., split_factor=1)
+synth_default_params = MWEMSynthesizer(iterations=1)
 
 test_data = np.array([[1,1,1],[2,2,2],[3,3,3]])
 
@@ -74,33 +72,13 @@ class TestMWEM:
 
     def test_initialize_a(self):
         h = synth._initialize_a(test_histogram,(3,3,3))
-        assert int(np.sum(h)) == int(np.sum(test_histogram))
+        assert int(np.sum(h.data)) == int(np.sum(test_histogram))
 
     def test_histogram_from_data_attributes(self):
         three_dims = synth._histogram_from_data_attributes(test_data,np.array([[0,1,2]]))
         one_dims = synth._histogram_from_data_attributes(test_data,np.array([np.array([0]),np.array([1]),np.array([2])]))
-        assert three_dims[0][1] == [3,3,3]
-        assert one_dims[0][1] == [3]
-
-    def test_compose_arbitrary_slices(self):
-        ss = synth._compose_arbitrary_slices(10, (3,3,3))
-        assert np.array(ss).shape == (10,3)
-
-    def test_evaluate(self):
-        ss = synth._evaluate([slice(0, 2, None), slice(0, 2, None), slice(0, 3, None)],np.array(test_histogram))
-        assert ss == 6.0
-
-    def test_binary_replace_in_place_slice(self):
-        b = synth._binary_replace_in_place_slice(np.array(test_histogram), [slice(0, 2, None), slice(0, 2, None), slice(0, 3, None)])
-        assert (b == np.array([[[1., 1., 0.],
-                            [1., 1., 0.],
-                            [0., 0., 1.]],
-                            [[1., 1., 0.],
-                            [1., 1., 0.],
-                            [0., 0., 1.]],
-                            [[1., 1., 0.],
-                            [1., 1., 0.],
-                            [0., 0., 1.]]])).all()
+        assert three_dims[0].dimensions == [3,3,3]
+        assert one_dims[0].dimensions == [3]
 
     def test_reorder(self):
         original = np.array([[1,2,3,4,5,6], [6,7,8,9,10,11]])
@@ -114,8 +92,3 @@ class TestMWEM:
     def test_generate_splits(self):
         assert (synth._generate_splits(3,3) == np.array([[0, 1, 2]])).all()
 
-    # TODO: More split tests
-
-    def test_faux_fit(self):
-        pytest.warns(Warning, faux_synth.fit, test_data)
-        assert faux_synth.histograms
