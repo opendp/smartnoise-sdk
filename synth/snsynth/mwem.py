@@ -144,14 +144,16 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def __init__(
         self,
         epsilon=3.0,
+        *ignore,
         q_count=None,
         iterations=None,
-        mult_weights_iterations=20,
         splits=[],
         split_factor=None,
-        max_retries_exp_mechanism=10,
-        max_marginal_width=None,
+        marginal_width=None,
+        add_ranges=False,
         measure_only=False,
+        max_retries_exp_mechanism=10,
+        mult_weights_iterations=20,
         debug=False
     ):
         """
@@ -169,17 +171,14 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         Linear queries used for sampling in this implementation are
         random contiguous slices of the n-dimensional numpy array.
 
-        :param q_count: Number of random queries in the pool to generate.
-            Must be more than # of iterations, recommended ~10-15x iterations,
-            defaults to 400
-        :type q_count: int, optional
         :param epsilon: Privacy epsilon for DP, defaults to 3.0
         :type epsilon: float, optional
-        :param iterations: Number of iterations of MWEM, defaults to 30
+        :param q_count: Number of random queries in the pool to generate.
+            Must be more than # of iterations
+        :type q_count: int, optional
+        :param iterations: Number of iterations of MWEM to run.  MWEM will
+        guess a reasonable number of iterations if this is not specified.
         :type iterations: int, optional
-        :param mult_weights_iterations: Number of iterations of MW, per
-            iteration of MWEM, defaults to 20
-        :type mult_weights_iterations: int, optional
         :param splits: Allows you to specify feature dependence when creating
             internal histograms.
             Columns that are known to be dependent can be kept together.
@@ -193,11 +192,37 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             Note: this will likely make synthetic data worse.
             defaults to None
         :type split_factor: int, optional
+        :param marginal_width: MWEM by default will create cuboids to measure
+            marginals, and will use a heuristic to determine the maximum width
+            of the marginals.  This parameter allows you to specify that MWEM
+            should always measure marginals up to width marginal_width.
+        :type marginal_width: int, optional
+        :param add_ranges: In addition to measuring cuboids, MWEM can measure
+            randomly generated range queries.  Range queries work well on columns
+            that are binned from continuous values.
+        :type add_range: bool, optional
+        :param measure_only: MWEM operates by spending some privacy budget to select
+            the best query.  This parameter allows you to specify that MWEM should
+            uniformly measure all queries, and not spend any privacy budget on the
+            query selection.  This is useful in limited cases.  Allowing MWEM to select
+            will usually work best.
+        :type measure_only: bool, optional
+        :param max_retries_exp_mechanism: In each iteration, MWEM tries to select
+            a poorly-peforming query that hasn't yet been measured.  If it fails,
+            it will select one of the remaining queries uniformly at random.
+        :type max_retries_exp_mechanism: int, optional
+        :param mult_weights_iterations: Number of iterations of multiplicative weights,
+            per iteration of MWEM, defaults to 20
+        :type mult_weights_iterations: int, optional
+        :param debug: Set to True to print debug information.
+        :type debug: bool, optional
         """
         self.epsilon = epsilon
         self.q_count = q_count
         self.iterations = iterations
         self.mult_weights_iterations = mult_weights_iterations
+        self.add_ranges = add_ranges
+        self.measure_only = measure_only
         self.synthetic_data = None
         self.data_bins = None
         self.real_data = None
@@ -205,7 +230,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.split_factor = split_factor
         self.mins_maxes = {}
         self.scale = {}
-        self.max_marginal_width = max_marginal_width
+        self.marginal_width = marginal_width
         self.debug = debug
 
         # Pandas check
@@ -217,8 +242,10 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.q_values = None
         self.max_retries_exp_mechanism = max_retries_exp_mechanism
         self.accountant = []
-        self.measure_only = measure_only
 
+    @property
+    def spent(self):
+        return sum([a for a in self.accountant])
     @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
         """
@@ -261,42 +288,47 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # load queries into each split
         n_histograms = len(self.histograms)
         for idx, h in enumerate(self.histograms):
-            marginal_width = self.max_marginal_width
+            marginal_width = self.marginal_width
             scale = np.sum(h.data)
+            iterations = self.iterations
+            if iterations is None:
+                iterations = int(np.ceil(np.log10(scale))) * 10
+
             if marginal_width is None:
                 if scale > 10_000:
                     marginal_width = 3
                 else:
                     marginal_width = 2
+
             h.add_cuboid_queries(marginal_width)
 
-            # revise iterations
-            iterations = self.iterations if self.iterations is not None else h.n_queries
-            h.iterations = iterations
+            q_count = self.q_count if self.q_count is not None else 2 * iterations
 
-            if self.q_count and h.n_queries < self.q_count:
-                h.add_arbitrary_queries(self.q_count - h.n_queries)
-            if not self.q_count and not self.measure_only:
-                h.add_arbitrary_queries(h.n_queries)
-                if h.n_queries < h.iterations:
-                    h.add_arbitrary_queries(h.iterations - h.n_queries)
-            if h.iterations > h.n_queries:
-                h.iterations = h.n_queries
+            while h.n_queries < q_count:
+                if self.add_ranges:
+                    h.add_arbitrary_queries(q_count - h.n_queries)
+                else:
+                    h.add_cuboid_queries(marginal_width)
+            if h.n_queries > q_count:
+                h.queries = np.random.choice(h.queries, q_count, replace=False)
 
             meas_eps = self.epsilon / 2.0 / n_histograms / iterations
-            meas_err = -np.log(2*(0.05)) * (1 / meas_eps)  # 95% confidence
+            meas_bounds = -np.log(2*(0.05)) * (1 / meas_eps)  # 95% confidence
             h.iterations = iterations
             h.meas_eps = meas_eps
-            h.meas_err = meas_err
+            h.meas_bound = meas_bounds
 
             if self.debug:
                 print(f"Histogram #{idx} split: {h.split}")
                 print(f"Columns: {h.n_cols}")
-                print(f"Dimensionality: {h.dimensionality}")
+                print(f"Dimensionality: {h.dimensionality:,}")
                 print(f"Cuboids possible: {h.n_cuboids}")
                 print(f"1-2-way cuboids possible: {math.comb(h.n_cols, 2) + h.n_cols}")
+                print(f"Fitting for {h.iterations} iterations")
                 print(f"Number of queries: {h.n_queries}")
                 print(f"Number of slices in queries: {h.n_slices}")
+                print(f"Per-Measure Epsilon: {h.meas_eps:.3f}")
+                print(f"Measurement Error: {h.meas_bound:.2f}")
                 print()
 
         self.max_iterations = max([h.iterations for h in self.histograms])
