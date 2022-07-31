@@ -11,25 +11,31 @@ import pandas as pd
 
 from snsynth.base import SDGYMBaseSynthesizer
 
+
 class Query:
     def __init__(self, query):
         self.query = query
+
     def evaluate(self, hist):
         e = hist.T[tuple(self.query)]
         if isinstance(e, np.ndarray):
             return np.sum(e)
         else:
             return e
+
     def error(self, hist, synth_hist):
         return np.abs(self.evaluate(hist) - self.evaluate(synth_hist))
+
     def mask(self, hist):
         data = np.zeros_like(hist.copy())
         view = data.copy()
         view.T[tuple(self.query)] = 1.0
         return view
+
     @property
     def queries(self):
         return [self]
+
     @classmethod
     def make_arbitrary(cls, dims):
         inds = []
@@ -47,7 +53,8 @@ class Query:
         sl = []
         for ind in inds:
             sl.append(np.s_[ind[0]: ind[1]])
-        return Query(sl)    
+        return Query(sl)
+
     @classmethod
     def make_marginals(cls, dims_mask):
         # Makes all marginal slices matching the dimensions
@@ -61,7 +68,7 @@ class Query:
 
         dims = [d for d in dims_mask if d is not None]
         ranges = [range(d) for d in dims]
-        prod = product(*ranges) # cartesian product
+        prod = product(*ranges)  # cartesian product
 
         return [
             Query([
@@ -69,28 +76,33 @@ class Query:
             ]) for p in prod
         ]
 
+
 class Cuboid:
     # A cuboid is a collection of marginal queries that are mutually disjoint
     def __init__(self, queries, dims_mask):
         self.queries = queries
         dims_mask = dims_mask
+
     @property
     def n_cells(self):
         return len(self.queries)
+
     @property
     def n_cols(self):
         return np.sum([1 if c is not None else 0 for c in self.dims_mask])
+
     def error(self, hist, synth_hist):
         err = np.sum([q.error(hist, synth_hist) for q in self.queries])
-        #err = err - self.n_cells
         err = err / self.n_cells
         return err if err > 0.0 else 0.0
+
     @classmethod
-    def make_cuboid (cls, dimensions, columns):
+    def make_cuboid(cls, dimensions, columns):
         assert max(columns) < len(dimensions)
         dims_mask = [d if c in columns else None for c, d in enumerate(dimensions)]
         queries = Query.make_marginals(dims_mask)
         return Cuboid(queries, dims_mask)
+
     @classmethod
     def make_n_way(cls, dimensions, n):
         n_dims = len(dimensions)
@@ -99,6 +111,7 @@ class Cuboid:
         indices = list(np.arange(n_dims))
         combos = list(combinations(indices, n))
         return [cls.make_cuboid(dimensions, c) for c in combos]
+
 
 class Histogram:
     def __init__(self, data, dimensions, bins, split):
@@ -110,39 +123,48 @@ class Histogram:
         assert(len(self.dimensions) == len(self.bins))
         assert(len(self.dimensions) == len(self.split))
         assert(all([a == b for a, b in zip(self.data.shape, self.dimensions)]))
+
     @property
     def dimensionality(self):
         return np.prod(self.dimensions)
+
     @property
     def n_cols(self):
         return len(self.dimensions)
+
     @property
     def n_cuboids(self):
         return 2 ** self.n_cols - 1
+
     @property
     def n_queries(self):
         return len(self.queries)
+
     @property
     def n_slices(self):
         return np.sum([len(q.queries) for q in self.queries])
+
     def add_arbitrary_queries(self, n_queries):
         for _ in range(n_queries):
             self.queries.append(Query.make_arbitrary(self.dimensions))
+
     def add_marginal_queries(self, max_cols=2):
         dims = self.dimensions
         for n in range(1, max_cols + 1):
             cuboids = Cuboid.make_n_way(dims, n)
             for c in cuboids:
                 self.queries.extend(c.queries)
+
     def add_cuboid_queries(self, max_cols):
         dims = self.dimensions
         max_cols = max_cols if max_cols <= len(dims) else len(dims)
         for n in range(1, max_cols + 1):
             cuboids = Cuboid.make_n_way(dims, n)
             self.queries.extend(cuboids)
+
     @classmethod
     def histogramdd_indexes(cls, x: np.ndarray, category_lengths: List[int]) -> np.ndarray:
-        # https://github.com/opendp/prelim/blob/main/python/stat_histogram.py#L9-L31        
+        # https://github.com/opendp/prelim/blob/main/python/stat_histogram.py#L9-L31
         """Compute counts of each combination of categories in d dimensions.
         Discrete version of np.histogramdd.
         :param x: data of shape [n, len(`category_lengths`)] of non-negative category indexes
@@ -164,6 +186,7 @@ class Histogram:
 
         # map counts back to d-dimensional output
         return hist.reshape(category_lengths)
+
 
 class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def __init__(
@@ -271,6 +294,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     @property
     def spent(self):
         return sum([a for a in self.accountant])
+
     @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=None, ordinal_columns=None):
         """
@@ -556,8 +580,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :rtype: int
         """
         errors = [queries[i].error(hist, synth_hist) * (eps / 2.0)
-            for i in range(len(queries))
-        ]
+                  for i in range(len(queries))
+                  ]
         maxi = max(errors)
         mean_err = np.mean(errors)
         exp_errors = [math.exp(errors[i] - maxi) for i in range(len(errors))]
