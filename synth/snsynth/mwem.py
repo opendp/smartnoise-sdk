@@ -1,5 +1,6 @@
 import math
 import random
+from typing import List
 import warnings
 from itertools import combinations, product
 
@@ -139,6 +140,30 @@ class Histogram:
         for n in range(1, max_cols + 1):
             cuboids = Cuboid.make_n_way(dims, n)
             self.queries.extend(cuboids)
+    @classmethod
+    def histogramdd_indexes(cls, x: np.ndarray, category_lengths: List[int]) -> np.ndarray:
+        # https://github.com/opendp/prelim/blob/main/python/stat_histogram.py#L9-L31        
+        """Compute counts of each combination of categories in d dimensions.
+        Discrete version of np.histogramdd.
+        :param x: data of shape [n, len(`category_lengths`)] of non-negative category indexes
+        :param category_lengths: the number of unique categories per column
+        """
+
+        assert x.shape[1] == len(category_lengths)
+        assert x.ndim == 2
+        if not len(category_lengths):
+            return np.array(x.shape[0])
+
+        # consider each row as a multidimensional index into an ndarray
+        # determine what those indexes would be should the ndarray be flattened
+        # the flat indices uniquely identify each cell
+        flat_indices = np.ravel_multi_index(x.T, category_lengths)
+
+        # count the number of instances of each index
+        hist = np.bincount(flat_indices, minlength=np.prod(category_lengths))
+
+        # map counts back to d-dimensional output
+        return hist.reshape(category_lengths)
 
 class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def __init__(
@@ -502,6 +527,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             # Produce an N,D dimensional histogram, where
             # we pre-specify the bin sizes to correspond with
             # our ranges above
+            if any([a > 0 for a in mins_data]):
+                warnings.warn("Data should be preprocessed to have 0 based indices.")
             dimensionality = np.product(dims_sizes)
             if dimensionality > 1e8:
                 warnings.warn(f"Dimensionality of histogram is {dimensionality:,}, consider using splits.")
