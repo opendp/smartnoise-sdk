@@ -147,7 +147,9 @@
   <h1>Source code for snsynth.mwem</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span><span class="p">,</span> <span class="n">product</span>
 
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
@@ -157,19 +159,197 @@
 <span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">SDGYMBaseSynthesizer</span>
 
 
-<div class="viewcode-block" id="MWEMSynthesizer"><a class="viewcode-back" href="../../api/index.html#snsynth.MWEMSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">MWEMSynthesizer</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Query</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
 
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">):</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">e</span>
+
+    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">synth_hist</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">view</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">queries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_arbitrary</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dims</span><span class="p">):</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">dims</span><span class="p">):</span>
+            <span class="c1"># Random linear sample, within dimensions</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">l_b</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+            <span class="n">u_b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">pre</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">pre</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l_b</span><span class="p">)</span>
+            <span class="n">pre</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u_b</span><span class="p">)</span>
+            <span class="n">inds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+        <span class="c1"># Compose slice</span>
+        <span class="n">sl</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">:</span>
+            <span class="n">sl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">s_</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">ind</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="p">(</span><span class="n">sl</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_marginals</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dims_mask</span><span class="p">):</span>
+        <span class="c1"># Makes all marginal slices matching the dimensions</span>
+        <span class="c1"># Some should be set to None to marginalize.  For example,</span>
+        <span class="c1"># if dims = (2,None,7), then the middle dimension is marginalized,</span>
+        <span class="c1"># and slices for all of 2x7 are made.</span>
+        <span class="n">dims_mask</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">dims_mask</span><span class="p">))</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dims_mask</span><span class="p">]</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">dims_mask</span><span class="p">)]</span>
+
+        <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims_mask</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">ranges</span> <span class="o">=</span> <span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">]</span>
+        <span class="n">prod</span> <span class="o">=</span> <span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">ranges</span><span class="p">)</span>  <span class="c1"># cartesian product</span>
+
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">Query</span><span class="p">([</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">s_</span><span class="p">[:]</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">s_</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mask</span>
+            <span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prod</span>
+        <span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">Cuboid</span><span class="p">:</span>
+    <span class="c1"># A cuboid is a collection of marginal queries that are mutually disjoint</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">dims_mask</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queries</span> <span class="o">=</span> <span class="n">queries</span>
+        <span class="n">dims_mask</span> <span class="o">=</span> <span class="n">dims_mask</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_cells</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_cols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="mi">1</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims_mask</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">):</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">q</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="p">])</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">err</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span>
+        <span class="k">return</span> <span class="n">err</span> <span class="k">if</span> <span class="n">err</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_cuboid</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">max</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="n">dims_mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)]</span>
+        <span class="n">queries</span> <span class="o">=</span> <span class="n">Query</span><span class="o">.</span><span class="n">make_marginals</span><span class="p">(</span><span class="n">dims_mask</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Cuboid</span><span class="p">(</span><span class="n">queries</span><span class="p">,</span> <span class="n">dims_mask</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_n_way</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">n_dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_dims</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_dims</span><span class="p">))</span>
+        <span class="n">combos</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">make_cuboid</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">combos</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">Histogram</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">split</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="n">dimensions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">=</span> <span class="n">bins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">split</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">))</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">all</span><span class="p">([</span><span class="n">a</span> <span class="o">==</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)]))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dimensionality</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_cols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_cuboids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cols</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_queries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">queries</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">add_arbitrary_queries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_queries</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_queries</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Query</span><span class="o">.</span><span class="n">make_arbitrary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">add_marginal_queries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_cols</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cols</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">cuboids</span> <span class="o">=</span> <span class="n">Cuboid</span><span class="o">.</span><span class="n">make_n_way</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cuboids</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">queries</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_cuboid_queries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_cols</span><span class="p">):</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="n">max_cols</span> <span class="o">=</span> <span class="n">max_cols</span> <span class="k">if</span> <span class="n">max_cols</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cols</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">cuboids</span> <span class="o">=</span> <span class="n">Cuboid</span><span class="o">.</span><span class="n">make_n_way</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queries</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">cuboids</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">histogramdd_indexes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">category_lengths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># https://github.com/opendp/prelim/blob/main/python/stat_histogram.py#L9-L31</span>
+        <span class="sd">&quot;&quot;&quot;Compute counts of each combination of categories in d dimensions.</span>
+<span class="sd">        Discrete version of np.histogramdd.</span>
+<span class="sd">        :param x: data of shape [n, len(`category_lengths`)] of non-negative category indexes</span>
+<span class="sd">        :param category_lengths: the number of unique categories per column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">category_lengths</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">category_lengths</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># consider each row as a multidimensional index into an ndarray</span>
+        <span class="c1"># determine what those indexes would be should the ndarray be flattened</span>
+        <span class="c1"># the flat indices uniquely identify each cell</span>
+        <span class="n">flat_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel_multi_index</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">category_lengths</span><span class="p">)</span>
+
+        <span class="c1"># count the number of instances of each index</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">flat_indices</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">category_lengths</span><span class="p">))</span>
+
+        <span class="c1"># map counts back to d-dimensional output</span>
+        <span class="k">return</span> <span class="n">hist</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">category_lengths</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MWEMSynthesizer"><a class="viewcode-back" href="../../api/index.html#snsynth.MWEMSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">MWEMSynthesizer</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
-        <span class="n">q_count</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
-        <span class="n">iterations</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-        <span class="n">mult_weights_iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">ignore</span><span class="p">,</span>
+        <span class="n">q_count</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">splits</span><span class="o">=</span><span class="p">[],</span>
         <span class="n">split_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">max_bin_count</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-        <span class="n">custom_bin_count</span><span class="o">=</span><span class="p">{},</span>
-        <span class="n">max_retries_exp_mechanism</span><span class="o">=</span><span class="mi">1000</span>
+        <span class="n">marginal_width</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">add_ranges</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">measure_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">max_retries_exp_mechanism</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">mult_weights_iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">debug</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">         N-Dimensional numpy implementation of MWEM.</span>
@@ -186,17 +366,14 @@
 <span class="sd">        Linear queries used for sampling in this implementation are</span>
 <span class="sd">        random contiguous slices of the n-dimensional numpy array.</span>
 
-<span class="sd">        :param q_count: Number of random queries in the pool to generate.</span>
-<span class="sd">            Must be more than # of iterations, recommended ~10-15x iterations,</span>
-<span class="sd">            defaults to 400</span>
-<span class="sd">        :type q_count: int, optional</span>
 <span class="sd">        :param epsilon: Privacy epsilon for DP, defaults to 3.0</span>
 <span class="sd">        :type epsilon: float, optional</span>
-<span class="sd">        :param iterations: Number of iterations of MWEM, defaults to 30</span>
+<span class="sd">        :param q_count: Number of random queries in the pool to generate.</span>
+<span class="sd">            Must be more than # of iterations</span>
+<span class="sd">        :type q_count: int, optional</span>
+<span class="sd">        :param iterations: Number of iterations of MWEM to run.  MWEM will</span>
+<span class="sd">        guess a reasonable number of iterations if this is not specified.</span>
 <span class="sd">        :type iterations: int, optional</span>
-<span class="sd">        :param mult_weights_iterations: Number of iterations of MW, per</span>
-<span class="sd">            iteration of MWEM, defaults to 20</span>
-<span class="sd">        :type mult_weights_iterations: int, optional</span>
 <span class="sd">        :param splits: Allows you to specify feature dependence when creating</span>
 <span class="sd">            internal histograms.</span>
 <span class="sd">            Columns that are known to be dependent can be kept together.</span>
@@ -210,32 +387,46 @@
 <span class="sd">            Note: this will likely make synthetic data worse.</span>
 <span class="sd">            defaults to None</span>
 <span class="sd">        :type split_factor: int, optional</span>
-<span class="sd">        :param max_bin_count: MWEM is not good at continuous features, and</span>
-<span class="sd">            is not purpose built for the feature. We can, however,</span>
-<span class="sd">            fudge it by turning a continuous feature into a discrete feature with</span>
-<span class="sd">            artificial binning. This is the maximum number</span>
-<span class="sd">            of bins that MWEM will create. More bins leads to a huge slow down in</span>
-<span class="sd">            MWEM due to dimensionality exploding the histogram</span>
-<span class="sd">            size. Note, defaults to 500</span>
-<span class="sd">        :type max_bin_count: int, optional</span>
-<span class="sd">        :param custom_bin_count: If you have a specific bin assignment for</span>
-<span class="sd">            continuous features (i.e. column 3 -&gt; 20 bins), specify it with</span>
-<span class="sd">            a dict here, defaults to {}</span>
-<span class="sd">        :type custom_bin_count: dict, optional</span>
+<span class="sd">        :param marginal_width: MWEM by default will create cuboids to measure</span>
+<span class="sd">            marginals, and will use a heuristic to determine the maximum width</span>
+<span class="sd">            of the marginals.  This parameter allows you to specify that MWEM</span>
+<span class="sd">            should always measure marginals up to width marginal_width.</span>
+<span class="sd">        :type marginal_width: int, optional</span>
+<span class="sd">        :param add_ranges: In addition to measuring cuboids, MWEM can measure</span>
+<span class="sd">            randomly generated range queries.  Range queries work well on columns</span>
+<span class="sd">            that are binned from continuous values.</span>
+<span class="sd">        :type add_range: bool, optional</span>
+<span class="sd">        :param measure_only: MWEM operates by spending some privacy budget to select</span>
+<span class="sd">            the best query.  This parameter allows you to specify that MWEM should</span>
+<span class="sd">            uniformly measure all queries, and not spend any privacy budget on the</span>
+<span class="sd">            query selection.  This is useful in limited cases.  Allowing MWEM to select</span>
+<span class="sd">            will usually work best.</span>
+<span class="sd">        :type measure_only: bool, optional</span>
+<span class="sd">        :param max_retries_exp_mechanism: In each iteration, MWEM tries to select</span>
+<span class="sd">            a poorly-peforming query that hasn&#39;t yet been measured.  If it fails,</span>
+<span class="sd">            it will select one of the remaining queries uniformly at random.</span>
+<span class="sd">        :type max_retries_exp_mechanism: int, optional</span>
+<span class="sd">        :param mult_weights_iterations: Number of iterations of multiplicative weights,</span>
+<span class="sd">            per iteration of MWEM, defaults to 20</span>
+<span class="sd">        :type mult_weights_iterations: int, optional</span>
+<span class="sd">        :param debug: Set to True to print debug information.</span>
+<span class="sd">        :type debug: bool, optional</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_count</span> <span class="o">=</span> <span class="n">q_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span> <span class="o">=</span> <span class="n">iterations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mult_weights_iterations</span> <span class="o">=</span> <span class="n">mult_weights_iterations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_ranges</span> <span class="o">=</span> <span class="n">add_ranges</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">measure_only</span> <span class="o">=</span> <span class="n">measure_only</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">synthetic_data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_bins</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">real_data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="n">splits</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">split_factor</span> <span class="o">=</span> <span class="n">split_factor</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_bin_count</span> <span class="o">=</span> <span class="n">max_bin_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mins_maxes</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">custom_bin_count</span> <span class="o">=</span> <span class="n">custom_bin_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marginal_width</span> <span class="o">=</span> <span class="n">marginal_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
 
         <span class="c1"># Pandas check</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="o">=</span> <span class="kc">False</span>
@@ -245,6 +436,11 @@
         <span class="c1"># Query trackers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_values</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_retries_exp_mechanism</span> <span class="o">=</span> <span class="n">max_retries_exp_mechanism</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">spent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="p">])</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="o">.</span><span class="n">fit</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ordinal_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -272,12 +468,6 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_factor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">==</span> <span class="p">[]:</span>
             <span class="c1"># Set split factor to default to shape[1]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">split_factor</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="s2">&quot;Unset split_factor and splits, defaulting to include all columns &quot;</span>
-                    <span class="o">+</span> <span class="s2">&quot;- this can lead to slow performance or out of memory error. &quot;</span>
-                    <span class="o">+</span> <span class="s2">&quot; split_factor: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_factor</span><span class="p">),</span>
-                    <span class="ne">Warning</span><span class="p">,</span>
-                <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_splits</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_factor</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">)</span>
@@ -287,10 +477,58 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">histograms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_histogram_from_data_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_values</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">:</span>
-            <span class="c1"># h[1] is dimensions for each histogram</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compose_arbitrary_slices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_count</span><span class="p">,</span> <span class="n">h</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">)</span><span class="si">}</span><span class="s2"> histograms&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">()</span>
+
+        <span class="c1"># load queries into each split</span>
+        <span class="n">n_histograms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">):</span>
+            <span class="n">marginal_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">marginal_width</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">iterations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span>
+            <span class="k">if</span> <span class="n">iterations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">iterations</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">scale</span><span class="p">)))</span> <span class="o">*</span> <span class="mi">10</span>
+
+            <span class="k">if</span> <span class="n">marginal_width</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">scale</span> <span class="o">&gt;</span> <span class="mi">10_000</span><span class="p">:</span>
+                    <span class="n">marginal_width</span> <span class="o">=</span> <span class="mi">3</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">marginal_width</span> <span class="o">=</span> <span class="mi">2</span>
+
+            <span class="n">h</span><span class="o">.</span><span class="n">add_cuboid_queries</span><span class="p">(</span><span class="n">marginal_width</span><span class="p">)</span>
+
+            <span class="n">q_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_count</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_count</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">iterations</span>
+
+            <span class="k">while</span> <span class="n">h</span><span class="o">.</span><span class="n">n_queries</span> <span class="o">&lt;</span> <span class="n">q_count</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_ranges</span><span class="p">:</span>
+                    <span class="n">h</span><span class="o">.</span><span class="n">add_arbitrary_queries</span><span class="p">(</span><span class="n">q_count</span> <span class="o">-</span> <span class="n">h</span><span class="o">.</span><span class="n">n_queries</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">h</span><span class="o">.</span><span class="n">add_cuboid_queries</span><span class="p">(</span><span class="n">marginal_width</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">n_queries</span> <span class="o">&gt;</span> <span class="n">q_count</span><span class="p">:</span>
+                <span class="n">h</span><span class="o">.</span><span class="n">queries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">queries</span><span class="p">,</span> <span class="n">q_count</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="n">meas_eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="n">n_histograms</span> <span class="o">/</span> <span class="n">iterations</span>
+            <span class="n">meas_bounds</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mf">0.05</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">meas_eps</span><span class="p">)</span>  <span class="c1"># 95% confidence</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">iterations</span> <span class="o">=</span> <span class="n">iterations</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">meas_eps</span> <span class="o">=</span> <span class="n">meas_eps</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">meas_bound</span> <span class="o">=</span> <span class="n">meas_bounds</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Histogram #</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> split: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Columns: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">n_cols</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dimensionality: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">dimensionality</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cuboids possible: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">n_cuboids</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;1-2-way cuboids possible: </span><span class="si">{</span><span class="n">math</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">n_cols</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">h</span><span class="o">.</span><span class="n">n_cols</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fitting for </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">iterations</span><span class="si">}</span><span class="s2"> iterations&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of queries: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">n_queries</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of slices in queries: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">n_slices</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Per-Measure Epsilon: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">meas_eps</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Measurement Error: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">meas_bound</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_iterations</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">h</span><span class="o">.</span><span class="n">iterations</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">])</span>
+
         <span class="c1"># Run the algorithm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">synthetic_histograms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mwem</span><span class="p">()</span>
 
@@ -299,7 +537,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates samples from the histogram data.</span>
 <span class="sd">        Follows sdgym schema to be compatible with their benchmark system.</span>
-<span class="sd">        NOTE: We are sampleing from each split dimensional</span>
+<span class="sd">        NOTE: We are sampling from each split dimensional</span>
 <span class="sd">        group as though they are *independent* from one another.</span>
 <span class="sd">        We have essentially created len(splits) DP histograms as</span>
 <span class="sd">        if they are separate databases, and combine the results into</span>
@@ -351,7 +589,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Runner for the mwem algorithm.</span>
 <span class="sd">        Initializes the synthetic histogram, and updates it</span>
-<span class="sd">        for self.iterations using the exponential mechanism and</span>
+<span class="sd">        for up to self.max_iterations using the exponential mechanism and</span>
 <span class="sd">        multiplicative weights. Draws from the initialized query store</span>
 <span class="sd">        for measurements.</span>
 
@@ -360,11 +598,11 @@
 <span class="sd">        :rtype: np.ndarray, np.ndarray</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">a_values</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">):</span>
-            <span class="n">hist</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">dimensions</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">split</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
-            <span class="n">queries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">):</span>
+            <span class="n">hist</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">dimensions</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">dimensions</span>
+            <span class="n">split</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">split</span>
+            <span class="n">queries</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">queries</span>
             <span class="n">synth_hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_a</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">)</span>
             <span class="n">measurements</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="c1"># NOTE: Here we perform a privacy check,</span>
@@ -375,10 +613,9 @@
             <span class="c1"># distribution)</span>
             <span class="c1"># This usually occurs with a split factor of 1,</span>
             <span class="c1"># so that each attribute is independent of the other</span>
-            <span class="n">flat_dim</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
-                <span class="n">flat_dim</span> <span class="o">*=</span> <span class="n">j</span>
-            <span class="k">if</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">flat_dim</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">:</span>
+            <span class="n">flat_dim</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">dimensionality</span>
+            <span class="n">iterations</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">iterations</span>
+            <span class="k">if</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">flat_dim</span> <span class="o">&lt;=</span> <span class="n">iterations</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                     <span class="s2">&quot;Flattened dimensionality of synthetic histogram is less than&quot;</span>
                     <span class="o">+</span> <span class="s2">&quot; the number of iterations. This is a privacy risk.&quot;</span>
@@ -388,32 +625,21 @@
                     <span class="ne">Warning</span><span class="p">,</span>
                 <span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">):</span>
-                <span class="c1"># print(&quot;Iteration: &quot; + str(i))</span>
+            <span class="n">eps</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">meas_eps</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_only</span> <span class="k">else</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="o">.</span><span class="n">meas_eps</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
                 <span class="n">qi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exponential_mechanism</span><span class="p">(</span>
-                    <span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">))</span>
+                    <span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">i</span>
                 <span class="p">)</span>
-                <span class="c1"># Make sure we get a different query to measure:</span>
-                <span class="n">count_retries</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="k">while</span> <span class="n">qi</span> <span class="ow">in</span> <span class="n">measurements</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">count_retries</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_retries_exp_mechanism</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                            <span class="s2">&quot;Did not find a different query to measure via exponential mechanism. Try &quot;</span>
-                            <span class="o">+</span> <span class="s2">&quot;decreasing the number of iterations or increasing the number of allowed &quot;</span>
-                            <span class="o">+</span> <span class="s2">&quot;retries.&quot;</span><span class="p">)</span>
 
-                    <span class="n">qi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exponential_mechanism</span><span class="p">(</span>
-                        <span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">))</span>
-                    <span class="p">)</span>
-                    <span class="n">count_retries</span> <span class="o">+=</span> <span class="mi">1</span>
-
-                <span class="c1"># NOTE: Add laplace noise here with budget</span>
-                <span class="n">evals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate</span><span class="p">(</span><span class="n">queries</span><span class="p">[</span><span class="n">qi</span><span class="p">],</span> <span class="n">hist</span><span class="p">)</span>
-                <span class="n">lap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_laplace</span><span class="p">(</span>
-                    <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="n">measurements</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span> <span class="o">=</span> <span class="n">evals</span> <span class="o">+</span> <span class="n">lap</span>
-                <span class="c1"># Improve approximation with Multiplicative Weights</span>
+                <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span><span class="o">.</span><span class="n">queries</span><span class="p">:</span>
+                    <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">Query</span><span class="p">))</span>
+                    <span class="n">actual</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span>
+                    <span class="n">lap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_laplace</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">eps</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">qi</span> <span class="ow">in</span> <span class="n">measurements</span><span class="p">:</span>
+                        <span class="n">measurements</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">actual</span> <span class="o">+</span> <span class="n">lap</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">measurements</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">actual</span> <span class="o">+</span> <span class="n">lap</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
                 <span class="n">synth_hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multiplicative_weights</span><span class="p">(</span>
                     <span class="n">synth_hist</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mult_weights_iterations</span>
                 <span class="p">)</span>
@@ -433,9 +659,6 @@
 <span class="sd">        reference histogram</span>
 <span class="sd">        :rtype: np.ndarray</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># NOTE: Could actually use a distribution from real data with some budget,</span>
-        <span class="c1"># as opposed to using this uniform dist (would take epsilon as argument,</span>
-        <span class="c1"># and detract from it)</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">histogram</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">n</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
         <span class="n">synth_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">histogram</span><span class="p">)</span>
@@ -462,7 +685,7 @@
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">split_data</span><span class="o">.</span><span class="n">T</span><span class="p">):</span>
                 <span class="n">min_c</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
                 <span class="n">max_c</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
-                <span class="c1"># TODO: Make these noisy min/max</span>
+                <span class="c1"># TODO: just use integer bins and assume 0 base</span>
                 <span class="n">mins_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_c</span><span class="p">)</span>
                 <span class="n">maxs_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">max_c</span><span class="p">)</span>
                 <span class="c1"># Dimension size (number of bins)</span>
@@ -470,36 +693,23 @@
                 <span class="c1"># Here we track the min and max for the column,</span>
                 <span class="c1"># for sampling</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">mins_maxes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span> <span class="o">=</span> <span class="p">(</span><span class="n">min_c</span><span class="p">,</span> <span class="n">max_c</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">bin_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_bin_count</span><span class="p">:</span>
-                    <span class="c1"># Note the limitations of MWEM here, specifically in the case of continuous data.</span>
-                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                        <span class="s2">&quot;Bin count &quot;</span>
-                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">bin_count</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="s2">&quot; in column: &quot;</span>
-                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                        <span class="o">+</span> <span class="s2">&quot; exceeds max_bin_count, defaulting to: &quot;</span>
-                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_bin_count</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="s2">&quot;. Is this a continuous variable?&quot;</span><span class="p">,</span>
-                        <span class="ne">Warning</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="n">bin_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_bin_count</span>
-                    <span class="c1"># We track a scaling factor per column, for sampling</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_c</span> <span class="o">-</span> <span class="n">min_c</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_bin_count</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_bin_count</span><span class="p">:</span>
-                    <span class="n">bin_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_bin_count</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])])</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">1</span>
                 <span class="n">dims_sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bin_count</span><span class="p">)</span>
             <span class="c1"># Produce an N,D dimensional histogram, where</span>
             <span class="c1"># we pre-specify the bin sizes to correspond with</span>
             <span class="c1"># our ranges above</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">a</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">mins_data</span><span class="p">]):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Data should be preprocessed to have 0 based indices.&quot;</span><span class="p">)</span>
+            <span class="n">dimensionality</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">dims_sizes</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dimensionality</span> <span class="o">&gt;</span> <span class="mf">1e8</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dimensionality of histogram is </span><span class="si">{</span><span class="n">dimensionality</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">, consider using splits.&quot;</span><span class="p">)</span>
             <span class="n">histogram</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogramdd</span><span class="p">(</span><span class="n">split_data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">dims_sizes</span><span class="p">)</span>
             <span class="c1"># Return histogram, dimensions</span>
-            <span class="n">histograms</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">histogram</span><span class="p">,</span> <span class="n">dims_sizes</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">split</span><span class="p">))</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span><span class="n">histogram</span><span class="p">,</span> <span class="n">dims_sizes</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">split</span><span class="p">)</span>
+            <span class="n">histograms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">histograms</span>
 
-    <span class="k">def</span> <span class="nf">_exponential_mechanism</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_exponential_mechanism</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">iteration</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Refer to paper for in depth description of</span>
 <span class="sd">        Exponential Mechanism.</span>
@@ -516,20 +726,41 @@
 <span class="sd">        :return: # of errors</span>
 <span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">errors</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_evaluate</span><span class="p">(</span><span class="n">queries</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">hist</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate</span><span class="p">(</span><span class="n">queries</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">synth_hist</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">eps</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">queries</span><span class="p">))</span>
-        <span class="p">]</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[</span><span class="n">queries</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">eps</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">queries</span><span class="p">))</span>
+                  <span class="p">]</span>
         <span class="n">maxi</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
-        <span class="n">errors</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">maxi</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">))]</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
-        <span class="n">e_s</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)):</span>
-            <span class="n">c</span> <span class="o">+=</span> <span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="n">r</span> <span class="o">*</span> <span class="n">e_s</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">i</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mean_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+        <span class="n">exp_errors</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">maxi</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">))]</span>
+
+        <span class="n">count_retries</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">qi</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="n">qi</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">qi</span> <span class="ow">in</span> <span class="n">measurements</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_only</span> <span class="ow">or</span> <span class="n">count_retries</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_retries_exp_mechanism</span><span class="p">:</span>
+                <span class="c1"># grab one uniformly random, wastes epsilon, but is safe</span>
+                <span class="n">options</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">queries</span><span class="p">))]</span>
+                <span class="n">options</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">measurements</span><span class="p">]</span>
+                <span class="n">qi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+                <span class="n">e_s</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">exp_errors</span><span class="p">)</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">qi</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">exp_errors</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">exp_errors</span><span class="p">)):</span>
+                    <span class="n">c</span> <span class="o">+=</span> <span class="n">exp_errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="n">r</span> <span class="o">*</span> <span class="n">e_s</span><span class="p">:</span>
+                        <span class="n">qi</span> <span class="o">=</span> <span class="n">i</span>
+                        <span class="k">break</span>
+                <span class="n">count_retries</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="n">log</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iterations</span><span class="p">)))</span>
+            <span class="n">skip</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">log</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">log</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">iteration</span> <span class="o">%</span> <span class="n">skip</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">] - Average error: </span><span class="si">{</span><span class="n">mean_err</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">. Selected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">queries</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span><span class="o">.</span><span class="n">queries</span><span class="p">)</span><span class="si">}</span><span class="s2"> slices&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_only</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">qi</span>
 
     <span class="k">def</span> <span class="nf">_multiplicative_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">synth_hist</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">iterate</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -553,97 +784,22 @@
         <span class="n">sum_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">synth_hist</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterate</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">qi</span> <span class="ow">in</span> <span class="n">m</span><span class="p">:</span>
-                <span class="n">error</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate</span><span class="p">(</span><span class="n">queries</span><span class="p">[</span><span class="n">qi</span><span class="p">],</span> <span class="n">synth_hist</span><span class="p">)</span>
-                <span class="c1"># Perform the weights update</span>
-                <span class="n">query_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_replace_in_place_slice</span><span class="p">(</span>
-                                   <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">synth_hist</span><span class="o">.</span><span class="n">copy</span><span class="p">()),</span> <span class="n">queries</span><span class="p">[</span><span class="n">qi</span><span class="p">])</span>
+                <span class="n">measurements</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span>
+                <span class="n">queries_list</span> <span class="o">=</span> <span class="n">queries</span><span class="p">[</span><span class="n">qi</span><span class="p">]</span><span class="o">.</span><span class="n">queries</span>
+                <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">queries_list</span><span class="p">))</span>
 
-                <span class="c1"># Apply the update</span>
-                <span class="n">a_multiplier</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">query_update</span> <span class="o">*</span> <span class="n">error</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sum_a</span><span class="p">))</span>
-                <span class="n">a_multiplier</span><span class="p">[</span><span class="n">a_multiplier</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-                <span class="n">synth_hist</span> <span class="o">=</span> <span class="n">synth_hist</span> <span class="o">*</span> <span class="n">a_multiplier</span>
-                <span class="c1"># Normalize again</span>
-                <span class="n">count_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">synth_hist</span><span class="p">)</span>
-                <span class="n">synth_hist</span> <span class="o">=</span> <span class="n">synth_hist</span> <span class="o">*</span> <span class="p">(</span><span class="n">sum_a</span> <span class="o">/</span> <span class="n">count_a</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">measurement</span><span class="p">,</span> <span class="n">query</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">measurements</span><span class="p">,</span> <span class="n">queries_list</span><span class="p">):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="n">measurement</span> <span class="o">-</span> <span class="n">query</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">synth_hist</span><span class="p">)</span>
+                    <span class="n">query_update</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">synth_hist</span><span class="p">)</span>
+
+                    <span class="c1"># Apply the update</span>
+                    <span class="n">a_multiplier</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">query_update</span> <span class="o">*</span> <span class="n">error</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sum_a</span><span class="p">))</span>
+                    <span class="n">a_multiplier</span><span class="p">[</span><span class="n">a_multiplier</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                    <span class="n">synth_hist</span> <span class="o">=</span> <span class="n">synth_hist</span> <span class="o">*</span> <span class="n">a_multiplier</span>
+                    <span class="c1"># Normalize again</span>
+                    <span class="n">count_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">synth_hist</span><span class="p">)</span>
+                    <span class="n">synth_hist</span> <span class="o">=</span> <span class="n">synth_hist</span> <span class="o">*</span> <span class="p">(</span><span class="n">sum_a</span> <span class="o">/</span> <span class="n">count_a</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">synth_hist</span>
-
-    <span class="k">def</span> <span class="nf">_compose_arbitrary_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_s</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Here, dimensions is the shape of the histogram</span>
-<span class="sd">        We want to return a list of length num_s, containing</span>
-<span class="sd">        random slice objects, given the dimensions</span>
-<span class="sd">        These are our linear queries</span>
-
-<span class="sd">        :param num_s: Number of queries (slices) to generate</span>
-<span class="sd">        :type num_s: int</span>
-<span class="sd">        :param dimensions: Dimensions of histogram to be sliced</span>
-<span class="sd">        :type dimensions: np.shape</span>
-<span class="sd">        :return: Collection of random np.s_ (linear queries) for</span>
-<span class="sd">        a dataset with dimensions</span>
-<span class="sd">        :rtype: list</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">slices_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># TODO: For analysis, generate a distribution of slice sizes,</span>
-        <span class="c1"># by running the list of slices on a dimensional array</span>
-        <span class="c1"># and plotting the bucket size</span>
-        <span class="n">slices_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_s</span><span class="p">):</span>
-            <span class="n">inds</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">dimensions</span><span class="p">):</span>
-                <span class="c1"># Random linear sample, within dimensions</span>
-                <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-                <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-                <span class="n">l_b</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
-                <span class="n">u_b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">pre</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="n">pre</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l_b</span><span class="p">)</span>
-                <span class="n">pre</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u_b</span><span class="p">)</span>
-                <span class="n">inds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
-            <span class="c1"># Compose slices</span>
-            <span class="n">sl</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">:</span>
-                <span class="n">sl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">s_</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">ind</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
-            <span class="n">slices_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sl</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">slices_list</span>
-
-    <span class="k">def</span> <span class="nf">_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a_slice</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Evaluate a count query i.e. an arbitrary slice</span>
-
-<span class="sd">        :param a_slice: Random slice within bounds of flattened data length</span>
-<span class="sd">        :type a_slice: np.s_</span>
-<span class="sd">        :param data: Data to evaluate from (synthetic dset)</span>
-<span class="sd">        :type data: np.ndarray</span>
-<span class="sd">        :return: Count from data within slice</span>
-<span class="sd">        :rtype: float</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># We want to count the number of objects in an</span>
-        <span class="c1"># arbitrary slice of our collection</span>
-        <span class="c1"># We use np.s_[arbitrary slice] as our queries</span>
-        <span class="n">e</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">a_slice</span><span class="p">)]</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">e</span>
-
-    <span class="k">def</span> <span class="nf">_binary_replace_in_place_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">a_slice</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        We want to create a binary copy of the data,</span>
-<span class="sd">        so that we can easily perform our error multiplication</span>
-<span class="sd">        in MW. Convenience function.</span>
-
-<span class="sd">        :param data: Data</span>
-<span class="sd">        :type data: np.ndarray</span>
-<span class="sd">        :param a_slice: Slice</span>
-<span class="sd">        :type a_slice: np.s_</span>
-<span class="sd">        :return: Return data, where the range specified</span>
-<span class="sd">        by a_slice is all 1s.</span>
-<span class="sd">        :rtype: np.ndarray</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">view</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">view</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">a_slice</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
-        <span class="k">return</span> <span class="n">view</span>
 
     <span class="k">def</span> <span class="nf">_reorder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">splits</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

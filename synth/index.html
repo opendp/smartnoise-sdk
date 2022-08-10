@@ -239,13 +239,21 @@
 <span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">nf</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-<span class="n">synth</span> <span class="o">=</span> <span class="n">snsynth</span><span class="o">.</span><span class="n">MWEMSynthesizer</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">split_factor</span><span class="o">=</span><span class="n">nf</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">snsynth</span><span class="o">.</span><span class="n">MWEMSynthesizer</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">nf</span><span class="p">)</span>
 
-<span class="n">sample</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MWEM spent epsilon </span><span class="si">{</span><span class="n">synth</span><span class="o">.</span><span class="n">spent</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>MWEM maintains an in-memory copy of the full joint distribution, initialized to a uniform distribution, and updated with each iteration.  The size of the joint distribution in memory is the product of the cardinalities of columns of the input data, which may be much larger than the number of rows.  For example, in the PUMS dataset with income column dropped, the size of the in-memory histogram is 29,184 cells.  The size of the histogram can explode rapidly with multiple columns with high cardinality.  You can provide splits to divide the columns into independent subsets, which may dramatically reduce the memory requirement.</p>
+<p>The MWEM algorithm operates by alternating between a step that selects a poorly-performing query via exponential mechanism, and then updating the estimated joint distribution via the laplace mechanism, to perform better on the selected query.  Over multiple iterations, the estimated joint distribution will become better at answering the selected workload of queries.</p>
+<p>Because of this, the performance of MWEM is highly dependent on the quality of the candidate query workload.  The implementation tries to generate a query workload that will perform well.  You can provide some hints to influence the candidate queries.  By default, MWEM will generate workloads with all one-way and two-way marginals.  If you want to ensure three-way or higher marginals are candidates, you can use <code class="docutils literal notranslate"><span class="pre">marginal_width</span></code>.  In cases where columns contain ordinal data, particularly in columns that are binned from continuous values, you can use <code class="docutils literal notranslate"><span class="pre">add_ranges</span></code> to ensure that candidate queries include range queries.  If range queries are more important that two-way marginals, for example, you can combine <code class="docutils literal notranslate"><span class="pre">add_ranges</span></code> with a <code class="docutils literal notranslate"><span class="pre">marginal_width=1</span></code> to suppress two-way marginals.</p>
+<p>Each iteration spends a fraction of the budgeted epsilon.  Very large numbers of iterations may divide the epsilon too small, resulting in large measurement error on each measurement.  Conversely, using too few iterations will reduce error of individual measurements, but may interefere with the algorithm converging.  For example, if your data set has 15 total one-way and two-way cuboids, and you use iterations=15, every cuboid will be measured with the maximum possible epsilon, but the fit may be poor.</p>
+<p>By default, the implementation chooses a number of iterations based on the size of the data.  The number of candidate queries generated will be based on the number of iterations, and will focus on marginals, unless <code class="docutils literal notranslate"><span class="pre">add_ranges</span></code> is specified.  You can also specify a <code class="docutils literal notranslate"><span class="pre">q_count</span></code> to ensure that a certain number of candidate queries is always generated, regardless of the number of iterations.  This can be useful when you care more about range queries than marginals, because range queries each touch a single slice, while marginal cuboids may update hundreds or thousands of slices.</p>
+<p>If you are confident that the candidate query workload is high quality, you can use <code class="docutils literal notranslate"><span class="pre">measure_only</span></code> to skip the query selection step, and just sample uniformly from the workload.  This can double the budget available to measure the queries, but typically is not useful for anything but the smallest datasets.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">debug</span></code> flag prints detailed diagnostics about the query workload generated and convergence status.</p>
 </section>
 <section id="dp-ctgan">
 <h3><a class="toc-backref" href="#id5">DP-CTGAN</a><a class="headerlink" href="#dp-ctgan" title="Permalink to this headline">¶</a></h3>
@@ -294,6 +302,11 @@
 <section id="mst">
 <h3><a class="toc-backref" href="#id7">MST</a><a class="headerlink" href="#mst" title="Permalink to this headline">¶</a></h3>
 <p>MST achieves state of the art results for marginals over categorical data, and does well even with small source data.  From McKenna et al. “<a class="reference external" href="https://arxiv.org/abs/2108.04978">Winning the NIST Contest: A scalable and general approach to differentially private synthetic data</a>”</p>
+<p>Before using MST, install <a class="reference external" href="pipinstallgit+https://github.com/ryan112358/private-pgm.git">Private-PGM</a> :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install git+https://github.com/ryan112358/private-pgm.git
+</pre></div>
+</div>
+<p>And call like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsynth</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -310,7 +323,7 @@
 </pre></div>
 </div>
 <p>For more, see the <a class="reference external" href="https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/mst_sample">sample notebook</a></p>
-<p>This is version 0.2.6 of the guides, last built on Jul 27, 2022.</p>
+<p>This is version 0.2.7 of the guides, last built on Aug 10, 2022.</p>
 </section>
 </section>
 </section>
