@@ -1,8 +1,6 @@
-from pacsynth import DpAggregateSeededSynthesizer, DpAggregateSeededParametersBuilder, AccuracyMode, FabricationMode, Dataset
+from pacsynth import DpAggregateSeededSynthesizer, DpAggregateSeededParametersBuilder, AccuracyMode, FabricationMode
+from pacsynth import Dataset as AggregateSeededDataset
 from snsynth.base import SDGYMBaseSynthesizer
-from snsynth.aggregate_seeded.accuracy_mode import AccuracyMode
-from snsynth.aggregate_seeded.fabrication_mode import FabricationMode
-from snsynth.aggregate_seeded.dataset import AggregateSeededDataset
 from functools import wraps
 
 import pandas as pd
@@ -60,10 +58,10 @@ class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
             .use_synthetic_counts(use_synthetic_counts) \
             .weight_selection_percentile(weight_selection_percentile)
 
-        if aggregate_counts_scale_factor != None:
+        if aggregate_counts_scale_factor is not None:
             builder = builder.aggregate_counts_scale_factor(aggregate_counts_scale_factor)
 
-        if delta != None:
+        if delta is not None:
             builder = builder.delta(delta)
 
         self.reporting_length = reporting_length
@@ -76,7 +74,7 @@ class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
 
     @wraps(SDGYMBaseSynthesizer.fit)
     def fit(self, data, categorical_columns=None, ordinal_columns=None, sensitive_zeros=None):
-        assert ordinal_columns == None, 'ordinal columns should be binned and transformed in categorical columns'
+        assert ordinal_columns is None, 'ordinal columns should be binned and transformed in categorical columns'
 
         if isinstance(data, list) and all(map(lambda row: isinstance(row, list), data)):
             self.dataset = AggregateSeededDataset(
@@ -106,16 +104,16 @@ class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
     def sample(self, samples=None):
         result = self.synth.sample(samples)
 
-        if self.pandas == True:
+        if self.pandas is True:
             result = AggregateSeededDataset.raw_data_to_data_frame(result)
 
         return result
 
     def get_sensitive_aggregates(self, combination_delimiter=';', reporting_length=None):
-        if self.dataset == None:
+        if self.dataset is None:
             raise RuntimeError("make sure 'fit' method has been successfully called first")
 
-        if reporting_length == None:
+        if reporting_length is None:
             reporting_length = self.reporting_length
 
         return self.dataset.get_aggregates(

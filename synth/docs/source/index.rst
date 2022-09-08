@@ -135,11 +135,11 @@ For more, see the `sample notebook <https://github.com/opendp/smartnoise-sdk/tre
 
 
 Aggregate Seeded
----
+----------------
 
 A differentially-private synthesizer that relies on DP Marginals to build synthetic data. It will compute DP Marginals (called aggregates) for your dataset up to and including a specified reporting length, and synthesize data based on the computed aggregated counts.
 
-Based on the `Synthetic Data Showcase project <https://github.com/microsoft/synthetic-data-showcase>`_. DP documentation available `here <https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp>`.
+Based on the `Synthetic Data Showcase project <https://github.com/microsoft/synthetic-data-showcase>`_. DP documentation available `here <https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp>`_.
 
 Before using Aggregate Seeded, install `pac-synth <pip install pac-synth>`_ :
 
