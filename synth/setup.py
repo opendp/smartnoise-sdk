@@ -3,6 +3,7 @@ from setuptools import setup
 
 packages = \
 ['snsynth',
+ 'snsynth.aggregate_seeded',
  'snsynth.models',
  'snsynth.mst',
  'snsynth.preprocessors',
