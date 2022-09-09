@@ -143,12 +143,6 @@ class TestAggregateSeeded:
         with pytest.raises(ValueError):
             synth.fit([["A", "B"], ("1", "2")])
 
-    def test_fit_with_ordinal_columns(self):
-        synth = AggregateSeededSynthesizer()
-
-        with pytest.raises(AssertionError):
-            synth.fit(self.sensitive_df, ordinal_columns=["H1", "H2"])
-
     def test_get_sensitive_aggregates(self):
         synth = AggregateSeededSynthesizer()
 
@@ -195,7 +189,7 @@ class TestAggregateSeeded:
         synth = AggregateSeededSynthesizer()
         selected_columns = ["H1", "H2", "H4", "H5", "H7"]
 
-        synth.fit(self.sensitive_df, categorical_columns=selected_columns)
+        synth.fit(self.sensitive_df, use_columns=selected_columns)
         synthetic_data = synth.sample(100)
 
         assert set(synthetic_data.columns) == set(selected_columns)
