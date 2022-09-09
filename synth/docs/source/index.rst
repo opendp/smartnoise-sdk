@@ -141,13 +141,7 @@ A differentially-private synthesizer that relies on DP Marginals to build synthe
 
 Based on the `Synthetic Data Showcase project <https://github.com/microsoft/synthetic-data-showcase>`_. DP documentation available `here <https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp>`_.
 
-Before using Aggregate Seeded, install `pac-synth <https://pypi.org/project/pac-synth>`_ :
-
-.. code-block:: bash
-
-  pip install pac-synth
-
-And call like this:
+Call like this:
 
 .. code-block:: python
 
