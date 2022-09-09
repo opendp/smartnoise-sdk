@@ -203,14 +203,16 @@ class TestAggregateSeeded:
     def test_sample_with_sensitive_zeros(self):
         synth = AggregateSeededSynthesizer()
 
-        synth.fit(self.sensitive_df)
+        sensitive_df = self.sensitive_df.copy()
+        sensitive_df["H4"] = "0"
+
+        synth.fit(sensitive_df)
         synthetic_data = synth.sample(100)
 
         assert "0" not in synthetic_data.values
 
-        synth.fit(self.sensitive_df, sensitive_zeros=["H4", "H6"])
+        synth.fit(sensitive_df, sensitive_zeros=["H4"])
         synthetic_data = synth.sample(100)
 
         assert len(synthetic_data) == 100
         assert "0" in synthetic_data["H4"].values
-        assert "0" in synthetic_data["H6"].values
