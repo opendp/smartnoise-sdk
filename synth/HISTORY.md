@@ -1,3 +1,8 @@
+# SmartNoise Synth v0.2.8 Release Notes
+
+* Support for pac-synth DP Marginals synthesizer (thanks, @rracanicci!)
+* Bump Python requirement to 3.7+
+
 # SmartNoise Synth v0.2.7 Release Notes
 
 ## MWEM Updates

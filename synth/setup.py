@@ -3,6 +3,7 @@ from setuptools import setup
 
 packages = \
 ['snsynth',
+ 'snsynth.aggregate_seeded',
  'snsynth.models',
  'snsynth.mst',
  'snsynth.preprocessors',
@@ -13,7 +14,10 @@ package_data = \
 {'': ['*']}
 
 install_requires = \
-['ctgan>=0.4.3,<0.5.0', 'opacus>=0.14.0,<0.15.0', 'opendp>=0.4.0,<0.5.0']
+['ctgan>=0.4.3,<0.5.0',
+ 'opacus>=0.14.0,<0.15.0',
+ 'opendp>=0.4.0,<0.5.0',
+ 'pac-synth>=0.0.5,<0.0.6']
 
 setup_kwargs = {
     'name': 'smartnoise-synth',
@@ -28,7 +32,7 @@ setup_kwargs = {
     'packages': packages,
     'package_data': package_data,
     'install_requires': install_requires,
-    'python_requires': '>=3.6.8,<3.9',
+    'python_requires': '>=3.7,<3.9',
 }
 
 
