@@ -116,6 +116,18 @@ class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
 
         return result
 
+    @wraps(SDGYMBaseSynthesizer.fit_sample)
+    def fit_sample(
+        self, data, categorical_columns=None, ordinal_columns=None, sensitive_zeros=None
+    ):
+        self.fit(
+            data,
+            categorical_columns=categorical_columns,
+            ordinal_columns=ordinal_columns,
+            sensitive_zeros=sensitive_zeros,
+        )
+        return self.sample(data.shape[0])
+
     def get_sensitive_aggregates(
         self, combination_delimiter=";", reporting_length=None
     ):
