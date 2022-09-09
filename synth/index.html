@@ -174,6 +174,11 @@
      MST
     </a>
    </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#aggregate-seeded">
+     Aggregate Seeded
+    </a>
+   </li>
   </ul>
  </li>
 </ul>
@@ -209,6 +214,7 @@
 <li><p><a class="reference internal" href="#dp-ctgan" id="id5">DP-CTGAN</a></p></li>
 <li><p><a class="reference internal" href="#pate-ctgan" id="id6">PATE-CTGAN</a></p></li>
 <li><p><a class="reference internal" href="#mst" id="id7">MST</a></p></li>
+<li><p><a class="reference internal" href="#aggregate-seeded" id="id8">Aggregate Seeded</a></p></li>
 </ul>
 </li>
 </ul>
@@ -323,7 +329,44 @@
 </pre></div>
 </div>
 <p>For more, see the <a class="reference external" href="https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/mst_sample">sample notebook</a></p>
-<p>This is version 0.2.7 of the guides, last built on Aug 10, 2022.</p>
+</section>
+<section id="aggregate-seeded">
+<h3><a class="toc-backref" href="#id8">Aggregate Seeded</a><a class="headerlink" href="#aggregate-seeded" title="Permalink to this headline">¶</a></h3>
+<p>A differentially-private synthesizer that relies on DP Marginals to build synthetic data. It will compute DP Marginals (called aggregates) for your dataset up to and including a specified reporting length, and synthesize data based on the computed aggregated counts.</p>
+<p>Based on the <a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase">Synthetic Data Showcase project</a>. DP documentation available <a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp">here</a>.</p>
+<p>Call like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.aggregate_seeded</span> <span class="kn">import</span> <span class="n">AggregateSeededSynthesizer</span>
+
+<span class="c1"># this generates a random pandas data frame with 5000 records</span>
+<span class="c1"># replace this with your own data</span>
+<span class="n">sensitive_df</span> <span class="o">=</span> <span class="n">gen_data_frame</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+
+<span class="c1"># build synthesizer</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">AggregateSeededSynthesizer</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">sensitive_df</span><span class="p">)</span>
+
+<span class="c1"># sample 5000 records and build a data frame</span>
+<span class="n">synthetic_df</span> <span class="o">=</span> <span class="n">sensitive_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+
+<span class="c1"># show 10 example records</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">synthetic_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># this will output</span>
+<span class="c1">#      H1 H2  H3 H4 H5 H6 H7 H8 H9 H10</span>
+<span class="c1"># 2791  2         1  0  1  1  1  0   1</span>
+<span class="c1"># 2169  1  3   4  1  0  1  0  1  1   0</span>
+<span class="c1"># 4607     4   7  1  1  0  1  1  1   0</span>
+<span class="c1"># 4803  1      8  0  0  0  1  1  1   1</span>
+<span class="c1"># 2635         8  0  1  1  1  0  1   0</span>
+<span class="c1"># 537   1         1  1  1  1  1  0   0</span>
+<span class="c1"># 3495     6   7  0  0  1  0  0  1   0</span>
+<span class="c1"># 2009  1  3   3  0  0  1  0  1  1   0</span>
+<span class="c1"># 3214  1  5      1  1  1  1  1  0   1</span>
+<span class="c1"># 4879  2  5  10  0  1  1  1  1  1   1</span>
+</pre></div>
+</div>
+<p>For more, see the <a class="reference external" href="https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/aggregate_seeded_sample">samples notebook</a>.</p>
+<p>This is version 0.2.8 of the guides, last built on Sep 09, 2022.</p>
 </section>
 </section>
 </section>
