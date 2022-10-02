@@ -1,3 +1,7 @@
+# SmartNoise Synth v0.2.8.1 Release Notes
+
+* Add diagnostics to GANs to show epsilon spend on preprocessor
+
 # SmartNoise Synth v0.2.8 Release Notes
 
 * Support for pac-synth DP Marginals synthesizer (thanks, @rracanicci!)
