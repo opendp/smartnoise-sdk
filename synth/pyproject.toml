@@ -13,7 +13,7 @@ readme = "README.md"
 python = ">=3.7,<3.9"
 ctgan = "^0.4.3"
 opacus = "^0.14.0"
-opendp = "^0.4.0"
+opendp = "^0.5.0"
 pac-synth = "^0.0.5"
 
 [tool.poetry.dev-dependencies]
