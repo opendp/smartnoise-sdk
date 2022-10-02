@@ -61,5 +61,5 @@ def download_pums():
         for idx, row in df_dup.iterrows():
             if random.random() < 0.38:
                 col = np.random.choice(colnames, 1, p=p)
-                df_dup.loc[idx, col] = None
-        df_dup.to_csv(pums_null_csv_path, index=False)
+                df_dup.loc[idx, col] = np.nan
+        df_dup.to_csv(pums_null_csv_path, index=False, float_format = '%.12g')
