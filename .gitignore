@@ -112,6 +112,7 @@ poetry.lock
 # mlflow
 mlruns
 result.json
+run.py
 
 # VS Code
 .vscode/
@@ -136,3 +137,5 @@ PUMS_large.csv
 PUMS_dup.csv
 PUMS_null.csv
 *.db
+
+
