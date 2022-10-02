@@ -15,17 +15,17 @@ class Mechanisms:
     def __init__(self):
         self.classes = {
             Mechanism.laplace: Laplace,
-            Mechanism.geometric: Geometric,
-            Mechanism.gaussian: Gaussian,
-            Mechanism.analytic_gaussian: AnalyticGaussian
+            Mechanism.geometric: DiscreteLaplace,
+            Mechanism.discrete_laplace: DiscreteLaplace,
+            Mechanism.discrete_gaussian: DiscreteGaussian
         }
         self.large = 1000
         self.map = {
-            Stat.count: Mechanism.geometric,
-            Stat.sum_int: Mechanism.geometric,
-            Stat.sum_large_int: Mechanism.laplace,
+            Stat.count: Mechanism.discrete_laplace,
+            Stat.sum_int: Mechanism.discrete_laplace,
+            Stat.sum_large_int: Mechanism.discrete_laplace,
             Stat.sum_float: Mechanism.laplace,
-            Stat.threshold: Mechanism.laplace
+            Stat.threshold: Mechanism.discrete_laplace
         }
     def _get_stat(self, stat: str, t: str):
         if stat == 'threshold':

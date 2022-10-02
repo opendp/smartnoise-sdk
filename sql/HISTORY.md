@@ -1,3 +1,10 @@
+# SmartNoise SQL v0.2.5 Release Notes
+
+* Update to use OpenDP v0.5, support for Mac Silicon
+* Switch to use discrete Laplace for all integer sums and counts
+* Enable discrete Gaussian option
+* `get_privacy_cost` now allows lists of queries
+
 # SmartNoise SQL v0.2.4 Release Notes
 
 * Support for BigQuery (thanks, @oskarkocol!)

@@ -2,10 +2,12 @@ from enum import Enum
 import numpy as np
 
 class Mechanism(Enum):
-    gaussian = 1
+    # gaussian = 1
     laplace = 2
-    geometric = 3
-    analytic_gaussian = 4
+    geometric = 3 # discrete laplace
+    # analytic_gaussian = 4
+    discrete_gaussian = 5
+    discrete_laplace = 6
 
 class AdditiveNoiseMechanism:
     """
@@ -61,7 +63,7 @@ class Unbounded(AdditiveNoiseMechanism):
         ):
         super().__init__(
                 epsilon,
-                mechanism=Mechanism.gaussian,
+                mechanism=Mechanism.discrete_laplace,
                 delta=delta,
                 sensitivity=sensitivity,
                 max_contrib=max_contrib,
