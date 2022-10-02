@@ -54,11 +54,12 @@ def download_pums():
         print("Generating PUMS small with ~40% rows with NULL and duplicate IDs")
         random.seed(1011)
         df_dup = pd.read_csv(pums_dup_csv_path)
-        colnames = list(df_dup.columns)
+        #colnames = list(df_dup.columns)
+        colnames = df_dup.columns
         p = [random.choice([1.0, 1.5, 2.0]) for _ in range(len(colnames))]
         p = np.array(p) / np.sum(p)
         for idx, row in df_dup.iterrows():
             if random.random() < 0.38:
                 col = np.random.choice(colnames, 1, p=p)
-                df_dup.at[idx, col] = pd.NA
+                df_dup.loc[idx, col] = None
         df_dup.to_csv(pums_null_csv_path, index=False)
