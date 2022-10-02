@@ -159,7 +159,8 @@ class PATECTGAN(CTGANSynthesizer):
         self.pac = pac
         self.preprocessor_eps = preprocessor_eps
         if preprocessor_eps and preprocessor_eps > 0:
-            print(f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
+            print(
+                f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
             self.epsilon = epsilon - preprocessor_eps
         else:
             self.epsilon = epsilon
@@ -240,7 +241,6 @@ class PATECTGAN(CTGANSynthesizer):
             print(f"Privatizing the category frequencies consumes {cat_eps:.3f} epsilon,")
             print(f"allowing {per_cat_eps:.3f} epsilon per category.")
             print(f"We have {(self.epsilon - cat_eps):.3f} epsilon left over for training")
-
 
         train_data = self._transformer.transform(data)
 

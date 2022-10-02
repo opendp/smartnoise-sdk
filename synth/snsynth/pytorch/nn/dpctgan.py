@@ -173,7 +173,8 @@ class DPCTGAN(CTGANSynthesizer):
         self.delta = delta
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
         if preprocessor_eps and preprocessor_eps > 0:
-            print(f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
+            print(
+                f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
             self.epsilon = epsilon - preprocessor_eps
         else:
             self.epsilon = epsilon
