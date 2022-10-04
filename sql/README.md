@@ -138,23 +138,6 @@ epsilon_many, _ = reader.odometer.spent
 print(f'{epsilon_many} < {epsilon_single * 100}')
 ```
 
-## Accuracy
-
-The `get_simple_accuracy` method returns the column-wise accuracies for a given alpha for a given query.
-
-```python
-privacy = Privacy(epsilon=1.0, delta=10e-6)
-
-reader = from_connection(conn, metadata=metadata, privacy=privacy)
-
-query = 'SELECT COUNT(*) AS n, SUM(age) AS age FROM PUMS.PUMS'
-
-acc95 = reader.get_simple_accuracy(query, alpha=0.05)
-print(f'n will be +/- {acc95[0]} in 95% of executions.  Age will be +/- {acc95[1]}')
-```
-
-This method only returns simple accuracies, where the noise scale for each column is fixed and does not vary per row.  Statistics like AVG and VARIANCE are computed from a quotient of noisy sum and noisy count, so the accuracy can vary widely per row.  In these cases, a per-row accuracy can be obtained with `execute_with_accuracy`.  
-
 ## Histograms
 
 SQL `group by` queries represent histograms binned by grouping key.  Queries over a grouping key with unbounded or non-public dimensions expose privacy risk. For example:

@@ -122,7 +122,7 @@ class PATECTGAN(CTGANSynthesizer):
         batch_size=500,
         discriminator_steps=1,
         log_frequency=False,
-        verbose=False,
+        verbose=True,
         epochs=300,
         pac=1,
         cuda=True,
@@ -135,7 +135,7 @@ class PATECTGAN(CTGANSynthesizer):
         sample_per_teacher=1000,
         delta=None,
         noise_multiplier=1e-3,
-        preprocessor_eps=1,
+        preprocessor_eps=0.5,
         moments_order=100,
         category_epsilon_pct=0.1,
     ):
@@ -158,7 +158,14 @@ class PATECTGAN(CTGANSynthesizer):
         self._epochs = epochs
         self.pac = pac
         self.preprocessor_eps = preprocessor_eps
-        self.epsilon = epsilon - preprocessor_eps
+        if preprocessor_eps and preprocessor_eps > 0:
+            print(
+                f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
+            self.epsilon = epsilon - preprocessor_eps
+        else:
+            self.epsilon = epsilon
+        if self.epsilon < 10E-3:
+            raise ValueError("Epsilon needs to be larger than preprocessor_eps!")
 
         self._category_epsilon_pct = category_epsilon_pct
 
@@ -219,11 +226,21 @@ class PATECTGAN(CTGANSynthesizer):
         self.num_teachers = int(len(data) / sample_per_teacher) + 1
 
         self._transformer = transformer(self.preprocessor_eps)
+        if isinstance(self._transformer, BaseTransformer) and self.preprocessor_eps and self.preprocessor_eps > 0.0:
+            warnings.warn("The base transformer does not use any epsilon, so preprocessor_eps is wasted!")
         self._transformer.fit(
             data,
             discrete_columns=categorical_columns,
             continuous_columns_lower_upper=continuous_columns_lower_upper,
         )
+
+        if self.verbose:
+            cat_eps = self.epsilon * self._category_epsilon_pct
+            per_cat_eps = cat_eps / len(categorical_columns)
+            print(f"The preprocessor consumes {self.preprocessor_eps:.3f} epsilon")
+            print(f"Privatizing the category frequencies consumes {cat_eps:.3f} epsilon,")
+            print(f"allowing {per_cat_eps:.3f} epsilon per category.")
+            print(f"We have {(self.epsilon - cat_eps):.3f} epsilon left over for training")
 
         train_data = self._transformer.transform(data)
 
@@ -555,7 +572,7 @@ class PATECTGAN(CTGANSynthesizer):
 
     def generate(self, n, condition_column=None, condition_value=None):
         """
-        TODO: Add condition_column support from CTGAN
+        TODO: Add condition_column support 
         """
         self._generator.eval()
 

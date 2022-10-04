@@ -1,7 +1,7 @@
+from typing import List, Union
 import warnings
 import numpy as np
 from snsql.metadata import Metadata
-from snsql.sql._mechanisms.accuracy import Accuracy
 from snsql.sql.odometer import OdometerHeterogeneous
 from snsql.sql.privacy import Privacy, Stat
 
@@ -119,7 +119,7 @@ class PrivateReader(Reader):
             warnings.warn(
 f"""Dimension censoring is enabled, with {self.privacy.mechanisms.map[Stat.threshold]} as the thresholding mechanism. 
 This is an unsafe floating point mechanism.  Counts used for censoring will be revealed in any queries that request COUNT DISTINCT(person), 
-leading to potential privacy leaks. If your query workload needs to reveal distinct counts of individuals, consider doing the dimesion
+leading to potential privacy leaks. If your query workload needs to reveal distinct counts of individuals, consider doing the dimension
 censoring as a preprocessing step.  See the documentation for more information."""
             )
 
@@ -143,13 +143,6 @@ f"""The following columns are of type float: {', '.join(floats)}.
 summary statistics over floats will use {mechs.map[Stat.sum_float]}, which is not floating-point safe, 
 This could lead to privacy leaks."""
             )
-        if large_ints and not mechs.map[Stat.sum_large_int] in mechs.safe:
-            warnings.warn(
-f"""The following integer columns have large sensitivity: {', '.join(large_ints)}. 
-Summary statistics over large integers will use {mechs.map[Stat.sum_large_int]}, which is not floating-point safe,
-This could lead to privacy leaks."""
-            )
-
     def _grouping_columns(self, query: Query):
         """
         Return a vector of boolean corresponding to the columns of the
@@ -220,13 +213,13 @@ This could lead to privacy leaks."""
         mechs = self._get_mechanisms(subquery)
         return [(mech.epsilon, mech.delta) if mech else None for mech in mechs]
     
-    def get_privacy_cost(self, query_string):
+    def get_privacy_cost(self, query_strings: Union[str, List[str]]):
         """Estimates the epsilon and delta cost for running the given query.
         Privacy cost is returned without running the query or incrementing the odometer.
 
-        :param query_string: The query string to analyze
+        :param query_string: The query string or strings to analyze
         :returns: A tuple of (epsilon, delta) estimating total privacy cost for
-            running this query.
+            running this query or queries.
 
         .. code-block:: python
 
@@ -254,10 +247,13 @@ This could lead to privacy leaks."""
 
         """
         odo = OdometerHeterogeneous(self.privacy)
-        costs = self._get_mechanism_costs(query_string)
-        costs = [cost for cost in costs if cost]
-        for epsilon, delta in costs:
-            odo.spend(Privacy(epsilon=epsilon, delta=delta))
+        if not isinstance(query_strings, list):
+            query_strings = [query_strings]
+        for query_string in query_strings:
+            costs = self._get_mechanism_costs(query_string)
+            costs = [cost for cost in costs if cost]
+            for epsilon, delta in costs:
+                odo.spend(Privacy(epsilon=epsilon, delta=delta))
         return odo.spent
 
     def parse_query_string(self, query_string) -> Query:
@@ -514,7 +510,7 @@ This could lead to privacy leaks."""
 
         _accuracy = None
         if accuracy:
-            _accuracy = Accuracy(query, subquery, self.privacy)
+            raise NotImplementedError("Simple accuracy has been removed.  Please see documentation for information on estimating accuracy.")
 
         syms = subquery._select_symbols
         source_col_names = [s.name for s in syms]

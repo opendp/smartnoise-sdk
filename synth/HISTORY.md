@@ -1,7 +1,23 @@
+# SmartNoise Synth v0.2.8.1 Release Notes
+
+* Add diagnostics to GANs to show epsilon spend on preprocessor
+
+# SmartNoise Synth v0.2.8 Release Notes
+
+* Support for pac-synth DP Marginals synthesizer (thanks, @rracanicci!)
+* Bump Python requirement to 3.7+
+
 # SmartNoise Synth v0.2.7 Release Notes
 
-* Factory Interface
-* Differentially Private Reversible Transforms
+## MWEM Updates
+
+* Support for measuring Cuboids. Cuboids include multiple disjoint queries that can be measured under a single iteration.
+* Default iterations and query count adapt based on dimensionality of source data
+* Support for measure-only MWEM, for small cubes with optimal query workloads
+* Basic accountant keeps track of spent epsilon
+* Removed bin edge support, since we delegate to preprocessor now
+* Better handles cases where exponential mechanism can't find a query. Should always find queries to measure now
+* Debug flag prints trace information
 
 # SmartNoise Synth v0.2.6 Release Notes
 

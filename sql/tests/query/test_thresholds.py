@@ -46,7 +46,7 @@ class TestQueryThresholds:
     def test_yes_tau_gauss(self, test_databases):
         # should drop approximately half of educ bins
         privacy = Privacy(epsilon=1.0, delta=1/1000)
-        privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
+        privacy.mechanisms.map[Stat.threshold] = Mechanism.discrete_laplace
         readers = test_databases.get_private_readers(database='PUMS_pid', privacy=privacy)
         assert(len(readers) > 0)
         for reader in readers:
@@ -55,7 +55,7 @@ class TestQueryThresholds:
     def test_yes_tau_gauss_row(self, test_databases):
         # should drop approximately half of educ bins
         privacy = Privacy(epsilon=1.0, delta=1/1000)
-        privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
+        privacy.mechanisms.map[Stat.threshold] = Mechanism.discrete_laplace
         readers = test_databases.get_private_readers(database='PUMS', privacy=privacy)
         assert(len(readers) > 0)
         for reader in readers:
@@ -101,8 +101,8 @@ class TestQueryThresholds:
             for d in max_contribs:
                 for delta in deltas:
                     privacy = Privacy(epsilon=eps, delta=delta)
-                    privacy.mechanisms.map[Stat.threshold] = Mechanism.analytic_gaussian
-                    # crude smoke test; compare threshold from analytical gaussian to threshold from gaussian,
+                    privacy.mechanisms.map[Stat.threshold] = Mechanism.discrete_gaussian
+                    # crude smoke test; compare threshold from discrete gaussian to threshold from gaussian,
                     # and check that the threshold isn't widly different
                     gaus_scale = math.sqrt(d) * math.sqrt(2 * math.log(1.25/delta))/eps
                     gaus_rho = 1 + gaus_scale * math.sqrt(2 * math.log(d / math.sqrt(2 * math.pi * delta)))

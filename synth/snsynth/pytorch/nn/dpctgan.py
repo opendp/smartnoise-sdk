@@ -143,7 +143,7 @@ class DPCTGAN(CTGANSynthesizer):
         sigma=5,
         max_per_sample_grad_norm=1.0,
         epsilon=1,
-        preprocessor_eps=1,
+        preprocessor_eps=0.5,
         loss="cross_entropy",
         category_epsilon_pct=0.1,
     ):
@@ -172,9 +172,14 @@ class DPCTGAN(CTGANSynthesizer):
         self.disabled_dp = disabled_dp
         self.delta = delta
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
-        self.epsilon = epsilon - preprocessor_eps
-        if self.epsilon < 0:
-            raise ValueError("needs to be larger than preprocessor_eps!")
+        if preprocessor_eps and preprocessor_eps > 0:
+            print(
+                f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
+            self.epsilon = epsilon - preprocessor_eps
+        else:
+            self.epsilon = epsilon
+        if self.epsilon < 10E-3:
+            raise ValueError("Epsilon needs to be larger than preprocessor_eps!")
         self.preprocessor_eps = preprocessor_eps
         self.epsilon_list = []
         self.alpha_list = []
@@ -230,14 +235,21 @@ class DPCTGAN(CTGANSynthesizer):
                 )
 
         self._transformer = transformer(self.preprocessor_eps)
+        if isinstance(self._transformer, BaseTransformer) and self.preprocessor_eps and self.preprocessor_eps > 0.0:
+            warnings.warn("The base transformer does not use any epsilon, so preprocessor_eps is wasted!")
         self._transformer.fit(
             data,
             discrete_columns=categorical_columns,
             continuous_columns_lower_upper=continuous_columns_lower_upper,
         )
-        # for tinfo in self._transformer._column_transform_info_list:
-        #    if tinfo.column_type == "continuous":
-        #        raise ValueError("We don't support continuous values on this synthesizer.  Please discretize values.")
+
+        if self.verbose:
+            cat_eps = self.epsilon * self._category_epsilon_pct
+            per_cat_eps = cat_eps / len(categorical_columns)
+            print(f"The preprocessor consumes {self.preprocessor_eps:.3f} epsilon")
+            print(f"Privatizing the category frequencies consumes {cat_eps:.3f} epsilon,")
+            print(f"allowing {per_cat_eps:.3f} epsilon per category.")
+            print(f"We have {(self.epsilon - cat_eps):.3f} epsilon left over for training")
 
         train_data = self._transformer.transform(data)
 
