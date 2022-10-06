@@ -1,3 +1,4 @@
+from collections import namedtuple
 import numpy as np
 import torch
 from torch import optim
@@ -16,10 +17,11 @@ from torch.nn import (
 import warnings
 
 import opacus
+from snsynth.transform.definitions import ColumnType
 
-from snsynth.preprocessors.data_transformer import BaseTransformer
+from snsynth.transform.table import TableTransformer
 from .data_sampler import DataSampler
-from ctgan.synthesizers import CTGANSynthesizer
+from .ctgan import CTGANSynthesizer
 
 
 class Discriminator(Module):
@@ -219,28 +221,20 @@ class DPCTGAN(CTGANSynthesizer):
         categorical_columns=None,
         ordinal_columns=None,
         update_epsilon=None,
-        transformer=BaseTransformer,
-        continuous_columns_lower_upper={},
+        transformer=None,
+        continuous_columns={},
     ):
         if update_epsilon:
             self.epsilon = update_epsilon - self.preprocessor_eps
 
-        for col in categorical_columns:
-            if str(data[col].dtype).startswith("float"):
-                raise ValueError(
-                    "It looks like you are passing in a vector of continuous values"
-                    f"to a categorical column at [{col}]."
-                    "Please discretize and pass in categorical columns with"
-                    "unsigned integer or string category names."
-                )
-
-        self._transformer = transformer(self.preprocessor_eps)
-        if isinstance(self._transformer, BaseTransformer) and self.preprocessor_eps and self.preprocessor_eps > 0.0:
-            warnings.warn("The base transformer does not use any epsilon, so preprocessor_eps is wasted!")
+        tt = TableTransformer.create(data, style='gan',
+            categorical_columns=categorical_columns,
+            continuous_columns=continuous_columns,
+            ordinal_columns=ordinal_columns)
+        self._transformer = tt
         self._transformer.fit(
             data,
-            discrete_columns=categorical_columns,
-            continuous_columns_lower_upper=continuous_columns_lower_upper,
+            epsilon=self.preprocessor_eps
         )
 
         if self.verbose:
@@ -252,6 +246,9 @@ class DPCTGAN(CTGANSynthesizer):
             print(f"We have {(self.epsilon - cat_eps):.3f} epsilon left over for training")
 
         train_data = self._transformer.transform(data)
+        train_data = np.array([
+            [float(x) if x is not None else 0.0 for x in row] for row in train_data
+        ])
 
         sampler_eps = 0.0
 
@@ -264,18 +261,18 @@ class DPCTGAN(CTGANSynthesizer):
 
         self._data_sampler = DataSampler(
             train_data,
-            self._transformer.output_info_list,
+            self._transformer.transformers,
             self._log_frequency,
             per_column_epsilon=per_col_sampler_eps,
         )
 
-        spent = self._data_sampler.total_spent
-        if spent > sampler_eps and not np.isclose(spent, sampler_eps):
-            raise AssertionError(
-                f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
-            )
+        # spent = self._data_sampler.total_spent
+        # if spent > sampler_eps and not np.isclose(spent, sampler_eps):
+        #     raise AssertionError(
+        #         f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
+        #     )
 
-        data_dim = self._transformer.output_dimensions
+        data_dim = self._transformer.output_width
 
         self._generator = Generator(
             self._embedding_dim + self._data_sampler.dim_cond_vec(),

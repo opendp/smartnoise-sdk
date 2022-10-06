@@ -1,4 +1,7 @@
 
+from snsynth.transform.definitions import ColumnType
+
+
 class ColumnTransformer:
     """Base class for column transformers.  Subclasses must implement the
     _fit, _transform, and _inverse_transform methods."""
@@ -7,8 +10,31 @@ class ColumnTransformer:
         self.output_width = 0
         self._clear_fit()
     @property
+    def output_type(self):
+        """Must be implemented by subclasses to return the type of the output
+        of the transformer.  From definitions.ColumnType enum."""
+        raise NotImplementedError
+    @property
+    def is_categorical(self):
+        return self.output_type == ColumnType.CATEGORICAL
+    @property
+    def is_continuous(self):
+        return self.output_type == ColumnType.CONTINUOUS
+    @property
     def fit_complete(self):
         return self._fit_complete
+    @property
+    def needs_epsilon(self):
+        """Overriden by subclasses to indicate whether the transformer
+        needs an epsilon value to be supplied to the fit method."""
+        return False
+    def allocate_privacy_budget(self, epsilon, odometer):
+        """Allocate privacy budget to the transformer.  This method is called
+        by the DataTransformer to allocate privacy budget to the transformer.
+        The default implementation does nothing, but subclasses can override
+        this method to allocate privacy budget to the transformer.
+        """
+        pass
     def fit(self, data, idx=None):
         """Fit a column of data.  If data includes multiple columns,
         provide an index to select which column to fit.  If no index is supplied,

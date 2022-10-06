@@ -1,5 +1,8 @@
 from .base import CachingColumnTransformer
 from .mechanism import approx_bounds
+from snsql.sql.privacy import Privacy
+from snsynth.transform.definitions import ColumnType
+import numpy as np
 
 class BinTransformer(CachingColumnTransformer):
     """Transformer that bins values into a discrete set of bins.
@@ -11,18 +14,30 @@ class BinTransformer(CachingColumnTransformer):
     :param epsilon: The privacy budget to use.
     :return: A transformed column of values.
     """
-    def __init__(self, *, bins=10, lower=None, upper=None, epsilon=None):
-        if epsilon is None and (lower is None and upper is None):
-            raise ValueError("BinTransformer requires either epsilon or upper and lower.")
+    def __init__(self, *, bins=10, lower=None, upper=None, epsilon=None, nullable=False, odometer=None):
         self.lower = lower
         self.upper = upper
         self.epsilon = epsilon
         self.bins = bins
         self.budget_spent = []
+        self.nullable = nullable
+        self.odometer = odometer
         super().__init__()
+    @property
+    def output_type(self):
+        return ColumnType.CATEGORICAL
+    @property
+    def needs_epsilon(self):
+        return self.upper is None or self.lower is None
+    def allocate_privacy_budget(self, epsilon, odometer):
+        self.epsilon = epsilon
+        self.odometer = odometer
     def _fit_finish(self):
-        if self.epsilon is not None and (self.lower is None or self.upper is None):
+        if self.epsilon is not None and self.epsilon > 0.0 and (self.lower is None or self.upper is None):
+            self._fit_vals = [v for v in self._fit_vals if v is not None and not (isinstance(v, float) and np.isnan(v))]
             self.fit_lower, self.fit_upper = approx_bounds(self._fit_vals, self.epsilon)
+            if self.odometer is not None:
+                self.odometer.spend(Privacy(self.epsilon, 0.0))
             self.budget_spent.append(self.epsilon)
             if self.fit_lower is None or self.fit_upper is None:
                 raise ValueError("BinTransformer could not find bounds.")
@@ -32,7 +47,10 @@ class BinTransformer(CachingColumnTransformer):
             self.fit_lower = self.lower
             self.fit_upper = self.upper
         self._fit_complete = True
-        self.output_width = 1
+        if self.nullable:
+            self.output_width = 2
+        else:
+            self.output_width = 1
     def _clear_fit(self):
         self._reset_fit()
         self.fit_lower = None
@@ -40,7 +58,10 @@ class BinTransformer(CachingColumnTransformer):
         # if bounds provided, we can immediately use without fitting
         if self.lower and self.upper:
             self._fit_complete = True
-            self.output_width = 1
+            if self.nullable:
+                self.output_width = 2
+            else:
+                self.output_width = 1
             self.fit_lower = self.lower
             self.fit_upper = self.upper
     def _bin_edges(self, bin):
@@ -51,15 +72,30 @@ class BinTransformer(CachingColumnTransformer):
     def _bin(self, val):
         if not self.fit_complete:
             raise ValueError("BinTransformer has not been fit yet.")
+        if self.nullable and (val is None or (isinstance(val, float) and np.isnan(val))):
+            return 1
         return int(self.bins * (val - self.fit_lower) / (self.fit_upper - self.fit_lower))
     def _transform(self, val):
         if not self.fit_complete:
             raise ValueError("BinTransformer has not been fit yet.")
+        if  val is None or (isinstance(val, float) and np.isnan(val)):
+            if self.nullable:
+                return (0, 1)
+            else:
+                raise ValueError("Cannot transform None or NaN.  Consider setting nullable=True.")
         val = self.fit_lower if val < self.fit_lower else val
         val = self.fit_upper if val > self.fit_upper else val
-        return self._bin(val)
+        if self.nullable:
+            return (self._bin(val), 0)
+        else:
+            return self._bin(val)
     def _inverse_transform(self, val):
         if not self.fit_complete:
             raise ValueError("BinTransformer has not been fit yet.")
+        if self.nullable:
+            v, n = val
+            if n == 1:
+                return None
+            val = v
         lower, upper = self._bin_edges(val)
         return (lower + upper) / 2

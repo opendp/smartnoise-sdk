@@ -44,7 +44,7 @@ class DPSSTransformer(BaseTransformer):
         )
 
     def fit(
-        self, raw_data, discrete_columns=tuple(), continuous_columns_lower_upper={}
+        self, raw_data, discrete_columns=tuple(), continuous_columns={}
     ):
         """Fit GMM for continuous columns and One hot encoder for discrete columns.
 
@@ -53,8 +53,8 @@ class DPSSTransformer(BaseTransformer):
         self.output_info_list = []
         self.output_dimensions = 0
 
-        if continuous_columns_lower_upper and len(continuous_columns_lower_upper) > 0:
-            number_of_con_col = len(continuous_columns_lower_upper.keys())
+        if continuous_columns and len(continuous_columns) > 0:
+            number_of_con_col = len(continuous_columns.keys())
         else:
             number_of_con_col = raw_data.shape[1] - len(discrete_columns)
 

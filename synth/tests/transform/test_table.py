@@ -1,5 +1,6 @@
 import seaborn as sns
 import numpy as np
+import pandas as pd
 
 from snsynth.transform.label import LabelTransformer
 from snsynth.transform.onehot import OneHotEncoder
@@ -21,13 +22,19 @@ sepal_orig = [row[0] for row in iris]
 
 sepal_large = [np.exp(v) for v in sepal_orig]
 
+pums_csv_path = "../datasets/PUMS_null.csv"
+pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
+pums_categories = list(pums.columns)
+pums_categories.remove('income')
+pums_continuous = ['income']
+
 class TestTableTransform:
     def test_needs_fit(self):
         tt = TableTransformer([
-            MinMaxTransformer(epsilon=1.0),
+            MinMaxTransformer(),
             LogTransformer(),
             ChainTransformer([
-                BinTransformer(epsilon=1.0),
+                BinTransformer(),
                 LabelTransformer(),
                 OneHotEncoder()
             ]),
@@ -35,7 +42,7 @@ class TestTableTransform:
             ChainTransformer([LabelTransformer(), OneHotEncoder()]),
         ])
         assert(not tt.fit_complete)
-        tt.fit(iter(iris))
+        tt.fit(iter(iris), epsilon=2.0)
         iris_encoded = tt.transform(iris)
         iris_decoded = tt.inverse_transform(iris_encoded)
         for row_num in np.arange(5) * 2:
@@ -72,6 +79,7 @@ class TestTableTransform:
             ChainTransformer([IdentityTransformer(), IdentityTransformer()]),
         ])
         assert(tt.fit_complete)
+        assert(tt.odometer.spent == (0.0, 0.0))
         iris_encoded = tt.transform(iris)
         iris_decoded = tt.inverse_transform(iris_encoded)
         for row_num in np.arange(5) * 2:
@@ -81,3 +89,60 @@ class TestTableTransform:
                     assert(np.isclose(v, iris_decoded[row_num][idx]))
                 else:
                     assert(iris_decoded[row_num][idx] == v)
+    def test_nullable_pandas_round_trip_gan(self):
+        tt = TableTransformer.from_pandas(
+            pums, 'gan', 
+            categorical_columns=pums_categories,
+            continuous_columns=pums_continuous)
+        assert(sum([1 if isinstance(x, MinMaxTransformer) else 0 for x in tt.transformers]) == 1)
+        tt.fit(pums, epsilon=4.0)
+        pums_encoded = tt.transform(pums)
+        pums_decoded = tt.inverse_transform(pums_encoded)
+        pums_decoded_iter = [tuple([c for c in t[1:]]) for t in pums_decoded.itertuples()]
+        pums_iter = [tuple([c for c in t[1:]]) for t in pums.itertuples()]
+        for a, b in zip(pums_iter, pums_decoded_iter):
+            assert(all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in zip(a, b)]))
+    def test_nullable_pandas_round_trip_cube(self):
+        tt = TableTransformer.from_pandas(
+            pums, 'cube', 
+            categorical_columns=pums_categories,
+            continuous_columns=pums_continuous)
+        assert(sum([1 if isinstance(x, BinTransformer) else 0 for x in tt.transformers]) == 1)
+        tt.fit(pums, epsilon=4.0)
+        pums_encoded = tt.transform(pums)
+        pums_decoded = tt.inverse_transform(pums_encoded)
+        pums_decoded_iter = [tuple([c for c in t[1:]]) for t in pums_decoded.itertuples()]
+        pums_iter = [tuple([c for c in t[1:]]) for t in pums.itertuples()]
+        for a, b in zip(pums_iter, pums_decoded_iter):
+            # for bins, don't check the continuous column
+            a = [x if i != 4 else 1 for i, x in enumerate(a)]
+            b = [x if i != 4 else 1 for i, x in enumerate(b)]
+            assert(all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in zip(a, b)]))
+    def test_nullable_iter_round_trip_gan(self):
+        tt = TableTransformer.from_pandas(
+            pums, 'gan', 
+            categorical_columns=pums_categories,
+            continuous_columns=pums_continuous)
+        assert(sum([1 if isinstance(x, MinMaxTransformer) else 0 for x in tt.transformers]) == 1)
+        pums_iter = [tuple([c if not np.isnan(c) else None for c in t[1:]]) for t in pums.itertuples()]
+        tt.fit(pums_iter, epsilon=4.0)
+        pums_encoded = tt.transform(pums_iter)
+        pums_decoded = tt.inverse_transform(pums_encoded)
+        for a, b in zip(pums_iter, pums_decoded):
+            assert(all([x == y or (x is None and y is None) for x, y in zip(a, b)]))
+    def test_nullable_iter_round_trip_cube(self):
+        tt = TableTransformer.from_pandas(
+            pums, 'cube', 
+            categorical_columns=pums_categories,
+            continuous_columns=pums_continuous)
+        assert(sum([1 if isinstance(x, BinTransformer) else 0 for x in tt.transformers]) == 1)
+        pums_iter = [tuple([c if not np.isnan(c) else None for c in t[1:]]) for t in pums.itertuples()]
+        tt.fit(pums_iter, epsilon=4.0)
+        pums_encoded = tt.transform(pums_iter)
+        pums_decoded = tt.inverse_transform(pums_encoded)
+        for a, b in zip(pums_iter, pums_decoded):
+            # for bins, don't check the continuous column
+            a = [x if i != 4 else 1 for i, x in enumerate(a)]
+            b = [x if i != 4 else 1 for i, x in enumerate(b)]
+            assert(all([x == y or (x is None and y is None) 
+            for x, y in zip(a, b)]))

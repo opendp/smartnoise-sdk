@@ -110,7 +110,7 @@ class DPMinMaxTransformer(BaseTransformer):
         )
 
     def fit(
-        self, raw_data, discrete_columns=tuple(), continuous_columns_lower_upper={}
+        self, raw_data, discrete_columns=tuple(), continuous_columns={}
     ):
         """Fit GMM for continuous columns and One hot encoder for discrete columns.
 
@@ -118,7 +118,7 @@ class DPMinMaxTransformer(BaseTransformer):
         """
         self.output_info_list = []
         self.output_dimensions = 0
-        number_of_con_col = len(continuous_columns_lower_upper.keys())
+        number_of_con_col = len(continuous_columns.keys())
 
         if not isinstance(raw_data, pd.DataFrame):
             self.dataframe = False
@@ -139,8 +139,8 @@ class DPMinMaxTransformer(BaseTransformer):
                     column_name,
                     raw_column_data,
                     self.epsilon / number_of_con_col,
-                    continuous_columns_lower_upper[column_name][0],
-                    continuous_columns_lower_upper[column_name][1],
+                    continuous_columns[column_name][0],
+                    continuous_columns[column_name][1],
                 )
 
             self.output_info_list.append(column_transform_info.output_info)

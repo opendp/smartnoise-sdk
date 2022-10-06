@@ -6,18 +6,9 @@ import pandas as pd
 
 from diffprivlib.models import LogisticRegression as DPLR
 
-try:
-    from snsynth.preprocessors import BaseTransformer
-    from snsynth.pytorch import PytorchDPSynthesizer
-    from snsynth.pytorch.nn import PATECTGAN
-    from snsynth import QUAILSynthesizer
-
-except Exception as e:
-    import logging
-
-    test_logger = logging.getLogger(__name__)
-    test_logger.warning(f"Requires torch and torchdp {e}")
-
+from snsynth.pytorch import PytorchDPSynthesizer
+from snsynth.pytorch.nn import PATECTGAN
+from snsynth import QUAILSynthesizer
 
 git_root_dir = (
     subprocess.check_output("git rev-parse --show-toplevel".split(" "))
@@ -52,14 +43,14 @@ class TestQUAIL:
     def test_fit(self):
         categorical_columns = [col for col in df.columns if col != "married"]
         self.quail.fit(
-            df, categorical_columns=categorical_columns, transformer=BaseTransformer
+            df, categorical_columns=categorical_columns
         )
         assert self.quail.private_synth
 
     def test_sample(self):
         categorical_columns = [col for col in df.columns if col != "married"]
         self.quail.fit(
-            df, categorical_columns=categorical_columns, transformer=BaseTransformer
+            df, categorical_columns=categorical_columns
         )
         sample_size = len(df)
         synth_data = self.quail.sample(sample_size)

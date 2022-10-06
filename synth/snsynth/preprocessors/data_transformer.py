@@ -1,10 +1,13 @@
 # standard scalar transform of continuous variable
 
 from collections import namedtuple
+from snsynth.transform.onehot import OneHotEncoder
+from snsynth.transform.label import LabelTransformer
+from snsynth.transform.chain import ChainTransformer
+from snsynth.transform.minmax import MinMaxTransformer
 
 import numpy as np
 import pandas as pd
-from rdt.transformers import OneHotEncodingTransformer
 
 SpanInfo = namedtuple("SpanInfo", ["dim", "activation_fn"])
 ColumnTransformInfo = namedtuple(
@@ -39,12 +42,14 @@ class BaseTransformer(object):
         self.epsilon = epsilon
 
     def _fit_continuous(self, column_name, raw_column_data):
-        """No preprocessing for continuous columns, just intialize ColumnTransformInfo object"""
+        """Use minmaxscaler"""
+        mmt = MinMaxTransformer(epsilon=2.0, negative=True)
+        mmt.fit(raw_column_data)
 
         return ColumnTransformInfo(
             column_name=column_name,
             column_type="continuous",
-            transform=None,
+            transform=mmt,
             transform_aux=None,
             output_info=[SpanInfo(1, "tanh")],
             output_dimensions=1,
@@ -52,9 +57,9 @@ class BaseTransformer(object):
 
     def _fit_discrete(self, column_name, raw_column_data):
         """Fit one hot encoder for discrete column."""
-        ohe = OneHotEncodingTransformer()
+        ohe = ChainTransformer([LabelTransformer(), OneHotEncoder()])
         ohe.fit(raw_column_data)
-        num_categories = len(ohe.dummies)
+        num_categories = ohe.output_width
 
         return ColumnTransformInfo(
             column_name=column_name,
@@ -66,7 +71,7 @@ class BaseTransformer(object):
         )
 
     def fit(
-        self, raw_data, discrete_columns=tuple(), continuous_columns_lower_upper={}
+        self, raw_data, discrete_columns=tuple(), continuous_columns={}
     ):
         """Fit DP StandardScaler for continuous columns and One hot encoder for discrete columns.
         This step also counts the #columns in matrix data, and span information.
@@ -97,12 +102,36 @@ class BaseTransformer(object):
             self._column_transform_info_list.append(column_transform_info)
 
     def _transform_continuous(self, column_transform_info, raw_column_data):
-
-        return [raw_column_data]
+        mmt = column_transform_info.transform
+        rcd = []
+        for v in raw_column_data:
+            if isinstance(v, list) or isinstance(v, np.ndarray):
+                if len(v) > 1:
+                    raise ValueError(
+                        "Discrete column {} has more than one value.".format(
+                            column_transform_info.column_name
+                        )
+                    )
+                rcd.append(v[0])
+            else:
+                rcd.append(v)
+        return [mmt.transform(rcd)]
 
     def _transform_discrete(self, column_transform_info, raw_column_data):
         ohe = column_transform_info.transform
-        return [ohe.transform(raw_column_data)]
+        rcd = []
+        for v in raw_column_data:
+            if isinstance(v, list) or isinstance(v, np.ndarray):
+                if len(v) > 1:
+                    raise ValueError(
+                        "Discrete column {} has more than one value.".format(
+                            column_transform_info.column_name
+                        )
+                    )
+                rcd.append(v[0])
+            else:
+                rcd.append(v)
+        return [ohe.transform(rcd)]
 
     def transform(self, raw_data):
         """Take raw data and output a matrix data."""
@@ -132,7 +161,7 @@ class BaseTransformer(object):
 
     def _inverse_transform_discrete(self, column_transform_info, column_data):
         ohe = column_transform_info.transform
-        return ohe.reverse_transform(column_data)
+        return ohe.inverse_transform(column_data)
 
     def inverse_transform(self, data, sigmas=None):
         """Take matrix data and output raw data.

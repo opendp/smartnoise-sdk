@@ -1,8 +1,5 @@
 import warnings
 import numpy as np
-from opendp.mod import binary_search_param, enable_features
-from opendp.trans import make_bounded_sum, make_clamp
-from opendp.meas import make_base_geometric
 
 
 class DataSampler(object):
@@ -19,44 +16,30 @@ class DataSampler(object):
     def __init__(
             self,
             data,
-            output_info,
+            transformers,
             log_frequency,
             *ignore,
             per_column_epsilon=None,
             discrete_column_category_prob=None,
             **kwargs):
         self._data = data
+        self._transformers = transformers
         self._per_column_epsilon = per_column_epsilon
 
+        if log_frequency:
+            warnings.warn(
+                "Log frequency is deprecated and will be removed in a future release. ")
+            log_frequency = False
         if per_column_epsilon:
-            if per_column_epsilon <= 0.0:
-                raise ValueError("per_column_epsilon must be positive")
-            bounds = (0, 1)
-            max_contrib = 1
-            enable_features('contrib')
-            bounded_sum = (
-                make_clamp(bounds=bounds) >>
-                make_bounded_sum(bounds=bounds)
-            )
-            discovered_scale = binary_search_param(
-                lambda s: bounded_sum >> make_base_geometric(scale=s),
-                d_in=max_contrib,
-                d_out=(self._per_column_epsilon))
-            self._per_column_scale = discovered_scale
-        else:
-            self._per_column_scale = None
-            if discrete_column_category_prob is None:
-                warnings.warn(
-                    "per_column_epsilon is not set, and no cached probabilites have been provided. "
-                    "Sampler will not privatize frequencies, which may cause privacy leaks"
-                )
-
-        def is_discrete_column(column_info):
-            return (len(column_info) == 1
-                    and column_info[0].activation_fn == "softmax")
+            warnings.warn("Per column epsilon is deprecated and will be removed in a future version.")
+        self._per_column_scale = None
+        if discrete_column_category_prob is not None:
+            warnings.warn("Discrete column category prob is deprecated and will be removed in a future version.")
+        self._discrete_column_category_prob = None
+        self._per_column_epsilon = None
 
         n_discrete_columns = sum(
-            [1 for column_info in output_info if is_discrete_column(column_info)])
+            [1 for t in self._transformers if t.is_categorical])
 
         self._discrete_column_matrix_st = np.zeros(
             n_discrete_columns, dtype="int32")
@@ -68,24 +51,23 @@ class DataSampler(object):
 
         # Compute _rid_by_cat_cols
         st = 0
-        for column_info in output_info:
-            if is_discrete_column(column_info):
-                span_info = column_info[0]
-                ed = st + span_info.dim
+        for t in self._transformers:
+            if t.is_categorical:
+                ed = st + t.output_width
 
                 rid_by_cat = []
-                for j in range(span_info.dim):
+                for j in range(t.output_width):
                     rid_by_cat.append(np.nonzero(data[:, st + j])[0])
                 self._rid_by_cat_cols.append(rid_by_cat)
                 st = ed
             else:
-                st += sum([span_info.dim for span_info in column_info])
+                st += t.output_width
         assert st == data.shape[1]
 
         # Prepare an interval matrix for efficiently sample conditional vector
         max_category = max(
-            [column_info[0].dim for column_info in output_info
-             if is_discrete_column(column_info)], default=0)
+            [t.output_width for t in self._transformers
+             if t.is_categorical], default=0)
 
         self._discrete_column_cond_st = np.zeros(n_discrete_columns, dtype='int32')
         self._discrete_column_n_category = np.zeros(
@@ -94,41 +76,39 @@ class DataSampler(object):
             (n_discrete_columns, max_category))
         self._n_discrete_columns = n_discrete_columns
         self._n_categories = sum(
-            [column_info[0].dim for column_info in output_info
-             if is_discrete_column(column_info)])
+            [t.output_width for t in self._transformers
+             if t.is_categorical])
 
         eps_tot = 0.0
         st = 0
         current_id = 0
         current_cond_st = 0
-        for column_info in output_info:
-            if is_discrete_column(column_info):
-                span_info = column_info[0]
-                ed = st + span_info.dim
+        for t in self._transformers:
+            if t.is_categorical:
+                ed = st + t.output_width
                 category_freq = np.sum(data[:, st:ed], axis=0)
                 # insert privacy here
-                if self._per_column_scale:
-                    geom = make_base_geometric(self._per_column_scale)
-                    category_freq = [geom(int(v)) for v in category_freq]
-                    eps_tot += self._per_column_epsilon
+                # if self._per_column_scale:
+                #     geom = make_base_geometric(self._per_column_scale)
+                #     category_freq = [geom(int(v)) for v in category_freq]
+                #     eps_tot += self._per_column_epsilon
                 category_freq = [1 if v < 1 else v for v in category_freq]
                 if np.sum(category_freq) < 100:
                     # not enough data; use uniform distribution
                     category_freq = [1 for _ in category_freq]
                 category_freq = np.array(category_freq, dtype='float64')
-                if log_frequency:
-                    category_freq = np.log(category_freq + 1)
+                # if log_frequency:
+                #     category_freq = np.log(category_freq + 1)
                 category_prob = category_freq / np.sum(category_freq)
-                self._discrete_column_category_prob[current_id, :span_info.dim] = (
+                self._discrete_column_category_prob[current_id, :t.output_width] = (
                     category_prob)
                 self._discrete_column_cond_st[current_id] = current_cond_st
-                self._discrete_column_n_category[current_id] = span_info.dim
-                current_cond_st += span_info.dim
+                self._discrete_column_n_category[current_id] = t.output_width
+                current_cond_st += t.output_width
                 current_id += 1
                 st = ed
             else:
-                st += sum([span_info.dim for span_info in column_info])
-        self.total_spent = eps_tot
+                st += t.output_width
 
         if discrete_column_category_prob is not None:
             assert len(discrete_column_category_prob) == n_discrete_columns

@@ -44,7 +44,7 @@ class PATEGAN:
         ordinal_columns=None,
         update_epsilon=None,
         transformer=None,
-        continuous_columns_lower_upper=None,
+        continuous_columns=None,
     ):
         if update_epsilon:
             self.epsilon = update_epsilon

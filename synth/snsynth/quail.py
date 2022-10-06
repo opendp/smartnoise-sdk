@@ -79,7 +79,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         categorical_columns=tuple(),
         ordinal_columns=tuple(),
         transformer=None,
-        continuous_columns_lower_upper=None,
+        continuous_columns=None,
         verbose=None,
     ):
         """
@@ -142,7 +142,7 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
             categorical_columns=categorical_columns,
             ordinal_columns=ordinal_columns,
             transformer=transformer,
-            continuous_columns_lower_upper=continuous_columns_lower_upper,
+            continuous_columns=continuous_columns,
         )
 
         if hasattr(self.private_model, "coef_"):

@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from snsynth.preprocessors import GeneralTransformer, BaseTransformer
 from snsynth.pytorch import PytorchDPSynthesizer
 from snsynth.pytorch.nn import PATECTGAN, PATEGAN
 
@@ -18,7 +17,7 @@ class TestDPGANInputChecks:
     def test_train_patectgan_continuous(self):
         dpgan = PATECTGAN(epsilon=eps, batch_size=batch_size)
         try:
-            dpgan.train(np_data_xy, categorical_columns=[0])
+            dpgan.train(np_data_xy, categorical_columns=[0, 1])
         except ValueError:
             return
 
@@ -37,16 +36,14 @@ class TestDPGANInputChecks:
         pd_data_xy = pd.DataFrame(np_data_xy, columns=["x", "y"])
         try:
             dpgan.fit(
-                pd_data_xy, categorical_columns=["x"], transformer=BaseTransformer
+                pd_data_xy, categorical_columns=["x"]
             )
         except ValueError:
             return
 
-    # raise AssertionError('PATECTGAN should have raised a ValueError')
-
     def test_fit_pytorchgan_continuous_pategan(self):
         dpgan = PytorchDPSynthesizer(
-            eps, PATEGAN(epsilon=eps, batch_size=batch_size), GeneralTransformer
+            eps, PATEGAN(epsilon=eps, batch_size=batch_size), None
         )
         pd_data_xy = pd.DataFrame(np_data_xy, columns=["x", "y"])
         try:

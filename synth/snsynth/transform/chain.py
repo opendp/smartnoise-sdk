@@ -1,12 +1,29 @@
 from .base import CachingColumnTransformer
+import warnings
 
 class ChainTransformer(CachingColumnTransformer):
     def __init__(self, transformers):
         self.transformers = transformers
         super().__init__()
     @property
+    def output_type(self):
+        return self.transformers[-1].output_type
+    @property
+    def needs_epsilon(self):
+        return any(transformer.needs_epsilon for transformer in self.transformers)
+    @property
     def fit_complete(self):
         return all([t.fit_complete for t in self.transformers])
+    def allocate_privacy_budget(self, epsilon, odometer):
+        n_with_epsilon = sum([1 for t in self.transformers if t.needs_epsilon])
+        if n_with_epsilon == 0:
+            return
+        elif n_with_epsilon > 1:
+            warnings.warn(f"Multiple transformers in chain need epsilon, which is likely wasteful.")
+        else:
+            for transformer in self.transformers:
+                if transformer.needs_epsilon:
+                    transformer.allocate_privacy_budget(epsilon / n_with_epsilon, odometer)
     def _fit_finish(self):
         vals = self._fit_vals
         for transformer in self.transformers:

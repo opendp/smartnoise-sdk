@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import pandas as pd
 import torch
 from torch import optim
 from torch import nn
@@ -18,8 +19,8 @@ from torch.autograd import Variable
 import warnings
 
 from .data_sampler import DataSampler
-from ctgan.synthesizers import CTGANSynthesizer
-from snsynth.preprocessors.data_transformer import BaseTransformer
+from .ctgan import CTGANSynthesizer
+from snsynth.transform.table import TableTransformer
 
 from .privacy_utils import weights_init, pate, moments_acc
 
@@ -205,33 +206,25 @@ class PATECTGAN(CTGANSynthesizer):
         categorical_columns=None,
         ordinal_columns=None,
         update_epsilon=None,
-        transformer=BaseTransformer,
-        continuous_columns_lower_upper=None,
+        transformer=None,
+        continuous_columns=None,
     ):
         if update_epsilon:
             self.epsilon = update_epsilon - self.preprocessor_eps
-
-        for col in categorical_columns:
-            if str(data[col].dtype).startswith("float"):
-                raise ValueError(
-                    "It looks like you are passing in a vector of continuous values"
-                    f"to a categorical column at [{col}]."
-                    "Please discretize and pass in categorical columns with"
-                    "unsigned integer or string category names."
-                )
 
         sample_per_teacher = (
             self.sample_per_teacher if self.sample_per_teacher < len(data) else 1000
         )
         self.num_teachers = int(len(data) / sample_per_teacher) + 1
 
-        self._transformer = transformer(self.preprocessor_eps)
-        if isinstance(self._transformer, BaseTransformer) and self.preprocessor_eps and self.preprocessor_eps > 0.0:
-            warnings.warn("The base transformer does not use any epsilon, so preprocessor_eps is wasted!")
+        tt = TableTransformer.create(data, style='gan',
+            categorical_columns=categorical_columns,
+            continuous_columns=continuous_columns,
+            ordinal_columns=ordinal_columns)
+        self._transformer = tt
         self._transformer.fit(
             data,
-            discrete_columns=categorical_columns,
-            continuous_columns_lower_upper=continuous_columns_lower_upper,
+            epsilon=self.preprocessor_eps
         )
 
         if self.verbose:
@@ -243,10 +236,13 @@ class PATECTGAN(CTGANSynthesizer):
             print(f"We have {(self.epsilon - cat_eps):.3f} epsilon left over for training")
 
         train_data = self._transformer.transform(data)
+        train_data = np.array([
+            [float(x) if x is not None else 0.0 for x in row] for row in train_data
+        ])
 
         data_partitions = np.array_split(train_data, self.num_teachers)
 
-        data_dim = self._transformer.output_dimensions
+        data_dim = self._transformer.output_width
 
         sampler_eps = 0.0
         if categorical_columns and self._category_epsilon_pct:
@@ -258,16 +254,16 @@ class PATECTGAN(CTGANSynthesizer):
 
         self.cond_generator = DataSampler(
             train_data,
-            self._transformer.output_info_list,
+            self._transformer.transformers,
             self._log_frequency,
             per_column_epsilon=per_col_sampler_eps,
         )
 
-        spent = self.cond_generator.total_spent
-        if spent > sampler_eps and not np.isclose(spent, sampler_eps):
-            raise AssertionError(
-                f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
-            )
+        # spent = self.cond_generator.total_spent
+        # if spent > sampler_eps and not np.isclose(spent, sampler_eps):
+        #     raise AssertionError(
+        #         f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
+        #     )
         # create conditional generator for each teacher model
 
         # Note: Previously, there existed a ConditionalGenerator object in CTGAN
@@ -279,7 +275,7 @@ class PATECTGAN(CTGANSynthesizer):
         cond_generator = [
             DataSampler(
                 d,
-                self._transformer.output_info_list,
+                self._transformer.transformers,
                 self._log_frequency,
                 per_column_epsilon=None,
                 discrete_column_category_prob=cached_probs,
@@ -371,7 +367,7 @@ class PATECTGAN(CTGANSynthesizer):
                     partition_data = data_partitions[i]
                     data_sampler = DataSampler(
                         partition_data,
-                        self._transformer.output_info_list,
+                        self._transformer.transformers,
                         self._log_frequency,
                         per_column_epsilon=None,
                         discrete_column_category_prob=cached_probs,
@@ -441,7 +437,7 @@ class PATECTGAN(CTGANSynthesizer):
             for t_3 in range(self.student_iters):
                 data_sampler = DataSampler(
                     train_data,
-                    self._transformer.output_info_list,
+                    self._transformer.transformers,
                     self._log_frequency,
                     per_column_epsilon=None,
                     discrete_column_category_prob=cached_probs,

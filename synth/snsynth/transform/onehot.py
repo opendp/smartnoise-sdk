@@ -1,9 +1,14 @@
+from snsynth.transform.definitions import ColumnType
 from .base import ColumnTransformer
+import numpy as np
 
 class OneHotEncoder(ColumnTransformer):
     cache_fit = False
     def __init__(self):
         super().__init__()
+    @property
+    def output_type(self):
+        return ColumnType.CATEGORICAL
     def _fit(self, val):
         if val > self.max:
             self.max = val
@@ -20,6 +25,5 @@ class OneHotEncoder(ColumnTransformer):
         bits[val] = 1
         return tuple(bits)
     def _inverse_transform(self, val):
-        if 1 not in val:
-            raise ValueError("OneHotEncoder attempting to invert transform with no bits set.")
-        return val.index(1)
+        # will always choose first if multiple are set
+        return np.argmax(val)
