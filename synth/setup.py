@@ -6,16 +6,17 @@ packages = \
  'snsynth.aggregate_seeded',
  'snsynth.models',
  'snsynth.mst',
- 'snsynth.preprocessors',
  'snsynth.pytorch',
  'snsynth.pytorch.nn',
+ 'snsynth.pytorch.nn.ctgan',
  'snsynth.transform']
 
 package_data = \
 {'': ['*']}
 
 install_requires = \
-['opacus>=0.14.0,<0.15.0',
+['diffprivlib>=0.5.2,<0.6.0',
+ 'opacus>=0.14.0,<0.15.0',
  'pac-synth>=0.0.5,<0.0.6',
  'smartnoise-sql>=0.2.5,<0.3.0']
 

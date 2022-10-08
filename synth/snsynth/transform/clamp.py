@@ -1,6 +1,11 @@
 from .base import ColumnTransformer
 
 class ClampTransformer(ColumnTransformer):
+    """Clamps values to be within a specified range.
+
+    :param lower: The minimum value to scale to.  If None, no lower bound is applied.
+    :param upper: The maximum value to scale to.  If None, no upper bound is applied.
+    """
     def __init__(self, upper=None, lower=None):
         super().__init__()
         if upper is None and lower is None:

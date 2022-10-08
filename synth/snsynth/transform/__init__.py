@@ -6,6 +6,9 @@ from .bin import BinTransformer
 from .chain import ChainTransformer
 from .log import LogTransformer
 from .standard import StandardScaler
+from .clamp import ClampTransformer
+from .log import LogTransformer
+from .table import NoTransformer
 
 __all__ = [
     "TableTransformer", 
@@ -15,5 +18,8 @@ __all__ = [
     "BinTransformer", 
     "ChainTransformer", 
     "LogTransformer",
-    "StandardScaler"
+    "StandardScaler",
+    "LogTransformer",
+    "ClampTransformer",
+    "NoTransformer"
     ]

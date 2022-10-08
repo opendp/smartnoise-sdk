@@ -7,6 +7,11 @@ from snsql.sql.privacy import Privacy
 from snsynth.transform.type_map import TypeMap
 
 class TableTransformer:
+    """Transforms a table of data.
+
+    :param transformers: a list of transformers, one per column
+    :param odometer: an optional odometer to use to track privacy spent when fitting the data
+    """
     def __init__(self, transformers=[], *ignore, odometer=None):
         # one transformer per input column
         self.transformers = transformers
@@ -19,17 +24,20 @@ class TableTransformer:
         else:
             self.odometer = odometer
 
-        self._columns = None # set if pandas
-        self._dtype = None # set if numpy
+        self._columns = None # will be automatically set if pandas
+        self._dtype = None # will be automatically set if numpy
 
     @property
     def fit_complete(self):
+        """Returns True if the transformer has been fit."""
         return all([t.fit_complete for t in self.transformers])
     @property
     def needs_epsilon(self):
+        """Returns True if the transformer needs to spend privacy budget when fitting."""
         return any([t.needs_epsilon for t in self.transformers])
     @property
     def cardinality(self):
+        """Returns the cardinality of each output column.  Returns None for continuous columns."""
         cards = []
         for t in self.transformers:
             for c in t.cardinality:
@@ -44,6 +52,11 @@ class TableTransformer:
                 if transformer.needs_epsilon:
                     transformer.allocate_privacy_budget(epsilon / n_with_epsilon, odometer)
     def fit(self, data, *ignore, epsilon=None):
+        """Fits the transformer to the data.
+
+        :param data: a table represented as a list of tuples, a numpy.ndarray, or a pandas DataFrame
+        :param epsilon: the privacy budget to spend fitting the data
+        """
         if self.transformers == []:
             self._fit_finish()
         if epsilon is not None and epsilon > 0.0:
@@ -64,6 +77,13 @@ class TableTransformer:
     def _fit_finish(self):
         self.output_width = sum([t.output_width for t in self.transformers])
     def transform(self, data):
+        """Transforms the data.
+
+        :param data: tabular data to transform
+        :type data: a list of tuples, a numpy.ndarray, or a pandas DataFrame
+        :returns: the transformed data
+        :rtype: a list of tuples
+        """
         # always returns a list of tuples, except in null case
         if self.transformers == []:
             return data
@@ -95,6 +115,15 @@ class TableTransformer:
                     out_row.append(out_v)
         return tuple(out_row)
     def fit_transform(self, data, *ignore, epsilon=None):
+        """Fits the transformer to the data, then transforms.
+
+        :param data: tabular data to transform
+        :type data: a list of tuples, a numpy.ndarray, or a pandas DataFrame
+        :param epsilon: the privacy budget to spend fitting the data
+        :type epsilon: float, optional
+        :returns: the transformed data
+        :rtype: a list of tuples
+        """
         self.fit(data, epsilon=epsilon)
         return self.transform(data)
     def inverse_transform(self, data):
@@ -141,6 +170,8 @@ class TableTransformer:
         return cls.from_column_names(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
     @classmethod
     def create(cls, data, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[]):
+        """Creates a transformer from data.
+        """
         if categorical_columns is None:
             categorical_columns = []
         if ordinal_columns is None:
@@ -165,5 +196,12 @@ class TableTransformer:
             raise ValueError(f"Unknown data type: {type(data)}")
 
 class NoTransformer(TableTransformer):
+    """A pass-through table transformer that does nothing.  Note that the ``transform`` and ``inverse_transform`` methods
+    will simply return the data that is passed in, rather than transforming to and from a list of tuples.  This transformer
+    is suitable when you know that your input data is exactly what is needed for a specific synthesizer, and
+    you want to skip all pre-processing steps.  If you want a passthrough transformer that is slightly more
+    adaptable to multiple synthesizers, you can make a new ``TableTransformer`` with a list of ``IdentityTransformer``
+    column transformers.
+    """
     def __init__(self, *ignore):
         super().__init__([])

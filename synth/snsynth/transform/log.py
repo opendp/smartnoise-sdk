@@ -3,6 +3,9 @@ from .base import ColumnTransformer
 import numpy as np
 
 class LogTransformer(ColumnTransformer):
+    """Logarithmic transformation of values.  Useful for transforming skewed data.
+
+    """
     def __init__(self):
         super().__init__()
     @property

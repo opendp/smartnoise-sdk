@@ -8,13 +8,14 @@ import numpy as np
 
 class StandardScaler(CachingColumnTransformer):
     """Transforms a column of values to scale with mean centered on 0 and unit variance.
-    Some privacy budget is used to estimate the mean and variance.  If upper and lower
+    Some privacy budget is always used to estimate the mean and variance.  If upper and lower
     are not supplied, the budget will also be used to estimate the bounds of the column.
 
     :param lower: The minimum value to scale to.
     :param upper: The maximum value to scale to.
     :param epsilon: The privacy budget to use.
-    :return: A transformed column of values.
+    :param nullable: Whether the column can contain null values.  If True, the output will be a tuple of (value, null_flag).
+    :param odometer: The optional privacy odometer to use to track privacy budget spent.
     """
     def __init__(self, *, lower=None, upper=None, epsilon=0.0, nullable=False, odometer=None):
         self.lower = lower

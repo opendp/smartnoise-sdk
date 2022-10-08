@@ -1,6 +1,8 @@
 from .base import ColumnTransformer
 
 class IdentityTransformer(ColumnTransformer):
+    """Dummy transformer that passes through values.  Useful for testing.
+    """
     def __init__(self):
         super().__init__()
     @property

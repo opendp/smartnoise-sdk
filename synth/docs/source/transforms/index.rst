@@ -1,21 +1,20 @@
-=====================
-Reversible Transforms
-=====================
+=================
+Data Transformers
+=================
 
 .. contents:: Table of Contents
   :local:
   :depth: 3
 
-Transforming Data
-=================
+All synthesizers take an optional ``transformer`` argument, which accepts a ``TableTransformer`` object.  The transformer is used to transform the data before synthesis and then reverse the transformation after synthesis.  A ``TableTransformer`` manages a list of ``ColumnTransformer`` objects, one for each column in the table.  Multiple transformations of a column can be chained together with a ``ChainTransformer``.
 
-All synthesizers take an optional ``transformer`` argument, which accepts a ``TableTransformer`` object.  The transformer is used to transform the data before synthesis and then reverse the transformation after synthesis.
+Using Data Transformers
+=======================
 
+Inferring a TableTransformer
+----------------------------
 
-Create a TableTransformer
--------------------------
-
-The ``create`` method is used to create a ``TableTransformer`` based on a data set, which can be a pandas dataframe, a numpy array, or a list of tuples.  The following exmaple creates a transformer that converts categorical columns to one-hot encoding.
+The ``create`` factory method can be used to create a ``TableTransformer`` based on a data set, which can be a pandas dataframe, a numpy array, or a list of tuples.  The following exmaple creates a transformer that converts categorical columns to one-hot encoding.
 
 .. code-block:: python
 
@@ -25,7 +24,7 @@ The ``create`` method is used to create a ``TableTransformer`` based on a data s
     pums = pums.drop(['income', 'age'], axis=1)
     cat_cols = list(pums.columns)
 
-    tt = TableTransformer.create(pums, categorical_columns=cat_cols)
+    tt = TableTransformer.create(pums, style='gan', categorical_columns=cat_cols)
     pums_encoded = tt.fit_transform(pums)
 
     # 26 columns in one-hot encodind
@@ -167,3 +166,54 @@ If this argument is not provided, the synthesizer will attempt to infer the most
     dpctgan.fit(pums, categorical_columns=cat_cols)
     print(f"DPCTGAN inferred a onehot transformer with {dpctgan._transformer.output_width} columns")
 
+
+TableTransformer API
+====================
+
+.. autoclass:: snsynth.transform.table.TableTransformer
+    :members:
+
+.. autoclass:: snsynth.transform.table.NoTransformer
+
+Column Transformers Reference
+=============================
+
+LabelTransformer
+----------------
+
+.. autoclass:: snsynth.transform.label.LabelTransformer
+
+OneHotEncoder
+-------------
+
+.. autoclass:: snsynth.transform.onehot.OneHotEncoder
+
+MinMaxTransformer
+-----------------
+
+.. autoclass:: snsynth.transform.minmax.MinMaxTransformer
+
+StandardScaler
+--------------
+
+.. autoclass:: snsynth.transform.standard.StandardScaler
+
+BinTransformer
+--------------
+
+.. autoclass:: snsynth.transform.bin.BinTransformer
+
+LogTransformer
+--------------
+
+.. autoclass:: snsynth.transform.log.LogTransformer
+
+ChainTransformer
+----------------
+
+.. autoclass:: snsynth.transform.chain.ChainTransformer
+
+ClampTransformer
+----------------
+
+.. autoclass:: snsynth.transform.clamp.ClampTransformer

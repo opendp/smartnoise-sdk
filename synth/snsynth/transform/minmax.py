@@ -5,17 +5,14 @@ from snsql.sql.privacy import Privacy
 import numpy as np
 
 class MinMaxTransformer(CachingColumnTransformer):
-    """Transforms a column of values to scale between 0.0 and 1.0.
-    If epsilon is not None, then the bounds of the values are approximated.
-    If negative is True, then the values are scaled between -1.0 and 1.0.
-    If min and max are not None, then the values are scaled between min and max,
-    and no privacy budget is spent.
+    """Transforms a column of values to scale between -1.0 and +1.0.
 
     :param lower: The minimum value to scale to.
     :param upper: The maximum value to scale to.
-    :param negative: Whether to scale between -1.0 and 1.0.
-    :param epsilon: The privacy budget to use.
-    :return: A transformed column of values.
+    :param negative: If True, scale between -1.0 and 1.0.  Otherwise, scale between 0.0 and 1.0.
+    :param epsilon: The privacy budget to use to infer bounds, if none provided.
+    :param nullable: If null values are expected, a second output will be generated indicating null.
+    :param odometer: The optional odometer to use to track privacy budget.
     """
     def __init__(self, *, lower=None, upper=None, negative=True, epsilon=0.0, nullable=False, odometer=None):
         self.lower = lower

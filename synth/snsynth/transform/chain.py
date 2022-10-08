@@ -2,6 +2,11 @@ from .base import CachingColumnTransformer
 import warnings
 
 class ChainTransformer(CachingColumnTransformer):
+    """Sequentially process a column through multiple transforms.  When reversed,
+    the inverse transforms are applied in reverse order.
+
+    :param transforms: A list of ColumnTransformers to apply sequentially.
+    """
     def __init__(self, transformers):
         self.transformers = transformers
         super().__init__()

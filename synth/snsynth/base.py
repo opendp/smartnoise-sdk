@@ -18,27 +18,35 @@ class SDGYMBaseSynthesizer:
         """
         Fit the synthesizer model on the data.
 
-        :param data: The data for fitting the synthesizer model.
+        :param data: The private data used to fit the synthesizer.
         :type data: pd.DataFrame, np.ndarray, or list of tuples
-        :param transformer: The transformer to use to transform the data, defaults to None
+        :param transformer: The transformer to use to preprocess the data.  If no transformer 
+            is provided, the synthesizer will attempt to choose a transformer suitable for that 
+            synthesizer.  To prevent the synthesizer from choosing a transformer, pass in
+            snsynth.transform.NoTransformer().
         :type transformer: snsynth.transform.TableTransformer, optional
-        :param categorical_columns: List of column names for categorical columns, defaults to None
-        :type categorical_columns: list[str], optional
-        :param ordinal_columns: List of column names for ordinal columns, defaults to None
-        :type ordinal_columns: list[str], optional
-        :param ordinal_columns: List of column names for ordinal columns, defaults to None
-        :type ordinal_columns: list[str], optional
-        :return: Data set containing the generated data samples.
-        :rtype: pd.DataFrame, np.ndarray, or list of tuples
+        :param categorical_columns: List of column names or indixes to be treated as categorical columns, used as hints when no transformer is provided.
+        :type categorical_columns: list[], optional
+        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
+        :type ordinal_columns: list[], optional
+        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
+        :type ordinal_columns: list[], optional
+        :param preprocessor_eps: The epsilon value to use when preprocessing the data.  This epsilon budget is subtracted from the
+            budget supplied when creating the synthesizer, but is only used if the preprocessing requires
+            privacy budget, for example if bounds need to be inferred for continuous columns.  This value defaults to
+            0.0, and the synthesizer will raise an error if the budget is not sufficient to preprocess the data.
+        :type preprocessor_eps: float, optional
+        :param nullable: Whether or not to allow null values in the data.  This is only used if no transformer is provided,
+            and is used as a hint when inferring transformers.
         """
         raise NotImplementedError
 
-    def sample(self, n_samples):
+    def sample(self, n_rows):
         """
-        Sample from the synthesizer model.
+        Sample rows from the synthesizer.
 
-        :param n_samples: The number of samples to create
-        :type samples: int
+        :param n_rows: The number of rows to create
+        :type n_rows: int
         :return: Data set containing the generated data samples.
         :rtype: pd.DataFrame, np.ndarray, or list of tuples
         """
@@ -59,18 +67,26 @@ class SDGYMBaseSynthesizer:
         Fit the synthesizer model and then generate a synthetic dataset of the same
         size of the input data.
 
-        :param data: The data for fitting the synthesizer model.
+        :param data: The private data used to fit the synthesizer.
         :type data: pd.DataFrame, np.ndarray, or list of tuples
-        :param transformer: The transformer to use to transform the data, defaults to None
+        :param transformer: The transformer to use to preprocess the data.  If no transformer 
+            is provided, the synthesizer will attempt to choose a transformer suitable for that 
+            synthesizer.  To prevent the synthesizer from choosing a transformer, pass in
+            snsynth.transform.NoTransformer().
         :type transformer: snsynth.transform.TableTransformer, optional
-        :param categorical_columns: List of column names for categorical columns, defaults to None
-        :type categorical_columns: list[str], optional
-        :param ordinal_columns: List of column names for ordinal columns, defaults to None
-        :type ordinal_columns: list[str], optional
-        :param ordinal_columns: List of column names for ordinal columns, defaults to None
-        :type ordinal_columns: list[str], optional
-        :return: Data set containing the generated data samples.
-        :rtype: pd.DataFrame, np.ndarray, or list of tuples
+        :param categorical_columns: List of column names or indixes to be treated as categorical columns, used as hints when no transformer is provided.
+        :type categorical_columns: list[], optional
+        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
+        :type ordinal_columns: list[], optional
+        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
+        :type ordinal_columns: list[], optional
+        :param preprocessor_eps: The epsilon value to use when preprocessing the data.  This epsilon budget is subtracted from the
+            budget supplied when creating the synthesizer, but is only used if the preprocessing requires
+            privacy budget, for example if bounds need to be inferred for continuous columns.  This value defaults to
+            0.0, and the synthesizer will raise an error if the budget is not sufficient to preprocess the data.
+        :type preprocessor_eps: float, optional
+        :param nullable: Whether or not to allow null values in the data.  This is only used if no transformer is provided,
+            and is used as a hint when inferring transformers.
         """
         self.fit(
             data, 
@@ -118,6 +134,15 @@ synth_map = {
 class Synthesizer(SDGYMBaseSynthesizer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+    @classmethod
+    def list_synthesizers(cls):
+        """
+        List the available synthesizers.
+        
+        :return: List of available synthesizer names.
+        :rtype: list[str]
+        """
+        return list(synth_map.keys())
     def _get_train_data(self, data, *ignore, style, transformer, categorical_columns, ordinal_columns, continuous_columns, nullable, preprocessor_eps):
         if transformer is None:
             self._transformer = TableTransformer.create(data, style=style,
@@ -147,7 +172,26 @@ class Synthesizer(SDGYMBaseSynthesizer):
 
     # factory method
     @classmethod
-    def create(cls, synth=None, *args, **kwargs):
+    def create(cls, synth=None, epsilon=None, *args, **kwargs):
+        """
+        Create a differentially private synthesizer.
+
+        :param synth: The name of the synthesizer to create.  If called from an instance of a Synthesizer subclass, creates
+            an instance of the specified synthesizer.  Allowed synthesizers are available from
+            the list_synthesizers() method.
+        :type synth: str or Synthesizer class, required
+        :param epsilon: The privacy budget to be allocated to the synthesizer.  This budget will be
+            used when the synthesizer is fit to the data.
+        :type epsilon: float, required
+        :param args: Positional arguments to pass to the synthesizer constructor.
+        :type args: list, optional
+        :param kwargs: Keyword arguments to pass to the synthesizer constructor.  At a minimum,
+            the epsilon value must be provided.  Any other hyperparameters can be provided
+            here.  See the documentation for each specific synthesizer for details about available
+            hyperparameter.
+        :type kwargs: dict, optional
+
+        """
         if synth is None or (isinstance(synth, type) and issubclass(synth, Synthesizer)):
             clsname = cls.__module__ + '.' + cls.__name__ if synth is None else synth.__module__ + '.' + synth.__name__
             if clsname == 'snsynth.base.Synthesizer':
@@ -167,6 +211,6 @@ class Synthesizer(SDGYMBaseSynthesizer):
             synth_module, synth_class = synth_class.rsplit('.', 1)
             synth_module = __import__(synth_module, fromlist=[synth_class])
             synth_class = getattr(synth_module, synth_class)
-            return synth_class(*args, **kwargs)
+            return synth_class(epsilon=epsilon, *args, **kwargs)
         else:
             raise ValueError('Synthesizer must be a string or a class')

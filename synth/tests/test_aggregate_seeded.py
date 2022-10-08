@@ -12,7 +12,6 @@ import pytest
 
 from snsynth.transform.table import NoTransformer
 
-
 def gen_data_frame_with_schema(schema, n_records):
     return pd.DataFrame(
         {k: list(np.random.choice(schema[k], size=n_records)) for k in schema},

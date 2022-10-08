@@ -62,7 +62,7 @@ class DPGAN(Synthesizer):
             preprocessor_eps=preprocessor_eps
         )
 
-        data = train_data
+        data = np.array(train_data)
 
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
@@ -187,3 +187,9 @@ class DPGAN(Synthesizer):
         data = data[:n]
 
         return self._transformer.inverse_transform(data)
+
+    def fit(self, data, *ignore, transformer=None, categorical_columns=[], ordinal_columns=[], continuous_columns=[], preprocessor_eps=0.0, nullable=False):
+        self.train(data, transformer=transformer, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, preprocessor_eps=preprocessor_eps, nullable=nullable)
+
+    def sample(self, n_samples):
+        return self.generate(n_samples)

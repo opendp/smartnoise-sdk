@@ -1,12 +1,16 @@
 import numpy as np
 import pandas as pd
-from mbi import FactoredInference, Dataset, Domain
+
+try:
+    from mbi import FactoredInference, Dataset, Domain
+except ImportError:
+    print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git")
+
 from scipy import sparse
 from disjoint_set import DisjointSet
 import networkx as nx
 import itertools
 from scipy.special import logsumexp
-import json
 from snsynth.mst.cdp2adp import cdp_rho
 from snsynth.base import Synthesizer
 

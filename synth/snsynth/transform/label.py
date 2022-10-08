@@ -3,6 +3,11 @@ from .base import ColumnTransformer
 import numpy as np
 
 class LabelTransformer(ColumnTransformer):
+    """Transforms categorical values into integer-indexed labels.  Labels will be sorted if possible,
+    so that the output can be used as an ordinal.  The indices will be 0-based.
+
+    :param nullable: If null values are expected, a second output will be generated indicating null.
+    """
     def __init__(self, nullable=True):
         super().__init__()
         self.nullable = nullable

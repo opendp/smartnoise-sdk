@@ -58,29 +58,44 @@ class AggregateSeededSynthesizer(Synthesizer):
 
         For more information about the parameters run `help('pacsynth.DpAggregateSeededParametersBuilder')`.
         """
+        self.epsilon = epsilon
+        self.delta = delta
+        self.reporting_length = reporting_length
+        self.percentile_percentage = percentile_percentage
+        self.percentile_epsilon_proportion = percentile_epsilon_proportion
+        self.accuracy_mode = accuracy_mode
+        self.number_of_records_epsilon_proportion = number_of_records_epsilon_proportion
+        self.fabrication_mode = fabrication_mode
+        self.empty_value = empty_value
+        self.use_synthetic_counts = use_synthetic_counts
+        self.weight_selection_percentile = weight_selection_percentile
+        self.aggregate_counts_scale_factor = aggregate_counts_scale_factor
+        self.synth = None
+
+    def build_synthesizer(self):
         builder = (
             DpAggregateSeededParametersBuilder()
-            .reporting_length(reporting_length)
-            .epsilon(epsilon)
-            .percentile_percentage(percentile_percentage)
-            .percentile_epsilon_proportion(percentile_epsilon_proportion)
-            .accuracy_mode(accuracy_mode)
-            .number_of_records_epsilon_proportion(number_of_records_epsilon_proportion)
-            .fabrication_mode(fabrication_mode)
-            .empty_value(empty_value)
-            .use_synthetic_counts(use_synthetic_counts)
-            .weight_selection_percentile(weight_selection_percentile)
+            .reporting_length(self.reporting_length)
+            .epsilon(self.epsilon)
+            .percentile_percentage(self.percentile_percentage)
+            .percentile_epsilon_proportion(self.percentile_epsilon_proportion)
+            .accuracy_mode(self.accuracy_mode)
+            .number_of_records_epsilon_proportion(self.number_of_records_epsilon_proportion)
+            .fabrication_mode(self.fabrication_mode)
+            .empty_value(self.empty_value)
+            .use_synthetic_counts(self.use_synthetic_counts)
+            .weight_selection_percentile(self.weight_selection_percentile)
         )
 
-        if aggregate_counts_scale_factor is not None:
+        if self.aggregate_counts_scale_factor is not None:
             builder = builder.aggregate_counts_scale_factor(
-                aggregate_counts_scale_factor
+                self.aggregate_counts_scale_factor
             )
 
-        if delta is not None:
-            builder = builder.delta(delta)
+        if self.delta is not None:
+            builder = builder.delta(self.delta)
 
-        self.reporting_length = reporting_length
+        self.reporting_length = self.reporting_length
         self.parameters = builder.build()
         self.synth = DpAggregateSeededSynthesizer(self.parameters)
         self.dataset = None
@@ -131,6 +146,9 @@ class AggregateSeededSynthesizer(Synthesizer):
 
         if self._transformer is None:
             raise ValueError("We weren't able to fit a transformer to the data. Please check your data and try again.")
+
+        if self.synth is None:
+            self.build_synthesizer()
 
         if self._transformer.output_width > 0:
             colnames = ["column_{}".format(i) for i in range(len(train_data[0]))]
@@ -189,17 +207,15 @@ class AggregateSeededSynthesizer(Synthesizer):
 
     def get_sensitive_aggregates(
         self, combination_delimiter=";", reporting_length=None
-    ):
+        ):
         """
-        Returns the aggregates for the sensitive dataset.
-
-        For more information run `help('pacsynth.Dataset.get_aggregates')`.
+        Returns the aggregates for the sensitive dataset. For more information run `help('pacsynth.Dataset.get_aggregates')`.
 
         :param combination_delimiter: Combination delimiter to use, default to ';'
         :type combination_delimiter: str, optional
-        :param reporting_length: Maximum length (inclusive) to compute attribute combinations for,
-        defaults to the configured value in the synthesizer
+        :param reporting_length: Maximum length (inclusive) to compute attribute combinations for, defaults to the configured value in the synthesizer
         :type reporting_length: int, optional
+
         :return: A dictionary with the combination string representation as key and the combination count as value
         :rtype: dict[str, int]
         """

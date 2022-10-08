@@ -53,6 +53,19 @@ class PATEGAN(Synthesizer):
         if update_epsilon:
             self.epsilon = update_epsilon
 
+        train_data = self._get_train_data(
+            data,
+            style='gan',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
+        )
+
+        data = np.array(train_data)
+
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
                 data[col] = pd.to_numeric(data[col], errors="ignore")
@@ -205,4 +218,10 @@ class PATEGAN(Synthesizer):
         data = np.concatenate(data, axis=0)
         data = data[:n]
 
-        return data
+        return self._transformer.inverse_transform(data)
+
+    def fit(self, data, *ignore, transformer=None, categorical_columns=[], ordinal_columns=[], continuous_columns=[], preprocessor_eps=0.0, nullable=False):
+        self.train(data, transformer=transformer, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, preprocessor_eps=preprocessor_eps, nullable=nullable)
+
+    def sample(self, n_samples):
+        return self.generate(n_samples)

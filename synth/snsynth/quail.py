@@ -1,18 +1,48 @@
 import logging
 import warnings
 
-from functools import wraps
-
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 
-from snsynth.base import SDGYMBaseSynthesizer
+from snsynth.base import Synthesizer
 
 logger = logging.getLogger(__name__)
 
 
-class QUAILSynthesizer(SDGYMBaseSynthesizer):
+class QUAILSynthesizer(Synthesizer):
+    """
+    Quailified Architecture to Improve Labeling.
+    Divide epsilon in a known classification task
+    between a differentially private synthesizer and
+    classifier. Train DP classifier on real, fit DP synthesizer
+    to features (excluding the target label),
+    and use synthetic data from the DP synthesizer with
+    the DP classifier to create artificial labels. Produces
+    complete synthetic data.
+
+    More information here:
+    Differentially Private Synthetic Data: Applied Evaluations and Enhancements
+    https://arxiv.org/abs/2011.05537
+
+    :param epsilon: Total epsilon used across the DP Synthesizer and DP Classifier
+    :type epsilon: float
+    :param dp_synthesizer: A function that returns an instance of a DP Synthesizer
+        for a specified epsilon value
+    :type dp_synthesizer: function (epsilon) -> SDGYMBaseSynthesizer
+    :param dp_classifier: A function that returns an instance of a DP Classifier
+        for a specified epsilon value
+    :type dp_classifier: function (epsilon) -> classifier
+    :param target: The column name of the target column
+    :type target: str
+    :param test_size: Percent of the data that should be used for the test set,
+        defaults to 0.2
+    :type test_size: float, optional
+    :param seed: Seed for controlling randomness for testing, defaults to None
+    :type seed: int, optional
+    :param eps_split: Percent of epsilon used for the classifier.
+        1 - eps_split is used for the Synthesizer., defaults to 0.9
+    :type eps_split: float, optional
+    """
     def __init__(
         self,
         epsilon,
@@ -73,7 +103,6 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         self.pd_cols = None
         self.pd_index = None
 
-    @wraps(SDGYMBaseSynthesizer.fit)
     def fit(
         self,
         data,
@@ -159,7 +188,6 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         if hasattr(self.private_model, "classes_"):
             logging.log(log_level, self.private_model.classes_)
 
-    @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, samples):
         """
         Sample from the synthesizer model.

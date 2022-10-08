@@ -3,6 +3,9 @@ from .base import ColumnTransformer
 import numpy as np
 
 class OneHotEncoder(ColumnTransformer):
+    """Transforms integer-labeled data into one-hot encoding.  Inputs are assumed to be 0-based.
+    To convert from unstructured categorical data, chain with LabelTransformer first.
+    """
     cache_fit = False
     def __init__(self):
         super().__init__()

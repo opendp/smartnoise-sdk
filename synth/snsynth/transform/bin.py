@@ -5,14 +5,14 @@ from snsynth.transform.definitions import ColumnType
 import numpy as np
 
 class BinTransformer(CachingColumnTransformer):
-    """Transformer that bins values into a discrete set of bins.
+    """Transforms continuous values into a discrete set of bins.
 
+    :param bins: The number of bins to create.
     :param lower: The minimum value to scale to.
     :param upper: The maximum value to scale to.
-    :param bins: The number of bins to use.
-    :param negative: Whether to scale between -1.0 and 1.0.
-    :param epsilon: The privacy budget to use.
-    :return: A transformed column of values.
+    :param epsilon: The privacy budget to use to infer bounds, if none provided.
+    :param nullable: If null values are expected, a second output will be generated indicating null.
+    :param odometer: The optional odometer to use to track privacy budget.
     """
     def __init__(self, *, bins=10, lower=None, upper=None, epsilon=0.0, nullable=False, odometer=None):
         self.lower = lower
