@@ -3,6 +3,9 @@ from .base import ColumnTransformer
 class IdentityTransformer(ColumnTransformer):
     def __init__(self):
         super().__init__()
+    @property
+    def cardinality(self):
+        return [None]
     def _fit(self, val):
         pass
     def _clear_fit(self):

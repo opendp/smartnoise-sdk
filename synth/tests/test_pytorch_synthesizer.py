@@ -6,6 +6,7 @@ import pandas as pd
 
 from snsynth.pytorch import PytorchDPSynthesizer
 from snsynth.pytorch.nn import DPGAN, DPCTGAN, PATECTGAN
+from snsynth.transform.table import TableTransformer
 
 git_root_dir = (
     subprocess.check_output("git rev-parse --show-toplevel".split(" "))
@@ -46,7 +47,7 @@ class TestPytorchDPSynthesizer_DPGAN:
     def test_fit_continuous(self):
         dpgan = DPGAN(epsilon=1.0)
         df_continuous = df[["age", "educ", "income"]]
-        dpgan.train(df_continuous)
+        dpgan.train(df_continuous, transformer=TableTransformer())
         synth_data = dpgan.generate(len(df_continuous))
         assert synth_data.shape == df_continuous.shape
 
@@ -60,6 +61,7 @@ class TestPytorchDPSynthesizer_DPCTGAN:
             df,
             categorical_columns=["sex", "educ", "race", "married"],
             continuous_columns=["age", "income"],
+            preprocessor_eps=0.5
         )
         assert self.dpctgan.gan._generator
 
@@ -68,6 +70,7 @@ class TestPytorchDPSynthesizer_DPCTGAN:
             df,
             categorical_columns=["sex", "educ", "race", "married"],
             continuous_columns=["age", "income"],
+            preprocessor_eps=0.5
         )
         sample_size = len(df)
         synth_data = self.dpctgan.sample(sample_size)
@@ -75,7 +78,7 @@ class TestPytorchDPSynthesizer_DPCTGAN:
 
     def test_fit_numpy(self):
         dpctgan = DPCTGAN(epsilon=1.0)
-        dpctgan.train(nf_non_continuous, categorical_columns=[0, 1, 2, 3])
+        dpctgan.train(nf_non_continuous, preprocessor_eps=0.5, categorical_columns=[0, 1, 2, 3])
 
 
 class TestPytorchDPSynthesizer_PATECTGAN:
@@ -87,6 +90,7 @@ class TestPytorchDPSynthesizer_PATECTGAN:
             df,
             categorical_columns=["sex", "educ", "race", "married"],
             continuous_columns=["age", "income"],
+            preprocessor_eps=0.5
         )
         assert self.patectgan.gan._generator
 
@@ -95,6 +99,7 @@ class TestPytorchDPSynthesizer_PATECTGAN:
             df,
             categorical_columns=["sex", "educ", "race", "married"],
             continuous_columns=["age", "income"],
+            preprocessor_eps=0.5
         )
         sample_size = len(df)
         synth_data = self.patectgan.sample(sample_size)
@@ -111,6 +116,7 @@ class TestPytorchDPSynthesizer_PATECTDRAGAN:
         self.patectgan.fit(
             df_non_continuous,
             categorical_columns=["sex", "educ", "race", "married"],
+            preprocessor_eps=0.5,
         )
         assert self.patectgan.gan._generator
 
@@ -118,6 +124,7 @@ class TestPytorchDPSynthesizer_PATECTDRAGAN:
         self.patectgan.fit(
             df_non_continuous,
             categorical_columns=["sex", "educ", "race", "married"],
+            preprocessor_eps=0.5
         )
         sample_size = len(df)
         synth_data = self.patectgan.sample(sample_size)

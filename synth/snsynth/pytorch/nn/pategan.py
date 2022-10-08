@@ -7,13 +7,15 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
+from snsynth.base import Synthesizer
+
 from ._generator import Generator
 from ._discriminator import Discriminator
 
 from .privacy_utils import weights_init, pate, moments_acc
 
 
-class PATEGAN:
+class PATEGAN(Synthesizer):
     def __init__(
         self,
         epsilon,
@@ -45,6 +47,8 @@ class PATEGAN:
         update_epsilon=None,
         transformer=None,
         continuous_columns=None,
+        preprocessor_eps=0.0,
+        nullable=False,
     ):
         if update_epsilon:
             self.epsilon = update_epsilon

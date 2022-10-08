@@ -18,8 +18,10 @@ from torch.nn import (
 from torch.autograd import Variable
 import warnings
 
-from .data_sampler import DataSampler
-from .ctgan import CTGANSynthesizer
+from snsynth.base import Synthesizer
+
+from .ctgan.data_sampler import DataSampler
+from .ctgan.ctgan import CTGANSynthesizer
 from snsynth.transform.table import TableTransformer
 
 from .privacy_utils import weights_init, pate, moments_acc
@@ -110,7 +112,7 @@ class Generator(Module):
         return data
 
 
-class PATECTGAN(CTGANSynthesizer):
+class PATECTGAN(CTGANSynthesizer, Synthesizer):
     def __init__(
         self,
         embedding_dim=128,
@@ -122,7 +124,6 @@ class PATECTGAN(CTGANSynthesizer):
         discriminator_decay=1e-6,
         batch_size=500,
         discriminator_steps=1,
-        log_frequency=False,
         verbose=True,
         epochs=300,
         pac=1,
@@ -136,9 +137,7 @@ class PATECTGAN(CTGANSynthesizer):
         sample_per_teacher=1000,
         delta=None,
         noise_multiplier=1e-3,
-        preprocessor_eps=0.5,
         moments_order=100,
-        category_epsilon_pct=0.1,
     ):
 
         assert batch_size % 2 == 0
@@ -154,22 +153,10 @@ class PATECTGAN(CTGANSynthesizer):
 
         self._batch_size = batch_size
         self._discriminator_steps = discriminator_steps
-        self._log_frequency = log_frequency
         self._verbose = verbose
         self._epochs = epochs
         self.pac = pac
-        self.preprocessor_eps = preprocessor_eps
-        if preprocessor_eps and preprocessor_eps > 0:
-            print(
-                f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
-            self.epsilon = epsilon - preprocessor_eps
-        else:
-            self.epsilon = epsilon
-        if self.epsilon < 10E-3:
-            raise ValueError("Epsilon needs to be larger than preprocessor_eps!")
-
-        self._category_epsilon_pct = category_epsilon_pct
-
+        self.epsilon = epsilon
         self.verbose = verbose
         self.loss = loss
 
@@ -194,12 +181,6 @@ class PATECTGAN(CTGANSynthesizer):
 
         self._device = torch.device(device)
 
-        if self._log_frequency:
-            warnings.warn(
-                "log_frequency is selected.  This may result in oversampling frequent "
-                "categories, which could cause privacy leaks."
-            )
-
     def train(
         self,
         data,
@@ -207,35 +188,29 @@ class PATECTGAN(CTGANSynthesizer):
         ordinal_columns=None,
         update_epsilon=None,
         transformer=None,
-        continuous_columns=None,
+        continuous_columns=None, 
+        preprocessor_eps=0.0,
+        nullable=False
     ):
         if update_epsilon:
-            self.epsilon = update_epsilon - self.preprocessor_eps
+            self.epsilon = update_epsilon
 
         sample_per_teacher = (
             self.sample_per_teacher if self.sample_per_teacher < len(data) else 1000
         )
         self.num_teachers = int(len(data) / sample_per_teacher) + 1
 
-        tt = TableTransformer.create(data, style='gan',
-            categorical_columns=categorical_columns,
-            continuous_columns=continuous_columns,
-            ordinal_columns=ordinal_columns)
-        self._transformer = tt
-        self._transformer.fit(
+        train_data = self._get_train_data(
             data,
-            epsilon=self.preprocessor_eps
+            style='gan',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
         )
 
-        if self.verbose:
-            cat_eps = self.epsilon * self._category_epsilon_pct
-            per_cat_eps = cat_eps / len(categorical_columns)
-            print(f"The preprocessor consumes {self.preprocessor_eps:.3f} epsilon")
-            print(f"Privatizing the category frequencies consumes {cat_eps:.3f} epsilon,")
-            print(f"allowing {per_cat_eps:.3f} epsilon per category.")
-            print(f"We have {(self.epsilon - cat_eps):.3f} epsilon left over for training")
-
-        train_data = self._transformer.transform(data)
         train_data = np.array([
             [float(x) if x is not None else 0.0 for x in row] for row in train_data
         ])
@@ -244,40 +219,18 @@ class PATECTGAN(CTGANSynthesizer):
 
         data_dim = self._transformer.output_width
 
-        sampler_eps = 0.0
-        if categorical_columns and self._category_epsilon_pct:
-            sampler_eps = self.epsilon * self._category_epsilon_pct
-            per_col_sampler_eps = sampler_eps / len(categorical_columns)
-            self.epsilon = self.epsilon - sampler_eps
-        else:
-            per_col_sampler_eps = None
 
         self.cond_generator = DataSampler(
             train_data,
-            self._transformer.transformers,
-            self._log_frequency,
-            per_column_epsilon=per_col_sampler_eps,
+            self._transformer.transformers
         )
 
-        # spent = self.cond_generator.total_spent
-        # if spent > sampler_eps and not np.isclose(spent, sampler_eps):
-        #     raise AssertionError(
-        #         f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
-        #     )
-        # create conditional generator for each teacher model
-
-        # Note: Previously, there existed a ConditionalGenerator object in CTGAN
-        # - that functionality has been subsumed by DataSampler, but switch is
-        # essentially 1 for 1
-        # don't need to count eps for each teacher, because these are disjoint partitions
         cached_probs = self.cond_generator.discrete_column_category_prob
 
         cond_generator = [
             DataSampler(
                 d,
                 self._transformer.transformers,
-                self._log_frequency,
-                per_column_epsilon=None,
                 discrete_column_category_prob=cached_probs,
             )
             for d in data_partitions
@@ -368,8 +321,6 @@ class PATECTGAN(CTGANSynthesizer):
                     data_sampler = DataSampler(
                         partition_data,
                         self._transformer.transformers,
-                        self._log_frequency,
-                        per_column_epsilon=None,
                         discrete_column_category_prob=cached_probs,
                     )
                     fakez = torch.normal(mean, std=std).to(self._device)
@@ -438,8 +389,6 @@ class PATECTGAN(CTGANSynthesizer):
                 data_sampler = DataSampler(
                     train_data,
                     self._transformer.transformers,
-                    self._log_frequency,
-                    per_column_epsilon=None,
                     discrete_column_category_prob=cached_probs,
                 )
                 fakez = torch.normal(mean=mean, std=std)
@@ -560,7 +509,7 @@ class PATECTGAN(CTGANSynthesizer):
     def w_loss(self, output, labels):
         vals = torch.cat([labels[None, :], output[None, :]], axis=1)
         ordered = vals[vals[:, 0].sort()[1]]
-        data_list = torch.split(ordered, labels.shape[0] - int(labels.sum().item()))
+        data_list = torch.split(ordered, labels.shape[0] - int(labels.sum().item()), dim=1)
         fake_score = data_list[0][:, 1]
         true_score = torch.cat(data_list[1:], axis=0)[:, 1]
         w_loss = -(torch.mean(true_score) - torch.mean(fake_score))
@@ -597,3 +546,9 @@ class PATECTGAN(CTGANSynthesizer):
         data = data[:n]
 
         return self._transformer.inverse_transform(data)
+
+    def fit(self, data, *ignore, transformer=None, categorical_columns=[], ordinal_columns=[], continuous_columns=[], preprocessor_eps=0.0, nullable=False):
+        self.train(data, transformer=transformer, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, preprocessor_eps=preprocessor_eps, nullable=nullable)
+
+    def sample(self, n_samples):
+        return self.generate(n_samples)

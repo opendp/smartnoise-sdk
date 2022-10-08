@@ -28,6 +28,11 @@ class ColumnTransformer:
         """Overriden by subclasses to indicate whether the transformer
         needs an epsilon value to be supplied to the fit method."""
         return False
+    @property
+    def cardinality(self):
+        """Must be implemented by subclasses to return the cardinality of the
+        output of the transformer.  Only applicable for categorical transformers."""
+        return []
     def allocate_privacy_budget(self, epsilon, odometer):
         """Allocate privacy budget to the transformer.  This method is called
         by the DataTransformer to allocate privacy budget to the transformer.

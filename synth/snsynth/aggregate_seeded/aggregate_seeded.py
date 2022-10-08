@@ -5,7 +5,7 @@ from pacsynth import (
     FabricationMode,
 )
 from pacsynth import Dataset as AggregateSeededDataset
-from snsynth.base import SDGYMBaseSynthesizer
+from snsynth.base import SDGYMBaseSynthesizer, Synthesizer
 from functools import wraps
 
 import pandas as pd
@@ -26,7 +26,7 @@ For documentation please refer to:
 """
 
 
-class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
+class AggregateSeededSynthesizer(Synthesizer):
     """
     SmartNoise class wrapper for Aggregate Seeded Synthesizer from pac-synth.
     Works with Pandas data frames, raw data and follows norms set by other SmartNoise synthesizers.
@@ -85,7 +85,19 @@ class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
         self.pandas = False
 
     @wraps(SDGYMBaseSynthesizer.fit)
-    def fit(self, data, use_columns=None, sensitive_zeros=None):
+    def fit(
+        self, 
+        data,
+        *ignore,
+        use_columns=None,
+        sensitive_zeros=None,
+        transformer=None,
+        categorical_columns=None,
+        ordinal_columns=None,
+        continuous_columns=None,
+        preprocessor_eps=0.0,
+        nullable=False
+        ):
         """
         Fit the synthesizer model on the data.
 
@@ -105,6 +117,26 @@ class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
         :param sensitive_zeros: List of column names containing '0' that should not be turned into empty strings.
         :type sensitive_zeros: list[str], optional
         """
+        train_data = self._get_train_data(
+            data,
+            style='cube',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=True,
+            preprocessor_eps=preprocessor_eps
+        )
+
+        if self._transformer is None:
+            raise ValueError("We weren't able to fit a transformer to the data. Please check your data and try again.")
+
+        if self._transformer.output_width > 0:
+            colnames = ["column_{}".format(i) for i in range(len(train_data[0]))]
+            data = [colnames] + [[str(v) for v in row] for row in train_data]
+        else:
+            data = train_data
+
         if isinstance(data, list) and all(map(lambda row: isinstance(row, list), data)):
             self.dataset = AggregateSeededDataset(
                 data, use_columns=use_columns, sensitive_zeros=sensitive_zeros
@@ -145,34 +177,16 @@ class AggregateSeededSynthesizer(SDGYMBaseSynthesizer):
         """
         result = self.synth.sample(samples)
 
+        if self._transformer is not None and self._transformer.output_width > 0:
+            result = [[int(v) if v != '' else None for v in row] for row in result[1:]]
+            result = self._transformer.inverse_transform(result)
+            return result
+
         if self.pandas is True:
             result = AggregateSeededDataset.raw_data_to_data_frame(result)
 
         return result
 
-    @wraps(SDGYMBaseSynthesizer.fit_sample)
-    def fit_sample(self, data, use_columns=None, sensitive_zeros=None):
-        """
-        Fit the synthesizer model and then generate a synthetic dataset with the same
-        size of the input data.
-
-        The same number of records in the original dataset will be sampled.
-
-        :param data: The data for fitting the synthesizer model.
-        :type data: pd.DataFrame, list[list[str]], AggregateSeededDataset
-        :param use_columns: List of column names to be used, defaults to None, meaning use all columns
-        :type use_columns: list[str], optional
-        :param sensitive_zeros: List of column names containing '0' that should not be turned into empty strings.
-        :type sensitive_zeros: list[str], optional
-        :return: Generated data samples, the output type adjusts accordingly to the input data.
-        :rtype: Dataframe, list[list[str]]
-        """
-        self.fit(
-            data,
-            use_columns=use_columns,
-            sensitive_zeros=sensitive_zeros,
-        )
-        return self.sample(data.shape[0])
 
     def get_sensitive_aggregates(
         self, combination_delimiter=";", reporting_length=None

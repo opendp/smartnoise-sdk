@@ -9,11 +9,13 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from opacus import PrivacyEngine
 
+from snsynth.base import Synthesizer
+
 from ._generator import Generator
 from ._discriminator import Discriminator
 
 
-class DPGAN:
+class DPGAN(Synthesizer):
     def __init__(
         self,
         binary=False,
@@ -43,9 +45,24 @@ class DPGAN:
         update_epsilon=None,
         transformer=None,
         continuous_columns=None,
+        preprocessor_eps=0.0,
+        nullable=False,
     ):
         if update_epsilon:
             self.epsilon = update_epsilon
+
+        train_data = self._get_train_data(
+            data,
+            style='gan',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
+        )
+
+        data = train_data
 
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
@@ -53,6 +70,8 @@ class DPGAN:
             self.pd_cols = data.columns
             self.pd_index = data.index
             data = data.to_numpy()
+        elif isinstance(data, list):
+            data = np.array(data)
         elif not isinstance(data, np.ndarray):
             raise ValueError("Data must be a numpy array or pandas dataframe")
 
@@ -167,4 +186,4 @@ class DPGAN:
         data = np.concatenate(data, axis=0)
         data = data[:n]
 
-        return data
+        return self._transformer.inverse_transform(data)

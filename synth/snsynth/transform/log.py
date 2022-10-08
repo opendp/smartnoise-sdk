@@ -8,6 +8,9 @@ class LogTransformer(ColumnTransformer):
     @property
     def output_type(self):
         return ColumnType.CONTINUOUS
+    @property
+    def cardinality(self):
+        return [None]
     def _fit(self, val, idx=None):
         pass
     def _clear_fit(self):
@@ -15,6 +18,12 @@ class LogTransformer(ColumnTransformer):
         self._fit_complete = True
         self.output_width = 1
     def _transform(self, val):
-        return float(np.log(val))
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return None
+        else:
+            return float(np.log(val))
     def _inverse_transform(self, val):
-        return float(np.exp(val))
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return np.nan
+        else:
+            return float(np.exp(val))

@@ -41,6 +41,8 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
         ordinal_columns=tuple(),
         transformer=None,
         continuous_columns=None,
+        preprocessor_eps=0.0,
+        nullable=False,
     ):
         def column_names(n_items, prefix="col"):
             names = []
@@ -76,6 +78,8 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             update_epsilon=self.epsilon,
             transformer=transformer,
             continuous_columns=continuous_columns,
+            preprocessor_eps=preprocessor_eps,
+            nullable=nullable,
         )
 
     @wraps(SDGYMBaseSynthesizer.sample)

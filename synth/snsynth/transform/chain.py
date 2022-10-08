@@ -12,6 +12,13 @@ class ChainTransformer(CachingColumnTransformer):
     def needs_epsilon(self):
         return any(transformer.needs_epsilon for transformer in self.transformers)
     @property
+    def cardinality(self):
+        cards = []
+        for transformer in self.transformers:
+            for c in transformer.cardinality:
+                cards.append(c)
+        return cards
+    @property
     def fit_complete(self):
         return all([t.fit_complete for t in self.transformers])
     def allocate_privacy_budget(self, epsilon, odometer):

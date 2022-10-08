@@ -3,11 +3,15 @@ from .base import ColumnTransformer
 import numpy as np
 
 class LabelTransformer(ColumnTransformer):
-    def __init__(self):
+    def __init__(self, nullable=True):
         super().__init__()
+        self.nullable = nullable
     @property
     def output_type(self):
         return ColumnType.CATEGORICAL
+    @property
+    def cardinality(self):
+        return [len(self.categories)]
     def _fit(self, val):
         if isinstance(val, float) and np.isnan(val):
             val = None
@@ -16,6 +20,26 @@ class LabelTransformer(ColumnTransformer):
             self.categories[self.category] = val
             self.category += 1
             self.output_width = 1
+    def _fit_finish(self):
+        self._fit_complete = True
+
+        # try sorting the categories so this can be used in ordinals
+        vals = [v for v in self.labels.keys() if v is not None]
+        val_types = set([type(v) for v in vals])
+        if len(val_types) > 1:
+            return
+        sorted_labels = sorted(vals)
+        self.labels = {}
+        self.categories = []
+        for i, label in enumerate(sorted_labels):
+            self.labels[label] = i
+            self.categories.append(label)
+        if self.nullable:
+            idx = len(self.categories)
+            self.labels[None] = idx
+            self.categories.append(None)
+        return
+
     def _clear_fit(self):
         self._reset_fit()
         self.labels = {}
@@ -26,4 +50,6 @@ class LabelTransformer(ColumnTransformer):
             val = None
         return self.labels[val]
     def _inverse_transform(self, val):
+        if val is None and self.nullable:
+            return None
         return self.categories[val]

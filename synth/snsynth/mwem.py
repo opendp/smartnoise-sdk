@@ -9,7 +9,8 @@ from functools import wraps
 import numpy as np
 import pandas as pd
 
-from snsynth.base import SDGYMBaseSynthesizer
+from snsynth.base import SDGYMBaseSynthesizer, Synthesizer
+from snsynth.transform.table import TableTransformer
 
 
 class Query:
@@ -188,7 +189,7 @@ class Histogram:
         return hist.reshape(category_lengths)
 
 
-class MWEMSynthesizer(SDGYMBaseSynthesizer):
+class MWEMSynthesizer(Synthesizer):
     def __init__(
         self,
         epsilon=3.0,
@@ -202,7 +203,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         measure_only=False,
         max_retries_exp_mechanism=10,
         mult_weights_iterations=20,
-        debug=False
+        verbose=False
     ):
         """
          N-Dimensional numpy implementation of MWEM.
@@ -279,7 +280,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.mins_maxes = {}
         self.scale = {}
         self.marginal_width = marginal_width
-        self.debug = debug
+        self.debug = verbose
 
         # Pandas check
         self.pandas = False
@@ -296,7 +297,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         return sum([a for a in self.accountant])
 
     @wraps(SDGYMBaseSynthesizer.fit)
-    def fit(self, data, categorical_columns=None, ordinal_columns=None):
+    def fit(self, data, *ignore, transformer=None, categorical_columns=None, ordinal_columns=None, continuous_columns=None, preprocessor_eps=0.0, nullable=False):
         """
         Follows sdgym schema to be compatible with their benchmark system.
 
@@ -305,6 +306,20 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :return: synthetic data, real data histograms
         :rtype: np.ndarray
         """
+
+        train_data = self._get_train_data(
+            data,
+            style='cube',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
+        )
+
+        data = train_data
+        
         if isinstance(data, np.ndarray):
             self.data = data.copy()
         elif isinstance(data, pd.DataFrame):
@@ -314,14 +329,16 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             self.data = data.to_numpy().copy()
             self.pd_cols = data.columns
             self.pd_index = data.index
+        elif isinstance(data, list):
+            self.data = np.array(data)
         else:
-            raise ValueError("Data must be a numpy array or pandas dataframe.")
+            raise ValueError("Data must be a list of tuples, a numpy array, or a pandas dataframe.")
         if self.split_factor is not None and self.splits == []:
-            self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
+            self.splits = self._generate_splits(self.data.T.shape[0], self.split_factor)
         elif self.split_factor is None and self.splits == []:
             # Set split factor to default to shape[1]
-            self.split_factor = data.shape[1]
-            self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
+            self.split_factor = self.data.shape[1]
+            self.splits = self._generate_splits(self.data.T.shape[0], self.split_factor)
 
         self.splits = np.array(self.splits)
         if self.splits.size == 0:
@@ -432,11 +449,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         combined = synthesized_columns
         # Reorder the columns to mirror their original order
         r = self._reorder(self.splits)
-        if self.pandas:
-            df = pd.DataFrame(combined[:, r], columns=self.pd_cols)
-            return df
-        else:
-            return combined[:, r]
+        return self._transformer.inverse_transform(combined[:, r])
 
     def mwem(self):
         """

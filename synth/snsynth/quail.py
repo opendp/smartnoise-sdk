@@ -5,6 +5,7 @@ from functools import wraps
 
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 
 from snsynth.base import SDGYMBaseSynthesizer
 
@@ -81,6 +82,8 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
         transformer=None,
         continuous_columns=None,
         verbose=None,
+        preprocessor_eps=0.0,
+        nullable=False,
     ):
         """
         Takes a dataset and fits the synthesizer/learning model to it, using the epsilon split
@@ -143,6 +146,8 @@ class QUAILSynthesizer(SDGYMBaseSynthesizer):
             ordinal_columns=ordinal_columns,
             transformer=transformer,
             continuous_columns=continuous_columns,
+            preprocessor_eps=preprocessor_eps,
+            nullable=nullable,
         )
 
         if hasattr(self.private_model, "coef_"):

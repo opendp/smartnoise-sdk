@@ -14,7 +14,7 @@ class BinTransformer(CachingColumnTransformer):
     :param epsilon: The privacy budget to use.
     :return: A transformed column of values.
     """
-    def __init__(self, *, bins=10, lower=None, upper=None, epsilon=None, nullable=False, odometer=None):
+    def __init__(self, *, bins=10, lower=None, upper=None, epsilon=0.0, nullable=False, odometer=None):
         self.lower = lower
         self.upper = upper
         self.epsilon = epsilon
@@ -29,6 +29,12 @@ class BinTransformer(CachingColumnTransformer):
     @property
     def needs_epsilon(self):
         return self.upper is None or self.lower is None
+    @property
+    def cardinality(self):
+        if self.nullable:
+            return [self.bins, 2]
+        else:
+            return [self.bins]
     def allocate_privacy_budget(self, epsilon, odometer):
         self.epsilon = epsilon
         self.odometer = odometer
@@ -37,7 +43,7 @@ class BinTransformer(CachingColumnTransformer):
             self._fit_vals = [v for v in self._fit_vals if v is not None and not (isinstance(v, float) and np.isnan(v))]
             self.fit_lower, self.fit_upper = approx_bounds(self._fit_vals, self.epsilon)
             if self.odometer is not None:
-                self.odometer.spend(Privacy(self.epsilon, 0.0))
+                self.odometer.spend(Privacy(epsilon=self.epsilon, delta=0.0))
             self.budget_spent.append(self.epsilon)
             if self.fit_lower is None or self.fit_upper is None:
                 raise ValueError("BinTransformer could not find bounds.")

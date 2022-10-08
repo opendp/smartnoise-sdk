@@ -9,6 +9,9 @@ class OneHotEncoder(ColumnTransformer):
     @property
     def output_type(self):
         return ColumnType.CATEGORICAL
+    @property
+    def cardinality(self):
+        return [2] * (self.max + 1)
     def _fit(self, val):
         if val > self.max:
             self.max = val

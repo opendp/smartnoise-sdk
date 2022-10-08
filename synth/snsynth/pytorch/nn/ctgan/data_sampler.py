@@ -7,8 +7,6 @@ class DataSampler(object):
 
     :param data(np.ndarray): The data to be conditionally sampled.
     :param output_info(list): The output information of the model.
-    :param log_frequency(bool): Whether to use log frequency.
-    :param per_column_epsilon(float): The privacy budget for each column.
     :param discrete_column_category_prob(list): The category probabilities for each discrete column.
         Use this to pass in cached noisy probabilities.  Data must match the schema of the original data.
     """
@@ -17,26 +15,16 @@ class DataSampler(object):
             self,
             data,
             transformers,
-            log_frequency,
             *ignore,
-            per_column_epsilon=None,
             discrete_column_category_prob=None,
             **kwargs):
         self._data = data
         self._transformers = transformers
-        self._per_column_epsilon = per_column_epsilon
 
-        if log_frequency:
-            warnings.warn(
-                "Log frequency is deprecated and will be removed in a future release. ")
-            log_frequency = False
-        if per_column_epsilon:
-            warnings.warn("Per column epsilon is deprecated and will be removed in a future version.")
         self._per_column_scale = None
         if discrete_column_category_prob is not None:
             warnings.warn("Discrete column category prob is deprecated and will be removed in a future version.")
         self._discrete_column_category_prob = None
-        self._per_column_epsilon = None
 
         n_discrete_columns = sum(
             [1 for t in self._transformers if t.is_categorical])
@@ -87,18 +75,8 @@ class DataSampler(object):
             if t.is_categorical:
                 ed = st + t.output_width
                 category_freq = np.sum(data[:, st:ed], axis=0)
-                # insert privacy here
-                # if self._per_column_scale:
-                #     geom = make_base_geometric(self._per_column_scale)
-                #     category_freq = [geom(int(v)) for v in category_freq]
-                #     eps_tot += self._per_column_epsilon
                 category_freq = [1 if v < 1 else v for v in category_freq]
-                if np.sum(category_freq) < 100:
-                    # not enough data; use uniform distribution
-                    category_freq = [1 for _ in category_freq]
                 category_freq = np.array(category_freq, dtype='float64')
-                # if log_frequency:
-                #     category_freq = np.log(category_freq + 1)
                 category_prob = category_freq / np.sum(category_freq)
                 self._discrete_column_category_prob[current_id, :t.output_width] = (
                     category_prob)
