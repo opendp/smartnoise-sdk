@@ -10,6 +10,8 @@ from functools import wraps
 
 import pandas as pd
 
+from snsynth.transform.table import TableTransformer
+
 
 """
 Wrapper for Aggregate Seeded Synthesizer from pac-synth:
@@ -84,7 +86,6 @@ class AggregateSeededSynthesizer(Synthesizer):
         self.dataset = None
         self.pandas = False
 
-    @wraps(SDGYMBaseSynthesizer.fit)
     def fit(
         self, 
         data,
@@ -134,12 +135,10 @@ class AggregateSeededSynthesizer(Synthesizer):
         if self._transformer.output_width > 0:
             colnames = ["column_{}".format(i) for i in range(len(train_data[0]))]
             data = [colnames] + [[str(v) for v in row] for row in train_data]
-        else:
-            data = train_data
 
         if isinstance(data, list) and all(map(lambda row: isinstance(row, list), data)):
             self.dataset = AggregateSeededDataset(
-                data, use_columns=use_columns, sensitive_zeros=sensitive_zeros
+                data, use_columns=use_columns, sensitive_zeros=colnames
             )
             self.pandas = False
         elif isinstance(data, pd.DataFrame):

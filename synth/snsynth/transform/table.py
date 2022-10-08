@@ -164,3 +164,6 @@ class TableTransformer:
         else:
             raise ValueError(f"Unknown data type: {type(data)}")
 
+class NoTransformer(TableTransformer):
+    def __init__(self, *ignore):
+        super().__init__([])

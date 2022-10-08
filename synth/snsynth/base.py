@@ -6,7 +6,8 @@ from snsynth.transform.table import TableTransformer
 class SDGYMBaseSynthesizer:
     def fit(
         self, 
-        data, *ignore, 
+        data, 
+        *ignore, 
         transformer=None, 
         categorical_columns=[], 
         ordinal_columns=[], 
@@ -51,7 +52,8 @@ class SDGYMBaseSynthesizer:
         ordinal_columns=[], 
         continuous_columns=[],
         preprocessor_eps=0.0,
-        nullable=False
+        nullable=False,
+        **kwargs
         ):
         """
         Fit the synthesizer model and then generate a synthetic dataset of the same
@@ -78,6 +80,7 @@ class SDGYMBaseSynthesizer:
             continuous_columns=continuous_columns,
             preprocessor_eps=preprocessor_eps,
             nullable=nullable,
+            **kwargs
         )
         if isinstance(data, pd.DataFrame):
             return self.sample(len(data))
@@ -141,15 +144,29 @@ class Synthesizer(SDGYMBaseSynthesizer):
                     raise ValueError("Epsilon remaining is too small!")
         train_data = self._transformer.transform(data)
         return train_data
+
     # factory method
     @classmethod
-    def create(cls, synth, *args, **kwargs):
-        synth = synth.lower()
-        if synth not in synth_map:
-            raise ValueError('Synthesizer {} not found'.format(synth))
-        synth_class = synth_map[synth]['class']
-        synth_module, synth_class = synth_class.rsplit('.', 1)
-        synth_module = __import__(synth_module, fromlist=[synth_class])
-        synth_class = getattr(synth_module, synth_class)
-        return synth_class(*args, **kwargs)
-
+    def create(cls, synth=None, *args, **kwargs):
+        if synth is None or (isinstance(synth, type) and issubclass(synth, Synthesizer)):
+            clsname = cls.__module__ + '.' + cls.__name__ if synth is None else synth.__module__ + '.' + synth.__name__
+            if clsname == 'snsynth.base.Synthesizer':
+                raise ValueError("Must specify a synthesizer to use.")
+            matching_keys = [k for k, v in synth_map.items() if v['class'] == clsname]
+            if len(matching_keys) == 0:
+                raise ValueError(f"Synthesizer {clsname} not found in map.")
+            elif len(matching_keys) > 1:
+                raise ValueError(f"Synthesizer {clsname} found multiple times in map.")
+            else:
+                synth = matching_keys[0]
+        if isinstance(synth, str):
+            synth = synth.lower()
+            if synth not in synth_map:
+                raise ValueError('Synthesizer {} not found'.format(synth))
+            synth_class = synth_map[synth]['class']
+            synth_module, synth_class = synth_class.rsplit('.', 1)
+            synth_module = __import__(synth_module, fromlist=[synth_class])
+            synth_class = getattr(synth_module, synth_class)
+            return synth_class(*args, **kwargs)
+        else:
+            raise ValueError('Synthesizer must be a string or a class')

@@ -10,6 +10,8 @@ import numpy as np
 import json
 import pytest
 
+from snsynth.transform.table import NoTransformer
+
 
 def gen_data_frame_with_schema(schema, n_records):
     return pd.DataFrame(
@@ -125,7 +127,7 @@ class TestAggregateSeeded:
 
     def test_fit_with_data_frame(self):
         synth = AggregateSeededSynthesizer()
-        synth.fit(self.sensitive_df)
+        synth.fit(self.sensitive_df, transformer=NoTransformer())
         assert isinstance(synth.sample(10), pd.DataFrame)
 
     def test_fit_with_dataset(self):
@@ -134,14 +136,14 @@ class TestAggregateSeeded:
             *self.sensitive_df.values.tolist(),
         ]
         synth = AggregateSeededSynthesizer()
-        synth.fit(AggregateSeededDataset(raw_data))
+        synth.fit(AggregateSeededDataset(raw_data), transformer=NoTransformer())
         assert isinstance(synth.sample(10), list)
 
     def test_fit_with_invalid_data(self):
         synth = AggregateSeededSynthesizer()
 
         with pytest.raises(ValueError):
-            synth.fit([["A", "B"], ("1", "2")])
+            synth.fit([["A", "B"], ("1", "2")], transformer=NoTransformer())
 
     def test_get_sensitive_aggregates(self):
         synth = AggregateSeededSynthesizer()
@@ -180,7 +182,7 @@ class TestAggregateSeeded:
     def test_sample_with_all_columns(self):
         synth = AggregateSeededSynthesizer()
 
-        synth.fit(self.sensitive_df)
+        synth.fit(self.sensitive_df, transformer=NoTransformer())
         synthetic_data = synth.sample(100)
 
         assert set(synthetic_data.columns) == set(self.sensitive_df.columns)
@@ -189,7 +191,7 @@ class TestAggregateSeeded:
         synth = AggregateSeededSynthesizer()
         selected_columns = ["H1", "H2", "H4", "H5", "H7"]
 
-        synth.fit(self.sensitive_df, use_columns=selected_columns)
+        synth.fit(self.sensitive_df, use_columns=selected_columns, transformer=NoTransformer())
         synthetic_data = synth.sample(100)
 
         assert set(synthetic_data.columns) == set(selected_columns)
@@ -200,12 +202,12 @@ class TestAggregateSeeded:
         sensitive_df = self.sensitive_df.copy()
         sensitive_df["H4"] = "0"
 
-        synthetic_data = synth.fit_sample(sensitive_df)
+        synthetic_data = synth.fit_sample(sensitive_df, transformer=NoTransformer())
 
         assert len(synthetic_data) == len(self.sensitive_df)
         assert "0" not in synthetic_data.values
 
-        synthetic_data = synth.fit_sample(sensitive_df, sensitive_zeros=["H4"])
+        synthetic_data = synth.fit_sample(sensitive_df, sensitive_zeros=["H4"], transformer=NoTransformer())
 
         assert len(synthetic_data) == len(self.sensitive_df)
         assert "0" in synthetic_data["H4"].values
