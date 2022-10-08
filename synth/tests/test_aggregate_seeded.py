@@ -121,7 +121,7 @@ class TestAggregateSeeded:
             *self.sensitive_df.values.tolist(),
         ]
         synth = AggregateSeededSynthesizer()
-        synth.fit(raw_data)
+        synth.fit(raw_data, transformer=NoTransformer())
         assert isinstance(synth.sample(10), list)
 
     def test_fit_with_data_frame(self):

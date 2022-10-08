@@ -70,7 +70,8 @@ class AggregateSeededSynthesizer(Synthesizer):
         self.use_synthetic_counts = use_synthetic_counts
         self.weight_selection_percentile = weight_selection_percentile
         self.aggregate_counts_scale_factor = aggregate_counts_scale_factor
-        self.synth = None
+        self.preprocessed = False
+        self.build_synthesizer()
 
     def build_synthesizer(self):
         builder = (
@@ -133,6 +134,9 @@ class AggregateSeededSynthesizer(Synthesizer):
         :param sensitive_zeros: List of column names containing '0' that should not be turned into empty strings.
         :type sensitive_zeros: list[str], optional
         """
+
+        before_eps = self.epsilon
+
         train_data = self._get_train_data(
             data,
             style='cube',
@@ -144,19 +148,21 @@ class AggregateSeededSynthesizer(Synthesizer):
             preprocessor_eps=preprocessor_eps
         )
 
+        if self.epsilon != before_eps:
+            # preprocessor changed epsilon, rebuild synthesizer
+            self.build_synthesizer()
+
         if self._transformer is None:
             raise ValueError("We weren't able to fit a transformer to the data. Please check your data and try again.")
-
-        if self.synth is None:
-            self.build_synthesizer()
 
         if self._transformer.output_width > 0:
             colnames = ["column_{}".format(i) for i in range(len(train_data[0]))]
             data = [colnames] + [[str(v) for v in row] for row in train_data]
+            sensitive_zeros = colnames
 
         if isinstance(data, list) and all(map(lambda row: isinstance(row, list), data)):
             self.dataset = AggregateSeededDataset(
-                data, use_columns=use_columns, sensitive_zeros=colnames
+                data, use_columns=use_columns, sensitive_zeros=sensitive_zeros
             )
             self.pandas = False
         elif isinstance(data, pd.DataFrame):

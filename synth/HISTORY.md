@@ -1,3 +1,13 @@
+# SmartNoise Synth v0.3.0 Release Notes
+
+This release is a breaking change from v0.2.x.
+
+* Add `Synthesizer.create()` factory method as preferred way to create synthesizers.  See [Getting Started](https://docs.smartnoise.org/synth/index.html#getting-started) for new factory syntax.
+* Add library for differentially private reversible data transforms.  All synthesizers now accept a `TableTransformer` object, and infer one if none provided.  See [Data Transforms](https://docs.smartnoise.org/synth/index.html#data-transforms) for more information.
+* All synthesizers use safe differentially private preprocessing by default.
+* Removed option for `log_frequency` from CTGAN synthesizers.
+* Support for Apple Silicon
+
 # SmartNoise Synth v0.2.8.1 Release Notes
 
 * Add diagnostics to GANs to show epsilon spend on preprocessor

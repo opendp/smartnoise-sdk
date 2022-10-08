@@ -4,6 +4,102 @@ Advanced Usage
 
 This section covers some advanced usage scenarios.
 
+Managing Privacy Budget
+-----------------------
+
+The privacy parameters epsilon and delta are passed in to the private connection at instantiation time, and apply to each computed column during the life of the session.  Privacy cost accrues indefinitely as new queries are executed, with the total accumulated privacy cost being available via the ``spent`` property of the connection's ``odometer``:
+
+.. code-block:: python
+
+    privacy = Privacy(epsilon=0.1, delta=10e-7)
+
+    reader = from_connection(conn, metadata=metadata, privacy=privacy)
+    print(reader.odometer.spent)  # (0.0, 0.0)
+
+    result = reader.execute('SELECT COUNT(*) FROM PUMS.PUMS')
+    print(reader.odometer.spent)  # approximately (0.1, 10e-7)
+
+The privacy cost increases with the number of columns:
+
+.. code-block:: python
+
+    reader = from_connection(conn, metadata=metadata, privacy=privacy)
+    print(reader.odometer.spent)  # (0.0, 0.0)
+
+    result = reader.execute('SELECT AVG(age), AVG(income) FROM PUMS.PUMS')
+    print(reader.odometer.spent)  # approximately (0.4, 10e-6)
+
+The odometer is advanced immediately before the differentially private query result is returned to the caller.  If the caller wishes to estimate the privacy cost of a query without running it, ``get_privacy_cost`` can be used:
+
+.. code-block:: python
+
+    reader = from_connection(conn, metadata=metadata, privacy=privacy)
+    print(reader.odometer.spent)  # (0.0, 0.0)
+
+    cost = reader.get_privacy_cost('SELECT AVG(age), AVG(income) FROM PUMS.PUMS')
+    print(cost)  # approximately (0.4, 10e-6)
+
+    print(reader.odometer.spent)  # (0.0, 0.0)
+
+Note that the total privacy cost of a session accrues at a slower rate than the sum of the individual query costs obtained by ``get_privacy_cost``.  The odometer accrues all invocations of mechanisms for the life of a session, and uses them to compute total spend.
+
+.. code-block:: python
+
+    reader = from_connection(conn, metadata=metadata, privacy=privacy)
+    query = 'SELECT COUNT(*) FROM PUMS.PUMS'
+    epsilon_single, _ = reader.get_privacy_cost(query)
+    print(epsilon_single)  # 0.1
+
+    # no queries executed yet
+    print(reader.odometer.spent)  # (0.0, 0.0)
+
+    for _ in range(100):
+        reader.execute(query)
+
+    epsilon_many, _ = reader.odometer.spent
+    print(f'{epsilon_many} < {epsilon_single * 100}')
+
+Odometers can be shared across multiple readers, allowing the analyst to track privacy budget across query workloads with mixed accuracy requirements.  Additionally, the analyst can pass in batches of queries to ``get_privacy_cost`` to estimate the total privacy cost of a set of queries, without actually spending the budget.  This can be useful for determining the best per-column epsilon to use when setting up a private reader:
+
+.. code-block:: python
+
+    low_eps_queries = [
+        'SELECT sex, COUNT(*) AS n FROM PUMS.PUMS GROUP BY sex',
+        'SELECT COUNT(*) AS n FROM PUMS.PUMS',
+        'SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex',
+        'SELECT AVG(age) AS age FROM PUMS.PUMS'
+    ]
+
+    queries = [
+        'SELECT age, COUNT(*) AS n FROM PUMS.PUMS GROUP BY age',
+        'SELECT educ, COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ',
+        'SELECT educ, AVG(age) AS age FROM PUMS.PUMS GROUP BY educ'
+    ]
+
+    low_eps_privacy = Privacy(epsilon=0.1, delta=0.001)
+    low_eps_reader = snsql.from_df(pums, privacy=low_eps_privacy, metadata=meta_path)
+    eps, delt = low_eps_reader.get_privacy_cost(low_eps_queries)
+    print(f"Cost for low epsilon workload is {eps} epsilon and {delt} delta")
+
+    privacy = Privacy(epsilon=1.0, delta=0.001)
+    reader = snsql.from_df(pums, privacy=privacy, metadata=meta_path)
+    eps, delt = reader.get_privacy_cost(queries)
+    print(f"Cost for regular workload is {eps} epsilon and {delt} delta")
+
+    # use same odometer for both readers
+    reader.odometer = low_eps_reader.odometer
+
+    for q in low_eps_queries:
+        print(low_eps_reader.execute_df(q))
+        print(low_eps_reader.odometer.spent)
+
+    for q in queries:
+        print(reader.execute_df(q))
+        print(reader.odometer.spent)
+
+
+In the example above, the low-epsilon queries aggregate the entire dataset, so accuracy will be good without spending much budget.  The other queries in the workload aggregate down to a finer grain, so require more budget to achieve acceptable accuracy.  The code above shows how to measure the cost of the mixed workload.
+
 Overriding Mechanisms
 ---------------------
 
