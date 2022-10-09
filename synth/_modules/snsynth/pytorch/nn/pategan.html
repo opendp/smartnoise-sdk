@@ -71,8 +71,14 @@
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../../../../api/index.html">
-  API index
+ <a class="reference internal nav-link" href="../../../../synthesizers/index.html">
+  Synthesizers Index
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../../transforms/index.html">
+  Data Transformers Index
  </a>
 </li>
 
@@ -154,13 +160,15 @@
 <span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TensorDataset</span>
 
+<span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
+
 <span class="kn">from</span> <span class="nn">._generator</span> <span class="kn">import</span> <span class="n">Generator</span>
 <span class="kn">from</span> <span class="nn">._discriminator</span> <span class="kn">import</span> <span class="n">Discriminator</span>
 
 <span class="kn">from</span> <span class="nn">.privacy_utils</span> <span class="kn">import</span> <span class="n">weights_init</span><span class="p">,</span> <span class="n">pate</span><span class="p">,</span> <span class="n">moments_acc</span>
 
 
-<div class="viewcode-block" id="PATEGAN"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATEGAN">[docs]</a><span class="k">class</span> <span class="nc">PATEGAN</span><span class="p">:</span>
+<div class="viewcode-block" id="PATEGAN"><a class="viewcode-back" href="../../../../synthesizers/pategan.html#snsynth.pytorch.nn.pategan.PATEGAN">[docs]</a><span class="k">class</span> <span class="nc">PATEGAN</span><span class="p">(</span><span class="n">Synthesizer</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">epsilon</span><span class="p">,</span>
@@ -184,17 +192,32 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pd_cols</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pd_index</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="PATEGAN.train"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATEGAN.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">,</span>
         <span class="n">categorical_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ordinal_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">update_epsilon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">continuous_columns_lower_upper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">continuous_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">update_epsilon</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">update_epsilon</span>
+
+        <span class="n">train_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_train_data</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;gan&#39;</span><span class="p">,</span>
+            <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span>
+            <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span> 
+            <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span> 
+            <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span> 
+            <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">,</span>
+            <span class="n">preprocessor_eps</span><span class="o">=</span><span class="n">preprocessor_eps</span>
+        <span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
@@ -333,9 +356,9 @@
             <span class="n">loss_g</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output_g</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">label_g</span><span class="o">.</span><span class="n">double</span><span class="p">())</span>
             <span class="n">optimizer_g</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
             <span class="n">loss_g</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-            <span class="n">optimizer_g</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></div>
+            <span class="n">optimizer_g</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
-<div class="viewcode-block" id="PATEGAN.generate"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATEGAN.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="n">steps</span> <span class="o">=</span> <span class="n">n</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
@@ -348,7 +371,13 @@
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">data</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">ignore</span><span class="p">,</span> <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="p">[],</span> <span class="n">ordinal_columns</span><span class="o">=</span><span class="p">[],</span> <span class="n">continuous_columns</span><span class="o">=</span><span class="p">[],</span> <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span> <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span> <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span> <span class="n">preprocessor_eps</span><span class="o">=</span><span class="n">preprocessor_eps</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)</span></div>
 </pre></div>
 
               </div>

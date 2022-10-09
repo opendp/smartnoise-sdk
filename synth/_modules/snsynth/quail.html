@@ -71,8 +71,14 @@
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../../api/index.html">
-  API index
+ <a class="reference internal nav-link" href="../../synthesizers/index.html">
+  Synthesizers Index
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../transforms/index.html">
+  Data Transformers Index
  </a>
 </li>
 
@@ -148,17 +154,48 @@
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">SDGYMBaseSynthesizer</span>
+<span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="QUAILSynthesizer"><a class="viewcode-back" href="../../api/index.html#snsynth.QUAILSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">QUAILSynthesizer</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="p">):</span>
+<div class="viewcode-block" id="QUAILSynthesizer"><a class="viewcode-back" href="../../synthesizers/quail.html#snsynth.quail.QUAILSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">QUAILSynthesizer</span><span class="p">(</span><span class="n">Synthesizer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Quailified Architecture to Improve Labeling.</span>
+<span class="sd">    Divide epsilon in a known classification task</span>
+<span class="sd">    between a differentially private synthesizer and</span>
+<span class="sd">    classifier. Train DP classifier on real, fit DP synthesizer</span>
+<span class="sd">    to features (excluding the target label),</span>
+<span class="sd">    and use synthetic data from the DP synthesizer with</span>
+<span class="sd">    the DP classifier to create artificial labels. Produces</span>
+<span class="sd">    complete synthetic data.</span>
+
+<span class="sd">    More information here:</span>
+<span class="sd">    Differentially Private Synthetic Data: Applied Evaluations and Enhancements</span>
+<span class="sd">    https://arxiv.org/abs/2011.05537</span>
+
+<span class="sd">    :param epsilon: Total epsilon used across the DP Synthesizer and DP Classifier</span>
+<span class="sd">    :type epsilon: float</span>
+<span class="sd">    :param dp_synthesizer: A function that returns an instance of a DP Synthesizer</span>
+<span class="sd">        for a specified epsilon value</span>
+<span class="sd">    :type dp_synthesizer: function (epsilon) -&gt; SDGYMBaseSynthesizer</span>
+<span class="sd">    :param dp_classifier: A function that returns an instance of a DP Classifier</span>
+<span class="sd">        for a specified epsilon value</span>
+<span class="sd">    :type dp_classifier: function (epsilon) -&gt; classifier</span>
+<span class="sd">    :param target: The column name of the target column</span>
+<span class="sd">    :type target: str</span>
+<span class="sd">    :param test_size: Percent of the data that should be used for the test set,</span>
+<span class="sd">        defaults to 0.2</span>
+<span class="sd">    :type test_size: float, optional</span>
+<span class="sd">    :param seed: Seed for controlling randomness for testing, defaults to None</span>
+<span class="sd">    :type seed: int, optional</span>
+<span class="sd">    :param eps_split: Percent of epsilon used for the classifier.</span>
+<span class="sd">        1 - eps_split is used for the Synthesizer., defaults to 0.9</span>
+<span class="sd">    :type eps_split: float, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">epsilon</span><span class="p">,</span>
@@ -219,15 +256,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pd_cols</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pd_index</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@wraps</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="o">.</span><span class="n">fit</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">,</span>
         <span class="n">categorical_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span>
         <span class="n">ordinal_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span>
         <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">continuous_columns_lower_upper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">continuous_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Takes a dataset and fits the synthesizer/learning model to it, using the epsilon split</span>
@@ -289,7 +327,9 @@
             <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span>
             <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span>
             <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span>
-            <span class="n">continuous_columns_lower_upper</span><span class="o">=</span><span class="n">continuous_columns_lower_upper</span><span class="p">,</span>
+            <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span>
+            <span class="n">preprocessor_eps</span><span class="o">=</span><span class="n">preprocessor_eps</span><span class="p">,</span>
+            <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="p">,</span> <span class="s2">&quot;coef_&quot;</span><span class="p">):</span>
@@ -301,7 +341,6 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="p">,</span> <span class="s2">&quot;classes_&quot;</span><span class="p">):</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_model</span><span class="o">.</span><span class="n">classes_</span><span class="p">)</span>
 
-    <span class="nd">@wraps</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sample from the synthesizer model.</span>

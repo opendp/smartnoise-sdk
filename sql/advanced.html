@@ -157,6 +157,11 @@
 <nav id="bd-toc-nav">
     <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#managing-privacy-budget">
+   Managing Privacy Budget
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#overriding-mechanisms">
    Overriding Mechanisms
   </a>
@@ -195,6 +200,90 @@
   <section id="advanced-usage">
 <h1>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h1>
 <p>This section covers some advanced usage scenarios.</p>
+<section id="managing-privacy-budget">
+<h2>Managing Privacy Budget<a class="headerlink" href="#managing-privacy-budget" title="Permalink to this headline">¶</a></h2>
+<p>The privacy parameters epsilon and delta are passed in to the private connection at instantiation time, and apply to each computed column during the life of the session.  Privacy cost accrues indefinitely as new queries are executed, with the total accumulated privacy cost being available via the <code class="docutils literal notranslate"><span class="pre">spent</span></code> property of the connection’s <code class="docutils literal notranslate"><span class="pre">odometer</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">privacy</span> <span class="o">=</span> <span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">10e-7</span><span class="p">)</span>
+
+<span class="n">reader</span> <span class="o">=</span> <span class="n">from_connection</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">privacy</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>  <span class="c1"># (0.0, 0.0)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT COUNT(*) FROM PUMS.PUMS&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>  <span class="c1"># approximately (0.1, 10e-7)</span>
+</pre></div>
+</div>
+<p>The privacy cost increases with the number of columns:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">from_connection</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">privacy</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>  <span class="c1"># (0.0, 0.0)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT AVG(age), AVG(income) FROM PUMS.PUMS&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>  <span class="c1"># approximately (0.4, 10e-6)</span>
+</pre></div>
+</div>
+<p>The odometer is advanced immediately before the differentially private query result is returned to the caller.  If the caller wishes to estimate the privacy cost of a query without running it, <code class="docutils literal notranslate"><span class="pre">get_privacy_cost</span></code> can be used:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">from_connection</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">privacy</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>  <span class="c1"># (0.0, 0.0)</span>
+
+<span class="n">cost</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">get_privacy_cost</span><span class="p">(</span><span class="s1">&#39;SELECT AVG(age), AVG(income) FROM PUMS.PUMS&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">cost</span><span class="p">)</span>  <span class="c1"># approximately (0.4, 10e-6)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>  <span class="c1"># (0.0, 0.0)</span>
+</pre></div>
+</div>
+<p>Note that the total privacy cost of a session accrues at a slower rate than the sum of the individual query costs obtained by <code class="docutils literal notranslate"><span class="pre">get_privacy_cost</span></code>.  The odometer accrues all invocations of mechanisms for the life of a session, and uses them to compute total spend.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">from_connection</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">privacy</span><span class="p">)</span>
+<span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;SELECT COUNT(*) FROM PUMS.PUMS&#39;</span>
+<span class="n">epsilon_single</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">get_privacy_cost</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">epsilon_single</span><span class="p">)</span>  <span class="c1"># 0.1</span>
+
+<span class="c1"># no queries executed yet</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>  <span class="c1"># (0.0, 0.0)</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">reader</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+<span class="n">epsilon_many</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">epsilon_many</span><span class="si">}</span><span class="s1"> &lt; </span><span class="si">{</span><span class="n">epsilon_single</span> <span class="o">*</span> <span class="mi">100</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Odometers can be shared across multiple readers, allowing the analyst to track privacy budget across query workloads with mixed accuracy requirements.  Additionally, the analyst can pass in batches of queries to <code class="docutils literal notranslate"><span class="pre">get_privacy_cost</span></code> to estimate the total privacy cost of a set of queries, without actually spending the budget.  This can be useful for determining the best per-column epsilon to use when setting up a private reader:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">low_eps_queries</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SELECT sex, COUNT(*) AS n FROM PUMS.PUMS GROUP BY sex&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SELECT COUNT(*) AS n FROM PUMS.PUMS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SELECT AVG(age) AS age FROM PUMS.PUMS&#39;</span>
+<span class="p">]</span>
+
+<span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SELECT age, COUNT(*) AS n FROM PUMS.PUMS GROUP BY age&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SELECT educ, COUNT(*) AS n FROM PUMS.PUMS GROUP BY educ&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SELECT educ, AVG(age) AS age FROM PUMS.PUMS GROUP BY educ&#39;</span>
+<span class="p">]</span>
+
+<span class="n">low_eps_privacy</span> <span class="o">=</span> <span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+<span class="n">low_eps_reader</span> <span class="o">=</span> <span class="n">snsql</span><span class="o">.</span><span class="n">from_df</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">low_eps_privacy</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta_path</span><span class="p">)</span>
+<span class="n">eps</span><span class="p">,</span> <span class="n">delt</span> <span class="o">=</span> <span class="n">low_eps_reader</span><span class="o">.</span><span class="n">get_privacy_cost</span><span class="p">(</span><span class="n">low_eps_queries</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cost for low epsilon workload is </span><span class="si">{</span><span class="n">eps</span><span class="si">}</span><span class="s2"> epsilon and </span><span class="si">{</span><span class="n">delt</span><span class="si">}</span><span class="s2"> delta&quot;</span><span class="p">)</span>
+
+<span class="n">privacy</span> <span class="o">=</span> <span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+<span class="n">reader</span> <span class="o">=</span> <span class="n">snsql</span><span class="o">.</span><span class="n">from_df</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">privacy</span><span class="o">=</span><span class="n">privacy</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta_path</span><span class="p">)</span>
+<span class="n">eps</span><span class="p">,</span> <span class="n">delt</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">get_privacy_cost</span><span class="p">(</span><span class="n">queries</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cost for regular workload is </span><span class="si">{</span><span class="n">eps</span><span class="si">}</span><span class="s2"> epsilon and </span><span class="si">{</span><span class="n">delt</span><span class="si">}</span><span class="s2"> delta&quot;</span><span class="p">)</span>
+
+<span class="c1"># use same odometer for both readers</span>
+<span class="n">reader</span><span class="o">.</span><span class="n">odometer</span> <span class="o">=</span> <span class="n">low_eps_reader</span><span class="o">.</span><span class="n">odometer</span>
+
+<span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">low_eps_queries</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">low_eps_reader</span><span class="o">.</span><span class="n">execute_df</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">low_eps_reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">execute_df</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the example above, the low-epsilon queries aggregate the entire dataset, so accuracy will be good without spending much budget.  The other queries in the workload aggregate down to a finer grain, so require more budget to achieve acceptable accuracy.  The code above shows how to measure the cost of the mixed workload.</p>
+</section>
 <section id="overriding-mechanisms">
 <h2>Overriding Mechanisms<a class="headerlink" href="#overriding-mechanisms" title="Permalink to this headline">¶</a></h2>
 <p>You can override the default mechanisms used for differentially private summary statistics.  The mechanisms are specified in the <code class="docutils literal notranslate"><span class="pre">mechanisms.map</span></code> dictionary on the <code class="docutils literal notranslate"><span class="pre">Privacy</span></code> object.</p>
@@ -203,11 +292,10 @@
 <span class="n">privacy</span> <span class="o">=</span> <span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;We default to using </span><span class="si">{</span><span class="n">privacy</span><span class="o">.</span><span class="n">mechanisms</span><span class="o">.</span><span class="n">map</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">count</span><span class="p">]</span><span class="si">}</span><span class="s2"> for counts.&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Switching to use gaussian&quot;</span><span class="p">)</span>
-<span class="n">privacy</span><span class="o">.</span><span class="n">mechanisms</span><span class="o">.</span><span class="n">map</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">count</span><span class="p">]</span> <span class="o">=</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">gaussian</span>
+<span class="n">privacy</span><span class="o">.</span><span class="n">mechanisms</span><span class="o">.</span><span class="n">map</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">count</span><span class="p">]</span> <span class="o">=</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">discrete_gaussian</span>
 </pre></div>
 </div>
 <p>The list of statistics that can be mapped is in the <code class="docutils literal notranslate"><span class="pre">Stat</span></code> enumeration, and the mechanisms available are listed in the <code class="docutils literal notranslate"><span class="pre">Mechanism</span></code> enumeration.  The <code class="docutils literal notranslate"><span class="pre">AVG</span></code> sumamry statistic is computed from a sum and a count, each of which can be overriden.</p>
-<p>For integer sums, you can specify <code class="docutils literal notranslate"><span class="pre">Stat.sum_int</span></code>, and specify <code class="docutils literal notranslate"><span class="pre">Stat.sum_large_int</span></code> separately for large integer sums.  A “large” integer sum is any sum that is greater than the value set in <code class="docutils literal notranslate"><span class="pre">mechanisms.large</span></code>, which defaults to 1000.  This is primarily useful when using geometric mechanism for integer sums, since the geometric mechanism slows down for large integer sums.</p>
 </section>
 <section id="pre-aggregated">
 <h2>pre_aggregated<a class="headerlink" href="#pre-aggregated" title="Permalink to this headline">¶</a></h2>

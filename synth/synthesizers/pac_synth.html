@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Aggregate Seeded &#8212; OpenDP SmartNoise Synthesizers</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet">
+  <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/blank.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Differentially Private Conditional Tabular GAN (DPCTGAN)" href="dpctgan.html" />
+    <link rel="prev" title="Maximum Spanning Tree (MST)" href="mst.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+
+<a class="navbar-brand" href="http://docs.smartnoise.org">
+  <img src="../_static/smartnoise-logo.svg" class="logo" alt="logo">
+</a>
+
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="index.html">
+  Synthesizers Index
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../transforms/index.html">
+  Data Transformers Index
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/smartnoise-sdk" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://twitter.com/opendp_org" rel="noopener" target="_blank" title="Twitter">
+            <span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/opendp/discussions" rel="noopener" target="_blank" title="GitHub Discussions">
+            <span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="mwem.html">
+   MWEM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="mst.html">
+   MST
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   PAC-Synth
+  </a>
+ </li>
+</ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="dpctgan.html">
+   DP-CTGAN
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="patectgan.html">
+   PATE-CTGAN
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="pategan.html">
+   PATE-GAN
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="dpgan.html">
+   DP-GAN
+  </a>
+ </li>
+</ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="quail.html">
+   QUAIL
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#parameters">
+   Parameters
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="aggregate-seeded">
+<h1>Aggregate Seeded<a class="headerlink" href="#aggregate-seeded" title="Permalink to this headline">¶</a></h1>
+<p>A differentially-private synthesizer that relies on DP Marginals to build synthetic data. It will compute DP Marginals (called aggregates) for your dataset up to and including a specified reporting length, and synthesize data based on the computed aggregated counts.</p>
+<p>Based on the <a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase">Synthetic Data Showcase project</a>. DP documentation available <a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp">here</a>.</p>
+<p>Call like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.aggregate_seeded</span> <span class="kn">import</span> <span class="n">AggregateSeededSynthesizer</span>
+
+<span class="c1"># this generates a random pandas data frame with 5000 records</span>
+<span class="c1"># replace this with your own data</span>
+<span class="n">sensitive_df</span> <span class="o">=</span> <span class="n">gen_data_frame</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+
+<span class="c1"># build synthesizer</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">AggregateSeededSynthesizer</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">sensitive_df</span><span class="p">)</span>
+
+<span class="c1"># sample 5000 records and build a data frame</span>
+<span class="n">synthetic_df</span> <span class="o">=</span> <span class="n">sensitive_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+
+<span class="c1"># show 10 example records</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">synthetic_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># this will output</span>
+<span class="c1">#      H1 H2  H3 H4 H5 H6 H7 H8 H9 H10</span>
+<span class="c1"># 2791  2         1  0  1  1  1  0   1</span>
+<span class="c1"># 2169  1  3   4  1  0  1  0  1  1   0</span>
+<span class="c1"># 4607     4   7  1  1  0  1  1  1   0</span>
+<span class="c1"># 4803  1      8  0  0  0  1  1  1   1</span>
+<span class="c1"># 2635         8  0  1  1  1  0  1   0</span>
+<span class="c1"># 537   1         1  1  1  1  1  0   0</span>
+<span class="c1"># 3495     6   7  0  0  1  0  0  1   0</span>
+<span class="c1"># 2009  1  3   3  0  0  1  0  1  1   0</span>
+<span class="c1"># 3214  1  5      1  1  1  1  1  0   1</span>
+<span class="c1"># 4879  2  5  10  0  1  1  1  1  1   1</span>
+</pre></div>
+</div>
+<p>For more, see the <a class="reference external" href="https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/aggregate_seeded_sample">samples notebook</a>.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.aggregate_seeded.AggregateSeededSynthesizer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.aggregate_seeded.</span></span><span class="sig-name descname"><span class="pre">AggregateSeededSynthesizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">reporting_length=3</span></em>, <em class="sig-param"><span class="pre">epsilon=4.0</span></em>, <em class="sig-param"><span class="pre">delta=None</span></em>, <em class="sig-param"><span class="pre">percentile_percentage=99</span></em>, <em class="sig-param"><span class="pre">percentile_epsilon_proportion=0.01</span></em>, <em class="sig-param"><span class="pre">accuracy_mode=&lt;builtins.AccuracyMode</span> <span class="pre">object&gt;</span></em>, <em class="sig-param"><span class="pre">number_of_records_epsilon_proportion=0.005</span></em>, <em class="sig-param"><span class="pre">fabrication_mode=&lt;builtins.FabricationMode</span> <span class="pre">object&gt;</span></em>, <em class="sig-param"><span class="pre">empty_value=''</span></em>, <em class="sig-param"><span class="pre">use_synthetic_counts=False</span></em>, <em class="sig-param"><span class="pre">weight_selection_percentile=95</span></em>, <em class="sig-param"><span class="pre">aggregate_counts_scale_factor=None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/aggregate_seeded/aggregate_seeded.html#AggregateSeededSynthesizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.aggregate_seeded.AggregateSeededSynthesizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>SmartNoise class wrapper for Aggregate Seeded Synthesizer from pac-synth.
+Works with Pandas data frames, raw data and follows norms set by other SmartNoise synthesizers.</p>
+<p>Reuses code and modifies it lightly from
+<a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth">https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth</a>
+to achieve this.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="mst.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Maximum Spanning Tree (MST)</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="dpctgan.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Differentially Private Conditional Tabular GAN (DPCTGAN)</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2022.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.1.2.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>

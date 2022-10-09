@@ -409,16 +409,19 @@ passed in, the engine will be automatically detected.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="snsql.sql.private_reader.PrivateReader.get_privacy_cost">
-<span class="sig-name descname"><span class="pre">get_privacy_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query_string</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsql/sql/private_reader.html#PrivateReader.get_privacy_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsql.sql.private_reader.PrivateReader.get_privacy_cost" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_privacy_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query_strings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsql/sql/private_reader.html#PrivateReader.get_privacy_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsql.sql.private_reader.PrivateReader.get_privacy_cost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimates the epsilon and delta cost for running the given query.
 Privacy cost is returned without running the query or incrementing the odometer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_string</strong> – The query string to analyze</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query_string</strong> – The query string or strings to analyze</p></li>
+<li><p><strong>query_strings</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – </p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A tuple of (epsilon, delta) estimating total privacy cost for
-running this query.</p>
+running this query or queries.</p>
 </dd>
 </dl>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># metadata specifies censor_dims: False</span>

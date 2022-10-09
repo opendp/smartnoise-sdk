@@ -174,17 +174,17 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">classes</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">Mechanism</span><span class="o">.</span><span class="n">laplace</span><span class="p">:</span> <span class="n">Laplace</span><span class="p">,</span>
-            <span class="n">Mechanism</span><span class="o">.</span><span class="n">geometric</span><span class="p">:</span> <span class="n">Geometric</span><span class="p">,</span>
-            <span class="n">Mechanism</span><span class="o">.</span><span class="n">gaussian</span><span class="p">:</span> <span class="n">Gaussian</span><span class="p">,</span>
-            <span class="n">Mechanism</span><span class="o">.</span><span class="n">analytic_gaussian</span><span class="p">:</span> <span class="n">AnalyticGaussian</span>
+            <span class="n">Mechanism</span><span class="o">.</span><span class="n">geometric</span><span class="p">:</span> <span class="n">DiscreteLaplace</span><span class="p">,</span>
+            <span class="n">Mechanism</span><span class="o">.</span><span class="n">discrete_laplace</span><span class="p">:</span> <span class="n">DiscreteLaplace</span><span class="p">,</span>
+            <span class="n">Mechanism</span><span class="o">.</span><span class="n">discrete_gaussian</span><span class="p">:</span> <span class="n">DiscreteGaussian</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">large</span> <span class="o">=</span> <span class="mi">1000</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">Stat</span><span class="o">.</span><span class="n">count</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">geometric</span><span class="p">,</span>
-            <span class="n">Stat</span><span class="o">.</span><span class="n">sum_int</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">geometric</span><span class="p">,</span>
-            <span class="n">Stat</span><span class="o">.</span><span class="n">sum_large_int</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">laplace</span><span class="p">,</span>
+            <span class="n">Stat</span><span class="o">.</span><span class="n">count</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">discrete_laplace</span><span class="p">,</span>
+            <span class="n">Stat</span><span class="o">.</span><span class="n">sum_int</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">discrete_laplace</span><span class="p">,</span>
+            <span class="n">Stat</span><span class="o">.</span><span class="n">sum_large_int</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">discrete_laplace</span><span class="p">,</span>
             <span class="n">Stat</span><span class="o">.</span><span class="n">sum_float</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">laplace</span><span class="p">,</span>
-            <span class="n">Stat</span><span class="o">.</span><span class="n">threshold</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">laplace</span>
+            <span class="n">Stat</span><span class="o">.</span><span class="n">threshold</span><span class="p">:</span> <span class="n">Mechanism</span><span class="o">.</span><span class="n">discrete_laplace</span>
         <span class="p">}</span>
     <span class="k">def</span> <span class="nf">_get_stat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stat</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">stat</span> <span class="o">==</span> <span class="s1">&#39;threshold&#39;</span><span class="p">:</span>

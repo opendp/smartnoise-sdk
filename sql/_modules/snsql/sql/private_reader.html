@@ -157,10 +157,10 @@
               <div>
                 
   <h1>Source code for snsql.sql.private_reader</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">snsql.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
-<span class="kn">from</span> <span class="nn">snsql.sql._mechanisms.accuracy</span> <span class="kn">import</span> <span class="n">Accuracy</span>
 <span class="kn">from</span> <span class="nn">snsql.sql.odometer</span> <span class="kn">import</span> <span class="n">OdometerHeterogeneous</span>
 <span class="kn">from</span> <span class="nn">snsql.sql.privacy</span> <span class="kn">import</span> <span class="n">Privacy</span><span class="p">,</span> <span class="n">Stat</span>
 
@@ -278,7 +278,7 @@
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
 <span class="sa">f</span><span class="s2">&quot;&quot;&quot;Dimension censoring is enabled, with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy</span><span class="o">.</span><span class="n">mechanisms</span><span class="o">.</span><span class="n">map</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">threshold</span><span class="p">]</span><span class="si">}</span><span class="s2"> as the thresholding mechanism. </span>
 <span class="s2">This is an unsafe floating point mechanism.  Counts used for censoring will be revealed in any queries that request COUNT DISTINCT(person), </span>
-<span class="s2">leading to potential privacy leaks. If your query workload needs to reveal distinct counts of individuals, consider doing the dimesion</span>
+<span class="s2">leading to potential privacy leaks. If your query workload needs to reveal distinct counts of individuals, consider doing the dimension</span>
 <span class="s2">censoring as a preprocessing step.  See the documentation for more information.&quot;&quot;&quot;</span>
             <span class="p">)</span>
 
@@ -302,13 +302,6 @@
 <span class="s2">summary statistics over floats will use </span><span class="si">{</span><span class="n">mechs</span><span class="o">.</span><span class="n">map</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">sum_float</span><span class="p">]</span><span class="si">}</span><span class="s2">, which is not floating-point safe, </span>
 <span class="s2">This could lead to privacy leaks.&quot;&quot;&quot;</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">large_ints</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mechs</span><span class="o">.</span><span class="n">map</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">sum_large_int</span><span class="p">]</span> <span class="ow">in</span> <span class="n">mechs</span><span class="o">.</span><span class="n">safe</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-<span class="sa">f</span><span class="s2">&quot;&quot;&quot;The following integer columns have large sensitivity: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">large_ints</span><span class="p">)</span><span class="si">}</span><span class="s2">. </span>
-<span class="s2">Summary statistics over large integers will use </span><span class="si">{</span><span class="n">mechs</span><span class="o">.</span><span class="n">map</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">sum_large_int</span><span class="p">]</span><span class="si">}</span><span class="s2">, which is not floating-point safe,</span>
-<span class="s2">This could lead to privacy leaks.&quot;&quot;&quot;</span>
-            <span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">_grouping_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">Query</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a vector of boolean corresponding to the columns of the</span>
@@ -379,13 +372,13 @@
         <span class="n">mechs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mechanisms</span><span class="p">(</span><span class="n">subquery</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[(</span><span class="n">mech</span><span class="o">.</span><span class="n">epsilon</span><span class="p">,</span> <span class="n">mech</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span> <span class="k">if</span> <span class="n">mech</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">mech</span> <span class="ow">in</span> <span class="n">mechs</span><span class="p">]</span>
     
-<div class="viewcode-block" id="PrivateReader.get_privacy_cost"><a class="viewcode-back" href="../../../api/index.html#snsql.sql.private_reader.PrivateReader.get_privacy_cost">[docs]</a>    <span class="k">def</span> <span class="nf">get_privacy_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_string</span><span class="p">):</span>
+<div class="viewcode-block" id="PrivateReader.get_privacy_cost"><a class="viewcode-back" href="../../../api/index.html#snsql.sql.private_reader.PrivateReader.get_privacy_cost">[docs]</a>    <span class="k">def</span> <span class="nf">get_privacy_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_strings</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
         <span class="sd">&quot;&quot;&quot;Estimates the epsilon and delta cost for running the given query.</span>
 <span class="sd">        Privacy cost is returned without running the query or incrementing the odometer.</span>
 
-<span class="sd">        :param query_string: The query string to analyze</span>
+<span class="sd">        :param query_string: The query string or strings to analyze</span>
 <span class="sd">        :returns: A tuple of (epsilon, delta) estimating total privacy cost for</span>
-<span class="sd">            running this query.</span>
+<span class="sd">            running this query or queries.</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -413,10 +406,13 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">odo</span> <span class="o">=</span> <span class="n">OdometerHeterogeneous</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy</span><span class="p">)</span>
-        <span class="n">costs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mechanism_costs</span><span class="p">(</span><span class="n">query_string</span><span class="p">)</span>
-        <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="n">cost</span> <span class="k">for</span> <span class="n">cost</span> <span class="ow">in</span> <span class="n">costs</span> <span class="k">if</span> <span class="n">cost</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">delta</span> <span class="ow">in</span> <span class="n">costs</span><span class="p">:</span>
-            <span class="n">odo</span><span class="o">.</span><span class="n">spend</span><span class="p">(</span><span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query_strings</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">query_strings</span> <span class="o">=</span> <span class="p">[</span><span class="n">query_strings</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">query_string</span> <span class="ow">in</span> <span class="n">query_strings</span><span class="p">:</span>
+            <span class="n">costs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mechanism_costs</span><span class="p">(</span><span class="n">query_string</span><span class="p">)</span>
+            <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="n">cost</span> <span class="k">for</span> <span class="n">cost</span> <span class="ow">in</span> <span class="n">costs</span> <span class="k">if</span> <span class="n">cost</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">delta</span> <span class="ow">in</span> <span class="n">costs</span><span class="p">:</span>
+                <span class="n">odo</span><span class="o">.</span><span class="n">spend</span><span class="p">(</span><span class="n">Privacy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">odo</span><span class="o">.</span><span class="n">spent</span></div>
 
 <div class="viewcode-block" id="PrivateReader.parse_query_string"><a class="viewcode-back" href="../../../api/index.html#snsql.sql.private_reader.PrivateReader.parse_query_string">[docs]</a>    <span class="k">def</span> <span class="nf">parse_query_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_string</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
@@ -673,7 +669,7 @@
 
         <span class="n">_accuracy</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">accuracy</span><span class="p">:</span>
-            <span class="n">_accuracy</span> <span class="o">=</span> <span class="n">Accuracy</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">subquery</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">privacy</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Simple accuracy has been removed.  Please see documentation for information on estimating accuracy.&quot;</span><span class="p">)</span>
 
         <span class="n">syms</span> <span class="o">=</span> <span class="n">subquery</span><span class="o">.</span><span class="n">_select_symbols</span>
         <span class="n">source_col_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">syms</span><span class="p">]</span>

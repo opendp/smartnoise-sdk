@@ -71,8 +71,14 @@
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../../../../api/index.html">
-  API index
+ <a class="reference internal nav-link" href="../../../../synthesizers/index.html">
+  Synthesizers Index
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../../transforms/index.html">
+  Data Transformers Index
  </a>
 </li>
 
@@ -147,6 +153,7 @@
   <h1>Source code for snsynth.pytorch.nn.patectgan</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">optim</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
@@ -164,9 +171,11 @@
 <span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="kn">import</span> <span class="n">Variable</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">.data_sampler</span> <span class="kn">import</span> <span class="n">DataSampler</span>
-<span class="kn">from</span> <span class="nn">ctgan.synthesizers</span> <span class="kn">import</span> <span class="n">CTGANSynthesizer</span>
-<span class="kn">from</span> <span class="nn">snsynth.preprocessors.data_transformer</span> <span class="kn">import</span> <span class="n">BaseTransformer</span>
+<span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
+
+<span class="kn">from</span> <span class="nn">.ctgan.data_sampler</span> <span class="kn">import</span> <span class="n">DataSampler</span>
+<span class="kn">from</span> <span class="nn">.ctgan.ctgan</span> <span class="kn">import</span> <span class="n">CTGANSynthesizer</span>
+<span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
 
 <span class="kn">from</span> <span class="nn">.privacy_utils</span> <span class="kn">import</span> <span class="n">weights_init</span><span class="p">,</span> <span class="n">pate</span><span class="p">,</span> <span class="n">moments_acc</span>
 
@@ -256,8 +265,8 @@
         <span class="k">return</span> <span class="n">data</span>
 
 
-<div class="viewcode-block" id="PATECTGAN"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATECTGAN">[docs]</a><span class="k">class</span> <span class="nc">PATECTGAN</span><span class="p">(</span><span class="n">CTGANSynthesizer</span><span class="p">):</span>
-<div class="viewcode-block" id="PATECTGAN.__init__"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATECTGAN.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="PATECTGAN"><a class="viewcode-back" href="../../../../synthesizers/patectgan.html#snsynth.pytorch.nn.PATECTGAN">[docs]</a><span class="k">class</span> <span class="nc">PATECTGAN</span><span class="p">(</span><span class="n">CTGANSynthesizer</span><span class="p">,</span> <span class="n">Synthesizer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
         <span class="n">generator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
@@ -268,8 +277,7 @@
         <span class="n">discriminator_decay</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
         <span class="n">discriminator_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">log_frequency</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
         <span class="n">pac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -282,9 +290,7 @@
         <span class="n">sample_per_teacher</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
         <span class="n">delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">noise_multiplier</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
-        <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">moments_order</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">category_epsilon_pct</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
     <span class="p">):</span>
 
         <span class="k">assert</span> <span class="n">batch_size</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
@@ -300,15 +306,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_discriminator_steps</span> <span class="o">=</span> <span class="n">discriminator_steps</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span> <span class="o">=</span> <span class="n">log_frequency</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_epochs</span> <span class="o">=</span> <span class="n">epochs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pac</span> <span class="o">=</span> <span class="n">pac</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">preprocessor_eps</span> <span class="o">=</span> <span class="n">preprocessor_eps</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span> <span class="o">-</span> <span class="n">preprocessor_eps</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_category_epsilon_pct</span> <span class="o">=</span> <span class="n">category_epsilon_pct</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span>
 
@@ -333,85 +334,56 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s2">&quot;log_frequency is selected.  This may result in oversampling frequent &quot;</span>
-                <span class="s2">&quot;categories, which could cause privacy leaks.&quot;</span>
-            <span class="p">)</span></div>
-
-<div class="viewcode-block" id="PATECTGAN.train"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATECTGAN.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">,</span>
         <span class="n">categorical_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ordinal_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">update_epsilon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">transformer</span><span class="o">=</span><span class="n">BaseTransformer</span><span class="p">,</span>
-        <span class="n">continuous_columns_lower_upper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">continuous_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+        <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">update_epsilon</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">update_epsilon</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocessor_eps</span>
-
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">categorical_columns</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;It looks like you are passing in a vector of continuous values&quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;to a categorical column at [</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">].&quot;</span>
-                    <span class="s2">&quot;Please discretize and pass in categorical columns with&quot;</span>
-                    <span class="s2">&quot;unsigned integer or string category names.&quot;</span>
-                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">update_epsilon</span>
 
         <span class="n">sample_per_teacher</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sample_per_teacher</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_per_teacher</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1000</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_teachers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="n">sample_per_teacher</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span> <span class="o">=</span> <span class="n">transformer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocessor_eps</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_train_data</span><span class="p">(</span>
             <span class="n">data</span><span class="p">,</span>
-            <span class="n">discrete_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span>
-            <span class="n">continuous_columns_lower_upper</span><span class="o">=</span><span class="n">continuous_columns_lower_upper</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;gan&#39;</span><span class="p">,</span>
+            <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span>
+            <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span> 
+            <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span> 
+            <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span> 
+            <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">,</span>
+            <span class="n">preprocessor_eps</span><span class="o">=</span><span class="n">preprocessor_eps</span>
         <span class="p">)</span>
 
-        <span class="n">train_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">train_data</span>
+        <span class="p">])</span>
 
         <span class="n">data_partitions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_teachers</span><span class="p">)</span>
 
-        <span class="n">data_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_dimensions</span>
+        <span class="n">data_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span>
 
-        <span class="n">sampler_eps</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">if</span> <span class="n">categorical_columns</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_epsilon_pct</span><span class="p">:</span>
-            <span class="n">sampler_eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_category_epsilon_pct</span>
-            <span class="n">per_col_sampler_eps</span> <span class="o">=</span> <span class="n">sampler_eps</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">categorical_columns</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">-</span> <span class="n">sampler_eps</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">per_col_sampler_eps</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">cond_generator</span> <span class="o">=</span> <span class="n">DataSampler</span><span class="p">(</span>
             <span class="n">train_data</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_info_list</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span><span class="p">,</span>
-            <span class="n">per_column_epsilon</span><span class="o">=</span><span class="n">per_col_sampler_eps</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">transformers</span>
         <span class="p">)</span>
 
-        <span class="n">spent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cond_generator</span><span class="o">.</span><span class="n">total_spent</span>
-        <span class="k">if</span> <span class="n">spent</span> <span class="o">&gt;</span> <span class="n">sampler_eps</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">spent</span><span class="p">,</span> <span class="n">sampler_eps</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;The data sampler used </span><span class="si">{</span><span class="n">spent</span><span class="si">}</span><span class="s2"> epsilon and was budgeted for </span><span class="si">{</span><span class="n">sampler_eps</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-        <span class="c1"># create conditional generator for each teacher model</span>
-
-        <span class="c1"># Note: Previously, there existed a ConditionalGenerator object in CTGAN</span>
-        <span class="c1"># - that functionality has been subsumed by DataSampler, but switch is</span>
-        <span class="c1"># essentially 1 for 1</span>
-        <span class="c1"># don&#39;t need to count eps for each teacher, because these are disjoint partitions</span>
         <span class="n">cached_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cond_generator</span><span class="o">.</span><span class="n">discrete_column_category_prob</span>
 
         <span class="n">cond_generator</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">DataSampler</span><span class="p">(</span>
                 <span class="n">d</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_info_list</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span><span class="p">,</span>
-                <span class="n">per_column_epsilon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">transformers</span><span class="p">,</span>
                 <span class="n">discrete_column_category_prob</span><span class="o">=</span><span class="n">cached_probs</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data_partitions</span>
@@ -501,9 +473,7 @@
                     <span class="n">partition_data</span> <span class="o">=</span> <span class="n">data_partitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                     <span class="n">data_sampler</span> <span class="o">=</span> <span class="n">DataSampler</span><span class="p">(</span>
                         <span class="n">partition_data</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_info_list</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span><span class="p">,</span>
-                        <span class="n">per_column_epsilon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">transformers</span><span class="p">,</span>
                         <span class="n">discrete_column_category_prob</span><span class="o">=</span><span class="n">cached_probs</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">fakez</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="p">)</span>
@@ -571,9 +541,7 @@
             <span class="k">for</span> <span class="n">t_3</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">student_iters</span><span class="p">):</span>
                 <span class="n">data_sampler</span> <span class="o">=</span> <span class="n">DataSampler</span><span class="p">(</span>
                     <span class="n">train_data</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_info_list</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span><span class="p">,</span>
-                    <span class="n">per_column_epsilon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">transformers</span><span class="p">,</span>
                     <span class="n">discrete_column_category_prob</span><span class="o">=</span><span class="n">cached_probs</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">fakez</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">)</span>
@@ -689,20 +657,20 @@
                     <span class="s2">&quot;eps: </span><span class="si">{:f}</span><span class="s2"> </span><span class="se">\t</span><span class="s2"> G: </span><span class="si">{:f}</span><span class="s2"> </span><span class="se">\t</span><span class="s2"> D: </span><span class="si">{:f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">eps</span><span class="p">,</span> <span class="n">loss_g</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">loss_s</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                     <span class="p">)</span>
-                <span class="p">)</span></div>
+                <span class="p">)</span>
 
-<div class="viewcode-block" id="PATECTGAN.w_loss"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATECTGAN.w_loss">[docs]</a>    <span class="k">def</span> <span class="nf">w_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">w_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
         <span class="n">vals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">labels</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">output</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">ordered</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">vals</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sort</span><span class="p">()[</span><span class="mi">1</span><span class="p">]]</span>
-        <span class="n">data_list</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ordered</span><span class="p">,</span> <span class="n">labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()))</span>
+        <span class="n">data_list</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ordered</span><span class="p">,</span> <span class="n">labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">fake_score</span> <span class="o">=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">true_score</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">data_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">w_loss</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">true_score</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fake_score</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">w_loss</span></div>
+        <span class="k">return</span> <span class="n">w_loss</span>
 
-<div class="viewcode-block" id="PATECTGAN.generate"><a class="viewcode-back" href="../../../../api/index.html#snsynth.pytorch.nn.PATECTGAN.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">condition_column</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">condition_value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">condition_column</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">condition_value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        TODO: Add condition_column support from CTGAN</span>
+<span class="sd">        TODO: Add condition_column support </span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_generator</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
@@ -730,7 +698,13 @@
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">ignore</span><span class="p">,</span> <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="p">[],</span> <span class="n">ordinal_columns</span><span class="o">=</span><span class="p">[],</span> <span class="n">continuous_columns</span><span class="o">=</span><span class="p">[],</span> <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span> <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span> <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span> <span class="n">preprocessor_eps</span><span class="o">=</span><span class="n">preprocessor_eps</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)</span></div>
 </pre></div>
 
               </div>

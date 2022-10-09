@@ -1,0 +1,452 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snsynth.aggregate_seeded.aggregate_seeded &#8212; OpenDP SmartNoise Synthesizers</title>
+    
+  <link href="../../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/blank.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+
+<a class="navbar-brand" href="http://docs.smartnoise.org">
+  <img src="../../../_static/smartnoise-logo.svg" class="logo" alt="logo">
+</a>
+
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../synthesizers/index.html">
+  Synthesizers Index
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../transforms/index.html">
+  Data Transformers Index
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/smartnoise-sdk" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://twitter.com/opendp_org" rel="noopener" target="_blank" title="Twitter">
+            <span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/opendp/opendp/discussions" rel="noopener" target="_blank" title="GitHub Discussions">
+            <span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for snsynth.aggregate_seeded.aggregate_seeded</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">pacsynth</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DpAggregateSeededSynthesizer</span><span class="p">,</span>
+    <span class="n">DpAggregateSeededParametersBuilder</span><span class="p">,</span>
+    <span class="n">AccuracyMode</span><span class="p">,</span>
+    <span class="n">FabricationMode</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pacsynth</span> <span class="kn">import</span> <span class="n">Dataset</span> <span class="k">as</span> <span class="n">AggregateSeededDataset</span>
+<span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">SDGYMBaseSynthesizer</span><span class="p">,</span> <span class="n">Synthesizer</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Wrapper for Aggregate Seeded Synthesizer from pac-synth:</span>
+<span class="sd">https://pypi.org/project/pac-synth/.</span>
+
+<span class="sd">A differentially-private synthesizer that relies on DP Marginals to</span>
+<span class="sd">build synthetic data. It will compute DP Marginals (called aggregates)</span>
+<span class="sd">for your dataset up to and including a specified reporting length, and</span>
+<span class="sd">synthesize data based on the computed aggregated counts.</span>
+
+<span class="sd">For documentation please refer to:</span>
+<span class="sd">    - https://github.com/microsoft/synthetic-data-showcase</span>
+<span class="sd">    - https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="AggregateSeededSynthesizer"><a class="viewcode-back" href="../../../synthesizers/pac_synth.html#snsynth.aggregate_seeded.AggregateSeededSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">AggregateSeededSynthesizer</span><span class="p">(</span><span class="n">Synthesizer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    SmartNoise class wrapper for Aggregate Seeded Synthesizer from pac-synth.</span>
+<span class="sd">    Works with Pandas data frames, raw data and follows norms set by other SmartNoise synthesizers.</span>
+
+<span class="sd">    Reuses code and modifies it lightly from</span>
+<span class="sd">    https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth</span>
+<span class="sd">    to achieve this.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">reporting_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">epsilon</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
+        <span class="n">delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">percentile_percentage</span><span class="o">=</span><span class="mi">99</span><span class="p">,</span>
+        <span class="n">percentile_epsilon_proportion</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">accuracy_mode</span><span class="o">=</span><span class="n">AccuracyMode</span><span class="o">.</span><span class="n">prioritize_long_combinations</span><span class="p">(),</span>
+        <span class="n">number_of_records_epsilon_proportion</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>
+        <span class="n">fabrication_mode</span><span class="o">=</span><span class="n">FabricationMode</span><span class="o">.</span><span class="n">uncontrolled</span><span class="p">(),</span>
+        <span class="n">empty_value</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">use_synthetic_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">weight_selection_percentile</span><span class="o">=</span><span class="mi">95</span><span class="p">,</span>
+        <span class="n">aggregate_counts_scale_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Wrapper for Aggregate Seeded Synthesizer from pac-synth.</span>
+
+<span class="sd">        For more information about the parameters run `help(&#39;pacsynth.DpAggregateSeededParametersBuilder&#39;)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reporting_length</span> <span class="o">=</span> <span class="n">reporting_length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">percentile_percentage</span> <span class="o">=</span> <span class="n">percentile_percentage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">percentile_epsilon_proportion</span> <span class="o">=</span> <span class="n">percentile_epsilon_proportion</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_mode</span> <span class="o">=</span> <span class="n">accuracy_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_records_epsilon_proportion</span> <span class="o">=</span> <span class="n">number_of_records_epsilon_proportion</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fabrication_mode</span> <span class="o">=</span> <span class="n">fabrication_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">empty_value</span> <span class="o">=</span> <span class="n">empty_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_synthetic_counts</span> <span class="o">=</span> <span class="n">use_synthetic_counts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_selection_percentile</span> <span class="o">=</span> <span class="n">weight_selection_percentile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_counts_scale_factor</span> <span class="o">=</span> <span class="n">aggregate_counts_scale_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preprocessed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_synthesizer</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">build_synthesizer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">DpAggregateSeededParametersBuilder</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">reporting_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reporting_length</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">epsilon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">percentile_percentage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">percentile_percentage</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">percentile_epsilon_proportion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">percentile_epsilon_proportion</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">accuracy_mode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">accuracy_mode</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">number_of_records_epsilon_proportion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_records_epsilon_proportion</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">fabrication_mode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fabrication_mode</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">empty_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">empty_value</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">use_synthetic_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_synthetic_counts</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">weight_selection_percentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_selection_percentile</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_counts_scale_factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">aggregate_counts_scale_factor</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_counts_scale_factor</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">reporting_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reporting_length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">synth</span> <span class="o">=</span> <span class="n">DpAggregateSeededSynthesizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">data</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">ignore</span><span class="p">,</span>
+        <span class="n">use_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">sensitive_zeros</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">categorical_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">ordinal_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">continuous_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the synthesizer model on the data.</span>
+
+<span class="sd">        This will compute the differently private aggregates used to</span>
+<span class="sd">        synthesize data.</span>
+
+<span class="sd">        All the columns are supposed to be categorical, non-categorical columns</span>
+<span class="sd">        should be binned in advance.</span>
+
+<span class="sd">        For more information run `help(&#39;pacsynth.Dataset&#39;)` and</span>
+<span class="sd">        `help(&#39;pacsynth.DpAggregateSeededSynthesizer.fit&#39;)`.</span>
+
+<span class="sd">        :param data: The data for fitting the synthesizer model.</span>
+<span class="sd">        :type data: pd.DataFrame, list[list[str]], AggregateSeededDataset</span>
+<span class="sd">        :param use_columns: List of column names to be used, defaults to None, meaning use all columns</span>
+<span class="sd">        :type use_columns: list[str], optional</span>
+<span class="sd">        :param sensitive_zeros: List of column names containing &#39;0&#39; that should not be turned into empty strings.</span>
+<span class="sd">        :type sensitive_zeros: list[str], optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">before_eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span>
+
+        <span class="n">train_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_train_data</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;cube&#39;</span><span class="p">,</span>
+            <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span>
+            <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span> 
+            <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span> 
+            <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span> 
+            <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">preprocessor_eps</span><span class="o">=</span><span class="n">preprocessor_eps</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">!=</span> <span class="n">before_eps</span><span class="p">:</span>
+            <span class="c1"># preprocessor changed epsilon, rebuild synthesizer</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_synthesizer</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;We weren&#39;t able to fit a transformer to the data. Please check your data and try again.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;column_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]))]</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">colnames</span><span class="p">]</span> <span class="o">+</span> <span class="p">[[</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">train_data</span><span class="p">]</span>
+            <span class="n">sensitive_zeros</span> <span class="o">=</span> <span class="n">colnames</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="n">data</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">AggregateSeededDataset</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">use_columns</span><span class="o">=</span><span class="n">use_columns</span><span class="p">,</span> <span class="n">sensitive_zeros</span><span class="o">=</span><span class="n">sensitive_zeros</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">AggregateSeededDataset</span><span class="o">.</span><span class="n">from_data_frame</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">use_columns</span><span class="o">=</span><span class="n">use_columns</span><span class="p">,</span> <span class="n">sensitive_zeros</span><span class="o">=</span><span class="n">sensitive_zeros</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">AggregateSeededDataset</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;data should be either in raw format (List[List[]]) or a be pandas data frame (pd.DataFrame)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">SDGYMBaseSynthesizer</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample from the synthesizer model.</span>
+
+<span class="sd">        This will sample records from the generated differentially private aggregates.</span>
+
+<span class="sd">        If `samples` is `None`, the synthesizer will use all the available differentially</span>
+<span class="sd">        private attributes counts to synthesize records</span>
+<span class="sd">        (which will produce a number close to original number of records).</span>
+
+<span class="sd">        For more information run `help(&#39;pacsynth.DpAggregateSeededSynthesizer.sample&#39;)`.</span>
+
+<span class="sd">        :param samples: The number of samples to create</span>
+<span class="sd">        :type samples: int, None</span>
+<span class="sd">        :return: Generated data samples, the output type adjusts accordingly to the input data.</span>
+<span class="sd">        :rtype: Dataframe, list[list[str]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pandas</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">AggregateSeededDataset</span><span class="o">.</span><span class="n">raw_data_to_data_frame</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+
+    <span class="k">def</span> <span class="nf">get_sensitive_aggregates</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">combination_delimiter</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="n">reporting_length</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the aggregates for the sensitive dataset. For more information run `help(&#39;pacsynth.Dataset.get_aggregates&#39;)`.</span>
+
+<span class="sd">        :param combination_delimiter: Combination delimiter to use, default to &#39;;&#39;</span>
+<span class="sd">        :type combination_delimiter: str, optional</span>
+<span class="sd">        :param reporting_length: Maximum length (inclusive) to compute attribute combinations for, defaults to the configured value in the synthesizer</span>
+<span class="sd">        :type reporting_length: int, optional</span>
+
+<span class="sd">        :return: A dictionary with the combination string representation as key and the combination count as value</span>
+<span class="sd">        :rtype: dict[str, int]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;make sure &#39;fit&#39; method has been successfully called first&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reporting_length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">reporting_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reporting_length</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">get_aggregates</span><span class="p">(</span><span class="n">reporting_length</span><span class="p">,</span> <span class="n">combination_delimiter</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_dp_aggregates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">combination_delimiter</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the aggregates for the sensitive dataset protected with differential privacy.</span>
+
+<span class="sd">        For more information run `help(&#39;pacsynth.DpAggregateSeededSynthesizer.get_dp_aggregates&#39;)`.</span>
+
+<span class="sd">        :param combination_delimiter: Combination delimiter to use, default to &#39;;&#39;</span>
+<span class="sd">        :type combination_delimiter: str, optional</span>
+<span class="sd">        :return: A dictionary with the combination string representation as key and the combination count as value</span>
+<span class="sd">        :rtype: dict[str, int]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">synth</span><span class="o">.</span><span class="n">get_dp_aggregates</span><span class="p">(</span><span class="n">combination_delimiter</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_dp_number_of_records</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the differentially private number of records computed with the `.fit` method.</span>
+
+<span class="sd">        This is different than the number of records specified in the sample method, synthesized</span>
+<span class="sd">        in the synthetic data. This refers to the differentially private protected number of records</span>
+<span class="sd">        in original sensitive dataset (Laplacian noise added).</span>
+
+<span class="sd">        For more information run `help(&#39;pacsynth.DpAggregateSeededSynthesizer.get_dp_number_of_records&#39;)`.</span>
+
+<span class="sd">        :return: Number of sensitive records protect with differential privacy</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">synth</span><span class="o">.</span><span class="n">get_dp_number_of_records</span><span class="p">()</span></div>
+</pre></div>
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2022.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.1.2.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>
