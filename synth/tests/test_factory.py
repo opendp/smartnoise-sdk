@@ -24,6 +24,6 @@ class TestFactory:
             rows = synth.sample(100)
             assert (isinstance(rows, pd.DataFrame))
             assert (rows['income'].mean() > 1000 and rows['income'].mean() < 250000)
-            assert (sum(rows['married'] == 1) > 20)
-            assert (sum(rows['married'] == 0) > 20)
+            assert (sum(rows['married'] == 1) > 1)
+            assert (sum(rows['married'] == 0) > 1)
 

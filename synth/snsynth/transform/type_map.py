@@ -20,8 +20,8 @@ _EXPECTED_COL_STYLES = {
 }
 
 class TypeMap:
-    @classmethod
-    
+    def __init__(self):
+        pass    
     @classmethod
     def get_transformers(cls, column_names, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[]):
         if ordinal_columns is None:
