@@ -1,9 +1,6 @@
 name: Lint Synthesizers
 
 on:
-  pull_request:
-    paths:
-      - 'synth/snsynth/**'
   workflow_dispatch:
 
 jobs:
