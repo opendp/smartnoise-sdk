@@ -1,13 +1,18 @@
 import numpy as np
-from mbi import FactoredInference, Dataset, Domain
+import pandas as pd
+
+try:
+    from mbi import FactoredInference, Dataset, Domain
+except ImportError:
+    print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git")
+
 from scipy import sparse
 from disjoint_set import DisjointSet
 import networkx as nx
 import itertools
 from scipy.special import logsumexp
-import json
 from snsynth.mst.cdp2adp import cdp_rho
-from snsynth.base import SDGYMBaseSynthesizer
+from snsynth.base import Synthesizer
 
 """
 Wrapper for MST synthesizer from Private PGM:
@@ -21,7 +26,7 @@ and does not rely on public provisional data for measurement selection.
 """
 
 
-class MSTSynthesizer(SDGYMBaseSynthesizer):
+class MSTSynthesizer(Synthesizer):
     """
     Smartnoise class wrapper for MST Synthesizer. Works with
     Pandas dataframes, follows norms set by other smartnoise synthesizers.
@@ -31,32 +36,12 @@ class MSTSynthesizer(SDGYMBaseSynthesizer):
     to achieve this. Awesome work McKenna et. al!
     """
 
-    Domains = {
-        "test": "test-domain.json"
-    }
-
     def __init__(self,
-                 domain="test",
                  epsilon=0.1,
                  delta=1e-9,
-                 num_marginals=None,
-                 domain_path=None,
-                 domains_dict=None):
+                 num_marginals=None
+                 ):
 
-        if domains_dict is not None:
-            self.Domains = domains_dict
-
-        if domain_path is None:
-            domain_name = self.Domains[domain]
-            with open(domain_name) as json_file:
-                dict_domain = json.load(json_file)
-        else:
-            with open(domain_path) as json_file:
-                dict_domain = json.load(json_file)
-
-        if dict_domain is None:
-            raise ValueError("Domain file not found for: " + domain + " and " + domain_name)
-        self.domain = Domain.fromdict(dict_domain)
         self.epsilon = epsilon
         self.delta = delta
         self.num_marginals = num_marginals
@@ -64,10 +49,44 @@ class MSTSynthesizer(SDGYMBaseSynthesizer):
         self.synthesizer = None
         self.num_rows = None
 
-    def fit(self, data, categorical_columns=tuple(), ordinal_columns=tuple(), prng=np.random):
+    def fit(
+        self, 
+        data, 
+        *ignore,
+        transformer=None,
+        categorical_columns=[], 
+        ordinal_columns=[],
+        continuous_columns=[],
+        preprocessor_eps=0.0,
+        nullable=False,
+        prng=np.random
+        ):
+
+        train_data = self._get_train_data(
+            data,
+            style='cube',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
+        )
+
+        if self._transformer is None:
+            raise ValueError("We weren't able to fit a transformer to the data. Please check your data and try again.")
+
+        colnames = ["col" + str(i) for i in range(self._transformer.output_width)]
+        cards = self._transformer.cardinality
+
+        if len(cards) != len(colnames):
+            raise ValueError("Cardinality and column names must be the same length.")
+
+        domain = Domain(colnames, cards)
         self.num_rows = len(data)
 
-        data = Dataset(df=data, domain=self.domain)
+        data = pd.DataFrame(train_data, columns=colnames)
+        data = Dataset(df=data, domain=domain)
 
         self.MST(data, self.epsilon, self.delta)
 
@@ -76,7 +95,8 @@ class MSTSynthesizer(SDGYMBaseSynthesizer):
             samples = self.num_rows
         data = self.synthesizer.synthetic_data(rows=samples)
         decompressed = self.undo_compress_fn(data)
-        return decompressed.df
+        data_iter = [tuple([c for c in t[1:]]) for t in decompressed.df.itertuples()]
+        return self._transformer.inverse_transform(data_iter)
 
     def MST(self, data, epsilon, delta):
         rho = cdp_rho(epsilon, delta)
@@ -94,6 +114,7 @@ class MSTSynthesizer(SDGYMBaseSynthesizer):
         est = engine.estimate(log1+log2)
 
         # Here's the synthesizer
+
         self.synthesizer = est
 
     def measure(self, data, cliques, sigma, weights=None):

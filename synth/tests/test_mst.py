@@ -16,12 +16,8 @@ df = df.sample(frac=1, random_state=42)
 
 class TestMST:
 
-    Domains = {
-        "test": "tests/test-domain.json"
-    }
-
     def setup(self):
-        self.mst = MSTSynthesizer(domains_dict=self.Domains)
+        self.mst = MSTSynthesizer()
 
     def test_fit(self):
         self.df_non_continuous = df[['sex','educ','race','married']]

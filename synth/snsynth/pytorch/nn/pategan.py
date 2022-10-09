@@ -7,13 +7,15 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
+from snsynth.base import Synthesizer
+
 from ._generator import Generator
 from ._discriminator import Discriminator
 
 from .privacy_utils import weights_init, pate, moments_acc
 
 
-class PATEGAN:
+class PATEGAN(Synthesizer):
     def __init__(
         self,
         epsilon,
@@ -44,10 +46,25 @@ class PATEGAN:
         ordinal_columns=None,
         update_epsilon=None,
         transformer=None,
-        continuous_columns_lower_upper=None,
+        continuous_columns=None,
+        preprocessor_eps=0.0,
+        nullable=False,
     ):
         if update_epsilon:
             self.epsilon = update_epsilon
+
+        train_data = self._get_train_data(
+            data,
+            style='gan',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
+        )
+
+        data = np.array(train_data)
 
         if isinstance(data, pd.DataFrame):
             for col in data.columns:
@@ -201,4 +218,10 @@ class PATEGAN:
         data = np.concatenate(data, axis=0)
         data = data[:n]
 
-        return data
+        return self._transformer.inverse_transform(data)
+
+    def fit(self, data, *ignore, transformer=None, categorical_columns=[], ordinal_columns=[], continuous_columns=[], preprocessor_eps=0.0, nullable=False):
+        self.train(data, transformer=transformer, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, preprocessor_eps=preprocessor_eps, nullable=nullable)
+
+    def sample(self, n_samples):
+        return self.generate(n_samples)

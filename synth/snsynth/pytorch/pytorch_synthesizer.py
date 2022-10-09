@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from snsynth.preprocessors.preprocessing import GeneralTransformer
 from snsynth.base import SDGYMBaseSynthesizer
 
 
@@ -41,7 +40,9 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
         categorical_columns=tuple(),
         ordinal_columns=tuple(),
         transformer=None,
-        continuous_columns_lower_upper=None,
+        continuous_columns=None,
+        preprocessor_eps=0.0,
+        nullable=False,
     ):
         def column_names(n_items, prefix="col"):
             names = []
@@ -76,7 +77,9 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
             ordinal_columns=ordinal_columns,
             update_epsilon=self.epsilon,
             transformer=transformer,
-            continuous_columns_lower_upper=continuous_columns_lower_upper,
+            continuous_columns=continuous_columns,
+            preprocessor_eps=preprocessor_eps,
+            nullable=nullable,
         )
 
     @wraps(SDGYMBaseSynthesizer.sample)
@@ -84,10 +87,7 @@ class PytorchDPSynthesizer(SDGYMBaseSynthesizer):
         synth_data = self.gan.generate(n)
 
         if self.preprocessor is not None:
-            if isinstance(self.preprocessor, GeneralTransformer):
-                synth_data = self.preprocessor.inverse_transform(synth_data, None)
-            else:
-                synth_data = self.preprocessor.inverse_transform(synth_data)
+            synth_data = self.preprocessor.inverse_transform(synth_data)
 
         if isinstance(synth_data, np.ndarray):
             synth_data = pd.DataFrame(synth_data, columns=self._data_columns)

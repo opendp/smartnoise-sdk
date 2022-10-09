@@ -1,3 +1,4 @@
+from collections import namedtuple
 import numpy as np
 import torch
 from torch import optim
@@ -16,10 +17,11 @@ from torch.nn import (
 import warnings
 
 import opacus
+from snsynth.base import Synthesizer
 
-from snsynth.preprocessors.data_transformer import BaseTransformer
-from .data_sampler import DataSampler
-from ctgan.synthesizers import CTGANSynthesizer
+from snsynth.transform.table import TableTransformer
+from .ctgan.data_sampler import DataSampler
+from .ctgan.ctgan import CTGANSynthesizer
 
 
 class Discriminator(Module):
@@ -121,7 +123,7 @@ def _custom_create_or_extend_grad_sample(
         param.grad_sample = grad_sample
 
 
-class DPCTGAN(CTGANSynthesizer):
+class DPCTGAN(CTGANSynthesizer, Synthesizer):
     def __init__(
         self,
         embedding_dim=128,
@@ -133,7 +135,6 @@ class DPCTGAN(CTGANSynthesizer):
         discriminator_decay=1e-6,
         batch_size=500,
         discriminator_steps=1,
-        log_frequency=False,
         verbose=True,
         epochs=300,
         pac=1,
@@ -143,9 +144,7 @@ class DPCTGAN(CTGANSynthesizer):
         sigma=5,
         max_per_sample_grad_norm=1.0,
         epsilon=1,
-        preprocessor_eps=0.5,
-        loss="cross_entropy",
-        category_epsilon_pct=0.1,
+        loss="cross_entropy"
     ):
 
         assert batch_size % 2 == 0
@@ -161,10 +160,8 @@ class DPCTGAN(CTGANSynthesizer):
 
         self._batch_size = batch_size
         self._discriminator_steps = discriminator_steps
-        self._log_frequency = log_frequency
         self._verbose = verbose
         self._epochs = epochs
-        self._category_epsilon_pct = category_epsilon_pct
         self.pac = pac
 
         # opacus parameters
@@ -172,15 +169,7 @@ class DPCTGAN(CTGANSynthesizer):
         self.disabled_dp = disabled_dp
         self.delta = delta
         self.max_per_sample_grad_norm = max_per_sample_grad_norm
-        if preprocessor_eps and preprocessor_eps > 0:
-            print(
-                f"Reserving epsilon {preprocessor_eps} for preprocessor, leaving {epsilon - preprocessor_eps} for training")
-            self.epsilon = epsilon - preprocessor_eps
-        else:
-            self.epsilon = epsilon
-        if self.epsilon < 10E-3:
-            raise ValueError("Epsilon needs to be larger than preprocessor_eps!")
-        self.preprocessor_eps = preprocessor_eps
+        self.epsilon = epsilon
         self.epsilon_list = []
         self.alpha_list = []
         self.loss_d_list = []
@@ -207,75 +196,41 @@ class DPCTGAN(CTGANSynthesizer):
                 _custom_create_or_extend_grad_sample
             )
 
-        if self._log_frequency:
-            warnings.warn(
-                "log_frequency is selected.  This may result in oversampling frequent "
-                "categories, which could cause privacy leaks."
-            )
-
     def train(
         self,
         data,
-        categorical_columns=None,
-        ordinal_columns=None,
-        update_epsilon=None,
-        transformer=BaseTransformer,
-        continuous_columns_lower_upper={},
+        transformer=None,
+        categorical_columns=[],
+        ordinal_columns=[],
+        continuous_columns=[],
+        update_epsilon=None, 
+        preprocessor_eps=0.0,
+        nullable=False,
     ):
         if update_epsilon:
-            self.epsilon = update_epsilon - self.preprocessor_eps
+            self.epsilon = update_epsilon
 
-        for col in categorical_columns:
-            if str(data[col].dtype).startswith("float"):
-                raise ValueError(
-                    "It looks like you are passing in a vector of continuous values"
-                    f"to a categorical column at [{col}]."
-                    "Please discretize and pass in categorical columns with"
-                    "unsigned integer or string category names."
-                )
-
-        self._transformer = transformer(self.preprocessor_eps)
-        if isinstance(self._transformer, BaseTransformer) and self.preprocessor_eps and self.preprocessor_eps > 0.0:
-            warnings.warn("The base transformer does not use any epsilon, so preprocessor_eps is wasted!")
-        self._transformer.fit(
+        train_data = self._get_train_data(
             data,
-            discrete_columns=categorical_columns,
-            continuous_columns_lower_upper=continuous_columns_lower_upper,
+            style='gan',
+            transformer=transformer,
+            categorical_columns=categorical_columns, 
+            ordinal_columns=ordinal_columns, 
+            continuous_columns=continuous_columns, 
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
         )
 
-        if self.verbose:
-            cat_eps = self.epsilon * self._category_epsilon_pct
-            per_cat_eps = cat_eps / len(categorical_columns)
-            print(f"The preprocessor consumes {self.preprocessor_eps:.3f} epsilon")
-            print(f"Privatizing the category frequencies consumes {cat_eps:.3f} epsilon,")
-            print(f"allowing {per_cat_eps:.3f} epsilon per category.")
-            print(f"We have {(self.epsilon - cat_eps):.3f} epsilon left over for training")
-
-        train_data = self._transformer.transform(data)
-
-        sampler_eps = 0.0
-
-        if categorical_columns and self._category_epsilon_pct:
-            sampler_eps = self.epsilon * self._category_epsilon_pct
-            per_col_sampler_eps = sampler_eps / len(categorical_columns)
-            self.epsilon = self.epsilon - sampler_eps
-        else:
-            per_col_sampler_eps = None
+        train_data = np.array([
+            [float(x) if x is not None else 0.0 for x in row] for row in train_data
+        ])
 
         self._data_sampler = DataSampler(
             train_data,
-            self._transformer.output_info_list,
-            self._log_frequency,
-            per_column_epsilon=per_col_sampler_eps,
+            self._transformer.transformers
         )
 
-        spent = self._data_sampler.total_spent
-        if spent > sampler_eps and not np.isclose(spent, sampler_eps):
-            raise AssertionError(
-                f"The data sampler used {spent} epsilon and was budgeted for {sampler_eps}"
-            )
-
-        data_dim = self._transformer.output_dimensions
+        data_dim = self._transformer.output_width
 
         self._generator = Generator(
             self._embedding_dim + self._data_sampler.dim_cond_vec(),
@@ -531,3 +486,9 @@ class DPCTGAN(CTGANSynthesizer):
         data = data[:n]
 
         return self._transformer.inverse_transform(data)
+
+    def fit(self, data, *ignore, transformer=None, categorical_columns=[], ordinal_columns=[], continuous_columns=[], preprocessor_eps=0.0, nullable=False):
+        self.train(data, transformer=transformer, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, preprocessor_eps=preprocessor_eps, nullable=nullable)
+
+    def sample(self, n_samples):
+        return self.generate(n_samples)

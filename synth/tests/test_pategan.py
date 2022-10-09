@@ -6,7 +6,6 @@ import string
 import pandas as pd
 
 # try:
-from snsynth.preprocessors import GeneralTransformer
 from snsynth.pytorch import PytorchDPSynthesizer
 from snsynth.pytorch.nn import PATEGAN
 # except:
@@ -24,7 +23,7 @@ df = pd.read_csv(csv_path)
 @pytest.mark.torch
 class TestDPGAN:
     def setup(self):
-        self.pategan = PytorchDPSynthesizer(1.0, PATEGAN(1.0), GeneralTransformer())
+        self.pategan = PytorchDPSynthesizer(1.0, PATEGAN(1.0), None)
 
     def test_fit(self):
         df_non_continuous = df[['sex','educ','race','married']]

@@ -1,5 +1,5 @@
-from .mwem import MWEMSynthesizer
-from .quail import QUAILSynthesizer
+from .base import Synthesizer
+from .transform.table import TableTransformer
 
 
-__all__ = ["MWEMSynthesizer", "QUAILSynthesizer"]
+__all__ = ["Synthesizer", "TableTransformer"]

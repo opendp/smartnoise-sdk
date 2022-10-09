@@ -4,13 +4,10 @@ from typing import List
 import warnings
 from itertools import combinations, product
 
-from functools import wraps
-
 import numpy as np
 import pandas as pd
 
-from snsynth.base import SDGYMBaseSynthesizer
-
+from snsynth.base import Synthesizer
 
 class Query:
     def __init__(self, query):
@@ -120,9 +117,9 @@ class Histogram:
         self.bins = bins
         self.split = split
         self.queries = []
-        assert(len(self.dimensions) == len(self.bins))
-        assert(len(self.dimensions) == len(self.split))
-        assert(all([a == b for a, b in zip(self.data.shape, self.dimensions)]))
+        assert (len(self.dimensions) == len(self.bins))
+        assert (len(self.dimensions) == len(self.split))
+        assert (all([a == b for a, b in zip(self.data.shape, self.dimensions)]))
 
     @property
     def dimensionality(self):
@@ -188,7 +185,68 @@ class Histogram:
         return hist.reshape(category_lengths)
 
 
-class MWEMSynthesizer(SDGYMBaseSynthesizer):
+class MWEMSynthesizer(Synthesizer):
+    """
+        N-Dimensional numpy implementation of MWEM.
+        (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
+
+    From the paper:
+    "[MWEM is] a broadly applicable, simple, and easy-to-implement
+    algorithm, capable of substantially improving the performance of
+    linear queries on many realistic datasets...
+    (circa 2012)...MWEM matches the best known and nearly
+    optimal theoretical accuracy guarantees for differentially private
+    data analysis with linear queries."
+
+    Linear queries used for sampling in this implementation are
+    random contiguous slices of the n-dimensional numpy array.
+
+    :param epsilon: Privacy budget.
+    :type epsilon: float, optional
+    :param q_count: Number of random queries in the pool to generate.
+        Must be more than # of iterations
+    :type q_count: int, optional
+    :param iterations: Number of iterations of MWEM to run.  MWEM will
+        guess a reasonable number of iterations if this is not specified.
+    :type iterations: int, optional
+    :param splits: Allows you to specify feature dependence when creating
+        internal histograms.
+        Columns that are known to be dependent can be kept together.
+        Example: splits=[[0,1],[2,3]] where
+        columns 0 and 1 are dependent, columns 2 and 3 are dependent,
+        and between groupings there is independence, defaults to []
+    :type splits: list, optional
+    :param split_factor: If splits not specified, can instead subdivide
+        pseudo-randomly. For example, split_factor=3
+        will make groupings of features of size 3 for the histograms.
+        Note: this will likely make synthetic data worse.
+        defaults to None
+    :type split_factor: int, optional
+    :param marginal_width: MWEM by default will create cuboids to measure
+        marginals, and will use a heuristic to determine the maximum width
+        of the marginals.  This parameter allows you to specify that MWEM
+        should always measure marginals up to width marginal_width.
+    :type marginal_width: int, optional
+    :param add_ranges: In addition to measuring cuboids, MWEM can measure
+        randomly generated range queries.  Range queries work well on columns
+        that are binned from continuous values.
+    :type add_range: bool, optional
+    :param measure_only: MWEM operates by spending some privacy budget to select
+        the best query.  This parameter allows you to specify that MWEM should
+        uniformly measure all queries, and not spend any privacy budget on the
+        query selection.  This is useful in limited cases.  Allowing MWEM to select
+        will usually work best.
+    :type measure_only: bool, optional
+    :param max_retries_exp_mechanism: In each iteration, MWEM tries to select
+        a poorly-peforming query that hasn't yet been measured.  If it fails,
+        it will select one of the remaining queries uniformly at random.
+    :type max_retries_exp_mechanism: int, optional
+    :param mult_weights_iterations: Number of iterations of multiplicative weights,
+        per iteration of MWEM, defaults to 20
+    :type mult_weights_iterations: int, optional
+    :param verbose: Set to True to print debug information.
+    :type verbose: bool, optional
+    """
     def __init__(
         self,
         epsilon=3.0,
@@ -202,69 +260,8 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         measure_only=False,
         max_retries_exp_mechanism=10,
         mult_weights_iterations=20,
-        debug=False
+        verbose=False
     ):
-        """
-         N-Dimensional numpy implementation of MWEM.
-        (http://users.cms.caltech.edu/~katrina/papers/mwem-nips.pdf)
-
-        From the paper:
-        "[MWEM is] a broadly applicable, simple, and easy-to-implement
-        algorithm, capable of substantially improving the performance of
-        linear queries on many realistic datasets...
-        (circa 2012)...MWEM matches the best known and nearly
-        optimal theoretical accuracy guarantees for differentially private
-        data analysis with linear queries."
-
-        Linear queries used for sampling in this implementation are
-        random contiguous slices of the n-dimensional numpy array.
-
-        :param epsilon: Privacy epsilon for DP, defaults to 3.0
-        :type epsilon: float, optional
-        :param q_count: Number of random queries in the pool to generate.
-            Must be more than # of iterations
-        :type q_count: int, optional
-        :param iterations: Number of iterations of MWEM to run.  MWEM will
-        guess a reasonable number of iterations if this is not specified.
-        :type iterations: int, optional
-        :param splits: Allows you to specify feature dependence when creating
-            internal histograms.
-            Columns that are known to be dependent can be kept together.
-            Example: splits=[[0,1],[2,3]] where
-            columns 0 and 1 are dependent, columns 2 and 3 are dependent,
-            and between groupings there is independence, defaults to []
-        :type splits: list, optional
-        :param split_factor: If splits not specified, can instead subdivide
-            pseudo-randomly. For example, split_factor=3
-            will make groupings of features of size 3 for the histograms.
-            Note: this will likely make synthetic data worse.
-            defaults to None
-        :type split_factor: int, optional
-        :param marginal_width: MWEM by default will create cuboids to measure
-            marginals, and will use a heuristic to determine the maximum width
-            of the marginals.  This parameter allows you to specify that MWEM
-            should always measure marginals up to width marginal_width.
-        :type marginal_width: int, optional
-        :param add_ranges: In addition to measuring cuboids, MWEM can measure
-            randomly generated range queries.  Range queries work well on columns
-            that are binned from continuous values.
-        :type add_range: bool, optional
-        :param measure_only: MWEM operates by spending some privacy budget to select
-            the best query.  This parameter allows you to specify that MWEM should
-            uniformly measure all queries, and not spend any privacy budget on the
-            query selection.  This is useful in limited cases.  Allowing MWEM to select
-            will usually work best.
-        :type measure_only: bool, optional
-        :param max_retries_exp_mechanism: In each iteration, MWEM tries to select
-            a poorly-peforming query that hasn't yet been measured.  If it fails,
-            it will select one of the remaining queries uniformly at random.
-        :type max_retries_exp_mechanism: int, optional
-        :param mult_weights_iterations: Number of iterations of multiplicative weights,
-            per iteration of MWEM, defaults to 20
-        :type mult_weights_iterations: int, optional
-        :param debug: Set to True to print debug information.
-        :type debug: bool, optional
-        """
         self.epsilon = epsilon
         self.q_count = q_count
         self.iterations = iterations
@@ -279,7 +276,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         self.mins_maxes = {}
         self.scale = {}
         self.marginal_width = marginal_width
-        self.debug = debug
+        self.debug = verbose
 
         # Pandas check
         self.pandas = False
@@ -295,8 +292,15 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
     def spent(self):
         return sum([a for a in self.accountant])
 
-    @wraps(SDGYMBaseSynthesizer.fit)
-    def fit(self, data, categorical_columns=None, ordinal_columns=None):
+    def fit(
+            self,
+            data, *ignore,
+            transformer=None,
+            categorical_columns=None,
+            ordinal_columns=None,
+            continuous_columns=None,
+            preprocessor_eps=0.0,
+            nullable=False):
         """
         Follows sdgym schema to be compatible with their benchmark system.
 
@@ -305,6 +309,20 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :return: synthetic data, real data histograms
         :rtype: np.ndarray
         """
+
+        train_data = self._get_train_data(
+            data,
+            style='cube',
+            transformer=transformer,
+            categorical_columns=categorical_columns,
+            ordinal_columns=ordinal_columns,
+            continuous_columns=continuous_columns,
+            nullable=nullable,
+            preprocessor_eps=preprocessor_eps
+        )
+
+        data = train_data
+
         if isinstance(data, np.ndarray):
             self.data = data.copy()
         elif isinstance(data, pd.DataFrame):
@@ -314,14 +332,16 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             self.data = data.to_numpy().copy()
             self.pd_cols = data.columns
             self.pd_index = data.index
+        elif isinstance(data, list):
+            self.data = np.array(data)
         else:
-            raise ValueError("Data must be a numpy array or pandas dataframe.")
+            raise ValueError("Data must be a list of tuples, a numpy array, or a pandas dataframe.")
         if self.split_factor is not None and self.splits == []:
-            self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
+            self.splits = self._generate_splits(self.data.T.shape[0], self.split_factor)
         elif self.split_factor is None and self.splits == []:
             # Set split factor to default to shape[1]
-            self.split_factor = data.shape[1]
-            self.splits = self._generate_splits(data.T.shape[0], self.split_factor)
+            self.split_factor = self.data.shape[1]
+            self.splits = self._generate_splits(self.data.T.shape[0], self.split_factor)
 
         self.splits = np.array(self.splits)
         if self.splits.size == 0:
@@ -385,7 +405,6 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         # Run the algorithm
         self.synthetic_histograms = self.mwem()
 
-    @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, samples):
         """
         Creates samples from the histogram data.
@@ -432,11 +451,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         combined = synthesized_columns
         # Reorder the columns to mirror their original order
         r = self._reorder(self.splits)
-        if self.pandas:
-            df = pd.DataFrame(combined[:, r], columns=self.pd_cols)
-            return df
-        else:
-            return combined[:, r]
+        return self._transformer.inverse_transform(combined[:, r])
 
     def mwem(self):
         """
@@ -485,7 +500,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
                 )
 
                 for query in queries[qi].queries:
-                    assert(isinstance(query, Query))
+                    assert (isinstance(query, Query))
                     actual = query.evaluate(hist)
                     lap = self._laplace(1.0/eps)
                     if qi in measurements:
@@ -509,7 +524,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :param dimensions: Reference dimensions
         :type dimensions: np.ndarray
         :return: New histogram, uniformly distributed according to
-        reference histogram
+            reference histogram
         :rtype: np.ndarray
         """
         n = np.sum(histogram)
@@ -525,7 +540,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
         :param data: Reference histogram
         :type data: np.ndarray
         :return: Histogram over given data, dimensions,
-        bins created (output of np.histogramdd)
+            bins created (output of np.histogramdd)
         :rtype: np.ndarray, np.shape, np.ndarray
         """
         histograms = []
@@ -639,7 +654,7 @@ class MWEMSynthesizer(SDGYMBaseSynthesizer):
             for qi in m:
                 measurements = m[qi]
                 queries_list = queries[qi].queries
-                assert(len(measurements) == len(queries_list))
+                assert (len(measurements) == len(queries_list))
 
                 for measurement, query in zip(measurements, queries_list):
                     error = measurement - query.evaluate(synth_hist)

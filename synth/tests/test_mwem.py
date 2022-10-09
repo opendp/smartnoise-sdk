@@ -1,12 +1,11 @@
 import subprocess
 import os
 
-import pytest
 import numpy as np
 import pandas as pd
 
 from snsynth.mwem import MWEMSynthesizer
-from snsynth import MWEMSynthesizer as ShortMWEMSynthesizer
+from snsynth.mwem import MWEMSynthesizer as ShortMWEMSynthesizer
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -36,11 +35,11 @@ class TestMWEM:
 
     def test_ranges(self):
         cont = df[['age', 'educ']]
-        synth = MWEMSynthesizer(30.0, add_ranges=True, debug=True)
+        synth = MWEMSynthesizer(30.0, add_ranges=True)
         synth.fit(cont)
         rows = synth.sample(1000)
         age = np.mean(rows['age'])
-        assert(age < 50)
+        assert(age < 54)
         assert(age > 30)
 
     def test_fit(self):
@@ -55,7 +54,7 @@ class TestMWEM:
         assert synthetic.shape == nf.shape
 
         age = np.mean(synthetic[:,0])
-        assert(age < 50)
+        assert(age < 54)
         assert(age > 30)
 
         # test sample different sizes with epsilon
