@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+
 from pacsynth import (
     DpAggregateSeededSynthesizer,
     DpAggregateSeededParametersBuilder,
@@ -6,10 +9,6 @@ from pacsynth import (
 )
 from pacsynth import Dataset as AggregateSeededDataset
 from snsynth.base import Synthesizer
-
-import pandas as pd
-
-from snsynth.transform.table import TableTransformer
 
 
 """
@@ -32,9 +31,31 @@ class AggregateSeededSynthesizer(Synthesizer):
     SmartNoise class wrapper for Private Aggregate Seeded Synthesizer from pac-synth.
     Works with Pandas data frames, raw data and follows norms set by other SmartNoise synthesizers.
 
-    Reuses code and modifies it lightly from
-    https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth
-    to achieve this.
+    :param reporting_length: The maximum length of the combinations to be synthesized.  For example,
+        if reporting length is 2, the synthesizer will compute DP marginals for all two-column combinations
+        in the dataset.
+    :type reporting_length: int
+    :param epsilon: The privacy budget to be used for the synthesizer.
+    :type epsilon: float
+    :param delta: The delta value to be used for the synthesizer.  If set, should be small, in the range
+        of 1/(n * sqrt(n)), where n is the approximate number of records in the dataset.
+    :param percentile_percentage: Because the synthesizer computes multiple n-way marginals, each individual may
+        affect multiple marginals.  The ``percentile_percentage`` can remove the influence of outliers to
+        reduce sensitivity and improve the accuracy of the synthesizer.  For example, if ``percentile_percentage``
+        is 99, the synthesizer will use a sensitivity that can accomodate 99% of the individuals, and will ensure
+        that the records of the outlier 1% are sampled to conform to this sensitivity.
+    :type percentile_percentage: int
+    :param percentile_epsilon_proportion: The proportion of the epsilon budget to be used to estimate the
+        percentile sensitivity.
+    :type percentile_epsilon_proportion: float
+    :param verbose: Show diagnostic information about the synthesizer's progress.
+    :type verbose: bool
+
+    See the `pac-synth documentation <https://github.com/microsoft/synthetic-data-showcase/blob/main/docs/dp/README.md>`_ 
+        for more details about these and other hyperparameters.
+
+    Reuses code and modifies it lightly from 
+        `pac-synth <https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth>`_.
     """
 
     def __init__(
@@ -164,6 +185,15 @@ class AggregateSeededSynthesizer(Synthesizer):
             assert use_columns is None, "use columns cannot be set with a transformer, please set transformer=NoTransformer()"
 
             sensitive_zeros = colnames
+
+            cards = self._transformer.cardinality
+            if any (c is None for c in cards):
+                raise ValueError("The transformer appears to have some continuous columns. Please provide only categorical or ordinal.")
+
+            dimensionality = np.prod(cards)
+            if self.verbose:
+                print(f"Fitting with {dimensionality} dimensions")
+
 
         if isinstance(data, list) and all(map(lambda row: isinstance(row, list), data)):
             self.dataset = AggregateSeededDataset(

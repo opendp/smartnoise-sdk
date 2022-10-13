@@ -1,6 +1,6 @@
-================
+=======================================
 Private Aggregate Seeded from PAC-Synth
-================
+=======================================
 
 A differentially-private synthesizer that computes differentially private marginals to build synthetic data. It will aggregate n-way marginals up to and including a specified reporting length, and synthesize data based on the computed aggregated counts.
 

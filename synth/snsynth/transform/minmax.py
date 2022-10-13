@@ -1,6 +1,6 @@
 from snsynth.transform.definitions import ColumnType
 from .base import CachingColumnTransformer
-from .mechanism import approx_bounds
+from snsql.sql._mechanisms.approx_bounds import approx_bounds
 from snsql.sql.privacy import Privacy
 import numpy as np
 
