@@ -13,7 +13,7 @@ from snsynth.transform.table import TableTransformer
 
 
 """
-Wrapper for Aggregate Seeded Synthesizer from pac-synth:
+Wrapper for Private Aggregate Seeded Synthesizer from pac-synth:
 https://pypi.org/project/pac-synth/.
 
 A differentially-private synthesizer that relies on DP Marginals to
@@ -29,7 +29,7 @@ For documentation please refer to:
 
 class AggregateSeededSynthesizer(Synthesizer):
     """
-    SmartNoise class wrapper for Aggregate Seeded Synthesizer from pac-synth.
+    SmartNoise class wrapper for Private Aggregate Seeded Synthesizer from pac-synth.
     Works with Pandas data frames, raw data and follows norms set by other SmartNoise synthesizers.
 
     Reuses code and modifies it lightly from
@@ -54,7 +54,7 @@ class AggregateSeededSynthesizer(Synthesizer):
         verbose=False
     ):
         """
-        Wrapper for Aggregate Seeded Synthesizer from pac-synth.
+        Wrapper for Private Aggregate Seeded Synthesizer from pac-synth.
 
         For more information about the parameters run `help('pacsynth.DpAggregateSeededParametersBuilder')`.
         """

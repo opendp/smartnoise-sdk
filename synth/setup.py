@@ -16,7 +16,7 @@ package_data = \
 
 install_requires = \
 ['opacus>=0.14.0,<0.15.0',
- 'pac-synth>=0.0.5,<0.0.6',
+ 'pac-synth>=0.0.6,<0.0.7',
  'smartnoise-sql>=0.2.5,<0.3.0']
 
 setup_kwargs = {

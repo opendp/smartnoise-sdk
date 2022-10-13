@@ -12,7 +12,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.7,<3.11"
 opacus = "^0.14.0"
-pac-synth = "^0.0.5"
+pac-synth = "^0.0.6"
 smartnoise-sql = "^0.2.5"
 
 [tool.poetry.dev-dependencies]
