@@ -159,6 +159,10 @@ class AggregateSeededSynthesizer(Synthesizer):
         if self._transformer.output_width > 0:
             colnames = ["column_{}".format(i) for i in range(len(train_data[0]))]
             data = [colnames] + [[str(v) for v in row] for row in train_data]
+
+            assert sensitive_zeros is None, "sensitive zeros cannot be set with a transformer, please set transformer=NoTransformer()"
+            assert use_columns is None, "use columns cannot be set with a transformer, please set transformer=NoTransformer()"
+
             sensitive_zeros = colnames
 
         if isinstance(data, list) and all(map(lambda row: isinstance(row, list), data)):
