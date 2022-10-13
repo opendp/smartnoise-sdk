@@ -157,6 +157,7 @@
 
 <span class="kn">from</span> <span class="nn">snsql.sql.odometer</span> <span class="kn">import</span> <span class="n">OdometerHeterogeneous</span>
 <span class="kn">from</span> <span class="nn">snsql.sql.privacy</span> <span class="kn">import</span> <span class="n">Privacy</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">null</span>
 <span class="kn">from</span> <span class="nn">snsynth.transform.type_map</span> <span class="kn">import</span> <span class="n">TypeMap</span>
 
 <div class="viewcode-block" id="TableTransformer"><a class="viewcode-back" href="../../../transforms/index.html#snsynth.transform.table.TableTransformer">[docs]</a><span class="k">class</span> <span class="nc">TableTransformer</span><span class="p">:</span>
@@ -336,7 +337,8 @@
             <span class="n">categorical_columns</span> <span class="o">=</span> <span class="n">inferred</span><span class="p">[</span><span class="s1">&#39;categorical_columns&#39;</span><span class="p">]</span>
             <span class="n">ordinal_columns</span> <span class="o">=</span> <span class="n">inferred</span><span class="p">[</span><span class="s1">&#39;ordinal_columns&#39;</span><span class="p">]</span>
             <span class="n">continuous_columns</span> <span class="o">=</span> <span class="n">inferred</span><span class="p">[</span><span class="s1">&#39;continuous_columns&#39;</span><span class="p">]</span>
-            <span class="n">nullable</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inferred</span><span class="p">[</span><span class="s1">&#39;nullable_columns&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">nullable</span><span class="p">:</span>
+                <span class="n">nullable</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inferred</span><span class="p">[</span><span class="s1">&#39;nullable_columns&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="n">all_specified</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">categorical_columns</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">ordinal_columns</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">continuous_columns</span><span class="p">)</span>
         <span class="n">all_numeric</span> <span class="o">=</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">all_specified</span><span class="p">])</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>

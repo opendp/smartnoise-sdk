@@ -226,22 +226,14 @@
   <section id="differentially-private-conditional-tabular-gan-dpctgan">
 <h1>Differentially Private Conditional Tabular GAN (DPCTGAN)<a class="headerlink" href="#differentially-private-conditional-tabular-gan-dpctgan" title="Permalink to this headline">¶</a></h1>
 <p>Conditional tabular GAN with differentially private stochastic gradient descent.  From “<a class="reference external" href="https://arxiv.org/abs/1907.00503">Modeling Tabular data using Conditional GAN</a>”.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsynth</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">snsynth</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
 
-<span class="kn">from</span> <span class="nn">snsynth.pytorch.nn</span> <span class="kn">import</span> <span class="n">DPCTGAN</span>
-<span class="kn">from</span> <span class="nn">snsynth.pytorch</span> <span class="kn">import</span> <span class="n">PytorchDPSynthesizer</span>
-<span class="kn">from</span> <span class="nn">snsynth.preprocessors.data_transformer</span> <span class="kn">import</span> <span class="n">BaseTransformer</span>
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;PUMS.csv&quot;</span><span class="p">)</span>
 
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">pums_csv_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="n">synth</span> <span class="o">=</span> <span class="n">PytorchDPSynthesizer</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">DPCTGAN</span><span class="p">())</span>
-<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="n">transformer</span><span class="o">=</span><span class="n">BaseTransformer</span><span class="p">)</span>
-
-<span class="n">sample</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># synthesize 10 rows</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">Synthesizer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;dpctgan&quot;</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">pums_synth</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="parameters">
@@ -249,7 +241,30 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="snsynth.pytorch.nn.dpctgan.DPCTGAN">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.pytorch.nn.dpctgan.</span></span><span class="sig-name descname"><span class="pre">DPCTGAN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embedding_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(256,</span> <span class="pre">256)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discriminator_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(256,</span> <span class="pre">256)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator_lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0002</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discriminator_lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0002</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discriminator_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discriminator_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cuda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disabled_dp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_per_sample_grad_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cross_entropy'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/pytorch/nn/dpctgan.html#DPCTGAN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.pytorch.nn.dpctgan.DPCTGAN" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>DPCTGAN Synthesizer.</p>
+<p>GAN-based synthesizer that uses conditional masks to learn tabular data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epsilon</strong> – Privacy budget for the model.</p></li>
+<li><p><strong>sigma</strong> – The noise scale for the gradients.  Noise scale and batch size influence
+how fast the privacy budget is consumed, which in turn influences the
+convergence rate and the quality of the synthetic data.</p></li>
+<li><p><strong>batch_size</strong> – The batch size for training the model.</p></li>
+<li><p><strong>epochs</strong> – The number of epochs to train the model.</p></li>
+<li><p><strong>embedding_dim</strong> – The dimensionality of the embedding layer.</p></li>
+<li><p><strong>generator_dim</strong> – The dimensionality of the generator layer.</p></li>
+<li><p><strong>discriminator_dim</strong> – The dimensionality of the discriminator layer.</p></li>
+<li><p><strong>generator_lr</strong> – The learning rate for the generator.</p></li>
+<li><p><strong>discriminator_lr</strong> – The learning rate for the discriminator.</p></li>
+<li><p><strong>verbose</strong> – Whether to print the training progress.</p></li>
+<li><p><strong>diabled_dp</strong> – Allows training without differential privacy, to diagnose
+whether any model issues are caused by privacy or are simply the
+result of GAN instability or other issues with hyperparameters.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 </section>

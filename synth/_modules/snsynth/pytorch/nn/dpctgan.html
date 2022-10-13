@@ -277,6 +277,27 @@
 
 
 <div class="viewcode-block" id="DPCTGAN"><a class="viewcode-back" href="../../../../synthesizers/dpctgan.html#snsynth.pytorch.nn.dpctgan.DPCTGAN">[docs]</a><span class="k">class</span> <span class="nc">DPCTGAN</span><span class="p">(</span><span class="n">CTGANSynthesizer</span><span class="p">,</span> <span class="n">Synthesizer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;DPCTGAN Synthesizer.</span>
+
+<span class="sd">    GAN-based synthesizer that uses conditional masks to learn tabular data.</span>
+
+<span class="sd">    :param epsilon: Privacy budget for the model.</span>
+<span class="sd">    :param sigma: The noise scale for the gradients.  Noise scale and batch size influence</span>
+<span class="sd">        how fast the privacy budget is consumed, which in turn influences the</span>
+<span class="sd">        convergence rate and the quality of the synthetic data.</span>
+<span class="sd">    :param batch_size: The batch size for training the model.</span>
+<span class="sd">    :param epochs: The number of epochs to train the model.</span>
+<span class="sd">    :param embedding_dim: The dimensionality of the embedding layer.</span>
+<span class="sd">    :param generator_dim: The dimensionality of the generator layer.</span>
+<span class="sd">    :param discriminator_dim: The dimensionality of the discriminator layer.</span>
+<span class="sd">    :param generator_lr: The learning rate for the generator.</span>
+<span class="sd">    :param discriminator_lr: The learning rate for the discriminator.</span>
+<span class="sd">    :param verbose: Whether to print the training progress.</span>
+<span class="sd">    :param diabled_dp: Allows training without differential privacy, to diagnose</span>
+<span class="sd">        whether any model issues are caused by privacy or are simply the</span>
+<span class="sd">        result of GAN instability or other issues with hyperparameters.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>

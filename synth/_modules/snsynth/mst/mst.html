@@ -180,24 +180,29 @@
 
 
 <div class="viewcode-block" id="MSTSynthesizer"><a class="viewcode-back" href="../../../synthesizers/mst.html#snsynth.mst.mst.MSTSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">MSTSynthesizer</span><span class="p">(</span><span class="n">Synthesizer</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Smartnoise class wrapper for MST Synthesizer. Works with</span>
-<span class="sd">    Pandas dataframes, follows norms set by other smartnoise synthesizers.</span>
+    <span class="sd">&quot;&quot;&quot;Maximum Spanning Tree synthesizer, uses Private PGM.</span>
+
+<span class="sd">    :param epsilon: privacy budget for the synthesizer</span>
+<span class="sd">    :type epsilon: float</span>
+<span class="sd">    :param delta: privacy parameter.  Should be small, in the range of 1/(n * sqrt(n))</span>
+<span class="sd">    :type delta: float</span>
+<span class="sd">    :param verbose: print diagnostic information during processing</span>
+<span class="sd">    :type verbose: bool</span>
 
 <span class="sd">    Reuses code and modifies it lightly from</span>
-<span class="sd">    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py</span>
-<span class="sd">    to achieve this. Awesome work McKenna et. al!</span>
+<span class="sd">    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py. Awesome work McKenna et. al!</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
                  <span class="n">delta</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span>
-                 <span class="n">num_marginals</span><span class="o">=</span><span class="kc">None</span>
+                 <span class="o">*</span><span class="n">ignore</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
                  <span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_marginals</span> <span class="o">=</span> <span class="n">num_marginals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">synthesizer</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">=</span> <span class="kc">None</span>
@@ -229,6 +234,14 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;We weren&#39;t able to fit a transformer to the data. Please check your data and try again.&quot;</span><span class="p">)</span>
 
+        <span class="n">cards</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">cardinality</span>
+        <span class="k">if</span> <span class="nb">any</span> <span class="p">(</span><span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cards</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The transformer appears to have some continuous columns. Please provide only categorical or ordinal.&quot;</span><span class="p">)</span>
+
+        <span class="n">dimensionality</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">cards</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fitting with </span><span class="si">{</span><span class="n">dimensionality</span><span class="si">}</span><span class="s2"> dimensions&quot;</span><span class="p">)</span>
+
         <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;col&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span><span class="p">)]</span>
         <span class="n">cards</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">cardinality</span>
 
@@ -255,6 +268,8 @@
         <span class="n">rho</span> <span class="o">=</span> <span class="n">cdp_rho</span><span class="p">(</span><span class="n">epsilon</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">rho</span><span class="p">))</span>
         <span class="n">cliques</span> <span class="o">=</span> <span class="p">[(</span><span class="n">col</span><span class="p">,)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">domain</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Getting cliques&quot;</span><span class="p">)</span>
         <span class="n">log1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cliques</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">log1</span><span class="p">,</span> <span class="n">undo_compress_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compress_domain</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">log1</span><span class="p">)</span>
 
@@ -264,6 +279,8 @@
         <span class="n">cliques</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">rho</span><span class="o">/</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">log1</span><span class="p">)</span>
         <span class="n">log2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cliques</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
         <span class="n">engine</span> <span class="o">=</span> <span class="n">FactoredInference</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Estimating marginals&quot;</span><span class="p">)</span>
         <span class="n">est</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">estimate</span><span class="p">(</span><span class="n">log1</span><span class="o">+</span><span class="n">log2</span><span class="p">)</span>
 
         <span class="c1"># Here&#39;s the synthesizer</span>

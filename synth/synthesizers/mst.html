@@ -231,19 +231,14 @@
 </pre></div>
 </div>
 <p>And call like this:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">snsynth</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">snsynth</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
 
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">pums_csv_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;PUMS.csv&quot;</span><span class="p">)</span>
 
-<span class="n">Domains</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pums&quot;</span><span class="p">:</span> <span class="s2">&quot;samples/mst_sample/pums-domain.json&quot;</span><span class="p">}</span> <span class="c1"># in samples/mst_sample</span>
-<span class="n">synth</span> <span class="o">=</span> <span class="n">snsynth</span><span class="o">.</span><span class="n">MSTSynthesizer</span><span class="p">(</span><span class="n">domains_dict</span><span class="o">=</span><span class="n">Domains</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;pums&quot;</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
-
-<span class="n">sample</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># synthesize 10 rows</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">Synthesizer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;mst&quot;</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">pums_synth</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>For more, see the <a class="reference external" href="https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/mst_sample">sample notebook</a></p>
@@ -251,12 +246,19 @@
 <h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="snsynth.mst.mst.MSTSynthesizer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.mst.mst.</span></span><span class="sig-name descname"><span class="pre">MSTSynthesizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_marginals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/mst/mst.html#MSTSynthesizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.mst.mst.MSTSynthesizer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Smartnoise class wrapper for MST Synthesizer. Works with
-Pandas dataframes, follows norms set by other smartnoise synthesizers.</p>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.mst.mst.</span></span><span class="sig-name descname"><span class="pre">MSTSynthesizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-09</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/mst/mst.html#MSTSynthesizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.mst.mst.MSTSynthesizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum Spanning Tree synthesizer, uses Private PGM.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epsilon</strong> (<em>float</em>) – privacy budget for the synthesizer</p></li>
+<li><p><strong>delta</strong> (<em>float</em>) – privacy parameter.  Should be small, in the range of 1/(n * sqrt(n))</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – print diagnostic information during processing</p></li>
+</ul>
+</dd>
+</dl>
 <p>Reuses code and modifies it lightly from
-<a class="reference external" href="https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py">https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py</a>
-to achieve this. Awesome work McKenna et. al!</p>
+<a class="reference external" href="https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py">https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py</a>. Awesome work McKenna et. al!</p>
 </dd></dl>
 
 </section>

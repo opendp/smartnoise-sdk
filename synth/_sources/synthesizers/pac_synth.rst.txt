@@ -2,11 +2,24 @@
 Aggregate Seeded
 ================
 
-A differentially-private synthesizer that relies on DP Marginals to build synthetic data. It will compute DP Marginals (called aggregates) for your dataset up to and including a specified reporting length, and synthesize data based on the computed aggregated counts.
+A differentially-private synthesizer that computes differentially private marginals to build synthetic data. It will aggregate n-way marginals up to and including a specified reporting length, and synthesize data based on the computed aggregated counts.
 
 Based on the `Synthetic Data Showcase project <https://github.com/microsoft/synthetic-data-showcase>`_. DP documentation available `here <https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp>`_.
 
-Call like this:
+
+.. code-block:: python
+
+  import pandas as pd
+  from snsynth import Synthesizer
+
+  pums = pd.read_csv("PUMS.csv")
+
+  synth = Synthesizer.create("pacsynth", epsilon=3.0, verbose=True)
+  synth.fit(pums, preprocessor_eps=1.0)
+  pums_synth = synth.sample(1000)
+
+
+The pac-synth synthesizer will supress marginal combinations that could uniquely fingerprint individuals.  Unlike the other synthesizers, however, this synthesizer attempts to minimize the number of spurious dimension combinations that are generated.  This may be desirable in some settings, where the goal is to generate synthetic data with dimensions that are as similar as possible to the original data.  To achieve this dimensional fidelity, the pac-synth synthesizer will sometimes generate rows with missing values.
 
 .. code-block:: python
 
