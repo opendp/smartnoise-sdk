@@ -1,3 +1,8 @@
+# SmartNoise Synth v0.3.1 Release Notes
+
+* Update PAC-Synth to v0.6
+* Fix depenedencies to allow StandardScaler to run on Windows
+
 # SmartNoise Synth v0.3.0 Release Notes
 
 This release is a breaking change from v0.2.x.
