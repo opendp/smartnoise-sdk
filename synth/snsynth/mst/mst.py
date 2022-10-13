@@ -27,24 +27,29 @@ and does not rely on public provisional data for measurement selection.
 
 
 class MSTSynthesizer(Synthesizer):
-    """
-    Smartnoise class wrapper for MST Synthesizer. Works with
-    Pandas dataframes, follows norms set by other smartnoise synthesizers.
+    """Maximum Spanning Tree synthesizer, uses Private PGM.
+
+    :param epsilon: privacy budget for the synthesizer
+    :type epsilon: float
+    :param delta: privacy parameter.  Should be small, in the range of 1/(n * sqrt(n))
+    :type delta: float
+    :param verbose: print diagnostic information during processing
+    :type verbose: bool
 
     Reuses code and modifies it lightly from
-    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py
-    to achieve this. Awesome work McKenna et. al!
+    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py. Awesome work McKenna et. al!
     """
 
     def __init__(self,
                  epsilon=0.1,
                  delta=1e-9,
-                 num_marginals=None
+                 *ignore,
+                 verbose=False
                  ):
 
         self.epsilon = epsilon
         self.delta = delta
-        self.num_marginals = num_marginals
+        self.verbose = verbose
 
         self.synthesizer = None
         self.num_rows = None
@@ -76,6 +81,14 @@ class MSTSynthesizer(Synthesizer):
         if self._transformer is None:
             raise ValueError("We weren't able to fit a transformer to the data. Please check your data and try again.")
 
+        cards = self._transformer.cardinality
+        if any (c is None for c in cards):
+            raise ValueError("The transformer appears to have some continuous columns. Please provide only categorical or ordinal.")
+
+        dimensionality = np.prod(cards)
+        if self.verbose:
+            print(f"Fitting with {dimensionality} dimensions")
+
         colnames = ["col" + str(i) for i in range(self._transformer.output_width)]
         cards = self._transformer.cardinality
 
@@ -102,6 +115,8 @@ class MSTSynthesizer(Synthesizer):
         rho = cdp_rho(epsilon, delta)
         sigma = np.sqrt(3/(2*rho))
         cliques = [(col,) for col in data.domain]
+        if self.verbose:
+            print("Getting cliques")
         log1 = self.measure(data, cliques, sigma)
         data, log1, undo_compress_fn = self.compress_domain(data, log1)
 
@@ -111,6 +126,8 @@ class MSTSynthesizer(Synthesizer):
         cliques = self.select(data, rho/3.0, log1)
         log2 = self.measure(data, cliques, sigma)
         engine = FactoredInference(data.domain, iters=5000)
+        if self.verbose:
+            print("Estimating marginals")
         est = engine.estimate(log1+log2)
 
         # Here's the synthesizer

@@ -100,7 +100,7 @@ class BinTransformer(CachingColumnTransformer):
             raise ValueError("BinTransformer has not been fit yet.")
         if self.nullable:
             v, n = val
-            if n == 1:
+            if n == 1 or v is None or (isinstance(v, float) and np.isnan(v)):
                 return None
             val = v
         lower, upper = self._bin_edges(val)

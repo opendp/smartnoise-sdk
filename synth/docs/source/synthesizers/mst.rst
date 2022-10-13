@@ -14,22 +14,16 @@ And call like this:
 
 .. code-block:: python
 
-  import snsynth
   import pandas as pd
-  import numpy as np
+  from snsynth import Synthesizer
 
-  pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
-  pums = pums.drop(['income'], axis=1)
+  pums = pd.read_csv("PUMS.csv")
 
-  Domains = {"pums": "samples/mst_sample/pums-domain.json"} # in samples/mst_sample
-  synth = snsynth.MSTSynthesizer(domains_dict=Domains, domain="pums", epsilon=1.0)
-  synth.fit(pums)
-
-  sample = synth.sample(10) # synthesize 10 rows
-  print(sample)
+  synth = Synthesizer.create("mst", epsilon=3.0, verbose=True)
+  synth.fit(pums, preprocessor_eps=1.0)
+  pums_synth = synth.sample(1000)
 
 For more, see the `sample notebook <https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/mst_sample>`_
-
 
 
 Parameters

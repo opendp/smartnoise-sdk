@@ -124,6 +124,27 @@ def _custom_create_or_extend_grad_sample(
 
 
 class DPCTGAN(CTGANSynthesizer, Synthesizer):
+    """DPCTGAN Synthesizer.
+
+    GAN-based synthesizer that uses conditional masks to learn tabular data.
+
+    :param epsilon: Privacy budget for the model.
+    :param sigma: The noise scale for the gradients.  Noise scale and batch size influence
+        how fast the privacy budget is consumed, which in turn influences the
+        convergence rate and the quality of the synthetic data.
+    :param batch_size: The batch size for training the model.
+    :param epochs: The number of epochs to train the model.
+    :param embedding_dim: The dimensionality of the embedding layer.
+    :param generator_dim: The dimensionality of the generator layer.
+    :param discriminator_dim: The dimensionality of the discriminator layer.
+    :param generator_lr: The learning rate for the generator.
+    :param discriminator_lr: The learning rate for the discriminator.
+    :param verbose: Whether to print the training progress.
+    :param diabled_dp: Allows training without differential privacy, to diagnose
+        whether any model issues are caused by privacy or are simply the
+        result of GAN instability or other issues with hyperparameters.
+
+    """
     def __init__(
         self,
         embedding_dim=128,
