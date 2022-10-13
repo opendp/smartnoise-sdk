@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Aggregate Seeded &#8212; OpenDP SmartNoise Synthesizers</title>
+    <title>Private Aggregate Seeded from PAC-Synth &#8212; OpenDP SmartNoise Synthesizers</title>
     
   <link href="../_static/css/theme.css" rel="stylesheet">
   <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -223,8 +223,8 @@
               
               <div>
                 
-  <section id="aggregate-seeded">
-<h1>Aggregate Seeded<a class="headerlink" href="#aggregate-seeded" title="Permalink to this headline">¶</a></h1>
+  <section id="private-aggregate-seeded-from-pac-synth">
+<h1>Private Aggregate Seeded from PAC-Synth<a class="headerlink" href="#private-aggregate-seeded-from-pac-synth" title="Permalink to this headline">¶</a></h1>
 <p>A differentially-private synthesizer that computes differentially private marginals to build synthetic data. It will aggregate n-way marginals up to and including a specified reporting length, and synthesize data based on the computed aggregated counts.</p>
 <p>Based on the <a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase">Synthetic Data Showcase project</a>. DP documentation available <a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase/tree/main/docs/dp">here</a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -237,7 +237,7 @@
 <span class="n">pums_synth</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The pac-synth synthesizer will supress marginal combinations that could uniquely fingerprint individuals.  Unlike the other synthesizers, however, this synthesizer attempts to minimize the number of spurious dimension combinations that are generated.  This may be desirable in some settings, where the goal is to generate synthetic data with dimensions that are as similar as possible to the original data.  To achieve this dimensional fidelity, the pac-synth synthesizer will sometimes generate rows with missing values.</p>
+<p>The pac-synth synthesizer will suppress marginal combinations that could uniquely fingerprint individuals.  Unlike the other synthesizers, however, this synthesizer attempts to minimize the number of spurious dimension combinations that are generated.  This may be desirable in some settings, where the goal is to generate synthetic data with dimensions that are as similar as possible to the original data.  To achieve this dimensional fidelity, the pac-synth synthesizer will sometimes generate rows with missing values.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.aggregate_seeded</span> <span class="kn">import</span> <span class="n">AggregateSeededSynthesizer</span>
 
 <span class="c1"># this generates a random pandas data frame with 5000 records</span>
@@ -274,11 +274,34 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="snsynth.aggregate_seeded.AggregateSeededSynthesizer">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.aggregate_seeded.</span></span><span class="sig-name descname"><span class="pre">AggregateSeededSynthesizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">reporting_length=3</span></em>, <em class="sig-param"><span class="pre">epsilon=4.0</span></em>, <em class="sig-param"><span class="pre">delta=None</span></em>, <em class="sig-param"><span class="pre">percentile_percentage=99</span></em>, <em class="sig-param"><span class="pre">percentile_epsilon_proportion=0.01</span></em>, <em class="sig-param"><span class="pre">accuracy_mode=&lt;builtins.AccuracyMode</span> <span class="pre">object&gt;</span></em>, <em class="sig-param"><span class="pre">number_of_records_epsilon_proportion=0.005</span></em>, <em class="sig-param"><span class="pre">fabrication_mode=&lt;builtins.FabricationMode</span> <span class="pre">object&gt;</span></em>, <em class="sig-param"><span class="pre">empty_value=''</span></em>, <em class="sig-param"><span class="pre">use_synthetic_counts=False</span></em>, <em class="sig-param"><span class="pre">weight_selection_percentile=95</span></em>, <em class="sig-param"><span class="pre">aggregate_counts_scale_factor=None</span></em>, <em class="sig-param"><span class="pre">verbose=False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/aggregate_seeded/aggregate_seeded.html#AggregateSeededSynthesizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.aggregate_seeded.AggregateSeededSynthesizer" title="Permalink to this definition">¶</a></dt>
-<dd><p>SmartNoise class wrapper for Aggregate Seeded Synthesizer from pac-synth.
+<dd><p>SmartNoise class wrapper for Private Aggregate Seeded Synthesizer from pac-synth.
 Works with Pandas data frames, raw data and follows norms set by other SmartNoise synthesizers.</p>
-<p>Reuses code and modifies it lightly from
-<a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth">https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth</a>
-to achieve this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reporting_length</strong> (<em>int</em>) – The maximum length of the combinations to be synthesized.  For example,
+if reporting length is 2, the synthesizer will compute DP marginals for all two-column combinations
+in the dataset.</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em>) – The privacy budget to be used for the synthesizer.</p></li>
+<li><p><strong>delta</strong> – The delta value to be used for the synthesizer.  If set, should be small, in the range
+of 1/(n * sqrt(n)), where n is the approximate number of records in the dataset.</p></li>
+<li><p><strong>percentile_percentage</strong> (<em>int</em>) – Because the synthesizer computes multiple n-way marginals, each individual may
+affect multiple marginals.  The <code class="docutils literal notranslate"><span class="pre">percentile_percentage</span></code> can remove the influence of outliers to
+reduce sensitivity and improve the accuracy of the synthesizer.  For example, if <code class="docutils literal notranslate"><span class="pre">percentile_percentage</span></code>
+is 99, the synthesizer will use a sensitivity that can accomodate 99% of the individuals, and will ensure
+that the records of the outlier 1% are sampled to conform to this sensitivity.</p></li>
+<li><p><strong>percentile_epsilon_proportion</strong> (<em>float</em>) – The proportion of the epsilon budget to be used to estimate the
+percentile sensitivity.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Show diagnostic information about the synthesizer’s progress.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>See the <a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase/blob/main/docs/dp/README.md">pac-synth documentation</a> </dt><dd><p>for more details about these and other hyperparameters.</p>
+</dd>
+<dt>Reuses code and modifies it lightly from </dt><dd><p><a class="reference external" href="https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth">pac-synth</a>.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

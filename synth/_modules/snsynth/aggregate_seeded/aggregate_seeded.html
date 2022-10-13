@@ -151,7 +151,10 @@
               <div>
                 
   <h1>Source code for snsynth.aggregate_seeded.aggregate_seeded</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">pacsynth</span> <span class="kn">import</span> <span class="p">(</span>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">pacsynth</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">DpAggregateSeededSynthesizer</span><span class="p">,</span>
     <span class="n">DpAggregateSeededParametersBuilder</span><span class="p">,</span>
     <span class="n">AccuracyMode</span><span class="p">,</span>
@@ -160,13 +163,9 @@
 <span class="kn">from</span> <span class="nn">pacsynth</span> <span class="kn">import</span> <span class="n">Dataset</span> <span class="k">as</span> <span class="n">AggregateSeededDataset</span>
 <span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-
-<span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
-
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Wrapper for Aggregate Seeded Synthesizer from pac-synth:</span>
+<span class="sd">Wrapper for Private Aggregate Seeded Synthesizer from pac-synth:</span>
 <span class="sd">https://pypi.org/project/pac-synth/.</span>
 
 <span class="sd">A differentially-private synthesizer that relies on DP Marginals to</span>
@@ -182,12 +181,34 @@
 
 <div class="viewcode-block" id="AggregateSeededSynthesizer"><a class="viewcode-back" href="../../../synthesizers/pac_synth.html#snsynth.aggregate_seeded.AggregateSeededSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">AggregateSeededSynthesizer</span><span class="p">(</span><span class="n">Synthesizer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    SmartNoise class wrapper for Aggregate Seeded Synthesizer from pac-synth.</span>
+<span class="sd">    SmartNoise class wrapper for Private Aggregate Seeded Synthesizer from pac-synth.</span>
 <span class="sd">    Works with Pandas data frames, raw data and follows norms set by other SmartNoise synthesizers.</span>
 
-<span class="sd">    Reuses code and modifies it lightly from</span>
-<span class="sd">    https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth</span>
-<span class="sd">    to achieve this.</span>
+<span class="sd">    :param reporting_length: The maximum length of the combinations to be synthesized.  For example,</span>
+<span class="sd">        if reporting length is 2, the synthesizer will compute DP marginals for all two-column combinations</span>
+<span class="sd">        in the dataset.</span>
+<span class="sd">    :type reporting_length: int</span>
+<span class="sd">    :param epsilon: The privacy budget to be used for the synthesizer.</span>
+<span class="sd">    :type epsilon: float</span>
+<span class="sd">    :param delta: The delta value to be used for the synthesizer.  If set, should be small, in the range</span>
+<span class="sd">        of 1/(n * sqrt(n)), where n is the approximate number of records in the dataset.</span>
+<span class="sd">    :param percentile_percentage: Because the synthesizer computes multiple n-way marginals, each individual may</span>
+<span class="sd">        affect multiple marginals.  The ``percentile_percentage`` can remove the influence of outliers to</span>
+<span class="sd">        reduce sensitivity and improve the accuracy of the synthesizer.  For example, if ``percentile_percentage``</span>
+<span class="sd">        is 99, the synthesizer will use a sensitivity that can accomodate 99% of the individuals, and will ensure</span>
+<span class="sd">        that the records of the outlier 1% are sampled to conform to this sensitivity.</span>
+<span class="sd">    :type percentile_percentage: int</span>
+<span class="sd">    :param percentile_epsilon_proportion: The proportion of the epsilon budget to be used to estimate the</span>
+<span class="sd">        percentile sensitivity.</span>
+<span class="sd">    :type percentile_epsilon_proportion: float</span>
+<span class="sd">    :param verbose: Show diagnostic information about the synthesizer&#39;s progress.</span>
+<span class="sd">    :type verbose: bool</span>
+
+<span class="sd">    See the `pac-synth documentation &lt;https://github.com/microsoft/synthetic-data-showcase/blob/main/docs/dp/README.md&gt;`_ </span>
+<span class="sd">        for more details about these and other hyperparameters.</span>
+
+<span class="sd">    Reuses code and modifies it lightly from </span>
+<span class="sd">        `pac-synth &lt;https://github.com/microsoft/synthetic-data-showcase/tree/main/packages/lib-pacsynth&gt;`_.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -207,7 +228,7 @@
         <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Wrapper for Aggregate Seeded Synthesizer from pac-synth.</span>
+<span class="sd">        Wrapper for Private Aggregate Seeded Synthesizer from pac-synth.</span>
 
 <span class="sd">        For more information about the parameters run `help(&#39;pacsynth.DpAggregateSeededParametersBuilder&#39;)`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -312,7 +333,20 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;column_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]))]</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">colnames</span><span class="p">]</span> <span class="o">+</span> <span class="p">[[</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">train_data</span><span class="p">]</span>
+
+            <span class="k">assert</span> <span class="n">sensitive_zeros</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;sensitive zeros cannot be set with a transformer, please set transformer=NoTransformer()&quot;</span>
+            <span class="k">assert</span> <span class="n">use_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;use columns cannot be set with a transformer, please set transformer=NoTransformer()&quot;</span>
+
             <span class="n">sensitive_zeros</span> <span class="o">=</span> <span class="n">colnames</span>
+
+            <span class="n">cards</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">cardinality</span>
+            <span class="k">if</span> <span class="nb">any</span> <span class="p">(</span><span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cards</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The transformer appears to have some continuous columns. Please provide only categorical or ordinal.&quot;</span><span class="p">)</span>
+
+            <span class="n">dimensionality</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">cards</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fitting with </span><span class="si">{</span><span class="n">dimensionality</span><span class="si">}</span><span class="s2"> dimensions&quot;</span><span class="p">)</span>
+
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="n">data</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">AggregateSeededDataset</span><span class="p">(</span>
