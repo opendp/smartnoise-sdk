@@ -1,8 +1,9 @@
-# DP Standard Scaler from diffprivlib
-from diffprivlib.models import StandardScaler as DPSS
 from snsynth.transform.definitions import ColumnType
 from .base import CachingColumnTransformer
-from .mechanism import approx_bounds
+from opendp.mod import enable_features, binary_search_param
+from opendp.trans import make_sized_bounded_mean, make_sized_bounded_variance, make_clamp, make_bounded_resize
+from opendp.meas import make_base_laplace
+from snsql.sql._mechanisms.approx_bounds import approx_bounds
 from snsql.sql.privacy import Privacy
 import numpy as np
 
@@ -25,6 +26,8 @@ class StandardScaler(CachingColumnTransformer):
         self.nullable = nullable
         self.odometer = odometer
         self.scaler = None
+        self.mean = None
+        self.var = None
         super().__init__()
     @property
     def output_type(self):
@@ -60,8 +63,26 @@ class StandardScaler(CachingColumnTransformer):
                 self.fit_lower = self.lower
                 self.fit_upper = self.upper
             # fit scaler
-            self.scaler = DPSS(epsilon=self.epsilon, bounds=(self.fit_lower, self.fit_upper))
-            self.scaler.fit(np.array(self._fit_vals).reshape(-1, 1))
+            bounds = (float(self.fit_lower), float(self.fit_upper))
+            n = len(self._fit_vals)
+
+            enable_features("floating-point", "contrib")
+
+            var_pre =  make_clamp(bounds) >> make_bounded_resize(n, bounds, float(self.fit_lower)) >> make_sized_bounded_variance(size=n, bounds=bounds)
+            mean_pre =  make_clamp(bounds) >> make_bounded_resize(n, bounds, float(self.fit_lower)) >> make_sized_bounded_mean(size=n, bounds=bounds)
+
+            v_e = self.epsilon * 0.8
+            m_e = self.epsilon - v_e
+            v_s = binary_search_param(lambda s: var_pre >> make_base_laplace(s), d_in=1, d_out=v_e)
+            m_s = binary_search_param(lambda s: mean_pre >> make_base_laplace(s), d_in=1, d_out=m_e)
+            dpvar = var_pre >> make_base_laplace(v_s)
+            dpmean = mean_pre >> make_base_laplace(m_s)
+            
+            self.var = dpvar(np.array(self._fit_vals))
+            self.var = np.clip(self.var, 0.001, (self.fit_upper - self.fit_lower) ** 2 / 4)
+            self.mean = dpmean(np.array(self._fit_vals))
+            self.mean = np.clip(self.mean, self.fit_lower, self.fit_upper)
+
             if self.odometer is not None:
                 self.odometer.spend(Privacy(epsilon=self.epsilon, delta=0.0))
             self.budget_spent.append(self.epsilon)
@@ -80,7 +101,7 @@ class StandardScaler(CachingColumnTransformer):
         if self.nullable and (val is None or isinstance(val, float) and np.isnan(val)):
             return (None, 1)
         else:
-            val = self.scaler.transform(np.array([val]).reshape(-1, 1))[0][0]
+            val = (val - self.mean) / np.sqrt(self.var)
         if self.nullable:
             return (val, 0)
         else:
@@ -93,5 +114,5 @@ class StandardScaler(CachingColumnTransformer):
             val = v
             if n == 1:
                 return None
-        val = self.scaler.inverse_transform(np.array([val]).reshape(-1, 1))[0][0]
+        val = val * np.sqrt(self.var) + self.mean
         return np.clip(val, self.fit_lower, self.fit_upper)

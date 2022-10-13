@@ -5,8 +5,7 @@ from pacsynth import (
     FabricationMode,
 )
 from pacsynth import Dataset as AggregateSeededDataset
-from snsynth.base import SDGYMBaseSynthesizer, Synthesizer
-from functools import wraps
+from snsynth.base import Synthesizer
 
 import pandas as pd
 
@@ -52,6 +51,7 @@ class AggregateSeededSynthesizer(Synthesizer):
         use_synthetic_counts=False,
         weight_selection_percentile=95,
         aggregate_counts_scale_factor=None,
+        verbose=False
     ):
         """
         Wrapper for Aggregate Seeded Synthesizer from pac-synth.
@@ -70,6 +70,7 @@ class AggregateSeededSynthesizer(Synthesizer):
         self.use_synthetic_counts = use_synthetic_counts
         self.weight_selection_percentile = weight_selection_percentile
         self.aggregate_counts_scale_factor = aggregate_counts_scale_factor
+        self.verbose = verbose
         self.preprocessed = False
         self.build_synthesizer()
 
@@ -180,7 +181,6 @@ class AggregateSeededSynthesizer(Synthesizer):
 
         self.synth.fit(self.dataset)
 
-    @wraps(SDGYMBaseSynthesizer.sample)
     def sample(self, samples=None):
         """
         Sample from the synthesizer model.

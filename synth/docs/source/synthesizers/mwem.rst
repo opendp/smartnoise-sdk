@@ -6,22 +6,25 @@ Multiplicative Weights Exponential Mechanism.  From "`A Simple and Practical Alg
 
 .. code-block:: python
 
-  import snsynth
   import pandas as pd
-  import numpy as np
+  from snsynth import Synthesizer
 
-  pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
-  pums = pums.drop(['income'], axis=1)
-  nf = pums.to_numpy().astype(int)
+  pums = pd.read_csv("PUMS.csv")
+  synth = Synthesizer.create("mwem", epsilon=3.0, verbose=True)
+  synth.fit(pums, preprocessor_eps=1.0)
+  pums_synth = synth.sample(1000)
 
-  synth = snsynth.MWEMSynthesizer(debug=True)
-  synth.fit(nf)
+MWEM maintains an in-memory copy of the full joint distribution, initialized to a uniform distribution, and updated with each iteration.  The size of the joint distribution in memory is the product of the cardinalities of columns of the input data, which may be much larger than the number of rows.  For example, in the code above, the dimensionality inferred will be about 300,000 cells, and training will take several minutes.  In the PUMS dataset with income column dropped, the size of the in-memory histogram is 29,184 cells.  The size of the histogram can explode rapidly with multiple columns with high cardinality.  You can provide splits to divide the columns into independent subsets, which may dramatically reduce the memory requirement. In the code below, MWEM will split the data into multiple disjoint cubes with 3 columns each (per the ``split_factor`` argument), and train a separate model for each cube.  The size of the in-memory histogram will be lower than 3,000 cells, and training will be relatively fast.
 
-  print(f"MWEM spent epsilon {synth.spent}")
-  sample = synth.sample(100)
-  print(sample)
+.. code-block:: python
 
-MWEM maintains an in-memory copy of the full joint distribution, initialized to a uniform distribution, and updated with each iteration.  The size of the joint distribution in memory is the product of the cardinalities of columns of the input data, which may be much larger than the number of rows.  For example, in the PUMS dataset with income column dropped, the size of the in-memory histogram is 29,184 cells.  The size of the histogram can explode rapidly with multiple columns with high cardinality.  You can provide splits to divide the columns into independent subsets, which may dramatically reduce the memory requirement.
+  import pandas as pd
+  from snsynth import Synthesizer
+
+  pums = pd.read_csv("PUMS.csv")
+  synth = Synthesizer.create("mwem", epsilon=3.0, split_factor=3, verbose=True)
+  synth.fit(pums, preprocessor_eps=1.0)
+  pums_synth = synth.sample(1000)
 
 The MWEM algorithm operates by alternating between a step that selects a poorly-performing query via exponential mechanism, and then updating the estimated joint distribution via the laplace mechanism, to perform better on the selected query.  Over multiple iterations, the estimated joint distribution will become better at answering the selected workload of queries.
 

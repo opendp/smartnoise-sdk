@@ -4,6 +4,7 @@ import warnings
 
 from snsql.sql.odometer import OdometerHeterogeneous
 from snsql.sql.privacy import Privacy
+from sqlalchemy import null
 from snsynth.transform.type_map import TypeMap
 
 class TableTransformer:
@@ -183,7 +184,8 @@ class TableTransformer:
             categorical_columns = inferred['categorical_columns']
             ordinal_columns = inferred['ordinal_columns']
             continuous_columns = inferred['continuous_columns']
-            nullable = len(inferred['nullable_columns']) > 0
+            if not nullable:
+                nullable = len(inferred['nullable_columns']) > 0
         all_specified = list(categorical_columns) + list(ordinal_columns) + list(continuous_columns)
         all_numeric = all([isinstance(c, int) for c in all_specified])
         if isinstance(data, pd.DataFrame):

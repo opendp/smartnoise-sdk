@@ -3,22 +3,14 @@ Conditional tabular GAN using Private Aggregation of Teacher Ensembles.  From "`
 
 .. code-block:: python
 
-  import snsynth
   import pandas as pd
-  import numpy as np
+  from snsynth import Synthesizer
 
-  from snsynth.pytorch.nn import PATECTGAN
-  from snsynth.pytorch import PytorchDPSynthesizer
-  from snsynth.preprocessors.data_transformer import BaseTransformer
+  pums = pd.read_csv("PUMS.csv")
 
-  pums = pd.read_csv(pums_csv_path, index_col=None) # in datasets/
-  pums = pums.drop(['income'], axis=1)
-
-  synth = PytorchDPSynthesizer(1.0, PATECTGAN(regularization='dragan'))
-  synth.fit(pums, categorical_columns=list(pums.columns), transformer=BaseTransformer)
-
-  sample = synth.sample(10) # synthesize 10 rows
-  print(sample)
+  synth = Synthesizer.create("patectgan", epsilon=3.0, verbose=True)
+  synth.fit(pums, preprocessor_eps=1.0)
+  pums_synth = synth.sample(1000)
 
 
 Parameters
