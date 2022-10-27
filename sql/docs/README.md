@@ -19,7 +19,7 @@ open build/html/index.html
 
 ## Deployment
 
-Docs are deployed to http://docs.martnoise.org using GitHub Actions.
+Docs are deployed to http://docs.smartnoise.org using GitHub Actions.
 
 
 ## Join the Discussion
