@@ -1,6 +1,6 @@
 import numpy as np
 from opendp.mod import enable_features
-from opendp.meas import make_base_laplace
+from opendp.measurements import make_base_laplace
 
 def quantile(vals, alpha, epsilon, lower, upper):
     """Estimate the quantile.

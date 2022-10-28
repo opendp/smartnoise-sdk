@@ -1,8 +1,8 @@
 from snsynth.transform.definitions import ColumnType
 from .base import CachingColumnTransformer
 from opendp.mod import enable_features, binary_search_param
-from opendp.trans import make_sized_bounded_mean, make_sized_bounded_variance, make_clamp, make_bounded_resize
-from opendp.meas import make_base_laplace
+from opendp.transformations import make_sized_bounded_mean, make_sized_bounded_variance, make_clamp, make_bounded_resize
+from opendp.measurements import make_base_laplace
 from snsql.sql._mechanisms.approx_bounds import approx_bounds
 from snsql.sql.privacy import Privacy
 import numpy as np

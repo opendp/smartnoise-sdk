@@ -1,11 +1,11 @@
 import math
 
-from opendp.trans import make_bounded_sum, make_clamp
+from opendp.transformations import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
-from opendp.meas import make_base_discrete_gaussian, make_base_gaussian
+from opendp.measurements import make_base_discrete_gaussian, make_base_gaussian
 from opendp.accuracy import gaussian_scale_to_accuracy
-from opendp.comb import make_zCDP_to_approxDP, make_fix_delta
+from opendp.combinators import make_zCDP_to_approxDP, make_fix_delta
 from .normal import _normal_dist_inv_cdf
 
 class DiscreteGaussian(AdditiveNoiseMechanism):
