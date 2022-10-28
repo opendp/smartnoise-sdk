@@ -1,3 +1,7 @@
+# SmartNoise Synth v0.3.2 Release Notes
+
+* Update to OpenDP v0.6
+
 # SmartNoise Synth v0.3.1 Release Notes
 
 * Update PAC-Synth to v0.6

@@ -1,3 +1,7 @@
+# SmartNoise SQL v0.2.6 Release Notes
+
+* Update to use OpenDP v0.6
+
 # SmartNoise SQL v0.2.5 Release Notes
 
 * Update to use OpenDP v0.5, support for Mac Silicon

@@ -1,9 +1,9 @@
 import math
 
-from opendp.trans import make_bounded_sum, make_clamp
+from opendp.transformations import make_bounded_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
-from opendp.meas import make_base_laplace
+from opendp.measurements import make_base_laplace
 from opendp.accuracy import laplacian_scale_to_accuracy
 
 class Laplace(AdditiveNoiseMechanism):
