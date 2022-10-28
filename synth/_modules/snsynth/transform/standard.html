@@ -154,8 +154,8 @@
 <span></span><span class="kn">from</span> <span class="nn">snsynth.transform.definitions</span> <span class="kn">import</span> <span class="n">ColumnType</span>
 <span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">CachingColumnTransformer</span>
 <span class="kn">from</span> <span class="nn">opendp.mod</span> <span class="kn">import</span> <span class="n">enable_features</span><span class="p">,</span> <span class="n">binary_search_param</span>
-<span class="kn">from</span> <span class="nn">opendp.trans</span> <span class="kn">import</span> <span class="n">make_sized_bounded_mean</span><span class="p">,</span> <span class="n">make_sized_bounded_variance</span><span class="p">,</span> <span class="n">make_clamp</span><span class="p">,</span> <span class="n">make_bounded_resize</span>
-<span class="kn">from</span> <span class="nn">opendp.meas</span> <span class="kn">import</span> <span class="n">make_base_laplace</span>
+<span class="kn">from</span> <span class="nn">opendp.transformations</span> <span class="kn">import</span> <span class="n">make_sized_bounded_mean</span><span class="p">,</span> <span class="n">make_sized_bounded_variance</span><span class="p">,</span> <span class="n">make_clamp</span><span class="p">,</span> <span class="n">make_bounded_resize</span>
+<span class="kn">from</span> <span class="nn">opendp.measurements</span> <span class="kn">import</span> <span class="n">make_base_laplace</span>
 <span class="kn">from</span> <span class="nn">snsql.sql._mechanisms.approx_bounds</span> <span class="kn">import</span> <span class="n">approx_bounds</span>
 <span class="kn">from</span> <span class="nn">snsql.sql.privacy</span> <span class="kn">import</span> <span class="n">Privacy</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
