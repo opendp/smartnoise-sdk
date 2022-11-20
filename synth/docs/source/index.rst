@@ -12,7 +12,7 @@ Getting Started
 
 Create a synthesizer with the ``Synthesizer.create()`` method, passing in the name of the sythesizer you want to create, along with a privacy budget and any synthesizer-specific hyperparameters.  To see a list of available synthesizers, use the ``Synthesizer.list_synthesizers()`` method or read the `Synthesizer Reference <synthesizers/index.html>`_.
 
-Each synthesizer has a ``fit()`` method that fits the synthesizer to a private data set, and a ``sample()`` method that generates synthetic data from the fitted synthesizer.  Each synthesizer also has a ``fit_sample()`` helper method that combines the ``fit()`` and ``sample()`` methods into a single call.
+Each synthesizer has a ``fit()`` method that fits the synthesizer to a private data set, and a ``sample()`` method that generates synthetic data from the fitted synthesizer.  Each synthesizer also has a ``fit_sample()`` helper method that combines the ``fit()`` and ``sample()`` methods into a single call. By using the ``sample_conditional()`` method one can generate samples that satisfy certain conditions. It performs rejection sampling and can enable analytics without prior retention of the synthetic data.
 
 .. code-block:: python
 
@@ -25,6 +25,9 @@ Each synthesizer has a ``fit()`` method that fits the synthesizer to a private d
   synth = Synthesizer.create('mwem', epsilon=1.0)
   sample = synth.fit_sample(pums)
   print(sample)
+
+  sample_conditional = synth.sample_conditional(100, "age < 50 AND income > 1000")
+  print(sample_conditional)
 
 Preprocessing Privacy Budget
 ----------------------------
