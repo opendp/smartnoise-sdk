@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 
 from snsynth.transform.table import TableTransformer
+from snsql.sql.parse import QueryParser
+
 
 class SDGYMBaseSynthesizer:
     def fit(
@@ -214,3 +216,111 @@ class Synthesizer(SDGYMBaseSynthesizer):
             return synth_class(epsilon=epsilon, *args, **kwargs)
         else:
             raise ValueError('Synthesizer must be a string or a class')
+
+    @staticmethod
+    def _evaluate_condition(samples, query_condition, valid_samples, column_names):
+        """
+        Evaluates every sample with the given condition.
+        If a sample is valid, it will be appended to the list of valid samples.
+
+        :param samples: Data set containing generated data samples.
+        :type samples: iterable, required
+        :param query_condition: Condition to evaluate.
+        :type query_condition: snsql._ast.tokens.SqlExpr, required
+        :param valid_samples: List of valid data samples.
+        :type valid_samples: list[pd.Series, np.ndarray, or tuples], required
+        :param column_names: List of column names, used if ``samples`` is not a pd.DataFrame.
+        :type column_names: list[str], required
+        """
+        if isinstance(samples, pd.DataFrame):
+            for _, sample in samples.iterrows():
+                if query_condition.evaluate(sample):
+                    valid_samples.append(sample)
+        else:
+            for sample in samples:
+                try:  # check if the sample is iterable
+                    iter(sample)
+                except TypeError:  # else wrap the single value in a list
+                    sample = [sample]
+                bindings = dict(zip(column_names, sample))
+                if query_condition.evaluate(bindings):
+                    valid_samples.append(sample)
+
+    def sample_conditional(self, n_rows, condition, max_tries=100, column_names=None):
+        """
+        Generates a synthetic dataset that satisfies the given condition.
+        Performs a rejection sampling process where up to ``max_tries`` batches are sampled.
+        If not enough valid data samples are found the partial dataset is returned.
+
+        :param n_rows: Number of rows to sample.
+        :type n_rows: int, required
+        :param condition: Condition to evaluate. Needs to be a valid SQL WHERE clause e.g. "age < 50 AND income > 1000".
+        :type condition: str, required
+        :param max_tries: Number of times to retry sampling until enough are generated. Defaults to 100.
+        :type max_tries: int, optional
+        :param column_names: List of column names, required if ``samples`` is not a pd.DataFrame.
+        :type column_names: list[str], optional
+        :return: Data set containing the generated data samples.
+        :rtype: pd.DataFrame, np.ndarray, or list of tuples
+        """
+        if n_rows < 1:
+            raise ValueError(f"Please provide a value >= 1 for `n_rows`")
+
+        if max_tries < 1:
+            raise ValueError(f"Please provide a value >= 1 for `max_tries`")
+
+        try:
+            query = QueryParser().query(f"SELECT * FROM DUMMY WHERE {condition}")
+            query_condition = query.where.condition
+        except ValueError as e:
+            raise ValueError(
+                f"Could not parse `condition` {condition}. Please provide a valid WHERE clause"
+            ) from e
+
+        samples = self.sample(n_rows)
+        if not isinstance(samples, pd.DataFrame) and column_names is None:
+            raise ValueError(
+                f"Please provide `column_names` for samples of type {type(samples)}"
+            )
+
+        valid_samples = []
+        valid_total = 0
+        n_sample = n_rows
+        tries = 1
+
+        while valid_total < n_rows:
+            valid_before = valid_total
+            try:
+                self._evaluate_condition(
+                    samples, query_condition, valid_samples, column_names
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f"Could not evaluate `condition` {condition}. Please make sure to use valid column names"
+                ) from e
+
+            valid_total = len(valid_samples)
+
+            valid_current = valid_total - valid_before
+            valid_rate = max(valid_current, 1) / max(
+                n_sample, 1
+            )  # can decrease unnecessary sampling
+
+            remaining = n_rows - valid_total
+            n_sample = min(10 * n_rows, int(remaining / valid_rate))
+
+            tries += 1
+            if tries >= max_tries or n_sample < 1:
+                break
+            samples = self.sample(n_sample)
+
+        max_length = min(valid_total, n_rows)
+        valid_samples = valid_samples[:max_length]
+        if isinstance(samples, pd.DataFrame):
+            return pd.DataFrame(
+                data=valid_samples, index=pd.RangeIndex(stop=max_length)
+            ).astype(samples.dtypes)
+        elif isinstance(samples, np.ndarray):
+            return np.array(valid_samples)
+        else:
+            return valid_samples
