@@ -167,6 +167,35 @@ If this argument is not provided, the synthesizer will attempt to infer the most
     print(f"DPCTGAN inferred a onehot transformer with {dpctgan._transformer.output_width} columns")
 
 
+Anonymize personally identifiable information (PII)
+------------------------
+
+To prevent leakage of sensitive information PII can be anonymized by generating fake data. The ``AnonymizationTransformer`` can be used with builtin methods of the `Faker <https://github.com/joke2k/faker>`_ library or with a custom callable. By default, existing values are discarded and new values will be generated during inverse transformation. If ``fake_inbound=True`` is provided, the new values are injected during transformation.
+
+.. code-block:: python
+
+    import random
+    from snsynth.transform import *
+
+    # example data set with columns: user ID, email, age
+    pii_data = [(1, "email_1", 29), (2, "email_2", 42), (3, "email_3", 18)]
+
+    tt = TableTransformer([
+        AnonymizationTransformer(lambda: random.randint(0, 1_000)),  # generate random user ID
+        AnonymizationTransformer("email"),  # fake email
+        ChainTransformer([
+            AnonymizationTransformer(lambda: random.randint(0, 100), fake_inbound=True),  # generate random age
+            MinMaxTransformer(lower=0, upper=100)  # then use another transformer
+        ])
+    ])
+
+    pii_data_transformed = tt.fit_transform(pii_data)
+    assert all(len(t) == 1 for t in pii_data_transformed)  # only the faked age column could be used by a synthesizer
+
+    pii_data_inversed = tt.inverse_transform(pii_data_transformed)
+    assert all(a != b for a, b in zip(pii_data, pii_data_inversed))
+
+
 TableTransformer API
 ====================
 
@@ -217,3 +246,8 @@ ClampTransformer
 ----------------
 
 .. autoclass:: snsynth.transform.clamp.ClampTransformer
+
+AnonymizationTransformer
+----------------
+
+.. autoclass:: snsynth.transform.anonymization.AnonymizationTransformer
