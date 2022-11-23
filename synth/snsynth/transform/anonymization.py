@@ -41,7 +41,9 @@ class AnonymizationTransformer(ColumnTransformer):
         try:
             self._generate_fake_data()
         except TypeError as e:
-            raise ValueError(f"Provided arguments {args} and {kwargs} are invalid for `fake` {fake}") from e
+            raise ValueError(
+                f"Provided arguments {args} and {kwargs} are invalid for `fake` {fake}"
+            ) from e
 
     def _get_faker_builtin(self, fake, faker_setup, *args, **kwargs):
         """
@@ -63,7 +65,9 @@ class AnonymizationTransformer(ColumnTransformer):
             try:
                 self.faker = Faker(**faker_setup)
             except Exception as e:
-                raise ValueError(f"Provided `faker_setup` {faker_setup} is invalid") from e
+                raise ValueError(
+                    f"Provided `faker_setup` {faker_setup} is invalid"
+                ) from e
         else:
             self.faker = Faker()
 
@@ -109,10 +113,12 @@ class AnonymizationTransformer(ColumnTransformer):
         if idx is None:
             return [self._transform(val) for val in data]
         else:
-            return [row[:idx] + row[idx + 1:] for row in data]
+            return [row[:idx] + row[idx + 1 :] for row in data]
 
     def inverse_transform(self, data, idx=None):
         if idx is None:
             return [self._inverse_transform(val) for val in data]
         else:
-            return [row[:idx] + (self._inverse_transform(None),) + row[idx:] for row in data]
+            return [
+                row[:idx] + (self._inverse_transform(None),) + row[idx:] for row in data
+            ]
