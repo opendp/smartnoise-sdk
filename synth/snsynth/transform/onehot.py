@@ -27,6 +27,9 @@ class OneHotEncoder(ColumnTransformer):
     def _transform(self, val):
         if self.max < 0 or not self._fit_complete:
             raise ValueError("OneHotEncoder has not been fit yet.")
+        elif self.max == 0:
+            return 1
+
         bits = [0] * (self.max + 1)
         bits[val] = 1
         return tuple(bits)

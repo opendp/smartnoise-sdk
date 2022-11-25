@@ -30,7 +30,15 @@ class TestOneHot:
         assert(ohe.output_width == 3)
         cat_decoded = ohe.inverse_transform(cat_encoded)
         assert(all([a == b for a, b in zip(categories, cat_decoded)]))
-
+    def test_onehot_single_val(self):
+        ohe = OneHotEncoder()
+        data = [0]
+        ohe.fit(data)
+        assert(ohe.output_width == 1)
+        data_encoded = ohe.transform(data)
+        assert data_encoded[0] == 1
+        data_decoded = ohe.inverse_transform(data_encoded)
+        assert data_decoded == data
 
 
 
