@@ -1,3 +1,10 @@
+# SmartNoise Synth v0.3.3 Release Notes
+
+* Support for conditional sampling
+* Fix bug with onehot encoding on single-category column
+
+Thanks to @neat-web for both contributions!
+
 # SmartNoise Synth v0.3.2 Release Notes
 
 * Update to OpenDP v0.6
