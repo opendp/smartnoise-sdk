@@ -27,6 +27,11 @@ class OneHotEncoder(ColumnTransformer):
     def _transform(self, val):
         if self.max < 0 or not self._fit_complete:
             raise ValueError("OneHotEncoder has not been fit yet.")
+        elif val < 0 or val > self.max:
+            raise ValueError(
+                f"Provided integer-label {val} is invalid."
+                " Please ensure that all inputs are 0-based and provided during data fit."
+            )
         elif self.max == 0:
             return 1
 
