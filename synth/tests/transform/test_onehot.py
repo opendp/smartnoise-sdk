@@ -1,5 +1,5 @@
+import pytest
 import seaborn as sns
-import numpy as np
 from snsynth.transform.label import LabelTransformer
 from snsynth.transform.onehot import OneHotEncoder
 
@@ -40,6 +40,14 @@ class TestOneHot:
         data_decoded = ohe.inverse_transform(data_encoded)
         assert data_decoded == data
 
+    def test_invalid_val(self):
+        ohe = OneHotEncoder()
+        ohe.fit([0])
+        for data in [[-1], [-0.1], [0.1], [1]]:
+            with pytest.raises(ValueError, match="label.*?invalid"):
+                ohe.transform(data)
 
-
-
+    def test_not_fit(self):
+        ohe = OneHotEncoder()
+        with pytest.raises(ValueError, match="not.*?fit"):
+            ohe.transform([0])
