@@ -42,14 +42,19 @@ class PostgresReader(SqlReader):
         cnxn = self.conn
         if cnxn is None:
             cnxn = self.api.connect(self.connection_string)
-        cursor = cnxn.cursor()
-        cursor.execute(str(query))
-        if cursor.description is None:
-            return []
-        else:
-            col_names = [tuple(desc[0] for desc in cursor.description)]
-            rows = [row for row in cursor]
-            return col_names + rows
+        try:
+            cursor = cnxn.cursor()
+            cursor.execute(str(query))
+            cnxn.commit()
+            if cursor.description is None:
+                return []
+            else:
+                col_names = [tuple(desc[0] for desc in cursor.description)]
+                rows = [row for row in cursor]
+                return col_names + rows
+        except Exception as e:
+            cnxn.commit()
+            raise e
 
     def _update_connection_string(self):
         self.connection_string = "user='{0}' host='{1}'".format(self.user, self.host)
