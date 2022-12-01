@@ -9,7 +9,7 @@ from .standard import StandardScaler
 from .clamp import ClampTransformer
 from .log import LogTransformer
 from .table import NoTransformer
-
+from .anonymization import AnonymizationTransformer
 __all__ = [
     "TableTransformer", 
     "OneHotEncoder", 
@@ -21,5 +21,6 @@ __all__ = [
     "StandardScaler",
     "LogTransformer",
     "ClampTransformer",
-    "NoTransformer"
+    "NoTransformer",
+    "AnonymizationTransformer"
     ]

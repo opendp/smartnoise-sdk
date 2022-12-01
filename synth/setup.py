@@ -18,7 +18,8 @@ install_requires = \
 ['opacus>=0.14.0,<0.15.0',
  'opendp>=0.6.0,<0.7.0',
  'pac-synth>=0.0.6,<0.0.7',
- 'smartnoise-sql>=0.2.6,<0.3.0']
+ 'smartnoise-sql>=0.2.6,<0.3.0',
+ 'Faker>=15.0.0']
 
 setup_kwargs = {
     'name': 'smartnoise-synth',

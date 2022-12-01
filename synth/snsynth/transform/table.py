@@ -5,6 +5,8 @@ import warnings
 from snsql.sql.odometer import OdometerHeterogeneous
 from snsql.sql.privacy import Privacy
 from sqlalchemy import null
+
+from .anonymization import AnonymizationTransformer
 from snsynth.transform.type_map import TypeMap
 
 class TableTransformer:
@@ -109,7 +111,9 @@ class TableTransformer:
     def _transform(self, row):
         out_row = []
         for v, t in zip(row, self.transformers):
-            if t.output_width == 1:
+            if isinstance(t, AnonymizationTransformer) and not t.fake_inbound:
+                pass  # don't include any values if we wish to anonymize with inverse transformation
+            elif t.output_width == 1:
                 out_row.append(t._transform(v))
             else:
                 for out_v in t._transform(v):
