@@ -53,7 +53,7 @@ class PostgresReader(SqlReader):
                 rows = [row for row in cursor]
                 return col_names + rows
         except Exception as e:
-            cnxn.commit()
+            cnxn.rollback()
             raise e
 
     def _update_connection_string(self):
