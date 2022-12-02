@@ -7,148 +7,812 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>Data Transformers &#8212; OpenDP SmartNoise Synthesizers</title>
-    
-  <link href="../_static/css/theme.css" rel="stylesheet">
-  <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
 
-    
+  
   <link rel="stylesheet"
-    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+    href="../_static/vendor/fontawesome/6.1.2/css/all.min.css">
   <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+    href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+    href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
 
-    
-      
-
-    
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/blank.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
-    
-  <link rel="preload" as="script" href="../_static/js/index.be7d3bbb2ef33a8344ce.js">
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b">
 
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'transforms/index';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="Quailified Architecture to Improve Labeling (QUAIL)" href="../synthesizers/quail.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
-
-    <!-- Google Analytics -->
-    
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="None">
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
-    
-    <div class="container-fluid" id="banner"></div>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
 
-    
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
 
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fas fa-bars"></span>
+  </label>
   <div id="navbar-start">
     
     
+   
 
-<a class="navbar-brand" href="http://docs.smartnoise.org">
-  <img src="../_static/smartnoise-logo.svg" class="logo" alt="logo">
+
+<a class="navbar-brand logo" href="http://docs.smartnoise.org">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../_static/smartnoise-logo.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../_static/smartnoise-logo.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
 </a>
-
-
     
   </div>
 
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
   
-  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+  <div class="col-lg-9 navbar-header-items">
     <div id="navbar-center" class="mr-auto">
       
       <div class="navbar-center-item">
-        <ul id="navbar-main-elements" class="navbar-nav">
-    <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../synthesizers/index.html">
-  Synthesizers Index
- </a>
-</li>
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../synthesizers/index.html">
+                        Synthesizer Reference
+                    </a>
+                </li>
+                
 
-<li class="toctree-l1 current active nav-item">
- <a class="current reference internal nav-link" href="#">
-  Data Transformers Index
- </a>
-</li>
-
-    
-</ul>
+                <li class="nav-item current active">
+                    <a class="nav-link" href="#">
+                        Data Transformers
+                    </a>
+                </li>
+                
+    </ul>
+</nav>
       </div>
       
     </div>
 
     <div id="navbar-end">
+      <div class="navbar-end-item navbar-end__search-button-container">
+        
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search">
+  <i class="fas fa-search"></i>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <span class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
       
       <div class="navbar-end-item">
         <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
         <li class="nav-item">
-          <a class="nav-link" href="https://github.com/opendp/smartnoise-sdk" rel="noopener" target="_blank" title="GitHub">
-            <span><i class="fab fa-github-square"></i></span>
-            <label class="sr-only">GitHub</label>
-          </a>
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/smartnoise-sdk" title="GitHub" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="https://twitter.com/opendp_org" rel="noopener" target="_blank" title="Twitter">
-            <span><i class="fab fa-twitter-square"></i></span>
-            <label class="sr-only">Twitter</label>
-          </a>
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/opendp_org" title="Twitter" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="https://github.com/opendp/opendp/discussions" rel="noopener" target="_blank" title="GitHub Discussions">
-            <span><i class="far fa-comments"></i></span>
-            <label class="sr-only">GitHub Discussions</label>
-          </a>
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/opendp/discussions" title="GitHub Discussions" class="nav-link" rel="noopener" target="_blank"><span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label></a>
         </li>
       </ul>
       </div>
       
     </div>
   </div>
+
+
+  
+  <div class="search-button-container--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search">
+  <i class="fas fa-search"></i>
+</button>
+  </div>
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fas fa-outdent"></span>
+  </label>
+  
+
 </div>
-    </nav>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../synthesizers/index.html">
+                        Synthesizer Reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item current active">
+                    <a class="nav-link" href="#">
+                        Data Transformers
+                    </a>
+                </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
     
 
-    <div class="container-xl">
-      <div class="row">
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <span class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
           
-            
-            <!-- Only show if we have sidebars configured, else just a small margin  -->
-            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-  <div class="bd-toc-item active">
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/smartnoise-sdk" title="GitHub" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/opendp_org" title="Twitter" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/opendp/discussions" title="GitHub Discussions" class="nav-link" rel="noopener" target="_blank"><span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
     
   </div>
-</nav>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item">
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+      </div>
+      <main class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
             </div>
             
-          
-
-          
-          <div class="d-none d-xl-block col-xl-2 bd-toc">
             
+            <article class="bd-article" role="main">
               
-              <div class="toc-item">
-                
-<div class="tocsection onthispage pt-5 pb-3">
+  <section id="data-transformers">
+<h1>Data Transformers<a class="headerlink" href="#data-transformers" title="Permalink to this headline">#</a></h1>
+<div class="contents local topic" id="table-of-contents">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#using-data-transformers" id="id1">Using Data Transformers</a></p>
+<ul>
+<li><p><a class="reference internal" href="#inferring-a-tabletransformer" id="id2">Inferring a TableTransformer</a></p></li>
+<li><p><a class="reference internal" href="#inferring-bounds-for-continuous-columns" id="id3">Inferring Bounds for Continuous Columns</a></p></li>
+<li><p><a class="reference internal" href="#declaring-a-tabletransformer" id="id4">Declaring a TableTransformer</a></p></li>
+<li><p><a class="reference internal" href="#default-tabletransformer" id="id5">Default TableTransformer</a></p></li>
+<li><p><a class="reference internal" href="#anonymize-personally-identifiable-information-pii" id="id6">Anonymize personally identifiable information (PII)</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#tabletransformer-api" id="id7">TableTransformer API</a></p></li>
+<li><p><a class="reference internal" href="#column-transformers-reference" id="id8">Column Transformers Reference</a></p>
+<ul>
+<li><p><a class="reference internal" href="#labeltransformer" id="id9">LabelTransformer</a></p></li>
+<li><p><a class="reference internal" href="#onehotencoder" id="id10">OneHotEncoder</a></p></li>
+<li><p><a class="reference internal" href="#minmaxtransformer" id="id11">MinMaxTransformer</a></p></li>
+<li><p><a class="reference internal" href="#standardscaler" id="id12">StandardScaler</a></p></li>
+<li><p><a class="reference internal" href="#bintransformer" id="id13">BinTransformer</a></p></li>
+<li><p><a class="reference internal" href="#logtransformer" id="id14">LogTransformer</a></p></li>
+<li><p><a class="reference internal" href="#chaintransformer" id="id15">ChainTransformer</a></p></li>
+<li><p><a class="reference internal" href="#clamptransformer" id="id16">ClampTransformer</a></p></li>
+<li><p><a class="reference internal" href="#anonymizationtransformer" id="id17">AnonymizationTransformer</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>All synthesizers take an optional <code class="docutils literal notranslate"><span class="pre">transformer</span></code> argument, which accepts a <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> object.  The transformer is used to transform the data before synthesis and then reverse the transformation after synthesis.  A <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> manages a list of <code class="docutils literal notranslate"><span class="pre">ColumnTransformer</span></code> objects, one for each column in the table.  Multiple transformations of a column can be chained together with a <code class="docutils literal notranslate"><span class="pre">ChainTransformer</span></code>.</p>
+<section id="using-data-transformers">
+<h2><a class="toc-backref" href="#id1">Using Data Transformers</a><a class="headerlink" href="#using-data-transformers" title="Permalink to this headline">#</a></h2>
+<section id="inferring-a-tabletransformer">
+<h3><a class="toc-backref" href="#id2">Inferring a TableTransformer</a><a class="headerlink" href="#inferring-a-tabletransformer" title="Permalink to this headline">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">create</span></code> factory method can be used to create a <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> based on a data set, which can be a pandas dataframe, a numpy array, or a list of tuples.  The following exmaple creates a transformer that converts categorical columns to one-hot encoding.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;gan&#39;</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
+<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
+
+<span class="c1"># 26 columns in one-hot encodind</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">26</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pums</span><span class="p">))</span>
+
+<span class="c1"># round-trip</span>
+<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The default one-hot style is useful for neural networks, but is wasteful for cube-style synthesizer, such as MWEW, MST, and PAC-SYNTH.  The <code class="docutils literal notranslate"><span class="pre">style</span></code> argument can be used to specify a different style.  The following example creates a transformer that converts categorical columns into sequential label encoding.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;cube&#39;</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
+<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
+
+<span class="c1"># 4 columns in sequential label encoding</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pums</span><span class="p">))</span>
+
+<span class="c1"># round-trip</span>
+<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="inferring-bounds-for-continuous-columns">
+<h3><a class="toc-backref" href="#id3">Inferring Bounds for Continuous Columns</a><a class="headerlink" href="#inferring-bounds-for-continuous-columns" title="Permalink to this headline">#</a></h3>
+<p>In the examples above, we used only categorical columns, since continuous values need a min and max value to be transformed.  The <code class="docutils literal notranslate"><span class="pre">create</span></code> method can infer the min and max values from the data set.  Inferring the min and max requires some privacy budget, specified by the <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> argument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
+<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">cat_cols</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;income&#39;</span><span class="p">)</span>
+<span class="n">cat_cols</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;age&#39;</span><span class="p">)</span>
+
+<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;cube&#39;</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">,</span> <span class="n">continuous_columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">,</span> <span class="s1">&#39;income&#39;</span><span class="p">])</span>
+<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+
+<span class="c1"># 6 columns in sequential label encoding</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pums</span><span class="p">))</span>
+
+<span class="c1"># round-trip</span>
+<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pums</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;We used </span><span class="si">{</span><span class="n">tt</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="si">}</span><span class="s2"> when fitting the transformer&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="declaring-a-tabletransformer">
+<h3><a class="toc-backref" href="#id4">Declaring a TableTransformer</a><a class="headerlink" href="#declaring-a-tabletransformer" title="Permalink to this headline">#</a></h3>
+<p>In the above example, the transformer used some privacy budget to infer approximate bounds for the two continuous columns.  When bounds are known in advance, this is wasteful and can impact the accuracy of the synthesizer.  In most non-trivial cases, you will want to specify your <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> declaratively:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
+
+<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="p">([</span>
+    <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">70</span><span class="p">),</span> <span class="c1"># age</span>
+    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># sex</span>
+    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># educ</span>
+    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># race</span>
+    <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">420000</span><span class="p">),</span> <span class="c1"># income</span>
+    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># married</span>
+<span class="p">])</span>
+
+<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
+
+<span class="c1"># no privacy budget used</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span> <span class="o">==</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+
+<span class="c1"># round-trip</span>
+<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pums</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+</pre></div>
+</div>
+<p>Individual column transformers can be chained together with a <code class="docutils literal notranslate"><span class="pre">ChainTransformer</span></code>.  For example, we might want to convert each categorical column to a sequential label encoding, but then convert the resulting columns to one-hot encoding.  And we might want to log-transform the income column.  The following example shows how to do this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
+
+<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="p">([</span>
+    <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">70</span><span class="p">),</span> <span class="c1"># age</span>
+    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># sex</span>
+    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># educ</span>
+    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># race</span>
+    <span class="n">ChainTransformer</span><span class="p">([</span>
+        <span class="n">LogTransformer</span><span class="p">(),</span>
+        <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">420000</span><span class="p">))</span> <span class="c1"># income</span>
+    <span class="p">]),</span>
+    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># married</span>
+<span class="p">])</span>
+
+<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
+
+<span class="c1"># no privacy budget used</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span> <span class="o">==</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+
+<span class="c1"># round-trip</span>
+<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pums</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+</pre></div>
+</div>
+</section>
+<section id="default-tabletransformer">
+<h3><a class="toc-backref" href="#id5">Default TableTransformer</a><a class="headerlink" href="#default-tabletransformer" title="Permalink to this headline">#</a></h3>
+<p>If this argument is not provided, the synthesizer will attempt to infer the most appropriate transformer to map the data into the format expected by the synthesizer.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.pytorch.nn</span> <span class="kn">import</span> <span class="n">DPCTGAN</span>
+<span class="kn">from</span> <span class="nn">snsynth.mwem</span> <span class="kn">import</span> <span class="n">MWEMSynthesizer</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="n">pums_csv_path</span> <span class="o">=</span> <span class="s2">&quot;PUMS.csv&quot;</span>
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">pums_csv_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
+<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+<span class="n">mwem</span> <span class="o">=</span> <span class="n">MWEMSynthesizer</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">mwem</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MWEM inferred a cube transformer with </span><span class="si">{</span><span class="n">mwem</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span><span class="si">}</span><span class="s2"> columns&quot;</span><span class="p">)</span>
+
+<span class="n">dpctgan</span> <span class="o">=</span> <span class="n">DPCTGAN</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">dpctgan</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DPCTGAN inferred a onehot transformer with </span><span class="si">{</span><span class="n">dpctgan</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span><span class="si">}</span><span class="s2"> columns&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="anonymize-personally-identifiable-information-pii">
+<h3><a class="toc-backref" href="#id6">Anonymize personally identifiable information (PII)</a><a class="headerlink" href="#anonymize-personally-identifiable-information-pii" title="Permalink to this headline">#</a></h3>
+<p>To prevent leakage of sensitive information PII can be anonymized by generating fake data. The <code class="docutils literal notranslate"><span class="pre">AnonymizationTransformer</span></code> can be used with builtin methods of the <a class="reference external" href="https://github.com/joke2k/faker">Faker</a> library or with a custom callable. By default, existing values are discarded and new values will be generated during inverse transformation. If <code class="docutils literal notranslate"><span class="pre">fake_inbound=True</span></code> is provided, the new values are injected during transformation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">snsynth.transform</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># example data set with columns: user ID, email, age</span>
+<span class="n">pii_data</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;email_1&quot;</span><span class="p">,</span> <span class="mi">29</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;email_2&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;email_3&quot;</span><span class="p">,</span> <span class="mi">18</span><span class="p">)]</span>
+
+<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="p">([</span>
+    <span class="n">AnonymizationTransformer</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">)),</span>  <span class="c1"># generate random user ID</span>
+    <span class="n">AnonymizationTransformer</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">),</span>  <span class="c1"># fake email</span>
+    <span class="n">ChainTransformer</span><span class="p">([</span>
+        <span class="n">AnonymizationTransformer</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">fake_inbound</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>  <span class="c1"># generate random age</span>
+        <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>  <span class="c1"># then use another transformer</span>
+    <span class="p">])</span>
+<span class="p">])</span>
+
+<span class="n">pii_data_transformed</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pii_data</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">pii_data_transformed</span><span class="p">)</span>  <span class="c1"># only the faked age column could be used by a synthesizer</span>
+
+<span class="n">pii_data_inversed</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pii_data_transformed</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span> <span class="o">!=</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pii_data</span><span class="p">,</span> <span class="n">pii_data_inversed</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="tabletransformer-api">
+<h2><a class="toc-backref" href="#id7">TableTransformer API</a><a class="headerlink" href="#tabletransformer-api" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.table.</span></span><span class="sig-name descname"><span class="pre">TableTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Transforms a table of data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transformers</strong> – a list of transformers, one per column</p></li>
+<li><p><strong>odometer</strong> – an optional odometer to use to track privacy spent when fitting the data</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.cardinality">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">cardinality</span></span><a class="headerlink" href="#snsynth.transform.table.TableTransformer.cardinality" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns the cardinality of each output column.  Returns None for continuous columns.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.create">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gan'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ordinal_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuous_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">special_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.create" title="Permalink to this definition">#</a></dt>
+<dd><p>Creates a transformer from data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.fit" title="Permalink to this definition">#</a></dt>
+<dd><p>Fits the transformer to the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – a table represented as a list of tuples, a numpy.ndarray, or a pandas DataFrame</p></li>
+<li><p><strong>epsilon</strong> – the privacy budget to spend fitting the data</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.fit_complete">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">fit_complete</span></span><a class="headerlink" href="#snsynth.transform.table.TableTransformer.fit_complete" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns True if the transformer has been fit.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.fit_transform">
+<span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.fit_transform" title="Permalink to this definition">#</a></dt>
+<dd><p>Fits the transformer to the data, then transforms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>a list of tuples</em><em>, </em><em>a numpy.ndarray</em><em>, or </em><em>a pandas DataFrame</em>) – tabular data to transform</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – the privacy budget to spend fitting the data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the transformed data</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>a list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.needs_epsilon">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">needs_epsilon</span></span><a class="headerlink" href="#snsynth.transform.table.TableTransformer.needs_epsilon" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns True if the transformer needs to spend privacy budget when fitting.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.transform" title="Permalink to this definition">#</a></dt>
+<dd><p>Transforms the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>a list of tuples</em><em>, </em><em>a numpy.ndarray</em><em>, or </em><em>a pandas DataFrame</em>) – tabular data to transform</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the transformed data</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>a list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.table.NoTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.table.</span></span><span class="sig-name descname"><span class="pre">NoTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#NoTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.NoTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>A pass-through table transformer that does nothing.  Note that the <code class="docutils literal notranslate"><span class="pre">transform</span></code> and <code class="docutils literal notranslate"><span class="pre">inverse_transform</span></code> methods
+will simply return the data that is passed in, rather than transforming to and from a list of tuples.  This transformer
+is suitable when you know that your input data is exactly what is needed for a specific synthesizer, and
+you want to skip all pre-processing steps.  If you want a passthrough transformer that is slightly more
+adaptable to multiple synthesizers, you can make a new <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> with a list of <code class="docutils literal notranslate"><span class="pre">IdentityTransformer</span></code>
+column transformers.</p>
+</dd></dl>
+
+</section>
+<section id="column-transformers-reference">
+<h2><a class="toc-backref" href="#id8">Column Transformers Reference</a><a class="headerlink" href="#column-transformers-reference" title="Permalink to this headline">#</a></h2>
+<section id="labeltransformer">
+<h3><a class="toc-backref" href="#id9">LabelTransformer</a><a class="headerlink" href="#labeltransformer" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.label.LabelTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.label.</span></span><span class="sig-name descname"><span class="pre">LabelTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/label.html#LabelTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.label.LabelTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Transforms categorical values into integer-indexed labels.  Labels will be sorted if possible,
+so that the output can be used as an ordinal.  The indices will be 0-based.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>nullable</strong> – If null values are expected, a second output will be generated indicating null.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="onehotencoder">
+<h3><a class="toc-backref" href="#id10">OneHotEncoder</a><a class="headerlink" href="#onehotencoder" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.onehot.OneHotEncoder">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.onehot.</span></span><span class="sig-name descname"><span class="pre">OneHotEncoder</span></span><a class="reference internal" href="../_modules/snsynth/transform/onehot.html#OneHotEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.onehot.OneHotEncoder" title="Permalink to this definition">#</a></dt>
+<dd><p>Transforms integer-labeled data into one-hot encoding.  Inputs are assumed to be 0-based.
+To convert from unstructured categorical data, chain with LabelTransformer first.</p>
+</dd></dl>
+
+</section>
+<section id="minmaxtransformer">
+<h3><a class="toc-backref" href="#id11">MinMaxTransformer</a><a class="headerlink" href="#minmaxtransformer" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.minmax.MinMaxTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.minmax.</span></span><span class="sig-name descname"><span class="pre">MinMaxTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/minmax.html#MinMaxTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.minmax.MinMaxTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Transforms a column of values to scale between -1.0 and +1.0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lower</strong> – The minimum value to scale to.</p></li>
+<li><p><strong>upper</strong> – The maximum value to scale to.</p></li>
+<li><p><strong>negative</strong> – If True, scale between -1.0 and 1.0.  Otherwise, scale between 0.0 and 1.0.</p></li>
+<li><p><strong>epsilon</strong> – The privacy budget to use to infer bounds, if none provided.</p></li>
+<li><p><strong>nullable</strong> – If null values are expected, a second output will be generated indicating null.</p></li>
+<li><p><strong>odometer</strong> – The optional odometer to use to track privacy budget.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="standardscaler">
+<h3><a class="toc-backref" href="#id12">StandardScaler</a><a class="headerlink" href="#standardscaler" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.standard.StandardScaler">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.standard.</span></span><span class="sig-name descname"><span class="pre">StandardScaler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/standard.html#StandardScaler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.standard.StandardScaler" title="Permalink to this definition">#</a></dt>
+<dd><p>Transforms a column of values to scale with mean centered on 0 and unit variance.
+Some privacy budget is always used to estimate the mean and variance.  If upper and lower
+are not supplied, the budget will also be used to estimate the bounds of the column.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lower</strong> – The minimum value to scale to.</p></li>
+<li><p><strong>upper</strong> – The maximum value to scale to.</p></li>
+<li><p><strong>epsilon</strong> – The privacy budget to use.</p></li>
+<li><p><strong>nullable</strong> – Whether the column can contain null values.  If True, the output will be a tuple of (value, null_flag).</p></li>
+<li><p><strong>odometer</strong> – The optional privacy odometer to use to track privacy budget spent.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="bintransformer">
+<h3><a class="toc-backref" href="#id13">BinTransformer</a><a class="headerlink" href="#bintransformer" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.bin.BinTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.bin.</span></span><span class="sig-name descname"><span class="pre">BinTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/bin.html#BinTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.bin.BinTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Transforms continuous values into a discrete set of bins.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bins</strong> – The number of bins to create.</p></li>
+<li><p><strong>lower</strong> – The minimum value to scale to.</p></li>
+<li><p><strong>upper</strong> – The maximum value to scale to.</p></li>
+<li><p><strong>epsilon</strong> – The privacy budget to use to infer bounds, if none provided.</p></li>
+<li><p><strong>nullable</strong> – If null values are expected, a second output will be generated indicating null.</p></li>
+<li><p><strong>odometer</strong> – The optional odometer to use to track privacy budget.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="logtransformer">
+<h3><a class="toc-backref" href="#id14">LogTransformer</a><a class="headerlink" href="#logtransformer" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.log.LogTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.log.</span></span><span class="sig-name descname"><span class="pre">LogTransformer</span></span><a class="reference internal" href="../_modules/snsynth/transform/log.html#LogTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.log.LogTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Logarithmic transformation of values.  Useful for transforming skewed data.</p>
+</dd></dl>
+
+</section>
+<section id="chaintransformer">
+<h3><a class="toc-backref" href="#id15">ChainTransformer</a><a class="headerlink" href="#chaintransformer" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.chain.ChainTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.chain.</span></span><span class="sig-name descname"><span class="pre">ChainTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/chain.html#ChainTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.chain.ChainTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Sequentially process a column through multiple transforms.  When reversed,
+the inverse transforms are applied in reverse order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>transforms</strong> – A list of ColumnTransformers to apply sequentially.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="clamptransformer">
+<h3><a class="toc-backref" href="#id16">ClampTransformer</a><a class="headerlink" href="#clamptransformer" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.clamp.ClampTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.clamp.</span></span><span class="sig-name descname"><span class="pre">ClampTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/clamp.html#ClampTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.clamp.ClampTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Clamps values to be within a specified range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lower</strong> – The minimum value to scale to.  If None, no lower bound is applied.</p></li>
+<li><p><strong>upper</strong> – The maximum value to scale to.  If None, no upper bound is applied.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="anonymizationtransformer">
+<h3><a class="toc-backref" href="#id17">AnonymizationTransformer</a><a class="headerlink" href="#anonymizationtransformer" title="Permalink to this headline">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="snsynth.transform.anonymization.AnonymizationTransformer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.anonymization.</span></span><span class="sig-name descname"><span class="pre">AnonymizationTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fake</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faker_setup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inbound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/anonymization.html#AnonymizationTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.anonymization.AnonymizationTransformer" title="Permalink to this definition">#</a></dt>
+<dd><p>Transformer that can be used to anonymize personally identifiable information (PII) or other values.
+By default, the existing values are discarded during transformation and not used by a synthesizer.
+During inverse transformation new values will be generated according to the specified <code class="docutils literal notranslate"><span class="pre">fake</span></code>.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">fake_inbound</span></code> is true, the new values will be injected during transformation and passed through on inverse.
+This might be useful for e.g. operation in a ChainTransformer.</p>
+<p>Beware that the provided <code class="docutils literal notranslate"><span class="pre">fake</span></code> is called once to verify that the provided (keyword) arguments are valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fake</strong> (<em>str</em><em> or </em><em>callable</em><em>, </em><em>required</em>) – Text reference to Faker method (e.g. ‘email’) or custom callable</p></li>
+<li><p><strong>args</strong> (<em>args</em><em>, </em><em>optional</em>) – Arguments for the method</p></li>
+<li><p><strong>faker_setup</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary with keyword arguments for Faker initialization e.g. {‘locale’: ‘de_DE’}</p></li>
+<li><p><strong>fake_inbound</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defaults to False.</p></li>
+<li><p><strong>kwargs</strong> (<em>kwargs</em><em>, </em><em>optional</em>) – Keyword arguments for the method</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="../synthesizers/quail.html" title="previous page">
+      <i class="fas fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">Quailified Architecture to Improve Labeling (QUAIL)</p>
+      </div>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
     <i class="fas fa-list"></i> On this page
 </div>
-
-<nav id="bd-toc-nav">
+<nav id="bd-toc-nav" class="page-toc">
     <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#using-data-transformers">
@@ -173,6 +837,11 @@
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#default-tabletransformer">
      Default TableTransformer
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#anonymize-personally-identifiable-information-pii">
+     Anonymize personally identifiable information (PII)
     </a>
    </li>
   </ul>
@@ -227,478 +896,72 @@
      ClampTransformer
     </a>
    </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#anonymizationtransformer">
+     AnonymizationTransformer
+    </a>
+   </li>
   </ul>
  </li>
 </ul>
 
 </nav>
-              </div>
-              
-              <div class="toc-item">
-                
-              </div>
-              
-            
-          </div>
-          
-
-          
-          
-            
-          
-          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
-              
-              <div>
-                
-  <section id="data-transformers">
-<h1>Data Transformers<a class="headerlink" href="#data-transformers" title="Permalink to this headline">¶</a></h1>
-<div class="contents local topic" id="table-of-contents">
-<p class="topic-title">Table of Contents</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#using-data-transformers" id="id1">Using Data Transformers</a></p>
-<ul>
-<li><p><a class="reference internal" href="#inferring-a-tabletransformer" id="id2">Inferring a TableTransformer</a></p></li>
-<li><p><a class="reference internal" href="#inferring-bounds-for-continuous-columns" id="id3">Inferring Bounds for Continuous Columns</a></p></li>
-<li><p><a class="reference internal" href="#declaring-a-tabletransformer" id="id4">Declaring a TableTransformer</a></p></li>
-<li><p><a class="reference internal" href="#default-tabletransformer" id="id5">Default TableTransformer</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#tabletransformer-api" id="id6">TableTransformer API</a></p></li>
-<li><p><a class="reference internal" href="#column-transformers-reference" id="id7">Column Transformers Reference</a></p>
-<ul>
-<li><p><a class="reference internal" href="#labeltransformer" id="id8">LabelTransformer</a></p></li>
-<li><p><a class="reference internal" href="#onehotencoder" id="id9">OneHotEncoder</a></p></li>
-<li><p><a class="reference internal" href="#minmaxtransformer" id="id10">MinMaxTransformer</a></p></li>
-<li><p><a class="reference internal" href="#standardscaler" id="id11">StandardScaler</a></p></li>
-<li><p><a class="reference internal" href="#bintransformer" id="id12">BinTransformer</a></p></li>
-<li><p><a class="reference internal" href="#logtransformer" id="id13">LogTransformer</a></p></li>
-<li><p><a class="reference internal" href="#chaintransformer" id="id14">ChainTransformer</a></p></li>
-<li><p><a class="reference internal" href="#clamptransformer" id="id15">ClampTransformer</a></p></li>
-</ul>
-</li>
-</ul>
 </div>
-<p>All synthesizers take an optional <code class="docutils literal notranslate"><span class="pre">transformer</span></code> argument, which accepts a <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> object.  The transformer is used to transform the data before synthesis and then reverse the transformation after synthesis.  A <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> manages a list of <code class="docutils literal notranslate"><span class="pre">ColumnTransformer</span></code> objects, one for each column in the table.  Multiple transformations of a column can be chained together with a <code class="docutils literal notranslate"><span class="pre">ChainTransformer</span></code>.</p>
-<section id="using-data-transformers">
-<h2><a class="toc-backref" href="#id1">Using Data Transformers</a><a class="headerlink" href="#using-data-transformers" title="Permalink to this headline">¶</a></h2>
-<section id="inferring-a-tabletransformer">
-<h3><a class="toc-backref" href="#id2">Inferring a TableTransformer</a><a class="headerlink" href="#inferring-a-tabletransformer" title="Permalink to this headline">¶</a></h3>
-<p>The <code class="docutils literal notranslate"><span class="pre">create</span></code> factory method can be used to create a <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> based on a data set, which can be a pandas dataframe, a numpy array, or a list of tuples.  The following exmaple creates a transformer that converts categorical columns to one-hot encoding.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
 
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-
-<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;gan&#39;</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
-<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
-
-<span class="c1"># 26 columns in one-hot encodind</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">26</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pums</span><span class="p">))</span>
-
-<span class="c1"># round-trip</span>
-<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">))</span>
-</pre></div>
+<div class="toc-item">
+  
 </div>
-<p>The default one-hot style is useful for neural networks, but is wasteful for cube-style synthesizer, such as MWEW, MST, and PAC-SYNTH.  The <code class="docutils literal notranslate"><span class="pre">style</span></code> argument can be used to specify a different style.  The following example creates a transformer that converts categorical columns into sequential label encoding.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
 
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-
-<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;cube&#39;</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
-<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
-
-<span class="c1"># 4 columns in sequential label encoding</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pums</span><span class="p">))</span>
-
-<span class="c1"># round-trip</span>
-<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">))</span>
-</pre></div>
-</div>
-</section>
-<section id="inferring-bounds-for-continuous-columns">
-<h3><a class="toc-backref" href="#id3">Inferring Bounds for Continuous Columns</a><a class="headerlink" href="#inferring-bounds-for-continuous-columns" title="Permalink to this headline">¶</a></h3>
-<p>In the examples above, we used only categorical columns, since continuous values need a min and max value to be transformed.  The <code class="docutils literal notranslate"><span class="pre">create</span></code> method can infer the min and max values from the data set.  Inferring the min and max requires some privacy budget, specified by the <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> argument.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform.table</span> <span class="kn">import</span> <span class="n">TableTransformer</span>
-
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-<span class="n">cat_cols</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;income&#39;</span><span class="p">)</span>
-<span class="n">cat_cols</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;age&#39;</span><span class="p">)</span>
-
-<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;cube&#39;</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">,</span> <span class="n">continuous_columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">,</span> <span class="s1">&#39;income&#39;</span><span class="p">])</span>
-<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
-
-<span class="c1"># 6 columns in sequential label encoding</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pums</span><span class="p">))</span>
-
-<span class="c1"># round-trip</span>
-<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pums</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;We used </span><span class="si">{</span><span class="n">tt</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span><span class="si">}</span><span class="s2"> when fitting the transformer&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="declaring-a-tabletransformer">
-<h3><a class="toc-backref" href="#id4">Declaring a TableTransformer</a><a class="headerlink" href="#declaring-a-tabletransformer" title="Permalink to this headline">¶</a></h3>
-<p>In the above example, the transformer used some privacy budget to infer approximate bounds for the two continuous columns.  When bounds are known in advance, this is wasteful and can impact the accuracy of the synthesizer.  In most non-trivial cases, you will want to specify your <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> declaratively:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform</span> <span class="kn">import</span> <span class="o">*</span>
-
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-
-<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="p">([</span>
-    <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">70</span><span class="p">),</span> <span class="c1"># age</span>
-    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># sex</span>
-    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># educ</span>
-    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># race</span>
-    <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">420000</span><span class="p">),</span> <span class="c1"># income</span>
-    <span class="n">LabelTransformer</span><span class="p">(),</span> <span class="c1"># married</span>
-<span class="p">])</span>
-
-<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
-
-<span class="c1"># no privacy budget used</span>
-<span class="k">assert</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span> <span class="o">==</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-
-<span class="c1"># round-trip</span>
-<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pums</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
-</pre></div>
-</div>
-<p>Individual column transformers can be chained together with a <code class="docutils literal notranslate"><span class="pre">ChainTransformer</span></code>.  For example, we might want to convert each categorical column to a sequential label encoding, but then convert the resulting columns to one-hot encoding.  And we might want to log-transform the income column.  The following example shows how to do this:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.transform</span> <span class="kn">import</span> <span class="o">*</span>
-
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;PUMS.csv&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-
-<span class="n">tt</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="p">([</span>
-    <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">70</span><span class="p">),</span> <span class="c1"># age</span>
-    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># sex</span>
-    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># educ</span>
-    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># race</span>
-    <span class="n">ChainTransformer</span><span class="p">([</span>
-        <span class="n">LogTransformer</span><span class="p">(),</span>
-        <span class="n">MinMaxTransformer</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">420000</span><span class="p">))</span> <span class="c1"># income</span>
-    <span class="p">]),</span>
-    <span class="n">ChainTransformer</span><span class="p">([</span><span class="n">LabelTransformer</span><span class="p">(),</span> <span class="n">OneHotEncoder</span><span class="p">()]),</span> <span class="c1"># married</span>
-<span class="p">])</span>
-
-<span class="n">pums_encoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pums</span><span class="p">)</span>
-
-<span class="c1"># no privacy budget used</span>
-<span class="k">assert</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">odometer</span><span class="o">.</span><span class="n">spent</span> <span class="o">==</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-
-<span class="c1"># round-trip</span>
-<span class="n">pums_decoded</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">pums_encoded</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pums</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">pums_decoded</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
-</pre></div>
-</div>
-</section>
-<section id="default-tabletransformer">
-<h3><a class="toc-backref" href="#id5">Default TableTransformer</a><a class="headerlink" href="#default-tabletransformer" title="Permalink to this headline">¶</a></h3>
-<p>If this argument is not provided, the synthesizer will attempt to infer the most appropriate transformer to map the data into the format expected by the synthesizer.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">snsynth.pytorch.nn</span> <span class="kn">import</span> <span class="n">DPCTGAN</span>
-<span class="kn">from</span> <span class="nn">snsynth.mwem</span> <span class="kn">import</span> <span class="n">MWEMSynthesizer</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-
-<span class="n">pums_csv_path</span> <span class="o">=</span> <span class="s2">&quot;PUMS.csv&quot;</span>
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">pums_csv_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># in datasets/</span>
-<span class="n">pums</span> <span class="o">=</span> <span class="n">pums</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pums</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-
-<span class="n">mwem</span> <span class="o">=</span> <span class="n">MWEMSynthesizer</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-<span class="n">mwem</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MWEM inferred a cube transformer with </span><span class="si">{</span><span class="n">mwem</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span><span class="si">}</span><span class="s2"> columns&quot;</span><span class="p">)</span>
-
-<span class="n">dpctgan</span> <span class="o">=</span> <span class="n">DPCTGAN</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-<span class="n">dpctgan</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="o">=</span><span class="n">cat_cols</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DPCTGAN inferred a onehot transformer with </span><span class="si">{</span><span class="n">dpctgan</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span><span class="si">}</span><span class="s2"> columns&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="tabletransformer-api">
-<h2><a class="toc-backref" href="#id6">TableTransformer API</a><a class="headerlink" href="#tabletransformer-api" title="Permalink to this headline">¶</a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.table.</span></span><span class="sig-name descname"><span class="pre">TableTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms a table of data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>transformers</strong> – a list of transformers, one per column</p></li>
-<li><p><strong>odometer</strong> – an optional odometer to use to track privacy spent when fitting the data</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.cardinality">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">cardinality</span></span><a class="headerlink" href="#snsynth.transform.table.TableTransformer.cardinality" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the cardinality of each output column.  Returns None for continuous columns.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.create">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gan'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ordinal_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuous_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.create" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a transformer from data.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fits the transformer to the data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> – a table represented as a list of tuples, a numpy.ndarray, or a pandas DataFrame</p></li>
-<li><p><strong>epsilon</strong> – the privacy budget to spend fitting the data</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.fit_complete">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">fit_complete</span></span><a class="headerlink" href="#snsynth.transform.table.TableTransformer.fit_complete" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns True if the transformer has been fit.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.fit_transform">
-<span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.fit_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fits the transformer to the data, then transforms.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>a list of tuples</em><em>, </em><em>a numpy.ndarray</em><em>, or </em><em>a pandas DataFrame</em>) – tabular data to transform</p></li>
-<li><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – the privacy budget to spend fitting the data</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>the transformed data</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>a list of tuples</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.needs_epsilon">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">needs_epsilon</span></span><a class="headerlink" href="#snsynth.transform.table.TableTransformer.needs_epsilon" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns True if the transformer needs to spend privacy budget when fitting.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="snsynth.transform.table.TableTransformer.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#TableTransformer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.TableTransformer.transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms the data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>a list of tuples</em><em>, </em><em>a numpy.ndarray</em><em>, or </em><em>a pandas DataFrame</em>) – tabular data to transform</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>the transformed data</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>a list of tuples</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.table.NoTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.table.</span></span><span class="sig-name descname"><span class="pre">NoTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/table.html#NoTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.table.NoTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>A pass-through table transformer that does nothing.  Note that the <code class="docutils literal notranslate"><span class="pre">transform</span></code> and <code class="docutils literal notranslate"><span class="pre">inverse_transform</span></code> methods
-will simply return the data that is passed in, rather than transforming to and from a list of tuples.  This transformer
-is suitable when you know that your input data is exactly what is needed for a specific synthesizer, and
-you want to skip all pre-processing steps.  If you want a passthrough transformer that is slightly more
-adaptable to multiple synthesizers, you can make a new <code class="docutils literal notranslate"><span class="pre">TableTransformer</span></code> with a list of <code class="docutils literal notranslate"><span class="pre">IdentityTransformer</span></code>
-column transformers.</p>
-</dd></dl>
-
-</section>
-<section id="column-transformers-reference">
-<h2><a class="toc-backref" href="#id7">Column Transformers Reference</a><a class="headerlink" href="#column-transformers-reference" title="Permalink to this headline">¶</a></h2>
-<section id="labeltransformer">
-<h3><a class="toc-backref" href="#id8">LabelTransformer</a><a class="headerlink" href="#labeltransformer" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.label.LabelTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.label.</span></span><span class="sig-name descname"><span class="pre">LabelTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/label.html#LabelTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.label.LabelTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms categorical values into integer-indexed labels.  Labels will be sorted if possible,
-so that the output can be used as an ordinal.  The indices will be 0-based.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>nullable</strong> – If null values are expected, a second output will be generated indicating null.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="onehotencoder">
-<h3><a class="toc-backref" href="#id9">OneHotEncoder</a><a class="headerlink" href="#onehotencoder" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.onehot.OneHotEncoder">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.onehot.</span></span><span class="sig-name descname"><span class="pre">OneHotEncoder</span></span><a class="reference internal" href="../_modules/snsynth/transform/onehot.html#OneHotEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.onehot.OneHotEncoder" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms integer-labeled data into one-hot encoding.  Inputs are assumed to be 0-based.
-To convert from unstructured categorical data, chain with LabelTransformer first.</p>
-</dd></dl>
-
-</section>
-<section id="minmaxtransformer">
-<h3><a class="toc-backref" href="#id10">MinMaxTransformer</a><a class="headerlink" href="#minmaxtransformer" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.minmax.MinMaxTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.minmax.</span></span><span class="sig-name descname"><span class="pre">MinMaxTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/minmax.html#MinMaxTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.minmax.MinMaxTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms a column of values to scale between -1.0 and +1.0.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lower</strong> – The minimum value to scale to.</p></li>
-<li><p><strong>upper</strong> – The maximum value to scale to.</p></li>
-<li><p><strong>negative</strong> – If True, scale between -1.0 and 1.0.  Otherwise, scale between 0.0 and 1.0.</p></li>
-<li><p><strong>epsilon</strong> – The privacy budget to use to infer bounds, if none provided.</p></li>
-<li><p><strong>nullable</strong> – If null values are expected, a second output will be generated indicating null.</p></li>
-<li><p><strong>odometer</strong> – The optional odometer to use to track privacy budget.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="standardscaler">
-<h3><a class="toc-backref" href="#id11">StandardScaler</a><a class="headerlink" href="#standardscaler" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.standard.StandardScaler">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.standard.</span></span><span class="sig-name descname"><span class="pre">StandardScaler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/standard.html#StandardScaler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.standard.StandardScaler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms a column of values to scale with mean centered on 0 and unit variance.
-Some privacy budget is always used to estimate the mean and variance.  If upper and lower
-are not supplied, the budget will also be used to estimate the bounds of the column.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lower</strong> – The minimum value to scale to.</p></li>
-<li><p><strong>upper</strong> – The maximum value to scale to.</p></li>
-<li><p><strong>epsilon</strong> – The privacy budget to use.</p></li>
-<li><p><strong>nullable</strong> – Whether the column can contain null values.  If True, the output will be a tuple of (value, null_flag).</p></li>
-<li><p><strong>odometer</strong> – The optional privacy odometer to use to track privacy budget spent.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="bintransformer">
-<h3><a class="toc-backref" href="#id12">BinTransformer</a><a class="headerlink" href="#bintransformer" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.bin.BinTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.bin.</span></span><span class="sig-name descname"><span class="pre">BinTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nullable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/bin.html#BinTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.bin.BinTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms continuous values into a discrete set of bins.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>bins</strong> – The number of bins to create.</p></li>
-<li><p><strong>lower</strong> – The minimum value to scale to.</p></li>
-<li><p><strong>upper</strong> – The maximum value to scale to.</p></li>
-<li><p><strong>epsilon</strong> – The privacy budget to use to infer bounds, if none provided.</p></li>
-<li><p><strong>nullable</strong> – If null values are expected, a second output will be generated indicating null.</p></li>
-<li><p><strong>odometer</strong> – The optional odometer to use to track privacy budget.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="logtransformer">
-<h3><a class="toc-backref" href="#id13">LogTransformer</a><a class="headerlink" href="#logtransformer" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.log.LogTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.log.</span></span><span class="sig-name descname"><span class="pre">LogTransformer</span></span><a class="reference internal" href="../_modules/snsynth/transform/log.html#LogTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.log.LogTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Logarithmic transformation of values.  Useful for transforming skewed data.</p>
-</dd></dl>
-
-</section>
-<section id="chaintransformer">
-<h3><a class="toc-backref" href="#id14">ChainTransformer</a><a class="headerlink" href="#chaintransformer" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.chain.ChainTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.chain.</span></span><span class="sig-name descname"><span class="pre">ChainTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/chain.html#ChainTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.chain.ChainTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sequentially process a column through multiple transforms.  When reversed,
-the inverse transforms are applied in reverse order.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>transforms</strong> – A list of ColumnTransformers to apply sequentially.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="clamptransformer">
-<h3><a class="toc-backref" href="#id15">ClampTransformer</a><a class="headerlink" href="#clamptransformer" title="Permalink to this headline">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="snsynth.transform.clamp.ClampTransformer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.transform.clamp.</span></span><span class="sig-name descname"><span class="pre">ClampTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/transform/clamp.html#ClampTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.transform.clamp.ClampTransformer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clamps values to be within a specified range.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lower</strong> – The minimum value to scale to.  If None, no lower bound is applied.</p></li>
-<li><p><strong>upper</strong> – The maximum value to scale to.  If None, no upper bound is applied.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-</section>
-</section>
-
-
-              </div>
-              
-              
-              <!-- Previous / next buttons -->
-<div class='prev-next-area'> 
-    <a class='left-prev' id="prev-link" href="../synthesizers/quail.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Quailified Architecture to Improve Labeling (QUAIL)</p>
-        </div>
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../_sources/transforms/index.rst.txt">
+        <i class="fas fa-file-alt"></i> Show Source
     </a>
 </div>
-              
-          </main>
-          
 
-      </div>
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
     </div>
+  </div>
+
   
-  <script src="../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
-<footer class="footer mt-5 mt-md-0">
-  <div class="container">
     
-    <div class="footer-item">
-      <p class="copyright">
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
     &copy; Copyright 2022.<br>
+
 </p>
-    </div>
+
+  </div>
+  
+  <div class="footer-item">
     
-    <div class="footer-item">
-      <p class="sphinx-version">
+<p class="sphinx-version">
 Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.1.2.<br>
 </p>
-    </div>
-    
+
   </div>
-</footer>
+  
+</div>
+  </footer>
   </body>
 </html>
