@@ -168,7 +168,7 @@ If this argument is not provided, the synthesizer will attempt to infer the most
 
 
 Anonymize personally identifiable information (PII)
-------------------------
+---------------------------------------------------
 
 To prevent leakage of sensitive information PII can be anonymized by generating fake data. The ``AnonymizationTransformer`` can be used with builtin methods of the `Faker <https://github.com/joke2k/faker>`_ library or with a custom callable. By default, existing values are discarded and new values will be generated during inverse transformation. If ``fake_inbound=True`` is provided, the new values are injected during transformation.
 
@@ -248,6 +248,6 @@ ClampTransformer
 .. autoclass:: snsynth.transform.clamp.ClampTransformer
 
 AnonymizationTransformer
-----------------
+------------------------
 
 .. autoclass:: snsynth.transform.anonymization.AnonymizationTransformer

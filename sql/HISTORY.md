@@ -1,3 +1,7 @@
+# SmartNoise SQL v0.2.7 Release Notes
+
+* Fix Postgres Reader to rollback on failed transaction (thanks, @FishmanL!)
+
 # SmartNoise SQL v0.2.6 Release Notes
 
 * Update to use OpenDP v0.6
