@@ -75,7 +75,9 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
 html_theme_options = {
-    "logo_link": "http://docs.smartnoise.org",
+    "logo": {
+        "link": "http://docs.smartnoise.org"
+    },
     "icon_links": [
         {
             "name": "GitHub Discussions",
@@ -85,9 +87,6 @@ html_theme_options = {
     ],
     "twitter_url": "https://twitter.com/opendp_org",
     "github_url": "https://github.com/opendp/smartnoise-sdk"
-}
-
-html_theme_options = {
 }
 html_theme = 'pydata_sphinx_theme'
 
