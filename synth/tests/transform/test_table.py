@@ -1,6 +1,7 @@
 import seaborn as sns
 import numpy as np
 import pandas as pd
+import pytest
 
 from snsynth.transform.label import LabelTransformer
 from snsynth.transform.onehot import OneHotEncoder
@@ -11,6 +12,7 @@ from snsynth.transform.minmax import MinMaxTransformer
 from snsynth.transform.log import LogTransformer
 from snsynth.transform.bin import BinTransformer
 from snsynth.transform.identity import IdentityTransformer
+from snsynth.transform.anonymization import AnonymizationTransformer
 
 iris = sns.load_dataset('iris')
 print(iris.describe())
@@ -184,4 +186,53 @@ class TestTableTransform:
         pums_decoded = tt.inverse_transform(pums_encoded)
         for a, b in zip(pums_iter, pums_decoded):
             assert(all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in zip(a, b)]))
-            
+    def test_anon_id(self):
+        pums = pd.read_csv(pums_csv_path) # load with pid
+        tt = TableTransformer([
+            StandardScaler(nullable=True),
+            ChainTransformer([LabelTransformer(), OneHotEncoder()]),
+            ChainTransformer([LabelTransformer(), OneHotEncoder()]),
+            ChainTransformer([LabelTransformer(), OneHotEncoder()]),
+            StandardScaler(nullable=True),
+            ChainTransformer([LabelTransformer(), OneHotEncoder()]),
+            AnonymizationTransformer('ssn'),
+        ])
+        tt.fit(pums, epsilon=4.0)
+        pums_encoded = tt.transform(pums)
+        pums_decoded = tt.inverse_transform(pums_encoded)
+        income = pums_decoded['income'].mean()
+        assert(income > 25000 and income < 45000)
+    def test_anon_all_but_one(self):
+        pums = pd.read_csv(pums_csv_path) # load with pid
+        tt = TableTransformer([
+            AnonymizationTransformer('ssn'),
+            AnonymizationTransformer('date_time'),
+            AnonymizationTransformer('address'),
+            AnonymizationTransformer('name'),
+            StandardScaler(nullable=True),
+            AnonymizationTransformer('email'),
+            AnonymizationTransformer('ssn')
+        ])
+        tt.fit(pums, epsilon=4.0)
+        pums_encoded = tt.transform(pums)
+        assert(len(pums_encoded[5]) == 2)
+        pums_decoded = tt.inverse_transform(pums_encoded)
+        income = pums_decoded['income'].mean()
+        assert(income > 25000 and income < 45000)
+        assert(len(pums.columns == len(pums_decoded.columns)))
+    def test_anon_all(self):
+        tt = TableTransformer([
+            AnonymizationTransformer('ssn'),
+            AnonymizationTransformer('date_time'),
+            AnonymizationTransformer('address'),
+            AnonymizationTransformer('name'),
+            AnonymizationTransformer('ssn'),
+            AnonymizationTransformer('ssn'),
+        ])
+        with pytest.warns(UserWarning):
+            tt.fit(pums, epsilon=4.0)
+        assert(tt.output_width == 0)
+        pums_encoded = tt.transform(pums)
+        assert(len(pums_encoded[5]) == 0)
+        pums_decoded = tt.inverse_transform(pums_encoded)
+        assert(len(pums_decoded.columns) == len(pums.columns))

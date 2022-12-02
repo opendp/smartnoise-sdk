@@ -74,7 +74,7 @@ class MinMaxTransformer(CachingColumnTransformer):
         if not self.fit_complete:
             raise ValueError("MinMaxTransformer has not been fit yet.")
         if self.nullable and (val is None or isinstance(val, float) and np.isnan(val)):
-            return (None, 1)
+            return (0.0, 1)
         else:
             val = self.fit_lower if val < self.fit_lower else val
             val = self.fit_upper if val > self.fit_upper else val

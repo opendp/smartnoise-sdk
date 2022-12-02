@@ -81,7 +81,7 @@ class AnonymizationTransformer(ColumnTransformer):
 
     @property
     def output_type(self):
-        return ColumnType.CONTINUOUS
+        return ColumnType.UNBOUNDED
 
     @property
     def cardinality(self):
