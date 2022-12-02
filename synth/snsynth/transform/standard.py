@@ -48,7 +48,7 @@ class StandardScaler(CachingColumnTransformer):
         if self.scaler is None:
             if self.epsilon is None or self.epsilon == 0.0:
                 raise ValueError("StandardScaler requires epsilon to estimate mean and variance.")
-            self._fit_vals = [v for v in self._fit_vals if v is not None and not (isinstance(v, float) and np.isnan(v))]
+            self._fit_vals = [float(v) for v in self._fit_vals if v is not None and not (isinstance(v, float) and np.isnan(v))]
             # set bounds
             if self.upper is None or self.lower is None:
                 bounds_eps = self.epsilon / 2
@@ -99,7 +99,7 @@ class StandardScaler(CachingColumnTransformer):
         if not self.fit_complete:
             raise ValueError("StandardScaler has not been fit yet.")
         if self.nullable and (val is None or isinstance(val, float) and np.isnan(val)):
-            return (None, 1)
+            return (0.0, 1)
         else:
             val = (val - self.mean) / np.sqrt(self.var)
         if self.nullable:

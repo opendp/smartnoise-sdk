@@ -74,6 +74,8 @@ class TableTransformer:
         for t in self.transformers:
             t._fit_finish()
         self._fit_finish()
+        if self.output_width == 0:
+            warnings.warn("No columns were selected for output.  This may be because all columns were anonymized.")
     def _fit(self, row):
         for v, t in zip(row, self.transformers):
             t._fit(v)
@@ -156,25 +158,25 @@ class TableTransformer:
 
     # factory methods
     @classmethod
-    def from_column_names(cls, column_names, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[]):
-        transformers = TypeMap.get_transformers(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
+    def from_column_names(cls, column_names, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}):
+        transformers = TypeMap.get_transformers(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types)
         return cls(transformers)
     @classmethod
-    def from_pandas(cls, df, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[]):
-        return cls.from_column_names(df.columns, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
+    def from_pandas(cls, df, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}):
+        return cls.from_column_names(df.columns, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types)
     @classmethod
-    def from_list(cls, data, style='gan', *ignore, nullable=False, header=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[]):
+    def from_list(cls, data, style='gan', *ignore, nullable=False, header=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}):
         if not header:
             column_names = list(range(len(data[0])))
         else:
             column_names = data[0]
-        return cls.from_column_names(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
+        return cls.from_column_names(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types)
     @classmethod
-    def from_numpy(cls, data, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[]):
+    def from_numpy(cls, data, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}):
         column_names = list(range(len(data[0])))
-        return cls.from_column_names(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
+        return cls.from_column_names(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types)
     @classmethod
-    def create(cls, data, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[]):
+    def create(cls, data, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}):
         """Creates a transformer from data.
         """
         if categorical_columns is None:
@@ -183,21 +185,24 @@ class TableTransformer:
             ordinal_columns = []
         if continuous_columns is None:
             continuous_columns = []
+        if special_types is None:
+            special_types = {}
         if len(continuous_columns) + len(ordinal_columns) + len(categorical_columns) == 0:
             inferred = TypeMap.infer_column_types(data)
             categorical_columns = inferred['categorical_columns']
             ordinal_columns = inferred['ordinal_columns']
             continuous_columns = inferred['continuous_columns']
+            special_types = dict(zip(inferred['columns'], inferred['pii']))
             if not nullable:
                 nullable = len(inferred['nullable_columns']) > 0
         all_specified = list(categorical_columns) + list(ordinal_columns) + list(continuous_columns)
         all_numeric = all([isinstance(c, int) for c in all_specified])
         if isinstance(data, pd.DataFrame):
-            return cls.from_pandas(data, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
+            return cls.from_pandas(data, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types)
         elif isinstance(data, np.ndarray):
-            return cls.from_numpy(data, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
+            return cls.from_numpy(data, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types)
         elif isinstance(data, list):
-            return cls.from_list(data, style=style, nullable=nullable, header=(not all_numeric), categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns)
+            return cls.from_list(data, style=style, nullable=nullable, header=(not all_numeric), categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types)
         else:
             raise ValueError(f"Unknown data type: {type(data)}")
 
