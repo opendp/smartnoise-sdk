@@ -1,3 +1,9 @@
+# SmartNoise Synth v0.3.4 Release Notes
+
+* Anonymizing transformer for PII (thanks, @neat-web!)
+* DateTime transformer
+* Fix MinMax and StandardScaler to replace null with 0.0 when indicator column present
+
 # SmartNoise Synth v0.3.3 Release Notes
 
 * Support for conditional sampling
