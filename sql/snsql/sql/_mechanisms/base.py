@@ -15,7 +15,7 @@ class AdditiveNoiseMechanism:
     """
 
     def __init__(
-        self, epsilon, *ignore, delta=0.0, sensitivity=None, max_contrib=1, upper=None, lower=None, mechanism, **kwargs
+        self, epsilon, *ignore, delta=0.0, sensitivity=None, max_contrib=1, upper=None, lower=None, mechanism, bit_depth=64, **kwargs
     ):
         """
         Initialize an additive noise mechanism.
@@ -35,6 +35,9 @@ class AdditiveNoiseMechanism:
         self.upper = upper
         self.lower = lower
         self.mechanism = mechanism
+        if bit_depth not in [32, 64]:
+            raise ValueError("bit_depth must be 32 or 64")
+        self.bit_depth = bit_depth
         self.scale = None
         if (upper is None or lower is None) and sensitivity is None:
             raise ValueError("Please pass upper and lower bounds, or pass sensitivity")

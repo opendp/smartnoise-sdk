@@ -1,10 +1,10 @@
 import math
-
 from opendp.transformations import make_bounded_sum, make_clamp
-from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
 from opendp.measurements import make_base_discrete_laplace
 from opendp.accuracy import laplacian_scale_to_accuracy
+from opendp.typing import set_default_int_type
+from .base import AdditiveNoiseMechanism, Mechanism
 
 class DiscreteLaplace(AdditiveNoiseMechanism):
     def __init__(
@@ -23,6 +23,8 @@ class DiscreteLaplace(AdditiveNoiseMechanism):
     def _compute_noise_scale(self):
         if self.scale is not None:
             return
+        bit_depth = self.bit_depth
+        set_default_int_type(f"i{bit_depth}")
         lower = self.lower
         upper = self.upper
         max_contrib = self.max_contrib
@@ -57,8 +59,12 @@ class DiscreteLaplace(AdditiveNoiseMechanism):
         return thresh
     def release(self, vals):
         enable_features('contrib')
+        bit_depth = self.bit_depth
+        set_default_int_type(f"i{bit_depth}")
         meas = make_base_discrete_laplace(self.scale)
         vals = [meas(int(round(v))) for v in vals]
         return vals
     def accuracy(self, alpha):
+        bit_depth = self.bit_depth
+        set_default_int_type(f"i{bit_depth}")
         return laplacian_scale_to_accuracy(self.scale, alpha)
