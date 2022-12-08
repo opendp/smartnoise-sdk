@@ -1,3 +1,7 @@
+# SmartNoise SQL v0.2.8 Release Notes
+
+* Fix bug where integer sums can overflow i32.  All engines default to 64-bit integers now.
+
 # SmartNoise SQL v0.2.7 Release Notes
 
 * Fix Postgres Reader to rollback on failed transaction (thanks, @FishmanL!)
