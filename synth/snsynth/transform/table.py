@@ -44,6 +44,8 @@ class TableTransformer:
         """Returns the cardinality of each output column.  Returns None for continuous columns."""
         cards = []
         for t in self.transformers:
+            if isinstance(t, DropTransformer) or isinstance(t, AnonymizationTransformer):
+                continue # don't include cardinality for the unbounded transformers
             for c in t.cardinality:
                 cards.append(c)
         return cards

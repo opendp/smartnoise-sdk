@@ -207,8 +207,6 @@ class CTGANSynthesizer(BaseSynthesizer):
                 transformed = self._gumbel_softmax(data[:, st:ed], tau=0.2)
                 data_t.append(transformed)
                 st = ed
-            else:
-                assert 0
 
         return torch.cat(data_t, dim=1)
 
