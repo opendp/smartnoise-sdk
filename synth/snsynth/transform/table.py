@@ -185,8 +185,34 @@ class TableTransformer:
         column_names = list(range(len(data[0])))
         return cls.from_column_names(column_names, style=style, nullable=nullable, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns, continuous_columns=continuous_columns, special_types=special_types, constraints=constraints)
     @classmethod
-    def create(cls, data, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}):
-        """Creates a transformer from data.
+    def create(cls, data, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}, constraints=None):
+        """
+        Creates a transformer for the given data. Infers all columns if the provided lists are empty.
+        Columns that are referenced in a constraint will be excluded from the inference.
+
+        :param data: The private data to construct a transformer for.
+        :type data: pd.DataFrame, np.ndarray, or list of tuples
+        :param style: The style influences the choice of ColumnTransformers. Can either be 'gan' or 'cube'.
+            Defaults to 'gan' which results in one-hot style.
+        :type style: string, optional
+        :param nullable: Whether to allow null values in the data. This is used as a hint when inferring transformers.
+            Defaults to False.
+        :type nullable: bool, optional
+        :param categorical_columns: List of column names or indixes to be treated as categorical columns, used as hint.
+        :type categorical_columns: list[], optional
+        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hint.
+        :type ordinal_columns: list[], optional
+        :param continuous_columns: List of column names or indices to be treated as continuous columns, used as hint.
+        :type continuous_columns: list[], optional
+        :param constraints: Dictionary that maps from column names or indixes to constraints.
+            There are multiple ways to specify a constraint.
+            It can be a ``ColumnTransformer`` object, type or class name.
+            Another possiblity is the string keyword 'drop' which enforces a ``DropTransformer``.
+            Also, a string alias for any of the lists like 'categorical' can be provided.
+            All other values e.g. a callable or Faker method will be passed into an ``AnonymizationTransformer``.
+        :type constraints: dict, optional
+        :returns: The transformer object
+        :rtype: TableTransformer
         """
         if categorical_columns is None:
             categorical_columns = []
