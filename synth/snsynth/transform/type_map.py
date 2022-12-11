@@ -2,7 +2,10 @@ import pandas as pd
 import numpy as np
 import warnings
 import re
+from snsynth import transform
 from snsynth.transform.anonymization import AnonymizationTransformer
+from snsynth.transform.base import ColumnTransformer
+from snsynth.transform.drop import DropTransformer
 from snsynth.transform.minmax import MinMaxTransformer
 from snsynth.transform.bin import BinTransformer
 from snsynth.transform.label import LabelTransformer
@@ -34,16 +37,33 @@ class TypeMap:
     def __init__(self):
         pass    
     @classmethod
-    def get_transformers(cls, column_names, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}):
+    def get_transformers(cls, column_names, style='gan', *ignore, nullable=False, categorical_columns=[], ordinal_columns=[], continuous_columns=[], special_types={}, constraints=None):
         if ordinal_columns is None:
             ordinal_columns = []
         if continuous_columns is None:
             continuous_columns = []
         if categorical_columns is None:
             categorical_columns = []
+        if constraints is None:
+            constraints = dict()
+
+        constrained_columns = set(constraints.keys())
+        for k, v in constraints.items(): # check if a string value is an alias for any of the lists
+            if isinstance(v, str) and v.lower() in {"categorical", "ordinal", "continuous"}:
+                if v.lower() == "categorical":
+                  categorical_columns.append(k)
+                elif v.lower() == "ordinal":
+                   ordinal_columns.append(k)
+                elif v.lower() == "continuous":
+                    continuous_columns.append(k)
+                constrained_columns.remove(k)
+
         transformers = []
         for col in list(column_names):
-            if col in special_types and special_types[col] is not None:
+            if col in constrained_columns:
+                transformer = cls._get_transformer(constraints[col])
+                transformers.append(transformer)
+            elif col in special_types and special_types[col] is not None:
                 stype = special_types[col]
                 if stype in ['email', 'ssn', 'uuid4']:
                     transformers.append(AnonymizationTransformer(stype))
@@ -94,7 +114,7 @@ class TypeMap:
                 else:
                     raise ValueError(f"Unknown style: {style}")
             else:
-                raise ValueError(f"Column in dataframe not specified as categorical, ordinal, or continuous: {col}")
+                raise ValueError(f"Column in dataframe not specified as categorical, ordinal, continuous or constraint: {col}")
         return transformers
     @classmethod
     def infer_column_types(cls, data, excluded_columns=None):
@@ -255,3 +275,40 @@ class TypeMap:
         if np.std(diffs) < 0.1 * np.mean(diffs):
             return True
         return False
+
+    @staticmethod
+    def _get_transformer(constraint):
+        """
+        Constructs a transformer object according to the given constraint.
+        Firstly, if the string is a keyword e.g. 'drop' the corresponding transformer is returned.
+        Secondly, the method tries to construct a transformer class from a string value.
+        Other values will be passed into an ``AnonymizationTransformer``.
+
+        :param constraint: Transformer to be used, a keyword / built-in Faker method
+        :type constraint: a ColumnTransformer object/type, a string, or a callable
+        :return: Transformer object
+        :rtype: ColumnTransformer
+        """
+        if isinstance(constraint, ColumnTransformer):
+            return constraint
+        elif isinstance(constraint, type) and issubclass(constraint, ColumnTransformer):
+            return constraint()
+        elif isinstance(constraint, str):
+            # firstly, check if column should be ignored completely
+            if constraint.lower() == "drop":
+                return DropTransformer()
+
+            # secondly, try to find a valid transformer class
+            try:
+                transformer_class = getattr(transform, constraint)
+                return transformer_class()
+            except AttributeError:
+                pass
+
+        # otherwise assume that e.g. a Faker method is given
+        try:
+            return AnonymizationTransformer(constraint)
+        except ValueError as e:
+            raise ValueError(
+                f"Provided `constraint` {constraint} is invalid. Please read the documentation about constraints."
+            ) from e
