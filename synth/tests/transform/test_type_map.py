@@ -1,7 +1,11 @@
 import datetime
 import random
 import uuid
+import numpy as np
 import pandas as pd
+import pytest
+
+from snsynth.transform import *
 from snsynth.transform.table import TableTransformer
 
 from snsynth.transform.type_map import TypeMap
@@ -52,3 +56,60 @@ class TestTypeMap:
         tt2 = TableTransformer.create(pums_decoded, style='cube')
         tt2.fit(pums_decoded, epsilon=4.0)
         assert(tt2.output_width == tt.output_width == 9)
+
+    def _test_infer_exclude_each_column(self, data, columns):
+        for col in columns:  # exclude each column once
+            expected_columns = columns.copy()
+            expected_columns.remove(col)
+
+            res = TypeMap.infer_column_types(data, excluded_columns=[col])
+            assert len(res["columns"]) == len(expected_columns)
+            assert res["columns"] == expected_columns
+
+    def test_infer_data_frame_exclude_column(self):
+        columns = ["a", "b", "c"]
+        df = pd.DataFrame(data=[[0, 8.15, "cat_1"]], columns=columns)
+
+        self._test_infer_exclude_each_column(df, columns)
+
+    def test_infer_tuples_and_ndarray_exclude_column(self):
+        tuples = [(0, 8.15, "cat_1")]
+        ndarray = np.array(tuples)
+        columns = list(range(len(tuples[0])))
+
+        self._test_infer_exclude_each_column(tuples, columns)
+        self._test_infer_exclude_each_column(ndarray, columns)
+
+    def test_get_transformers_with_list_constraints(self):
+        columns = ["a", "b", "c"]
+        constraints = {"a": "categorical", "b": "ordinal", "c": "continuous"}
+
+        transformers = TypeMap.get_transformers(columns, constraints=constraints)
+        assert len(transformers) == len(columns)
+
+    def test_get_transformers_with_custom_constraints(self):
+        columns = ["a", "b", "c", "d", "e"]
+        anon_instance = AnonymizationTransformer(lambda: None)
+        constraints = {
+            "a": anon_instance,
+            "b": LogTransformer,
+            "c": "drop",
+            "d": "LogTransformer",
+            "e": "address",
+        }
+
+        transformers = TypeMap.get_transformers(columns, constraints=constraints)
+        assert len(transformers) == len(columns)
+        assert transformers[0] == anon_instance
+        assert isinstance(transformers[1], LogTransformer)
+        assert isinstance(transformers[2], DropTransformer)
+        assert isinstance(transformers[3], LogTransformer)
+        assert isinstance(transformers[4], AnonymizationTransformer)
+
+    def test_get_transformers_with_invalid_constraint(self):
+        with pytest.raises(ValueError, match="constraint.*?invalid"):
+            TypeMap.get_transformers([0], constraints={0: None})
+
+    def test_column_not_specified(self):
+        with pytest.raises(ValueError, match="Column.*?not specified"):
+            TypeMap.get_transformers([0])
