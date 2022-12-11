@@ -97,7 +97,7 @@ class TypeMap:
                 raise ValueError(f"Column in dataframe not specified as categorical, ordinal, or continuous: {col}")
         return transformers
     @classmethod
-    def infer_column_types(cls, data):
+    def infer_column_types(cls, data, excluded_columns=None):
         max_cached = 1000
         n_columns = 0
         colnames = []
@@ -120,6 +120,17 @@ class TypeMap:
             colnames = [i for i in range(n_columns)]
             data = data.tolist()
 
+        excluded_indices = set()
+        if excluded_columns is not None and len(excluded_columns) > 0: # don't infer the excluded columns
+            colnames_actual = []
+            for i, c in enumerate(colnames):
+                if c in excluded_columns:
+                    excluded_indices.add(i)
+                else:
+                    colnames_actual.append(c)
+            colnames = colnames_actual
+            n_columns = len(colnames)
+
         # cache up to max_cached rows
         n_cached = 0
         value_cache = []
@@ -129,8 +140,11 @@ class TypeMap:
             nullable.append(False)
             coltypes.append(None)
         for row in data:
+            index = 0
             for i, val in enumerate(row):
-                value_cache[i].append(val)
+                if i not in excluded_indices:
+                    value_cache[index].append(val)
+                    index += 1
             n_cached += 1
             if n_cached >= max_cached:
                 break
