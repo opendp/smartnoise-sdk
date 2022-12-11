@@ -22,24 +22,26 @@ class SDGYMBaseSynthesizer:
 
         :param data: The private data used to fit the synthesizer.
         :type data: pd.DataFrame, np.ndarray, or list of tuples
-        :param transformer: The transformer to use to preprocess the data.  If no transformer 
-            is provided, the synthesizer will attempt to choose a transformer suitable for that 
-            synthesizer.  To prevent the synthesizer from choosing a transformer, pass in
-            snsynth.transform.NoTransformer().
-        :type transformer: snsynth.transform.TableTransformer, optional
+        :param transformer: The transformer to use to preprocess the data.
+            If no transformer is provided, the synthesizer will attempt to choose a transformer suitable for that synthesizer.
+            To prevent the synthesizer from choosing a transformer, pass in snsynth.transform.NoTransformer().
+            The inferred preprocessor can be constrained for certain columns by providing a dictionary.
+            Read the ``TableTransformer.create()`` method documentation for details about the constraints.
+        :type transformer: snsynth.transform.TableTransformer or dictionary, optional
         :param categorical_columns: List of column names or indixes to be treated as categorical columns, used as hints when no transformer is provided.
         :type categorical_columns: list[], optional
         :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
         :type ordinal_columns: list[], optional
-        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
-        :type ordinal_columns: list[], optional
+        :param continuous_columns: List of column names or indices to be treated as continuous columns, used as hints when no transformer is provided.
+        :type continuous_columns: list[], optional
         :param preprocessor_eps: The epsilon value to use when preprocessing the data.  This epsilon budget is subtracted from the
             budget supplied when creating the synthesizer, but is only used if the preprocessing requires
             privacy budget, for example if bounds need to be inferred for continuous columns.  This value defaults to
             0.0, and the synthesizer will raise an error if the budget is not sufficient to preprocess the data.
         :type preprocessor_eps: float, optional
-        :param nullable: Whether or not to allow null values in the data.  This is only used if no transformer is provided,
-            and is used as a hint when inferring transformers.
+        :param nullable: Whether to allow null values in the data. This is only used if no transformer is provided,
+            and is used as a hint when inferring transformers. Defaults to False.
+        :type nullable: bool, optional
         """
         raise NotImplementedError
 
@@ -71,24 +73,26 @@ class SDGYMBaseSynthesizer:
 
         :param data: The private data used to fit the synthesizer.
         :type data: pd.DataFrame, np.ndarray, or list of tuples
-        :param transformer: The transformer to use to preprocess the data.  If no transformer 
-            is provided, the synthesizer will attempt to choose a transformer suitable for that 
-            synthesizer.  To prevent the synthesizer from choosing a transformer, pass in
-            snsynth.transform.NoTransformer().
-        :type transformer: snsynth.transform.TableTransformer, optional
+        :param transformer: The transformer to use to preprocess the data.
+            If no transformer is provided, the synthesizer will attempt to choose a transformer suitable for that synthesizer.
+            To prevent the synthesizer from choosing a transformer, pass in snsynth.transform.NoTransformer().
+            The inferred preprocessor can be constrained for certain columns by providing a dictionary.
+            Read the ``TableTransformer.create()`` method documentation for details about the constraints.
+        :type transformer: snsynth.transform.TableTransformer or dict, optional
         :param categorical_columns: List of column names or indixes to be treated as categorical columns, used as hints when no transformer is provided.
         :type categorical_columns: list[], optional
         :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
         :type ordinal_columns: list[], optional
-        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.
-        :type ordinal_columns: list[], optional
+        :param continuous_columns: List of column names or indices to be treated as continuous columns, used as hints when no transformer is provided.
+        :type continuous_columns: list[], optional
         :param preprocessor_eps: The epsilon value to use when preprocessing the data.  This epsilon budget is subtracted from the
             budget supplied when creating the synthesizer, but is only used if the preprocessing requires
             privacy budget, for example if bounds need to be inferred for continuous columns.  This value defaults to
             0.0, and the synthesizer will raise an error if the budget is not sufficient to preprocess the data.
         :type preprocessor_eps: float, optional
-        :param nullable: Whether or not to allow null values in the data.  This is only used if no transformer is provided,
-            and is used as a hint when inferring transformers.
+        :param nullable: Whether to allow null values in the data. This is only used if no transformer is provided,
+            and is used as a hint when inferring transformers. Defaults to False.
+        :type nullable: bool, optional
         """
         self.fit(
             data, 
