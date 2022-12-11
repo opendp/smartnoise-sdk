@@ -146,16 +146,17 @@ class Synthesizer(SDGYMBaseSynthesizer):
         """
         return list(synth_map.keys())
     def _get_train_data(self, data, *ignore, style, transformer, categorical_columns, ordinal_columns, continuous_columns, nullable, preprocessor_eps):
-        if transformer is None:
+        if transformer is None or isinstance(transformer, dict):
             self._transformer = TableTransformer.create(data, style=style,
                 categorical_columns=categorical_columns,
                 continuous_columns=continuous_columns,
                 ordinal_columns=ordinal_columns,
-                nullable=nullable,)
+                nullable=nullable,
+                constraints=transformer)
         elif isinstance(transformer, TableTransformer):
             self._transformer = transformer
         else:
-            raise ValueError("transformer must be a TableTransformer object or None.  See the updated documentation.")
+            raise ValueError("transformer must be a TableTransformer object, a dictionary or None.")
         if not self._transformer.fit_complete:
             if self._transformer.needs_epsilon and (preprocessor_eps is None or preprocessor_eps == 0.0):
                 raise ValueError("Transformer needs some epsilon to infer bounds.  If you know the bounds, pass them in to save budget.  Otherwise, set preprocessor_eps to a value > 0.0 and less than the training epsilon.  Preprocessing budget will be subtracted from training budget.")
