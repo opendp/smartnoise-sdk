@@ -10,6 +10,7 @@ from .clamp import ClampTransformer
 from .log import LogTransformer
 from .table import NoTransformer
 from .anonymization import AnonymizationTransformer
+from .drop import DropTransformer
 __all__ = [
     "TableTransformer", 
     "OneHotEncoder", 
@@ -22,5 +23,6 @@ __all__ = [
     "LogTransformer",
     "ClampTransformer",
     "NoTransformer",
-    "AnonymizationTransformer"
+    "AnonymizationTransformer",
+    "DropTransformer"
     ]

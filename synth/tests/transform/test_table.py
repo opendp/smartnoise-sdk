@@ -3,16 +3,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from snsynth.transform.label import LabelTransformer
-from snsynth.transform.onehot import OneHotEncoder
-from snsynth.transform.chain import ChainTransformer
-from snsynth.transform.standard import StandardScaler
-from snsynth.transform.table import TableTransformer
-from snsynth.transform.minmax import MinMaxTransformer
-from snsynth.transform.log import LogTransformer
-from snsynth.transform.bin import BinTransformer
+from snsynth.transform import *
 from snsynth.transform.identity import IdentityTransformer
-from snsynth.transform.anonymization import AnonymizationTransformer
 
 iris = sns.load_dataset('iris')
 print(iris.describe())
@@ -236,3 +228,78 @@ class TestTableTransform:
         assert(len(pums_encoded[5]) == 0)
         pums_decoded = tt.inverse_transform(pums_encoded)
         assert(len(pums_decoded.columns) == len(pums.columns))
+
+    def test_create_tuples_with_constraints_only(self):
+        tuples = [(0, 8.15, "cat_1"), (1, 3.1415, "cat_2")]
+        constraints = {
+            0: "ordinal",
+            1: "drop",
+            2: AnonymizationTransformer(lambda: "cat_3"),
+        }
+
+        tt = TableTransformer.create(tuples, constraints=constraints)
+        tt.fit(tuples)
+        transformed = tt.transform(tuples)
+        assert len(transformed) == len(tuples)
+
+        inversed = tt.inverse_transform(transformed)
+        assert len(inversed) == len(tuples)
+        assert len(inversed[0]) == 2
+        assert inversed[0][0] == tuples[0][0] and inversed[0][1] == "cat_3"
+        assert inversed[1][0] == tuples[1][0] and inversed[1][1] == "cat_3"
+
+    def test_create_dataframe_with_constraints_only(self):
+        columns = ["a", "b", "c"]
+        df = pd.DataFrame(
+            data=[(0, 8.15, "cat_1"), (1, 3.1415, "cat_2")], columns=columns
+        )
+        constraints = {
+            "a": "ordinal",
+            "b": "drop",
+            "c": AnonymizationTransformer(lambda: "cat_3"),
+        }
+
+        tt = TableTransformer.create(df, constraints=constraints)
+        tt.fit(df)
+        transformed = tt.transform(df)
+        assert len(transformed) == df.shape[0]
+
+        inversed = tt.inverse_transform(transformed)
+        assert isinstance(inversed, pd.DataFrame)
+        assert inversed.shape[0] == df.shape[0]
+        assert inversed.shape[1] == 2
+        assert inversed.at[0, "a"] == df.at[0, "a"] and inversed.at[0, "c"] == "cat_3"
+        assert inversed.at[1, "a"] == df.at[1, "a"] and inversed.at[1, "c"] == "cat_3"
+
+    def test_create_with_constraint_and_column_list(self):
+        tuples = [(0, "cat_1"), (1, "cat_2")]
+
+        tt = TableTransformer.create(
+            tuples, ordinal_columns=[0], constraints={1: "drop"}
+        )
+        tt.fit(tuples)
+        transformed = tt.transform(tuples)
+        assert len(transformed) == len(tuples)
+
+        inversed = tt.inverse_transform(transformed)
+        assert len(inversed) == len(tuples)
+        assert len(inversed[0]) == 1
+        assert inversed[0][0] == tuples[0][0] and inversed[1][0] == tuples[1][0]
+
+    def test_drop_all(self):
+        tuples = [(0, 8.15), (1, 3.1415)]
+
+        tt = TableTransformer.create(tuples, constraints={0: "drop", 1: "drop"})
+        assert tt.fit_complete
+        assert tt.output_width == 0
+        transformed = tt.transform(tuples)
+        assert len(transformed) == len(tuples)
+        assert all(v == () for v in transformed)
+
+        inversed = tt.inverse_transform(transformed)
+        assert len(inversed) == len(tuples)
+        assert all(v == () for v in inversed)
+
+    def test_invalid_constraint(self):
+        with pytest.raises(ValueError, match="constraint.*?invalid"):
+            TableTransformer.create([(0, 0)], constraints={0: None})
