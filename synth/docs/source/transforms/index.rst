@@ -85,7 +85,7 @@ In the examples above, we used only categorical columns, since continuous values
 Declaring a TableTransformer
 ----------------------------
 
-In the above example, the transformer used some privacy budget to infer approximate bounds for the two continuous columns.  When bounds are known in advance, this is wasteful and can impact the accuracy of the synthesizer.  In most non-trivial cases, you will want to specify your ``TableTransformer`` declaratively:
+In the above example, the transformer used some privacy budget to infer approximate bounds for the two continuous columns.  When bounds are known in advance, this is wasteful and can impact the accuracy of the synthesizer.  In cases where you want maximum control, you can specify your ``TableTransformer`` declaratively:
 
 .. code-block:: python
 
@@ -195,6 +195,69 @@ To prevent leakage of sensitive information PII can be anonymized by generating 
     pii_data_inversed = tt.inverse_transform(pii_data_transformed)
     assert all(a != b for a, b in zip(pii_data, pii_data_inversed))
 
+Mixing Inferred and Declared Transformers
+-----------------------------------------
+
+In many cases, the inferred transformers will be mostly acceptable, with only a few columns requiring special handling.  In this case, the ``TableTransformer`` can set constraints on the inference to make sure that specific columns are handled differently.  For example, the following code will use the inferred transformer for all columns except for the ``income`` column, which will be transformed using ``LogTransformer`` and ``BinTransformer``:
+
+.. code-block:: python
+
+    import pandas as pd
+    import math
+    from snsynth.transform import *
+
+    pums = pd.read_csv('PUMS_pid.csv', index_col=None)
+
+    tt = TableTransformer.create(
+        pums, 
+        style='cube',
+        constraints={
+            'income': 
+                ChainTransformer([
+                    LogTransformer(),
+                    BinTransformer(bins=20, lower=0, upper=math.log(400_000))
+                ])
+        }
+    )
+    tt.fit(pums, epsilon=1.0)
+    print(tt.odometer.spent)
+    income = tt.transformers[4]
+    assert(isinstance(income, ChainTransformer))
+    pid = tt.transformers[6]
+    assert(isinstance(pid, AnonymizationTransformer))
+    print(f"ID column is a {pid.fake} anonymization")
+
+In the above example, the budget spent will be 0.0, because the bounds were specified for the income column.  All other columns are correctly inferred, with the identifier column using a sequence faker.
+
+Note that the inferred columns will use ``cube`` style, so we use a ``BinTransformer`` to discretize the income column.  If we had used ``gan`` style, we would have used something more appropriate for a GAN, such as a ``OneHotEncoder`` or ``MinMaxTransformer``.
+
+Constraints can also be specified with shortcut strings.  For example, if we want the identifier column to be faked with a random GUID rather than an integer sequence, we could manually construct the ``AnonymizationTransformer`` similar to the above, or we can just use the string ``"uuid4"``:
+
+.. code-block:: python
+
+    tt = TableTransformer.create(
+        pums, 
+        style='cube',
+        constraints={
+            'pid': 'uuid4'
+        }
+    )
+
+Because this is a faker, it works the same regardless of the style.  Likewise, constraints can be specified as ``ordinal``, ``categorical``, or ``continuous`` to use the appropriate transformer for the column regardless of style.
+
+In the below example, we use the ``"drop"`` constraint to drop the identifier column entirely.  We also specify that ``educ`` should be treated as continuous, even though it in an integer with only 13 levels.  This will cause the inferred transformer to use continuous transformers rather than discrete.  Both of these constraints will do the right thing regardless of the style.
+
+.. code-block:: python
+
+    tt = TableTransformer.create(
+        pums, 
+        style='cube',
+        constraints={
+            'educ': 'continuous',
+            'pid': 'drop'
+        }
+    )
+
 
 TableTransformer API
 ====================
@@ -251,3 +314,8 @@ AnonymizationTransformer
 ------------------------
 
 .. autoclass:: snsynth.transform.anonymization.AnonymizationTransformer
+
+DropTransformer
+------------------------
+
+.. autoclass:: snsynth.transform.drop.DropTransformer

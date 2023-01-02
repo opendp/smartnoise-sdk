@@ -1,3 +1,8 @@
+# SmartNoise Synth v0.3.5 Release Notes
+
+* Callers can constrain inference with hints (thanks, @neat-web!)
+* DropTransformer can now be used to drop columns
+
 # SmartNoise Synth v0.3.4 Release Notes
 
 * Anonymizing transformer for PII (thanks, @neat-web!)
