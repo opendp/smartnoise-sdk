@@ -342,24 +342,26 @@
 
 <span class="sd">        :param data: The private data used to fit the synthesizer.</span>
 <span class="sd">        :type data: pd.DataFrame, np.ndarray, or list of tuples</span>
-<span class="sd">        :param transformer: The transformer to use to preprocess the data.  If no transformer </span>
-<span class="sd">            is provided, the synthesizer will attempt to choose a transformer suitable for that </span>
-<span class="sd">            synthesizer.  To prevent the synthesizer from choosing a transformer, pass in</span>
-<span class="sd">            snsynth.transform.NoTransformer().</span>
-<span class="sd">        :type transformer: snsynth.transform.TableTransformer, optional</span>
+<span class="sd">        :param transformer: The transformer to use to preprocess the data.</span>
+<span class="sd">            If no transformer is provided, the synthesizer will attempt to choose a transformer suitable for that synthesizer.</span>
+<span class="sd">            To prevent the synthesizer from choosing a transformer, pass in snsynth.transform.NoTransformer().</span>
+<span class="sd">            The inferred preprocessor can be constrained for certain columns by providing a dictionary.</span>
+<span class="sd">            Read the ``TableTransformer.create()`` method documentation for details about the constraints.</span>
+<span class="sd">        :type transformer: snsynth.transform.TableTransformer or dictionary, optional</span>
 <span class="sd">        :param categorical_columns: List of column names or indixes to be treated as categorical columns, used as hints when no transformer is provided.</span>
 <span class="sd">        :type categorical_columns: list[], optional</span>
 <span class="sd">        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.</span>
 <span class="sd">        :type ordinal_columns: list[], optional</span>
-<span class="sd">        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.</span>
-<span class="sd">        :type ordinal_columns: list[], optional</span>
+<span class="sd">        :param continuous_columns: List of column names or indices to be treated as continuous columns, used as hints when no transformer is provided.</span>
+<span class="sd">        :type continuous_columns: list[], optional</span>
 <span class="sd">        :param preprocessor_eps: The epsilon value to use when preprocessing the data.  This epsilon budget is subtracted from the</span>
 <span class="sd">            budget supplied when creating the synthesizer, but is only used if the preprocessing requires</span>
 <span class="sd">            privacy budget, for example if bounds need to be inferred for continuous columns.  This value defaults to</span>
 <span class="sd">            0.0, and the synthesizer will raise an error if the budget is not sufficient to preprocess the data.</span>
 <span class="sd">        :type preprocessor_eps: float, optional</span>
-<span class="sd">        :param nullable: Whether or not to allow null values in the data.  This is only used if no transformer is provided,</span>
-<span class="sd">            and is used as a hint when inferring transformers.</span>
+<span class="sd">        :param nullable: Whether to allow null values in the data. This is only used if no transformer is provided,</span>
+<span class="sd">            and is used as a hint when inferring transformers. Defaults to False.</span>
+<span class="sd">        :type nullable: bool, optional</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
@@ -391,24 +393,26 @@
 
 <span class="sd">        :param data: The private data used to fit the synthesizer.</span>
 <span class="sd">        :type data: pd.DataFrame, np.ndarray, or list of tuples</span>
-<span class="sd">        :param transformer: The transformer to use to preprocess the data.  If no transformer </span>
-<span class="sd">            is provided, the synthesizer will attempt to choose a transformer suitable for that </span>
-<span class="sd">            synthesizer.  To prevent the synthesizer from choosing a transformer, pass in</span>
-<span class="sd">            snsynth.transform.NoTransformer().</span>
-<span class="sd">        :type transformer: snsynth.transform.TableTransformer, optional</span>
+<span class="sd">        :param transformer: The transformer to use to preprocess the data.</span>
+<span class="sd">            If no transformer is provided, the synthesizer will attempt to choose a transformer suitable for that synthesizer.</span>
+<span class="sd">            To prevent the synthesizer from choosing a transformer, pass in snsynth.transform.NoTransformer().</span>
+<span class="sd">            The inferred preprocessor can be constrained for certain columns by providing a dictionary.</span>
+<span class="sd">            Read the ``TableTransformer.create()`` method documentation for details about the constraints.</span>
+<span class="sd">        :type transformer: snsynth.transform.TableTransformer or dict, optional</span>
 <span class="sd">        :param categorical_columns: List of column names or indixes to be treated as categorical columns, used as hints when no transformer is provided.</span>
 <span class="sd">        :type categorical_columns: list[], optional</span>
 <span class="sd">        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.</span>
 <span class="sd">        :type ordinal_columns: list[], optional</span>
-<span class="sd">        :param ordinal_columns: List of column names or indices to be treated as ordinal columns, used as hints when no transformer is provided.</span>
-<span class="sd">        :type ordinal_columns: list[], optional</span>
+<span class="sd">        :param continuous_columns: List of column names or indices to be treated as continuous columns, used as hints when no transformer is provided.</span>
+<span class="sd">        :type continuous_columns: list[], optional</span>
 <span class="sd">        :param preprocessor_eps: The epsilon value to use when preprocessing the data.  This epsilon budget is subtracted from the</span>
 <span class="sd">            budget supplied when creating the synthesizer, but is only used if the preprocessing requires</span>
 <span class="sd">            privacy budget, for example if bounds need to be inferred for continuous columns.  This value defaults to</span>
 <span class="sd">            0.0, and the synthesizer will raise an error if the budget is not sufficient to preprocess the data.</span>
 <span class="sd">        :type preprocessor_eps: float, optional</span>
-<span class="sd">        :param nullable: Whether or not to allow null values in the data.  This is only used if no transformer is provided,</span>
-<span class="sd">            and is used as a hint when inferring transformers.</span>
+<span class="sd">        :param nullable: Whether to allow null values in the data. This is only used if no transformer is provided,</span>
+<span class="sd">            and is used as a hint when inferring transformers. Defaults to False.</span>
+<span class="sd">        :type nullable: bool, optional</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
             <span class="n">data</span><span class="p">,</span> 
@@ -466,16 +470,17 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">synth_map</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
     <span class="k">def</span> <span class="nf">_get_train_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">ignore</span><span class="p">,</span> <span class="n">style</span><span class="p">,</span> <span class="n">transformer</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="p">,</span> <span class="n">ordinal_columns</span><span class="p">,</span> <span class="n">continuous_columns</span><span class="p">,</span> <span class="n">nullable</span><span class="p">,</span> <span class="n">preprocessor_eps</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">transformer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span> <span class="o">=</span> <span class="n">TableTransformer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">,</span>
                 <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span>
                 <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span>
                 <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span>
-                <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">,)</span>
+                <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">,</span>
+                <span class="n">constraints</span><span class="o">=</span><span class="n">transformer</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">TableTransformer</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span> <span class="o">=</span> <span class="n">transformer</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;transformer must be a TableTransformer object or None.  See the updated documentation.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;transformer must be a TableTransformer object, a dictionary or None.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">fit_complete</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">needs_epsilon</span> <span class="ow">and</span> <span class="p">(</span><span class="n">preprocessor_eps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">preprocessor_eps</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Transformer needs some epsilon to infer bounds.  If you know the bounds, pass them in to save budget.  Otherwise, set preprocessor_eps to a value &gt; 0.0 and less than the training epsilon.  Preprocessing budget will be subtracted from training budget.&quot;</span><span class="p">)</span>
@@ -695,7 +700,7 @@
     
 <p class="copyright">
 
-    &copy; Copyright 2022.<br>
+    &copy; Copyright 2023.<br>
 
 </p>
 
