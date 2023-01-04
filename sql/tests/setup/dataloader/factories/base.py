@@ -6,7 +6,6 @@ class DbDataset:
         self.connection = connection
         self.table_name = table_name
 
-
 class DbFactory:
     # Connections to a list of test databases sharing connection info
     def __init__(self, engine, user=None, host=None, port=None, datasets={}):

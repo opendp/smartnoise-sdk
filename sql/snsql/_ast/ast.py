@@ -500,7 +500,6 @@ class AliasedRelation(SqlRel):
             [Token("AS"), self.alias] if self.alias is not None else []
         )
 
-
 class Join(SqlRel):
     """A join expression attached to a primary relation"""
 

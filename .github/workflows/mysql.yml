@@ -1,0 +1,65 @@
+name: MySQL and SQLite Integration Tests
+on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9]
+      max-parallel: 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generate random password
+        shell: bash -l {0}
+        run: |
+          export RANDPASS=pgpass$RANDOM
+          echo "export MYSQL_PASSWORD=$RANDPASS" >> pass.sh
+      - name: Set up miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          auto-update-conda: true
+          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade pip
+        shell: bash -l {0}
+        run: |
+          conda install pip
+          conda update pip
+      - name: Setup SDK
+        shell: bash -l {0}
+        run: |
+          cd sql
+          pip install --no-cache-dir -r tests/requirements.txt
+          pip install --no-cache-dir -r tests/setup/mysql/requirements.txt
+          pip install --no-cache-dir  .
+      - name: Download test datasets
+        shell: bash -l {0}
+        run: |
+          cd sql
+          python tests/check_databases.py
+      - name: Check database connections test fixture
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql
+          mkdir ~/.smartnoise
+          cp tests/setup/mysql/connections-unit.yaml ~/.smartnoise
+          python tests/check_databases.py
+      - name: Test SDK
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql
+          export SKIP_PANDAS=1
+          export TEST_SQLITE=1
+          pytest tests
+

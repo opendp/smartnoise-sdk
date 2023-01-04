@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from urllib.parse import quote_plus
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 setup_path = os.path.abspath(
@@ -16,7 +17,6 @@ sys.path.insert(0, setup_path)
 
 from dataloader.create_pums_dbs import *
 
-import keyring
 from sqlalchemy import create_engine
 
 # change these to match your install
@@ -26,16 +26,10 @@ user = 'root'
 
 password = os.environ.get('MYSQL_PASSWORD')
 if not password:
-    conn = f"mysql://{host}:{port}"
-    try:
-        import keyring
-        password = keyring.get_password(conn, user)
-    except:
-        print(f"No password for engine {conn}")
-        print("Please make sure password is set and keyring is installed")
-        exit()
+    print("Please make sure password is set in MYSQL_PASSWORD")
+    exit()
 
-url = f"mysql+pymysql://{user}:{password}@{host}:{port}"
+url = f"mysql+pymysql://{user}:{quote_plus(password)}@{host}:{port}"
 engine = create_engine(url)
 
 engine.execute("CREATE DATABASE IF NOT EXISTS PUMS")
