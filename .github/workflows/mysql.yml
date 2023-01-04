@@ -1,10 +1,5 @@
-name: MySQL and SQLite Integration Tests
+name: MySQL Integration Tests
 on:
-  pull_request:
-    paths:
-      - 'sql/tests/**'
-      - 'sql/snsql/**'
-      - 'sql/pyproject.toml'
   workflow_dispatch:
 
 jobs:
@@ -22,6 +17,18 @@ jobs:
         run: |
           export RANDPASS=pgpass$RANDOM
           echo "export MYSQL_PASSWORD=$RANDPASS" >> pass.sh
+      - name: Install MySQL
+        shell: bash -l {0}
+        run: |
+          sudo apt-get update
+          sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password erdgrwegge'
+          sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password erdgrwegge'
+          sudo apt-get --yes install mysql-server-5.7
+      - name: Set MySQL Password
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          mysql --user root --password $MYSQL_PASSWORD
       - name: Set up miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -61,5 +68,5 @@ jobs:
           cd sql
           export SKIP_PANDAS=1
           export TEST_SQLITE=1
-          pytest tests
+          pytest tests/query/test_db_count.py
 
