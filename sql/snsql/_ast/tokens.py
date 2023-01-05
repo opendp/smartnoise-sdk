@@ -355,6 +355,15 @@ class SqlExpr(Sql):
                 + str(child_col)
             )
         return self
+    def replace(self, old, new):
+        if self == old:
+            return new
+        else:
+            props = self.__dict__
+            for k, v in props.items():
+                if isinstance(v, SqlExpr):
+                    props[k] = v.replace(old, new)
+            return self
 
     @property
     def is_key_count(self):
