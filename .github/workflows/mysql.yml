@@ -1,7 +1,11 @@
 name: MySQL Integration Tests
 on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
   workflow_dispatch:
-
 jobs:
   container-job:
     runs-on: ubuntu-latest
@@ -10,25 +14,22 @@ jobs:
       matrix:
         python-version: [3.9]
       max-parallel: 5
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: pass@word999
+          MYSQL_DATABASE: PUMS
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v2
       - name: Generate random password
         shell: bash -l {0}
         run: |
           export RANDPASS=pgpass$RANDOM
-          echo "export MYSQL_PASSWORD=$RANDPASS" >> pass.sh
-      - name: Install MySQL
-        shell: bash -l {0}
-        run: |
-          sudo apt-get update
-          sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password erdgrwegge'
-          sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password erdgrwegge'
-          sudo apt-get --yes install mysql-server-5.7
-      - name: Set MySQL Password
-        shell: bash -l {0}
-        run: |
-          source pass.sh
-          mysql --user root --password $MYSQL_PASSWORD
+          echo "export MYSQL_PASSWORD=pass@word99 >> pass.sh
       - name: Set up miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -48,11 +49,6 @@ jobs:
           pip install --no-cache-dir -r tests/requirements.txt
           pip install --no-cache-dir -r tests/setup/mysql/requirements.txt
           pip install --no-cache-dir  .
-      - name: Download test datasets
-        shell: bash -l {0}
-        run: |
-          cd sql
-          python tests/check_databases.py
       - name: Check database connections test fixture
         shell: bash -l {0}
         run: |
@@ -60,6 +56,18 @@ jobs:
           cd sql
           mkdir ~/.smartnoise
           cp tests/setup/mysql/connections-unit.yaml ~/.smartnoise
+          python tests/check_databases.py
+      - name: Install Tables to MySQL
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql/tests/setup/mysql
+          python create_pums.py
+      - name: Check DB install
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql
           python tests/check_databases.py
       - name: Test SDK
         shell: bash -l {0}
@@ -69,4 +77,3 @@ jobs:
           export SKIP_PANDAS=1
           export TEST_SQLITE=1
           pytest tests/query/test_db_count.py
-
