@@ -28,7 +28,7 @@ jobs:
       - name: Generate random password
         shell: bash -l {0}
         run: |
-          echo "export MYSQL_PASSWORD=pass@word99 > pass.sh
+          echo "export MYSQL_PASSWORD=pass@word99" > pass.sh
       - name: Set up miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -74,5 +74,4 @@ jobs:
           source pass.sh
           cd sql
           export SKIP_PANDAS=1
-          export TEST_SQLITE=1
-          pytest tests/query/test_db_count.py
+          pytest tests
