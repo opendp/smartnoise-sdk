@@ -5,6 +5,7 @@ import copy
 import yaml
 import copy
 
+from .factories.sqlite import SQLiteFactory
 from .factories.bigquery import BigQueryFactory
 from .factories.mysql import MySqlFactory
 from .factories.pandas import PandasFactory
@@ -38,6 +39,8 @@ class DbCollection:
         home = os.path.expanduser("~")
         p = os.path.join(home, ".smartnoise", "connections-unit.yaml")
 
+        if os.environ.get('TEST_SQLITE'):
+            self.engines['sqlite'] = SQLiteFactory()
         if not os.environ.get('SKIP_PANDAS'):
             self.engines['pandas'] = PandasFactory()
         else:
@@ -133,7 +136,7 @@ class DbCollection:
     def get_connection(self, *ignore, database, engine, **kwargs):
         if engine in self.engines:
             eng = self.engines[engine]
-            return eng.get_connection(database=database)
+            return eng.get_connection(dataset=database)
         else:
             return None
     def get_dialect(self, *ignore, engine, **kwargs):

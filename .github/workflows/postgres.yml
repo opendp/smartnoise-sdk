@@ -1,4 +1,4 @@
-name: PostgreSQL Integration Tests
+name: PostgreSQL and SQLite Integration Tests
 on:
   pull_request:
     paths:
@@ -53,12 +53,12 @@ jobs:
           pip install --no-cache-dir -r tests/requirements.txt
           pip install --no-cache-dir -r tests/setup/postgres/requirements.txt
           pip install --no-cache-dir  .
-          pip install --no-cache-dir opendp-smartnoise-core # temporary
       - name: Download test datasets
         shell: bash -l {0}
         run: |
           cd sql
           python tests/check_databases.py
+          ls -l ../datasets
       - name: Install PUMS
         shell: bash -l {0}
         run: |
@@ -87,11 +87,14 @@ jobs:
           mkdir ~/.smartnoise
           cp tests/setup/postgres/connections-unit.yaml ~/.smartnoise
           python tests/check_databases.py
+          ls -l ../datasets
       - name: Test SDK
         shell: bash -l {0}
         run: |
           source pass.sh
           cd sql
           export SKIP_PANDAS=1
+          export TEST_SQLITE=1
+          ls -l ../datasets
           pytest tests
 

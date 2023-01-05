@@ -27,6 +27,16 @@ class Probe:
         ):
             return "bigquery"
         if (
+            conn_mod == 'pymysql.connections' and
+            conn_class == 'Connection'
+        ):
+            return "mysql"
+        if (
+            conn_mod == 'sqlite3' and
+            conn_class == 'Connection'
+        ):
+            return "sqlite"
+        if (
             conn_mod == 'pyodbc' and
             conn_class == 'Connection'
         ):

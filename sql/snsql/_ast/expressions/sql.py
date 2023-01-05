@@ -100,8 +100,16 @@ class AggFunction(SqlExpr):
         else:
             return None
 
+    def __str__(self):
+        ret = self.name + "("
+        if self.quantifier is not None:
+            ret += self.quantifier + " "
+        ret += str(self.expression) + ")"
+        return ret
+
     def children(self):
         return [self.name, Token("("), self.quantifier, self.expression, Token(")")]
+
 
     def evaluate(self, bindings):
         # need to decide what to do with this

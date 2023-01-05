@@ -1,0 +1,77 @@
+name: MySQL Integration Tests
+on:
+  pull_request:
+    paths:
+      - 'sql/tests/**'
+      - 'sql/snsql/**'
+      - 'sql/pyproject.toml'
+  workflow_dispatch:
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9]
+      max-parallel: 5
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: pass@word999
+          MYSQL_DATABASE: PUMS
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generate random password
+        shell: bash -l {0}
+        run: |
+          echo "export MYSQL_PASSWORD=pass@word99" > pass.sh
+      - name: Set up miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          auto-update-conda: true
+          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade pip
+        shell: bash -l {0}
+        run: |
+          conda install pip
+          conda update pip
+      - name: Setup SDK
+        shell: bash -l {0}
+        run: |
+          cd sql
+          pip install --no-cache-dir -r tests/requirements.txt
+          pip install --no-cache-dir -r tests/setup/mysql/requirements.txt
+          pip install --no-cache-dir  .
+      - name: Check database connections test fixture
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql
+          mkdir ~/.smartnoise
+          cp tests/setup/mysql/connections-unit.yaml ~/.smartnoise
+          python tests/check_databases.py
+      - name: Install Tables to MySQL
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql/tests/setup/mysql
+          python create_pums.py
+      - name: Check DB install
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql
+          python tests/check_databases.py
+      - name: Test SDK
+        shell: bash -l {0}
+        run: |
+          source pass.sh
+          cd sql
+          export SKIP_PANDAS=1
+          pytest tests

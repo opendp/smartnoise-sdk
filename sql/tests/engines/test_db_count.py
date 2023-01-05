@@ -1,6 +1,5 @@
 import pytest
 import sys
-from snsql import metadata
 
 from snsql.sql.privacy import Privacy
 

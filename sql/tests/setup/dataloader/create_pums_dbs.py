@@ -86,13 +86,13 @@ def create_pums_dup(engine):
     with engine.begin() as conn:
         for _, row in pums_df.iterrows():
             ins = pums.insert().values(
-                pid = row['pid'],
-                sex = row['sex'],
-                age = row['age'],
-                educ = row['educ'],
-                race = row['race'],
-                income = row['income'],
-                married = row['married']
+                pid = int(row['pid']),
+                sex = int(row['sex']),
+                age = int(row['age']),
+                educ = int(row['educ']),
+                race = int(row['race']),
+                income = int(row['income']),
+                married = int(row['married'])
             )
             conn.execute(ins)
 
@@ -116,13 +116,13 @@ def create_pums_null(engine):
     with engine.begin() as conn:
         for _, row in pums_df.iterrows():
             ins = pums.insert().values(
-                pid = row['pid'] if not pd.isnull(row['pid']) else None,
-                sex = row['sex'] if not pd.isnull(row['sex']) else None,
-                age = row['age'] if not pd.isnull(row['age']) else None,
-                educ = row['educ'] if not pd.isnull(row['educ']) else None,
-                race = row['race'] if not pd.isnull(row['race']) else None,
-                income = row['income'] if not pd.isnull(row['income']) else None,
-                married = row['married'] if not pd.isnull(row['married']) else None
+                pid = int(row['pid']) if not pd.isnull(row['pid']) else None,
+                sex = int(row['sex']) if not pd.isnull(row['sex']) else None,
+                age = int(row['age']) if not pd.isnull(row['age']) else None,
+                educ = int(row['educ']) if not pd.isnull(row['educ']) else None,
+                race = int(row['race']) if not pd.isnull(row['race']) else None,
+                income = int(row['income']) if not pd.isnull(row['income']) else None,
+                married = int(row['married']) if not pd.isnull(row['married']) else None
             )
             conn.execute(ins)
 
