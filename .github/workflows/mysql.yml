@@ -28,8 +28,7 @@ jobs:
       - name: Generate random password
         shell: bash -l {0}
         run: |
-          export RANDPASS=pgpass$RANDOM
-          echo "export MYSQL_PASSWORD=pass@word99 >> pass.sh
+          echo "export MYSQL_PASSWORD=pass@word99 > pass.sh
       - name: Set up miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
