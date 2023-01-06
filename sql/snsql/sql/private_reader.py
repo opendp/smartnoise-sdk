@@ -11,7 +11,7 @@ from .dpsu import run_dpsu
 from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
-from .reader.base import SortKey
+from .reader.base import SortKeyExpressions
 
 from snsql._ast.ast import Query, Top
 from snsql._ast.expressions import sql as ast
@@ -651,10 +651,10 @@ This could lead to privacy leaks."""
             return keep
 
         if query.having is not None:
-            condition = deepcopy(query.having.condition,)
+            condition = deepcopy(query.having.condition)
             for i, ne in enumerate(_orig_query.select.namedExpressions):
                 source_col = binding_col_names[i]
-                condition = condition.replace(ne.expression, ast.Column(source_col))
+                condition = condition.replaced(ne.expression, ast.Column(source_col), lock=True)
             if hasattr(out, "filter"):
                 # it's an RDD
                 out = out.filter(lambda row: filter_aggregate(row, condition))
@@ -663,44 +663,23 @@ This could lead to privacy leaks."""
 
         # sort it if necessary
         if query.order is not None:
-            sort_fields = []
+            sort_expressions = []
             for si in query.order.sortItems:
-                if type(si.expression) is ast.Column:
-                    colname = si.expression.name.lower()
-                    if colname not in out_col_names:
-                        raise ValueError(
-                            "Can't sort by {0}, because it's not in output columns: {1}".format(
-                                colname, out_col_names
-                            )
-                        )
-                    colidx = out_col_names.index(colname)
-                    desc = False
-                    if si.order is not None and si.order.lower() == "desc":
-                        desc = True
-                    if desc and not (out_types[colidx] in ["int", "float", "boolean", "datetime"]):
-                        raise ValueError("We don't know how to sort descending by " + out_types[colidx])
-                    sf = (desc, colidx)
-                    sort_fields.append(sf)
+                desc = False
+                if si.order is not None and si.order.lower() == "desc":
+                    desc = True
+                if type(si.expression) is ast.Column and si.expression.name.lower() in out_col_names:
+                    sort_expressions.append((desc, si.expression))
                 else:
-                    # it's an expression; check for matches
-                    found_match = False
-                    for idx, ne in enumerate(_orig_query.select.namedExpressions):
-                        if si.expression == ne.expression:
-                            desc = False
-                            if si.order is not None and si.order.lower() == "desc":
-                                desc = True
-                            if desc and not (out_types[idx] in ["int", "float", "boolean", "datetime"]):
-                                raise ValueError("We don't know how to sort descending by " + out_types[idx])
-                            sf = (desc, idx)
-                            sort_fields.append(sf)
-                            found_match = True
-                            break
-                    if not found_match:
-                        raise ValueError("We couldn't find " + str(si.expression) + " in output columns")
+                    expr = deepcopy(si.expression)
+                    for i, ne in enumerate(_orig_query.select.namedExpressions):
+                        source_col = binding_col_names[i]
+                        expr = expr.replaced(ne.expression, ast.Column(source_col), lock=True)
+                    sort_expressions.append((desc, expr))
 
             def sort_func(row):
                 # use index 0, since index 1 is accuracy
-                return SortKey(row[0], sort_fields)
+                return SortKeyExpressions(row[0], sort_expressions, binding_col_names)
                 
             if hasattr(out, "sortBy"):
                 out = out.sortBy(sort_func)

@@ -355,14 +355,28 @@ class SqlExpr(Sql):
                 + str(child_col)
             )
         return self
-    def replace(self, old, new):
+
+    """
+        Replace all instances of an expression in the tree with another expression.
+
+        :param old: the old expression
+        :param new: the new expression
+        :param lock: if True, then the new expression will be locked
+            such that it cannot be replaced again
+        :return: the updated expression   
+    """
+    def replaced(self, old, new, lock=False):
+        if hasattr(self, "_locked") and self._locked:
+            return self
         if self == old:
+            if lock:
+                new._locked = True
             return new
         else:
             props = self.__dict__
             for k, v in props.items():
-                if isinstance(v, SqlExpr):
-                    props[k] = v.replace(old, new)
+                if isinstance(v, SqlExpr) and str(v) != '*':
+                    props[k] = v.replaced(old, new, lock)
             return self
 
     @property
