@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List, Union
 import warnings
 import numpy as np
@@ -10,7 +11,7 @@ from .dpsu import run_dpsu
 from .private_rewriter import Rewriter
 from .parse import QueryParser
 from .reader import PandasReader
-from .reader.base import SortKey
+from .reader.base import SortKeyExpressions
 
 from snsql._ast.ast import Query, Top
 from snsql._ast.expressions import sql as ast
@@ -20,6 +21,7 @@ from snsql.reader import Reader
 from ._mechanisms import *
 
 import itertools
+import string
 
 class PrivateReader(Reader):
     """Executes SQL queries against tabular data sources and returns differentially private results.
@@ -501,6 +503,7 @@ This could lead to privacy leaks."""
         if isinstance(query, str):
             raise ValueError("Please pass AST to _execute_ast.")
 
+        _orig_query = query
         subquery, query = self._rewrite_ast(query)
 
         if pre_aggregated is not None:
@@ -591,6 +594,8 @@ This could lead to privacy leaks."""
         out_syms = query._select_symbols
         out_types = [s.expression.type() for s in out_syms]
         out_col_names = [s.name for s in out_syms]
+        bind_prefix = ''.join(np.random.choice(list(string.ascii_lowercase), 5))
+        binding_col_names = [name if name != "???" else f"col_{bind_prefix}_{i}" for i, name in enumerate(out_col_names)]
 
         def convert(val, type):
             if val is None:
@@ -641,12 +646,15 @@ This could lead to privacy leaks."""
             out = map(process_out_row, out)
 
         def filter_aggregate(row, condition):
-            bindings = dict((name.lower(), val) for name, val in zip(out_col_names, row[0]))
+            bindings = dict((name.lower(), val) for name, val in zip(binding_col_names, row[0]))
             keep = condition.evaluate(bindings)
             return keep
 
         if query.having is not None:
-            condition = query.having.condition
+            condition = deepcopy(query.having.condition)
+            for i, ne in enumerate(_orig_query.select.namedExpressions):
+                source_col = binding_col_names[i]
+                condition = condition.replaced(ne.expression, ast.Column(source_col), lock=True)
             if hasattr(out, "filter"):
                 # it's an RDD
                 out = out.filter(lambda row: filter_aggregate(row, condition))
@@ -655,29 +663,23 @@ This could lead to privacy leaks."""
 
         # sort it if necessary
         if query.order is not None:
-            sort_fields = []
+            sort_expressions = []
             for si in query.order.sortItems:
-                if type(si.expression) is not ast.Column:
-                    raise ValueError("We only know how to sort by column names right now")
-                colname = si.expression.name.lower()
-                if colname not in out_col_names:
-                    raise ValueError(
-                        "Can't sort by {0}, because it's not in output columns: {1}".format(
-                            colname, out_col_names
-                        )
-                    )
-                colidx = out_col_names.index(colname)
                 desc = False
                 if si.order is not None and si.order.lower() == "desc":
                     desc = True
-                if desc and not (out_types[colidx] in ["int", "float", "boolean", "datetime"]):
-                    raise ValueError("We don't know how to sort descending by " + out_types[colidx])
-                sf = (desc, colidx)
-                sort_fields.append(sf)
+                if type(si.expression) is ast.Column and si.expression.name.lower() in out_col_names:
+                    sort_expressions.append((desc, si.expression))
+                else:
+                    expr = deepcopy(si.expression)
+                    for i, ne in enumerate(_orig_query.select.namedExpressions):
+                        source_col = binding_col_names[i]
+                        expr = expr.replaced(ne.expression, ast.Column(source_col), lock=True)
+                    sort_expressions.append((desc, expr))
 
             def sort_func(row):
                 # use index 0, since index 1 is accuracy
-                return SortKey(row[0], sort_fields)
+                return SortKeyExpressions(row[0], sort_expressions, binding_col_names)
                 
             if hasattr(out, "sortBy"):
                 out = out.sortBy(sort_func)

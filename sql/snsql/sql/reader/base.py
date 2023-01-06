@@ -147,6 +147,14 @@ class Serializer:
         return str(query)
 
 class SortKey:
+    """
+    Handles comparison operators for sorting
+
+    :param obj: The object to be sorted (a row)
+    :param sort_fields: A list of tuples, where each tuple is a pair of (bool, int)
+        The bool indicates whether the sort is descending (True) or ascending (False)
+        The int indicates the column index to sort on
+    """
     def __init__(self, obj, sort_fields, *args):
         self.obj = obj
         self.sort_fields = sort_fields
@@ -181,3 +189,55 @@ class SortKey:
 
     def __ne__(self, other):
         return self.mycmp(self.obj, other.obj, self.sort_fields) != 0
+
+class SortKeyExpressions:
+    """
+    Handles comparison operators for sorting
+
+    :param obj: The object to be sorted (a row)
+    :param sort_expressions: A list of tuples of SqlExpression objects to be used for comparison
+        each tuple is a boolean indicating whether the sort is descending (True) or ascending (False)
+        followed by the SqlExpression object to be used for comparison.
+    :param binding_col_names: A list of column names to be used for binding the sort expression
+    """
+    def __init__(self, obj, sort_expressions, binding_col_names, *args):
+        self.sort_expressions = sort_expressions
+        self.bindings = dict((name.lower(), val) for name, val in zip(binding_col_names, obj))
+    def mycmp(self, bindings_a, bindings_b, sort_expressions):
+        for desc, expr in sort_expressions:
+            try:
+                v_a = expr.evaluate(bindings_a)
+                v_b = expr.evaluate(bindings_b)
+                if desc:
+                    if v_a < v_b:
+                        return 1
+                    elif v_a > v_b:
+                        return -1
+                else:
+                    if v_a < v_b:
+                        return -1
+                    elif v_a > v_b:
+                        return 1
+            except Exception as e:
+                message = f"Error evaluating sort expression {expr}"
+                message += "\nWe can only sort using expressions that can be evaluated on output columns."
+                raise ValueError(message) from e
+        return 0
+
+    def __lt__(self, other):
+        return self.mycmp(self.bindings, other.bindings, self.sort_expressions) < 0
+
+    def __gt__(self, other):
+        return self.mycmp(self.bindings, other.bindings, self.sort_expressions) > 0
+
+    def __eq__(self, other):
+        return self.mycmp(self.bindings, other.bindings, self.sort_expressions) == 0
+
+    def __le__(self, other):
+        return self.mycmp(self.bindings, other.bindings, self.sort_expressions) <= 0
+
+    def __ge__(self, other):
+        return self.mycmp(self.bindings, other.bindings, self.sort_expressions) >= 0
+
+    def __ne__(self, other):
+        return self.mycmp(self.bindings, other.bindings, self.sort_expressions) != 0
