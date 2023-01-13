@@ -74,7 +74,7 @@ class TestMWEM:
         assert(np.isclose(synth_default_params.spent, synth_default_params.epsilon))
     
     def test_sample_different_sizes(self):
-        synth_df = MWEMSynthesizer(3., split_factor=3)
+        synth_df = MWEMSynthesizer(3., split_factor=3, verbose=True)
         synth_df.fit(df)
         assert synth_df.histograms
         assert(np.isclose(synth_df.spent, synth_df.epsilon))
