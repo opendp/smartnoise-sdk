@@ -392,7 +392,10 @@ class MWEMSynthesizer(Synthesizer):
                 print(f"Columns: {h.n_cols}")
                 print(f"Dimensionality: {h.dimensionality:,}")
                 print(f"Cuboids possible: {h.n_cuboids}")
-                print(f"1-2-way cuboids possible: {math.comb(h.n_cols, 2) + h.n_cols}")
+                if hasattr(math, "comb"):
+                    print(f"1-2-way cuboids possible: {math.comb(h.n_cols, 2) + h.n_cols}")
+                elif hasattr(math, "factorial"):
+                    print(f"1-2-way cuboids possible: {(math.factorial(h.n_cols) // math.factorial(2) // math.factorial(h.n_cols - 2)) + h.n_cols}")
                 print(f"Fitting for {h.iterations} iterations")
                 print(f"Number of queries: {h.n_queries}")
                 print(f"Number of slices in queries: {h.n_slices}")
