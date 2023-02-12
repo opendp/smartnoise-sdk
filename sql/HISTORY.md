@@ -1,7 +1,7 @@
 # SmartNoise SQL v0.2.9 Release Notes
 
 * MySql and SQLite readers
-* HAVING and ORDER BY allow expresssions in addition to columns
+* HAVING and ORDER BY allow expressions in addition to columns
 
 # SmartNoise SQL v0.2.8 Release Notes
 
