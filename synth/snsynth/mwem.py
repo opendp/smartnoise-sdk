@@ -343,8 +343,7 @@ class MWEMSynthesizer(Synthesizer):
             self.split_factor = self.data.shape[1]
             self.splits = self._generate_splits(self.data.T.shape[0], self.split_factor)
 
-        self.splits = np.array(self.splits)
-        if self.splits.size == 0:
+        if len(self.splits) == 0:
             self.histograms = self._histogram_from_data_attributes(
                 self.data, [np.arange(self.data.shape[1])]
             )
@@ -693,7 +692,7 @@ class MWEMSynthesizer(Synthesizer):
         :return: 2d list with splits (column indices)
         :rtype: array of arrays
         """
-        flat = np.concatenate(np.asarray(splits)).ravel()
+        flat = [i for l in splits for i in l]
         reordered = np.zeros(len(flat))
         for i, ind in enumerate(flat):
             reordered[ind] = i
@@ -722,7 +721,7 @@ class MWEMSynthesizer(Synthesizer):
         if indices[fits:].size != 0:
             s1.append(indices[fits:])
         s2 = [np.array(l_val) for l_val in s1]
-        return np.array(s2)
+        return s2
 
     def _laplace(self, sigma):
         """
