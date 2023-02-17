@@ -10,12 +10,25 @@ import argparse
 import itertools
 from snsynth.base import Synthesizer
 from mbi import Dataset, FactoredInference, Domain
-from hdmm.matrix import Identity
 from snsynth.cdp2adp import cdp_rho
 from snsynth.utils import exponential_mechanism, gaussian_noise, powerset
+from scipy import sparse
 
 prng = np.random
 
+
+class Identity(sparse.linalg.LinearOperator):
+    def __init__(self, n):
+        self.shape = (n,n)
+        self.dtype = np.float64
+    def _matmat(self, X):
+        return X
+    def __matmul__(self, X):
+        return X
+    def _transpose(self):
+        return self
+    def _adjoint(self):
+        return self
 
 def downward_closure(Ws):
     ans = set()
@@ -66,6 +79,8 @@ class AIMSynthesizer(Synthesizer):
         self.verbose = verbose
         self.rho = 0 if delta == 0 else cdp_rho(epsilon, delta)
         self.synthesizer = None
+        self.num_rows = None
+        self.original_column_names = None
 
     def fit(
             self,
@@ -79,6 +94,8 @@ class AIMSynthesizer(Synthesizer):
             nullable=False,
             prng=prng,
     ):
+        if type(data) is pd.DataFrame:
+            self.original_column_names = data.columns
 
         train_data = self._get_train_data(
             data,
@@ -101,14 +118,16 @@ class AIMSynthesizer(Synthesizer):
         dimensionality = np.prod(cards)
         if self.verbose:
             print(f"Fitting with {dimensionality} dimensions")
-
+        
+        print(self._transformer.output_width)
         colnames = ["col" + str(i) for i in range(self._transformer.output_width)]
 
         if len(cards) != len(colnames):
             raise ValueError("Cardinality and column names must be the same length.")
 
         domain = Domain(colnames, cards)
-
+        self.num_rows = len(data)
+        
         data = pd.DataFrame(train_data, columns=colnames)
         data = Dataset(df=data, domain=domain)
         workload = self.get_workload(
@@ -118,8 +137,12 @@ class AIMSynthesizer(Synthesizer):
         self.AIM(data, workload)
 
     def sample(self, samples=None):
+        if samples is None:
+            samples = self.num_rows
         data = self.synthesizer.synthetic_data(rows=samples)
-        return data
+        df = data.df
+        df.columns = self.original_column_names
+        return df
 
     @staticmethod
     def get_workload(data: Dataset, degree: int, max_cells: int, num_marginals: int = None):
@@ -217,58 +240,3 @@ class AIMSynthesizer(Synthesizer):
             errors.append(e)
         print('Average Error: ', np.mean(errors))
         return errors
-
-
-def default_params():
-    """
-    Return default parameters to run this program
-
-    :returns: a dictionary of default parameter settings for each command line argument
-    """
-    params = {}
-    params['dataset'] = '/home/stacy/GitHub/private-pgm/data/adult.csv'
-    params['domain'] = '/home/stacy/GitHub/private-pgm/data/adult-domain.json'
-    params['epsilon'] = 1.0
-    params['delta'] = 1e-9
-    params['max_model_size'] = 80
-    params['degree'] = 2
-    params['num_marginals'] = None
-    params['max_cells'] = 10000
-
-    return params
-
-
-def main(dataset, domain, epsilon, delta, max_model_size, degree, num_marginals, max_cells, save):
-
-    data = Dataset.load(dataset, domain)
-
-    synth = AIMSynthesizer(epsilon=epsilon, delta=delta, max_model_size=max_model_size, degree=degree,
-                           max_cells=max_cells, num_marginals=num_marginals)
-
-    synth.fit(data.df)
-    # errors = synth.get_errors(data, workload)
-    df = synth.sample(len(data.df))
-
-    if save is not None:
-        df.to_csv('aim_sample.csv', index=False)
-
-
-if __name__ == "__main__":
-
-    description = ''
-    formatter = argparse.ArgumentDefaultsHelpFormatter
-    parser = argparse.ArgumentParser(description=description, formatter_class=formatter)
-    parser.add_argument('--dataset', help='dataset to use')
-    parser.add_argument('--domain', help='domain to use')
-    parser.add_argument('--epsilon', type=float, help='privacy parameter')
-    parser.add_argument('--delta', type=float, help='privacy parameter')
-    parser.add_argument('--max_model_size', type=float, help='maximum size (in megabytes) of model')
-    parser.add_argument('--degree', type=int, help='degree of marginals in workload')
-    parser.add_argument('--num_marginals', type=int, help='number of marginals in workload')
-    parser.add_argument('--max_cells', type=int, help='maximum number of cells for marginals in workload')
-    parser.add_argument('--save', type=str, help='path to save synthetic data')
-
-    parser.set_defaults(**default_params())
-    args = parser.parse_args()
-    main(args.dataset, args.domain, args.epsilon, args.delta, args.max_model_size,
-         args.degree, args.num_marginals, args.max_cells, args.save)
