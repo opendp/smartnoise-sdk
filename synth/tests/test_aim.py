@@ -21,4 +21,4 @@ class TestAIM(TestCase):
         self.aim.fit(self.example_df)
         sample_size = len(self.example_df)
         synth_data = self.aim.sample(sample_size)
-        assert synth_data.df.shape == self.example_df.shape
+        assert synth_data.shape == self.example_df.shape
