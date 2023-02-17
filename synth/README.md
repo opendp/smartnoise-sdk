@@ -11,6 +11,7 @@ Differentially private synthesizers for tabular data.  Package includes:
 * DP-CTGAN
 * PATE-CTGAN
 * PATE-GAN
+* AIM
 
 ## Installation
 
