@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Maximum Spanning Tree (MST) &#8212; OpenDP SmartNoise Synthesizers</title>
+    <title>Adaptive Iterative Mechanism (AIM) &#8212; OpenDP SmartNoise Synthesizers</title>
   <script>
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
@@ -34,11 +34,11 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'synthesizers/mst';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'synthesizers/aim';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Private Aggregate Seeded from PAC-Synth" href="pac_synth.html" />
-    <link rel="prev" title="Multiplicative Weights Exponential Mechanism (MWEM)" href="mwem.html" />
+    <link rel="next" title="Multiplicative Weights Exponential Mechanism (MWEM)" href="mwem.html" />
+    <link rel="prev" title="Synthesizer Reference" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="docsearch:language" content="None">
   </head>
@@ -303,8 +303,8 @@
   </p>
   <div class="bd-toc-item navbar-nav">
     <ul class="current nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="aim.html">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
    AIM
   </a>
  </li>
@@ -313,8 +313,8 @@
    MWEM
   </a>
  </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
+ <li class="toctree-l1">
+  <a class="reference internal" href="mst.html">
    MST
   </a>
  </li>
@@ -380,10 +380,12 @@
             
             <article class="bd-article" role="main">
               
-  <section id="maximum-spanning-tree-mst">
-<h1>Maximum Spanning Tree (MST)<a class="headerlink" href="#maximum-spanning-tree-mst" title="Permalink to this headline">#</a></h1>
-<p>MST achieves state of the art results for marginals over categorical data, and does well even with small source data.  From McKenna et al. “<a class="reference external" href="https://arxiv.org/abs/2108.04978">Winning the NIST Contest: A scalable and general approach to differentially private synthetic data</a>”</p>
-<p>Before using MST, install <a class="reference external" href="https://github.com/ryan112358/private-pgm.git">Private-PGM</a> :</p>
+  <section id="adaptive-iterative-mechanism-aim">
+<h1>Adaptive Iterative Mechanism (AIM)<a class="headerlink" href="#adaptive-iterative-mechanism-aim" title="Permalink to this headline">#</a></h1>
+<blockquote>
+<div><p><a class="reference external" href="https://arxiv.org/abs/2201.12677">AIM</a> is a workload-adaptive algorithm, within the paradigm of algorithms that first selects a set of queries, then privately measures those queries, and finally generates synthetic data from the noisy measurements. It uses a set of innovative features to iteratively select the most useful measurements, reflecting both their relevance to the workload and their value in approximating the input data. AIM consistently outperforms a wide variety of existing mechanisms across a variety of experimental settings.</p>
+</div></blockquote>
+<p>Before using AIM, install <a class="reference external" href="https://github.com/ryan112358/private-pgm.git">Private-PGM</a> :</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install git+https://github.com/ryan112358/private-pgm.git
 </pre></div>
 </div>
@@ -393,29 +395,29 @@
 
 <span class="n">pums</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;PUMS.csv&quot;</span><span class="p">)</span>
 
-<span class="n">synth</span> <span class="o">=</span> <span class="n">Synthesizer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;mst&quot;</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">synth</span> <span class="o">=</span> <span class="n">Synthesizer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;aim&quot;</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">synth</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pums</span><span class="p">,</span> <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 <span class="n">pums_synth</span> <span class="o">=</span> <span class="n">synth</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For more, see the <a class="reference external" href="https://github.com/opendp/smartnoise-sdk/tree/main/synth/samples/mst_sample">sample notebook</a></p>
 <section id="parameters">
 <h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">#</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="snsynth.mst.mst.MSTSynthesizer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.mst.mst.</span></span><span class="sig-name descname"><span class="pre">MSTSynthesizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-09</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ignore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/mst/mst.html#MSTSynthesizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.mst.mst.MSTSynthesizer" title="Permalink to this definition">#</a></dt>
-<dd><p>Maximum Spanning Tree synthesizer, uses Private PGM.</p>
+<dt class="sig sig-object py" id="snsynth.aim.aim.AIMSynthesizer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">snsynth.aim.aim.</span></span><span class="sig-name descname"><span class="pre">AIMSynthesizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_model_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_marginals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/snsynth/aim/aim.html#AIMSynthesizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#snsynth.aim.aim.AIMSynthesizer" title="Permalink to this definition">#</a></dt>
+<dd><p>AIM: An Adaptive and Iterative Mechanism</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>epsilon</strong> (<em>float</em>) – privacy budget for the synthesizer</p></li>
 <li><p><strong>delta</strong> (<em>float</em>) – privacy parameter.  Should be small, in the range of 1/(n * sqrt(n))</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em>) – print diagnostic information during processing</p></li>
+<li><p><strong>max_cells</strong> (<em>int</em>) – </p></li>
 </ul>
 </dd>
 </dl>
-<p>Reuses code and modifies it lightly from
-<a class="reference external" href="https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py">https://github.com/ryan112358/private-pgm/blob/master/mechanisms/mst.py</a>. Awesome work McKenna et. al!</p>
+<p>Based on the code available in:
+<a class="reference external" href="https://github.com/ryan112358/private-pgm/blob/master/mechanisms/aim.py">https://github.com/ryan112358/private-pgm/blob/master/mechanisms/aim.py</a></p>
 </dd></dl>
 
 </section>
@@ -429,17 +431,17 @@
             <footer class="bd-footer-article">
                 <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-  <a class='left-prev' id="prev-link" href="mwem.html" title="previous page">
+  <a class='left-prev' id="prev-link" href="index.html" title="previous page">
       <i class="fas fa-angle-left"></i>
       <div class="prev-next-info">
           <p class="prev-next-subtitle">previous</p>
-          <p class="prev-next-title">Multiplicative Weights Exponential Mechanism (MWEM)</p>
+          <p class="prev-next-title">Synthesizer Reference</p>
       </div>
   </a>
-  <a class='right-next' id="next-link" href="pac_synth.html" title="next page">
+  <a class='right-next' id="next-link" href="mwem.html" title="next page">
   <div class="prev-next-info">
       <p class="prev-next-subtitle">next</p>
-      <p class="prev-next-title">Private Aggregate Seeded from PAC-Synth</p>
+      <p class="prev-next-title">Multiplicative Weights Exponential Mechanism (MWEM)</p>
   </div>
   <i class="fas fa-angle-right"></i>
   </a>
@@ -476,7 +478,7 @@
 <div class="toc-item">
   
 <div class="tocsection sourcelink">
-    <a href="../_sources/synthesizers/mst.rst.txt">
+    <a href="../_sources/synthesizers/aim.rst.txt">
         <i class="fas fa-file-alt"></i> Show Source
     </a>
 </div>

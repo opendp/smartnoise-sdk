@@ -332,7 +332,8 @@
             <article class="bd-article" role="main">
               
   <h1>Source code for snsql.sql.private_reader</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span></span><span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">snsql.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
@@ -344,7 +345,7 @@
 <span class="kn">from</span> <span class="nn">.private_rewriter</span> <span class="kn">import</span> <span class="n">Rewriter</span>
 <span class="kn">from</span> <span class="nn">.parse</span> <span class="kn">import</span> <span class="n">QueryParser</span>
 <span class="kn">from</span> <span class="nn">.reader</span> <span class="kn">import</span> <span class="n">PandasReader</span>
-<span class="kn">from</span> <span class="nn">.reader.base</span> <span class="kn">import</span> <span class="n">SortKey</span>
+<span class="kn">from</span> <span class="nn">.reader.base</span> <span class="kn">import</span> <span class="n">SortKeyExpressions</span>
 
 <span class="kn">from</span> <span class="nn">snsql._ast.ast</span> <span class="kn">import</span> <span class="n">Query</span><span class="p">,</span> <span class="n">Top</span>
 <span class="kn">from</span> <span class="nn">snsql._ast.expressions</span> <span class="kn">import</span> <span class="n">sql</span> <span class="k">as</span> <span class="n">ast</span>
@@ -354,6 +355,7 @@
 <span class="kn">from</span> <span class="nn">._mechanisms</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">string</span>
 
 <div class="viewcode-block" id="PrivateReader"><a class="viewcode-back" href="../../../api/index.html#snsql.sql.private_reader.PrivateReader">[docs]</a><span class="k">class</span> <span class="nc">PrivateReader</span><span class="p">(</span><span class="n">Reader</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Executes SQL queries against tabular data sources and returns differentially private results.</span>
@@ -835,6 +837,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please pass AST to _execute_ast.&quot;</span><span class="p">)</span>
 
+        <span class="n">_orig_query</span> <span class="o">=</span> <span class="n">query</span>
         <span class="n">subquery</span><span class="p">,</span> <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rewrite_ast</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">pre_aggregated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -925,6 +928,8 @@
         <span class="n">out_syms</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">_select_symbols</span>
         <span class="n">out_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">out_syms</span><span class="p">]</span>
         <span class="n">out_col_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">out_syms</span><span class="p">]</span>
+        <span class="n">bind_prefix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">),</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">binding_col_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;???&quot;</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;col_</span><span class="si">{</span><span class="n">bind_prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">out_col_names</span><span class="p">)]</span>
 
         <span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -975,12 +980,15 @@
             <span class="n">out</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">process_out_row</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">filter_aggregate</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
-            <span class="n">bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">out_col_names</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">binding_col_names</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
             <span class="n">keep</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">bindings</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">keep</span>
 
         <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">having</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">condition</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">having</span><span class="o">.</span><span class="n">condition</span>
+            <span class="n">condition</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">having</span><span class="o">.</span><span class="n">condition</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ne</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">_orig_query</span><span class="o">.</span><span class="n">select</span><span class="o">.</span><span class="n">namedExpressions</span><span class="p">):</span>
+                <span class="n">source_col</span> <span class="o">=</span> <span class="n">binding_col_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">replaced</span><span class="p">(</span><span class="n">ne</span><span class="o">.</span><span class="n">expression</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">source_col</span><span class="p">),</span> <span class="n">lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s2">&quot;filter&quot;</span><span class="p">):</span>
                 <span class="c1"># it&#39;s an RDD</span>
                 <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">filter_aggregate</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">condition</span><span class="p">))</span>
@@ -989,29 +997,23 @@
 
         <span class="c1"># sort it if necessary</span>
         <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sort_fields</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">sort_expressions</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">si</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">order</span><span class="o">.</span><span class="n">sortItems</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">si</span><span class="o">.</span><span class="n">expression</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ast</span><span class="o">.</span><span class="n">Column</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;We only know how to sort by column names right now&quot;</span><span class="p">)</span>
-                <span class="n">colname</span> <span class="o">=</span> <span class="n">si</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">colname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out_col_names</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="s2">&quot;Can&#39;t sort by </span><span class="si">{0}</span><span class="s2">, because it&#39;s not in output columns: </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                            <span class="n">colname</span><span class="p">,</span> <span class="n">out_col_names</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="n">colidx</span> <span class="o">=</span> <span class="n">out_col_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">colname</span><span class="p">)</span>
                 <span class="n">desc</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="k">if</span> <span class="n">si</span><span class="o">.</span><span class="n">order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">si</span><span class="o">.</span><span class="n">order</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;desc&quot;</span><span class="p">:</span>
                     <span class="n">desc</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">if</span> <span class="n">desc</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">out_types</span><span class="p">[</span><span class="n">colidx</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;boolean&quot;</span><span class="p">,</span> <span class="s2">&quot;datetime&quot;</span><span class="p">]):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;We don&#39;t know how to sort descending by &quot;</span> <span class="o">+</span> <span class="n">out_types</span><span class="p">[</span><span class="n">colidx</span><span class="p">])</span>
-                <span class="n">sf</span> <span class="o">=</span> <span class="p">(</span><span class="n">desc</span><span class="p">,</span> <span class="n">colidx</span><span class="p">)</span>
-                <span class="n">sort_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sf</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">si</span><span class="o">.</span><span class="n">expression</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ast</span><span class="o">.</span><span class="n">Column</span> <span class="ow">and</span> <span class="n">si</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">out_col_names</span><span class="p">:</span>
+                    <span class="n">sort_expressions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">desc</span><span class="p">,</span> <span class="n">si</span><span class="o">.</span><span class="n">expression</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">expr</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">si</span><span class="o">.</span><span class="n">expression</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ne</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">_orig_query</span><span class="o">.</span><span class="n">select</span><span class="o">.</span><span class="n">namedExpressions</span><span class="p">):</span>
+                        <span class="n">source_col</span> <span class="o">=</span> <span class="n">binding_col_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                        <span class="n">expr</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">replaced</span><span class="p">(</span><span class="n">ne</span><span class="o">.</span><span class="n">expression</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">source_col</span><span class="p">),</span> <span class="n">lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">sort_expressions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">desc</span><span class="p">,</span> <span class="n">expr</span><span class="p">))</span>
 
             <span class="k">def</span> <span class="nf">sort_func</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
                 <span class="c1"># use index 0, since index 1 is accuracy</span>
-                <span class="k">return</span> <span class="n">SortKey</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sort_fields</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">SortKeyExpressions</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sort_expressions</span><span class="p">,</span> <span class="n">binding_col_names</span><span class="p">)</span>
                 
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s2">&quot;sortBy&quot;</span><span class="p">):</span>
                 <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">sortBy</span><span class="p">(</span><span class="n">sort_func</span><span class="p">)</span>

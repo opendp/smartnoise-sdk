@@ -1,0 +1,638 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snsynth.aim.aim &#8212; OpenDP SmartNoise Synthesizers</title>
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=9b1a4fa89bdd0e95b23b" rel="stylesheet">
+
+  
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/snsynth/aim/aim';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="None">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fas fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+   
+
+
+<a class="navbar-brand logo" href="http://docs.smartnoise.org">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../../_static/smartnoise-logo.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../../_static/smartnoise-logo.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../synthesizers/index.html">
+                        Synthesizer Reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../transforms/index.html">
+                        Data Transformers
+                    </a>
+                </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      <div class="navbar-end-item navbar-end__search-button-container">
+        
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search">
+  <i class="fas fa-search"></i>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <span class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/smartnoise-sdk" title="GitHub" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/opendp_org" title="Twitter" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/opendp/discussions" title="GitHub Discussions" class="nav-link" rel="noopener" target="_blank"><span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  <div class="search-button-container--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search">
+  <i class="fas fa-search"></i>
+</button>
+  </div>
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fas fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../synthesizers/index.html">
+                        Synthesizer Reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../transforms/index.html">
+                        Data Transformers
+                    </a>
+                </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <span class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/smartnoise-sdk" title="GitHub" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/opendp_org" title="Twitter" class="nav-link" rel="noopener" target="_blank"><span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/opendp/opendp/discussions" title="GitHub Discussions" class="nav-link" rel="noopener" target="_blank"><span><i class="far fa-comments"></i></span>
+            <label class="sr-only">GitHub Discussions</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item">
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+      </div>
+      <main class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <h1>Source code for snsynth.aim.aim</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">mbi</span> <span class="kn">import</span> <span class="n">FactoredInference</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">GraphicalModel</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Please install mbi with:</span><span class="se">\n</span><span class="s2">   pip install git+https://github.com/ryan112358/private-pgm.git&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
+<span class="kn">from</span> <span class="nn">mbi</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">FactoredInference</span><span class="p">,</span> <span class="n">Domain</span>
+<span class="kn">from</span> <span class="nn">snsynth.cdp2adp</span> <span class="kn">import</span> <span class="n">cdp_rho</span>
+<span class="kn">from</span> <span class="nn">snsynth.utils</span> <span class="kn">import</span> <span class="n">exponential_mechanism</span><span class="p">,</span> <span class="n">gaussian_noise</span><span class="p">,</span> <span class="n">powerset</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">sparse</span>
+
+<span class="n">prng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span>
+
+
+<span class="k">class</span> <span class="nc">Identity</span><span class="p">(</span><span class="n">sparse</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinearOperator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="k">def</span> <span class="nf">_matmat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">X</span>
+    <span class="k">def</span> <span class="fm">__matmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">X</span>
+    <span class="k">def</span> <span class="nf">_transpose</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+    <span class="k">def</span> <span class="nf">_adjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<span class="k">def</span> <span class="nf">downward_closure</span><span class="p">(</span><span class="n">Ws</span><span class="p">):</span>
+    <span class="n">ans</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">Ws</span><span class="p">:</span>
+        <span class="n">ans</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">powerset</span><span class="p">(</span><span class="n">proj</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ans</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">hypothetical_model_size</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">cliques</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">GraphicalModel</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">cliques</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">20</span>
+
+
+<span class="k">def</span> <span class="nf">compile_workload</span><span class="p">(</span><span class="n">workload</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="n">cl</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">ax</span><span class="p">))</span> <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">workload</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="n">cl</span><span class="p">:</span> <span class="n">score</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span> <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">downward_closure</span><span class="p">(</span><span class="n">workload</span><span class="p">)}</span>
+
+
+<span class="k">def</span> <span class="nf">filter_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">size_limit</span><span class="p">):</span>
+    <span class="n">ans</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">free_cliques</span> <span class="o">=</span> <span class="n">downward_closure</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">cliques</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">cond1</span> <span class="o">=</span> <span class="n">hypothetical_model_size</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">cliques</span> <span class="o">+</span> <span class="p">[</span><span class="n">cl</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">size_limit</span>
+        <span class="n">cond2</span> <span class="o">=</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">free_cliques</span>
+        <span class="k">if</span> <span class="n">cond1</span> <span class="ow">or</span> <span class="n">cond2</span><span class="p">:</span>
+            <span class="n">ans</span><span class="p">[</span><span class="n">cl</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="n">cl</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">ans</span>
+
+
+<div class="viewcode-block" id="AIMSynthesizer"><a class="viewcode-back" href="../../../synthesizers/aim.html#snsynth.aim.aim.AIMSynthesizer">[docs]</a><span class="k">class</span> <span class="nc">AIMSynthesizer</span><span class="p">(</span><span class="n">Synthesizer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;AIM: An Adaptive and Iterative Mechanism</span>
+
+<span class="sd">    :param epsilon: privacy budget for the synthesizer</span>
+<span class="sd">    :type epsilon: float</span>
+<span class="sd">    :param delta: privacy parameter.  Should be small, in the range of 1/(n * sqrt(n))</span>
+<span class="sd">    :type delta: float</span>
+<span class="sd">    :param verbose: print diagnostic information during processing</span>
+<span class="sd">    :type verbose: bool</span>
+
+<span class="sd">    Based on the code available in:</span>
+<span class="sd">    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/aim.py</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">max_model_size</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_marginals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+                 <span class="n">rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rounds</span> <span class="o">=</span> <span class="n">rounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_model_size</span> <span class="o">=</span> <span class="n">max_model_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_cells</span> <span class="o">=</span> <span class="n">max_cells</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">degree</span> <span class="o">=</span> <span class="n">degree</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_marginals</span> <span class="o">=</span> <span class="n">num_marginals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">synthesizer</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_column_names</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">ignore</span><span class="p">,</span>
+            <span class="n">transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">categorical_columns</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">ordinal_columns</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">continuous_columns</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">preprocessor_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">original_column_names</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+
+        <span class="n">train_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_train_data</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;cube&#39;</span><span class="p">,</span>
+            <span class="n">transformer</span><span class="o">=</span><span class="n">transformer</span><span class="p">,</span>
+            <span class="n">categorical_columns</span><span class="o">=</span><span class="n">categorical_columns</span><span class="p">,</span>
+            <span class="n">ordinal_columns</span><span class="o">=</span><span class="n">ordinal_columns</span><span class="p">,</span>
+            <span class="n">continuous_columns</span><span class="o">=</span><span class="n">continuous_columns</span><span class="p">,</span>
+            <span class="n">nullable</span><span class="o">=</span><span class="n">nullable</span><span class="p">,</span>
+            <span class="n">preprocessor_eps</span><span class="o">=</span><span class="n">preprocessor_eps</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;We weren&#39;t able to fit a transformer to the data. Please check your data and try again.&quot;</span><span class="p">)</span>
+
+        <span class="n">cards</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">cardinality</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cards</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The transformer appears to have some continuous columns. Please provide only categorical or ordinal.&quot;</span><span class="p">)</span>
+
+        <span class="n">dimensionality</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">cards</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fitting with </span><span class="si">{</span><span class="n">dimensionality</span><span class="si">}</span><span class="s2"> dimensions&quot;</span><span class="p">)</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span><span class="p">)</span>
+        <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;col&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">output_width</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cards</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">colnames</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cardinality and column names must be the same length.&quot;</span><span class="p">)</span>
+
+        <span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">cards</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">cdp_rho</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">colnames</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
+        <span class="n">workload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_workload</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">degree</span><span class="p">,</span> <span class="n">max_cells</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_cells</span><span class="p">,</span> <span class="n">num_marginals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_marginals</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">AIM</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">workload</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesizer</span><span class="o">.</span><span class="n">synthetic_data</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
+        <span class="n">data_iter</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">itertuples</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformer</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">data_iter</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_workload</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_cells</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_marginals</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">workload</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">degree</span><span class="p">))</span>
+        <span class="n">workload</span> <span class="o">=</span> <span class="p">[</span><span class="n">cl</span> <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">workload</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_cells</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">num_marginals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">workload</span> <span class="o">=</span> <span class="p">[</span><span class="n">workload</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">prng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">workload</span><span class="p">),</span> <span class="n">num_marginals</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
+
+        <span class="c1"># workload = [(cl, 1.0) for cl in workload]</span>
+        <span class="k">return</span> <span class="n">workload</span>
+
+    <span class="k">def</span> <span class="nf">_worst_approximated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">answers</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">sensitivity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="n">wgt</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="n">cl</span><span class="p">]</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">answers</span><span class="p">[</span><span class="n">cl</span><span class="p">]</span>
+            <span class="n">bias</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span>
+            <span class="n">xest</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span>
+            <span class="n">errors</span><span class="p">[</span><span class="n">cl</span><span class="p">]</span> <span class="o">=</span> <span class="n">wgt</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">xest</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">bias</span><span class="p">)</span>
+            <span class="n">sensitivity</span><span class="p">[</span><span class="n">cl</span><span class="p">]</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wgt</span><span class="p">)</span>
+
+        <span class="n">max_sensitivity</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">sensitivity</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>  <span class="c1"># if all weights are 0, could be a problem</span>
+        <span class="k">return</span> <span class="n">exponential_mechanism</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">max_sensitivity</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">AIM</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">workload</span><span class="p">):</span>
+        <span class="n">rounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rounds</span> <span class="ow">or</span> <span class="mi">16</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">domain</span><span class="p">)</span>
+        <span class="c1"># workload = [cl for cl, _ in W]</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">compile_workload</span><span class="p">(</span><span class="n">workload</span><span class="p">)</span>
+        <span class="n">answers</span> <span class="o">=</span> <span class="p">{</span><span class="n">cl</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span> <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">}</span>
+
+        <span class="n">oneway</span> <span class="o">=</span> <span class="p">[</span><span class="n">cl</span> <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rounds</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mf">0.9</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">))</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">/</span> <span class="n">rounds</span><span class="p">)</span>
+
+        <span class="n">measurements</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial Sigma&#39;</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+        <span class="n">rho_used</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">oneway</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">oneway</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">gaussian_noise</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">I</span> <span class="o">=</span> <span class="n">Identity</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">measurements</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">cl</span><span class="p">))</span>
+
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">FactoredInference</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">warm_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">estimate</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">terminate</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">terminate</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">-</span> <span class="n">rho_used</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">/</span> <span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">epsilon</span> <span class="o">**</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="c1"># Just use up whatever remaining budget there is for one last round</span>
+                <span class="n">remaining</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">-</span> <span class="n">rho_used</span>
+                <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mf">0.9</span> <span class="o">*</span> <span class="n">remaining</span><span class="p">))</span>
+                <span class="n">epsilon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">remaining</span><span class="p">)</span>
+                <span class="n">terminate</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="n">rho_used</span> <span class="o">+=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">epsilon</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">size_limit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_model_size</span> <span class="o">*</span> <span class="n">rho_used</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span>
+
+            <span class="n">small_candidates</span> <span class="o">=</span> <span class="n">filter_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">size_limit</span><span class="p">)</span>
+            <span class="n">cl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worst_approximated</span><span class="p">(</span><span class="n">small_candidates</span><span class="p">,</span> <span class="n">answers</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+
+            <span class="n">n</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span>
+            <span class="n">Q</span> <span class="o">=</span> <span class="n">Identity</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">gaussian_noise</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">measurements</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">Q</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">cl</span><span class="p">))</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span>
+
+            <span class="n">model</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">estimate</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Selected&#39;</span><span class="p">,</span> <span class="n">cl</span><span class="p">,</span> <span class="s1">&#39;Size&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Budget Used&#39;</span><span class="p">,</span> <span class="n">rho_used</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="n">z</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;(!!!!!!!!!!!!!!!!!!!!!!) Reducing sigma&#39;</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">sigma</span> <span class="o">/=</span> <span class="mi">2</span>
+                <span class="n">epsilon</span> <span class="o">*=</span> <span class="mi">2</span>
+
+        <span class="n">engine</span><span class="o">.</span><span class="n">iters</span> <span class="o">=</span> <span class="mi">2500</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">estimate</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Estimating marginals&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">synthesizer</span> <span class="o">=</span> <span class="n">model</span>
+
+    <span class="k">def</span> <span class="nf">get_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">workload</span><span class="p">):</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">proj</span><span class="p">,</span> <span class="n">wgt</span> <span class="ow">in</span> <span class="n">workload</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesizer</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span><span class="o">.</span><span class="n">datavector</span><span class="p">()</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">wgt</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X</span> <span class="o">/</span> <span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">Y</span> <span class="o">/</span> <span class="n">Y</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average Error: &#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">errors</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
+</pre></div>
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+</div>
+
+<div class="toc-item">
+  
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=9b1a4fa89bdd0e95b23b"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 2023.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.1.2.<br>
+</p>
+
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>
