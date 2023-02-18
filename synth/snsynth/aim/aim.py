@@ -6,7 +6,6 @@ try:
 except ImportError:
     print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git")
 
-import argparse
 import itertools
 from snsynth.base import Synthesizer
 from mbi import Dataset, FactoredInference, Domain
@@ -63,10 +62,15 @@ def filter_candidates(candidates, model, size_limit):
 class AIMSynthesizer(Synthesizer):
     """AIM: An Adaptive and Iterative Mechanism
 
-    Based on the code available ins
-    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/aim.py
+    :param epsilon: privacy budget for the synthesizer
+    :type epsilon: float
+    :param delta: privacy parameter.  Should be small, in the range of 1/(n * sqrt(n))
+    :type delta: float
+    :param verbose: print diagnostic information during processing
+    :type verbose: bool
 
-    #TODO: describe params
+    Based on the code available in:
+    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/aim.py
     """
 
     def __init__(self, epsilon=1., delta=1e-9, max_model_size=80, degree=2, num_marginals=None, max_cells: int = 10000,
@@ -77,7 +81,8 @@ class AIMSynthesizer(Synthesizer):
         self.degree = degree
         self.num_marginals = num_marginals
         self.verbose = verbose
-        self.rho = 0 if delta == 0 else cdp_rho(epsilon, delta)
+        self.epsilon = epsilon
+        self.delta = delta
         self.synthesizer = None
         self.num_rows = None
         self.original_column_names = None
@@ -92,7 +97,6 @@ class AIMSynthesizer(Synthesizer):
             continuous_columns=[],
             preprocessor_eps=0.0,
             nullable=False,
-            prng=prng,
     ):
         if type(data) is pd.DataFrame:
             self.original_column_names = data.columns
@@ -127,7 +131,9 @@ class AIMSynthesizer(Synthesizer):
 
         domain = Domain(colnames, cards)
         self.num_rows = len(data)
-        
+
+        self.rho = 0 if self.delta == 0 else cdp_rho(self.epsilon, self.delta)
+
         data = pd.DataFrame(train_data, columns=colnames)
         data = Dataset(df=data, domain=domain)
         workload = self.get_workload(
@@ -140,9 +146,8 @@ class AIMSynthesizer(Synthesizer):
         if samples is None:
             samples = self.num_rows
         data = self.synthesizer.synthetic_data(rows=samples)
-        df = data.df
-        df.columns = self.original_column_names
-        return df
+        data_iter = [tuple([c for c in t[1:]]) for t in data.df.itertuples()]
+        return self._transformer.inverse_transform(data_iter)
 
     @staticmethod
     def get_workload(data: Dataset, degree: int, max_cells: int, num_marginals: int = None):
@@ -217,9 +222,11 @@ class AIMSynthesizer(Synthesizer):
 
             model = engine.estimate(measurements)
             w = model.project(cl).datavector()
-            print('Selected', cl, 'Size', n, 'Budget Used', rho_used / self.rho)
+            if self.verbose:
+                print('Selected', cl, 'Size', n, 'Budget Used', rho_used / self.rho)
             if np.linalg.norm(w - z, 1) <= sigma * np.sqrt(2 / np.pi) * n:
-                print('(!!!!!!!!!!!!!!!!!!!!!!) Reducing sigma', sigma / 2)
+                if self.verbose:
+                    print('(!!!!!!!!!!!!!!!!!!!!!!) Reducing sigma', sigma / 2)
                 sigma /= 2
                 epsilon *= 2
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smartnoise-synth"
-version = "0.3.5.1"
+version = "0.3.6"
 description = "Differentially Private Synthetic Data"
 authors = ["SmartNoise Team <smartnoise@opendp.org>"]
 license = "MIT"

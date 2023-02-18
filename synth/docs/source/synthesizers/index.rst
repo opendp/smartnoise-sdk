@@ -17,6 +17,7 @@ Marginal Synthesizers
   :glob:
   :maxdepth: 1
 
+    AIM <aim>
     MWEM <mwem>
     MST <mst>
     PAC-Synth <pac_synth>
