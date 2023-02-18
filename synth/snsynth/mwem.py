@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from snsynth.base import Synthesizer
+from snsynth.utils import laplace_noise
 
 class Query:
     def __init__(self, query):
@@ -732,4 +733,4 @@ class MWEMSynthesizer(Synthesizer):
         :return: Random value from laplace distribution [-1,1]
         :rtype: float
         """
-        return sigma * np.log(random.random()) * np.random.choice([-1, 1])
+        return laplace_noise(sigma)

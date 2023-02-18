@@ -134,7 +134,10 @@ synth_map = {
     },
     'pategan': {
         'class': 'snsynth.pytorch.nn.pategan.PATEGAN'
-    }
+    },
+    'aim': {
+        'class': 'snsynth.aim.AIMSynthesizer'
+    },
 }
 
 class Synthesizer(SDGYMBaseSynthesizer):

@@ -11,8 +11,9 @@ from disjoint_set import DisjointSet
 import networkx as nx
 import itertools
 from scipy.special import logsumexp
-from snsynth.mst.cdp2adp import cdp_rho
+from snsynth.cdp2adp import cdp_rho
 from snsynth.base import Synthesizer
+from snsynth.utils import gaussian_noise
 
 """
 Wrapper for MST synthesizer from Private PGM:
@@ -64,7 +65,6 @@ class MSTSynthesizer(Synthesizer):
         continuous_columns=[],
         preprocessor_eps=0.0,
         nullable=False,
-        prng=np.random
         ):
 
         train_data = self._get_train_data(
@@ -141,7 +141,7 @@ class MSTSynthesizer(Synthesizer):
         measurements = []
         for proj, wgt in zip(cliques, weights):
             x = data.project(proj).datavector()
-            y = x + np.random.normal(loc=0, scale=sigma/wgt, size=x.size)
+            y = x + gaussian_noise(sigma/wgt, x.size)
             Q = sparse.eye(x.size)
             measurements.append((Q, y, sigma/wgt, proj))
         return measurements

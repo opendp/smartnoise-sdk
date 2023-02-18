@@ -2,14 +2,14 @@ import itertools
 
 import numpy as np
 from scipy.special import softmax
+from opendp.measurements import make_base_laplace, make_base_gaussian
+from opendp.mod import enable_features
 
 prng = np.random
 
 
 def exponential_mechanism(qualities, epsilon, sensitivity=1.0, base_measure=None):
     if isinstance(qualities, dict):
-        # import pandas as pd
-        # print(pd.Series(list(qualities.values()), list(qualities.keys())).sort_values().tail())
         keys = list(qualities.keys())
         qualities = np.array([qualities[key] for key in keys])
         if base_measure is not None:
@@ -27,11 +27,21 @@ def exponential_mechanism(qualities, epsilon, sensitivity=1.0, base_measure=None
 
     return keys[prng.choice(p.size, p=p)]
 
+def gaussian_noise(sigma, size=None):
+    enable_features('floating-point', 'contrib')
+    meas = make_base_gaussian(sigma)
+    if size is None:
+        return meas(0.0)
+    else:
+        return [meas(0.0) for _ in range(size)]
 
-def gaussian_noise(sigma, size):
-    """ Generate iid Gaussian noise  of a given scale and size """
-    return prng.normal(0, sigma, size)
-
+def laplace_noise(scale, size=None):
+    enable_features('floating-point', 'contrib')
+    meas = make_base_laplace(scale)
+    if size is None:
+        return meas(0.0)
+    else:
+        return [meas(0.0) for _ in range(size)]
 
 def powerset(iterable):
     "powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"

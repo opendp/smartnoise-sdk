@@ -1,3 +1,8 @@
+# SmartNoise Synth v0.3.6 Release Notes
+
+* Add AIM Synthesizer (thanks, @aholovenko and @lurosenb!)
+* Switch additive noise to use OpenDP v0.6
+
 # SmartNoise Synth v0.3.5 Release Notes
 
 * Callers can constrain inference with hints (thanks, @neat-web!)
