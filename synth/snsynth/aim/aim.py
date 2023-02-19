@@ -9,8 +9,7 @@ except ImportError:
 import itertools
 from snsynth.base import Synthesizer
 from mbi import Dataset, FactoredInference, Domain
-from snsynth.cdp2adp import cdp_rho
-from snsynth.utils import exponential_mechanism, gaussian_noise, powerset
+from snsynth.utils import cdp_rho, exponential_mechanism, gaussian_noise, powerset
 from scipy import sparse
 
 prng = np.random

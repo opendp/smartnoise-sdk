@@ -11,9 +11,8 @@ from disjoint_set import DisjointSet
 import networkx as nx
 import itertools
 from scipy.special import logsumexp
-from snsynth.cdp2adp import cdp_rho
 from snsynth.base import Synthesizer
-from snsynth.utils import gaussian_noise
+from snsynth.utils import cdp_rho, gaussian_noise
 
 """
 Wrapper for MST synthesizer from Private PGM:
