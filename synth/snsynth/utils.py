@@ -46,6 +46,7 @@ def laplace_noise(scale, size=None):
 
 def cdp_rho(epsilon, delta):
     budget = (epsilon, delta)
+    enable_features('floating-point', 'contrib')
     def make_fixed_approxDP_gaussian(scale):
         adp = make_zCDP_to_approxDP(make_base_gaussian(scale))
         return make_fix_delta(adp, delta=budget[1])
