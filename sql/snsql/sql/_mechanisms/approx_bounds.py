@@ -61,23 +61,19 @@ def approx_bounds(vals, epsilon):
             return (-1.0, -0.0)
         else:
             return (-1 * 2.0 ** np.abs(bins - idx - 1), -1 * 2.0 ** np.abs(bins - idx - 2))
+        
+    edge_list = [edges(idx) for idx in range(len(hist))]
 
     # compute histograms
     for v in vals:
-        if v >= 0 and v < 1.0:
-            bin = bins
-            hist[bin] += 1
-        elif v >= 1.0:
-            bin = int(np.trunc(np.log2(v))) + bins + 1
-            if bin < len(hist):
-                hist[bin] += 1
-        elif v < 0 and v >= -1.0:
-            bin = bins - 1
-            hist[bin] += 1
-        else:
-            bin = bins - int(np.trunc(np.log2(-v + 1))) - 1
-            if bin > 0:
-                hist[bin] += 1
+        bin = None
+        for idx, (l, u) in enumerate(edge_list):
+            if l <= v < u:
+                bin = idx
+                break
+        if bin is None:
+            raise ValueError(f"Value {v} is outside of the range we can use to infer bounds")
+        hist[bin] += 1
 
         # for testing
         l, u = edges(bin)

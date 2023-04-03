@@ -1,3 +1,7 @@
+# SmartNoise SQL v0.2.10 Release Notes
+
+* Fix bug where approximate bounds would fail in some cases
+
 # SmartNoise SQL v0.2.9 Release Notes
 
 * MySql and SQLite readers
