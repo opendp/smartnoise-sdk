@@ -117,14 +117,6 @@ class PrivateReader(Reader):
         """
         Warn if any of the current settings could result in unsafe floating point mechanisms.
         """
-        if self._options.censor_dims:
-            warnings.warn(
-f"""Dimension censoring is enabled, with {self.privacy.mechanisms.map[Stat.threshold]} as the thresholding mechanism. 
-This is an unsafe floating point mechanism.  Counts used for censoring will be revealed in any queries that request COUNT DISTINCT(person), 
-leading to potential privacy leaks. If your query workload needs to reveal distinct counts of individuals, consider doing the dimension
-censoring as a preprocessing step.  See the documentation for more information."""
-            )
-
         mechs = self.privacy.mechanisms
         tables = self.metadata.tables()
         floats = []

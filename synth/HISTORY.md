@@ -1,3 +1,8 @@
+# SmartNoise Synth v0.3.7 Release Notes
+
+* Update PAC-Synth to v0.0.8
+* Update smartnoise-sql dependency to >=0.2.10
+
 # SmartNoise Synth v0.3.6 Release Notes
 
 * Add AIM Synthesizer (thanks, @aholovenko and @lurosenb!)

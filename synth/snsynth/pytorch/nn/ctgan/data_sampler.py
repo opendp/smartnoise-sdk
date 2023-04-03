@@ -22,8 +22,6 @@ class DataSampler(object):
         self._transformers = transformers
 
         self._per_column_scale = None
-        if discrete_column_category_prob is not None:
-            warnings.warn("Discrete column category prob is deprecated and will be removed in a future version.")
         self._discrete_column_category_prob = None
 
         n_discrete_columns = sum(

@@ -33,8 +33,12 @@ class TestApproximateBounds:
         assert (min == -1.0)
         assert (max == 0.0)
     def test_bounds_increment(self):
-        powers = np.arange(10) * 4
+        powers = np.arange(10) * 4.0
         vals = [2.0**p for p in powers] * 100
         min, max = approx_bounds(vals, 10.0)
         assert (min == 1.0)
         assert (max >= 2**35 and max <= 2**37)
+    def test_bounds_ragged_edges(self):
+        vals = [1, 3, 5, -6, -4.5, 25, -3, 299, 899] * 100
+        min, max = approx_bounds(vals, 1.0)
+        assert (min < -6 and max > 899)
