@@ -126,5 +126,4 @@ class ExtractFunction(SqlExpr):
         else:
             raise ValueError(f"Unknown date part requested: {self.date_part}")
     def symbol(self, relations):
-        return ExtractFunction(self.expression.symbol(relations), self.date_part)
-
+        return ExtractFunction(self.date_part, self.expression.symbol(relations))

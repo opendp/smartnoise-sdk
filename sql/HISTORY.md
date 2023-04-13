@@ -1,3 +1,7 @@
+# SmartNoise SQL v0.2.11 Release Notes
+
+* Fix bug where EXTRACT function would lose datepart after symbols loaded
+
 # SmartNoise SQL v0.2.10 Release Notes
 
 * Fix bug where approximate bounds would fail in some cases
