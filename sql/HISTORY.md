@@ -1,3 +1,7 @@
+# SmartNoise SQL v0.2.12 Release Notes
+
+* Fix bug where other counts would borrow `SELECT COUNT(*)` when `SELECT COUNT(*)` was used first
+
 # SmartNoise SQL v0.2.11 Release Notes
 
 * Fix bug where EXTRACT function would lose datepart after symbols loaded

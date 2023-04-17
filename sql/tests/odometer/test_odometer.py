@@ -55,7 +55,7 @@ class TestOdometer:
         assert(priv.odometer.spent == (0.0, 0.0))
         assert(priv.odometer.k == 0)
         res = priv.execute("SELECT COUNT(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(priv.odometer.k == 1)
+        assert(priv.odometer.k == 2)
     def test_count_row_privacy_col_quantifier(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
@@ -80,21 +80,21 @@ class TestOdometer:
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv.execute("SELECT VAR(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(priv.odometer.k == 3)
+        assert(priv.odometer.k == 4)
     def test_std(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv.execute("SELECT STD(age) FROM PUMS.PUMS GROUP BY sex")
-        assert(priv.odometer.k == 3)
+        assert(priv.odometer.k == 4)
     def test_avg(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
         meta_obj['PUMS.PUMS'].censor_dims = True
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv.execute("SELECT AVG(age) FROM PUMS.PUMS GROUP BY educ")
-        assert(priv.odometer.k == 2)
+        assert(priv.odometer.k == 3)
     def test_sum(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
@@ -152,7 +152,7 @@ class TestMultiplier:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv._get_mechanism_costs("SELECT COUNT(age) FROM PUMS.PUMS GROUP BY educ")
         res = [r for r in res if r]
-        assert(len(res) == 1)
+        assert(len(res) == 2)
     def test_count_row_privacy_col_quantifier(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
@@ -176,7 +176,7 @@ class TestMultiplier:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv._get_mechanism_costs("SELECT VAR(age) FROM PUMS.PUMS GROUP BY educ")
         res = [r for r in res if r]
-        assert(len(res) == 3)
+        assert(len(res) == 4)
     def test_std(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
@@ -184,7 +184,7 @@ class TestMultiplier:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv._get_mechanism_costs("SELECT STD(age) FROM PUMS.PUMS GROUP BY sex")
         res = [r for r in res if r]
-        assert(len(res) == 3)
+        assert(len(res) == 4)
     def test_avg(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False
@@ -192,7 +192,7 @@ class TestMultiplier:
         priv = PrivateReader.from_connection(pums, privacy=privacy, metadata=meta_obj)
         res = priv._get_mechanism_costs("SELECT AVG(age) FROM PUMS.PUMS GROUP BY educ")
         res = [r for r in res if r]
-        assert(len(res) == 2)
+        assert(len(res) == 3)
     def test_sum(self):
         meta_obj['PUMS.PUMS'].row_privacy = True
         meta_obj['PUMS.PUMS']['pid'].is_key = False

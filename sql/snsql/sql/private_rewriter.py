@@ -365,7 +365,10 @@ class Scope:
                 return proposed
 
         # see if the expression has been used
-        names = [name for name in self.expressions.keys() if self.expressions[name] == expression]
+        names = []
+        for name in self.expressions.keys():
+            if self.expressions[name] == expression:
+                names.append(name)
         if len(names) > 0:
             return names[0]
 
