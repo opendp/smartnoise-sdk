@@ -1,7 +1,13 @@
+import os
+import subprocess
 import pytest
 import sys
+from snsql import Privacy, from_connection
 
-from snsql.sql.privacy import Privacy
+git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
+
+two_table_meta_a = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_dup_twotable.yaml"))
+two_table_meta_b = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_dup_twotable_reverse.yaml"))
 
 privacy = Privacy(alphas=[0.01, 0.05], epsilon=30.0, delta=0.1)
 
@@ -31,6 +37,13 @@ class TestDbCounts:
                     upper = 1224000
                 print(f"Table {dbname}.PUMS.{tablename} has {n} COUNT(age) rows in {reader.engine}")
                 assert(n > lower and n < upper)
+    def test_with_two_table_meta(self, test_databases):
+        conn = test_databases.get_connection(database='PUMS_null', engine='postgres')
+        conn = conn.connection
+        for meta in [two_table_meta_a, two_table_meta_b]:
+            reader = from_connection(conn, metadata=meta, privacy=privacy)
+            count_age = reader.execute('SELECT COUNT(age) FROM PUMS.PUMS')[1][0]
+            assert count_age > 890 and count_age < 1020
     def test_db_counts_star(self, test_databases):
         # Actual is 1000
         for dbname in ['PUMS', 'PUMS_pid', 'PUMS_large', 'PUMS_dup', 'PUMS_null']:

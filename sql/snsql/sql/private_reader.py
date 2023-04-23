@@ -103,7 +103,6 @@ class PrivateReader(Reader):
         self._options.censor_dims = not any([not t.censor_dims for t in tables])
         self._options.reservoir_sample = any([t.sample_max_ids for t in tables])
         self._options.clamp_counts = any([t.clamp_counts for t in tables])
-        self._options.max_contrib = max([t.max_ids for t in tables])
         self._options.use_dpsu = any([t.use_dpsu for t in tables])
         self._options.clamp_columns = any([t.clamp_columns for t in tables])
 
