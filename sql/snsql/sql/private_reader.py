@@ -279,8 +279,7 @@ This could lead to privacy leaks."""
         if isinstance(query, str):
             raise ValueError("Please pass a Query AST object to _rewrite_ast()")
         query_max_contrib = query.max_ids
-        if self._options.max_contrib is None or self._options.max_contrib > query_max_contrib:
-            self._options.max_contrib = query_max_contrib
+        self._options.max_contrib = query_max_contrib
 
         self._refresh_options()
         query = self.rewriter.query(query)
