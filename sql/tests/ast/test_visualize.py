@@ -1,11 +1,7 @@
 import os
 import subprocess
-import copy
-import pytest
 
 import pandas as pd
-from pandasql import sqldf
-import math
 
 from snsql import *
 from snsql.metadata import Metadata

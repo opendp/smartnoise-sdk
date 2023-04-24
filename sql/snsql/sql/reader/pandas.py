@@ -1,6 +1,6 @@
 import importlib
-
-#from snsql.metadata import Metadata
+import pandas as pd
+from sqlalchemy import create_engine, text
 from .base import SqlReader, NameCompare, Serializer
 from .engine import Engine
 import copy
@@ -11,24 +11,42 @@ import re
 class PandasReader(SqlReader):
     ENGINE = Engine.PANDAS
 
-    def __init__(self, df=None, metadata=None, conn=None, **kwargs):
+    def __init__(self, df=None, metadata=None, conn=None, *ignore, table_name=None, **kwargs):
         super().__init__(self.ENGINE)
+        if metadata is not None:
+            self.metadata = metadata
+            class_ = getattr(importlib.import_module("snsql.metadata"), "Metadata")
+            self.metadata = class_.from_(metadata)
         if conn is not None:
             df = conn
-        if metadata is None:
-            raise ValueError("Load without metadata is not yet implemented")
         if df is None:
             raise ValueError("Pass in a Pandas dataframe")
-        self.df = df
+        table_dict = {}
+        if isinstance(df, pd.DataFrame):        
+            if table_name is None:
+                if metadata is None:
+                    raise ValueError("Must pass in table_name if metadata is not provided")
+                table_names = list(self.metadata.m_tables.keys())
+                if len(table_names) > 1:
+                    raise ValueError(
+                        "Must pass in table_name if metadata has more than one table"
+                    )
+                table_name = table_names[0]
+            else:
+                if metadata is not None:
+                    table_names = list(metadata.m_tables.keys())
+                    if table_name not in table_names:
+                        raise ValueError(
+                            "table_name {} not in metadata".format(table_name)
+                        )
+            table_dict[table_name] = df
+        elif not isinstance(df, dict):
+            raise ValueError("df must be a Pandas dataframe or a dictionary of dataframes")
+        else:
+            table_dict = df
 
-        # we can replace this when we remove
-        # Metadata from pandas cleaning
-        class_ = getattr(importlib.import_module("snsql.metadata"), "Metadata")
-        metadata = class_.from_(metadata)
-
-        self.metadata, self.original_column_names = self._sanitize_metadata(metadata)
+        # check minimum version of sqlite
         import sqlite3
-
         ver = [int(part) for part in sqlite3.sqlite_version.split(".")]
         if len(ver) == 3:
             # all historical versions of SQLite have 3 parts
@@ -43,6 +61,18 @@ class PandasReader(SqlReader):
                     ),
                     Warning,
                 )
+
+        # load all dataframes into a single sqlite database
+        table_names = list(table_dict.keys())
+        self.table_names = table_names
+
+        table_name_fixed = [t.replace(".", "_") for t in table_names]
+        if len(table_names) != len(set(table_name_fixed)):
+            raise ValueError("Table names must be unique after replacing '.' with '_'.")
+        db_engine = create_engine('sqlite://', echo=False)
+        for table_name, df in table_dict.items():
+            df.to_sql(table_name.replace('.','_'), con=db_engine, index=False)
+        self.db_engine = db_engine
 
     def _sanitize_column_name(self, column_name):
         x = re.search(r".*[a-zA-Z0-9()_]", column_name)
@@ -113,42 +143,17 @@ class PandasReader(SqlReader):
             tuples for rows.  This will NOT fix the query to target the
             specific SQL dialect.  Call execute_typed to fix dialect.
         """
-        query = self._sanitize_query(query)
-        from pandasql import sqldf
-
         if not isinstance(query, str):
             raise ValueError("Please pass strings to execute.  To execute ASTs, use execute_typed.")
-        table_names = list(self.metadata.m_tables.keys())
-        if len(table_names) > 1:
-            raise Exception(
-                "PandasReader only supports one table, {} found.".format(len(table_names))
-            )
-
-        df_name = "df_for_diffpriv1234"
-        table_name = table_names[0]
-
-        def clean_query(query):
-            for column in self.metadata.m_tables[table_name].m_columns:
-                if " " in column or "(" in column or ")" in column:
-                    new_column_name = column.replace(" ", "_").replace("(", "_").replace(")", "_")
-                    query = query.replace(column, new_column_name)
-                    query = query.replace("'{}'".format(new_column_name), new_column_name)
-            return query.replace(table_name, df_name)
-
-        for column in self.metadata.m_tables[table_name].m_columns:
-            new_column_name = column.replace(" ", "_").replace("(", "_").replace(")", "_")
-            if self.metadata.m_tables[table_name].m_columns[column].is_key:
-                if column not in self.df:
-                    self.df[column] = range(len(self.df))
-            else:
-                if new_column_name not in self.df:
-                    self.df[new_column_name] = self.df[column]
-
-        df_for_diffpriv1234 = self.df
-        q_result = sqldf(clean_query(query), locals())
-        return [tuple([col for col in q_result.columns])] + [
-            val[1:] for val in q_result.itertuples()
-        ]
+        
+        # this is a hack; should use AST
+        for table_name in self.table_names:
+            query = query.replace(table_name, table_name.replace('.', '_'))
+        with self.db_engine.connect() as conn:
+            result_proxy = conn.execute(text(query))
+            column_names = [tuple(c for c in result_proxy.keys())]
+            result = [tuple(row) for row in result_proxy.fetchall()]
+            return column_names + result
 
 class PandasNameCompare(NameCompare):
     def __init__(self, search_path=None):
@@ -157,3 +162,7 @@ class PandasNameCompare(NameCompare):
 class PandasSerializer(Serializer):
     def __init__(self):
         super().__init__()
+    def serialize(self, query):
+        if isinstance(query, str):
+            raise ValueError("We need an AST to validate and serialize.")
+        return str(query)

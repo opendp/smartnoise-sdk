@@ -1,3 +1,7 @@
+# SmartNoise SQL v1.0.0 Release Notes
+
+* Switch to use Pandas 2.0 and SQLAlchemy 2.0
+
 # SmartNoise SQL v0.2.12 Release Notes
 
 * Fix bug where other counts would borrow `SELECT COUNT(*)` when `SELECT COUNT(*)` was used first
