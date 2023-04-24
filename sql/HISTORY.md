@@ -1,6 +1,10 @@
 # SmartNoise SQL v0.2.12 Release Notes
 
 * Fix bug where other counts would borrow `SELECT COUNT(*)` when `SELECT COUNT(*)` was used first
+* Fix bug where queries would fail if multiple tables in a single metadata had different `max_contrib`.
+* Change behavior of VAR and STDDEV to return zero if VAR is negative.
+
+Thanks to @mhauru for reporting these issues!
 
 # SmartNoise SQL v0.2.11 Release Notes
 
