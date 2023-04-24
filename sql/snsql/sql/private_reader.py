@@ -103,7 +103,6 @@ class PrivateReader(Reader):
         self._options.censor_dims = not any([not t.censor_dims for t in tables])
         self._options.reservoir_sample = any([t.sample_max_ids for t in tables])
         self._options.clamp_counts = any([t.clamp_counts for t in tables])
-        self._options.max_contrib = max([t.max_ids for t in tables])
         self._options.use_dpsu = any([t.use_dpsu for t in tables])
         self._options.clamp_columns = any([t.clamp_columns for t in tables])
 
@@ -280,8 +279,7 @@ This could lead to privacy leaks."""
         if isinstance(query, str):
             raise ValueError("Please pass a Query AST object to _rewrite_ast()")
         query_max_contrib = query.max_ids
-        if self._options.max_contrib is None or self._options.max_contrib > query_max_contrib:
-            self._options.max_contrib = query_max_contrib
+        self._options.max_contrib = query_max_contrib
 
         self._refresh_options()
         query = self.rewriter.query(query)

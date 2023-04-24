@@ -19,4 +19,4 @@ class PostgresFactory(DbFactory):
             print(f'Postgres: Connected {dataset} to {dbname} as {table_name}')
         except Exception as e:
             print(str(e))
-            print(f"Unable to connect to postgres datset {dataset}.  Ensure connection info is correct and psycopg2 is installed")
+            print(f"Unable to connect to postgres dataset {dataset}.  Ensure connection info is correct and psycopg2 is installed")

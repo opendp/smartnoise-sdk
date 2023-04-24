@@ -95,8 +95,6 @@ class TestQueryThresholds:
         deltas = [10E-5, 10E-15]
         query = "SELECT COUNT(*) FROM PUMS.PUMS GROUP BY married"
         reader = PandasReader(df, schema)
-        qp = QueryParser(schema)
-        q = qp.query(query)
         for eps in epsilons:
             for d in max_contribs:
                 for delta in deltas:
@@ -108,8 +106,9 @@ class TestQueryThresholds:
                     gaus_rho = 1 + gaus_scale * math.sqrt(2 * math.log(d / math.sqrt(2 * math.pi * delta)))
                     schema_c = copy.copy(schema)
                     schema_c["PUMS.PUMS"].max_ids = d
+                    qp = QueryParser(schema_c)
+                    q = qp.query(query)
                     private_reader = PrivateReader(reader, metadata=schema_c, privacy=privacy)
-                    assert(private_reader._options.max_contrib == d)
                     r = private_reader._execute_ast(q)
                     assert(private_reader.tau < gaus_rho * 3 and private_reader.tau > gaus_rho / 3)
     def test_empty_result_count_typed_notau_prepost(self):
