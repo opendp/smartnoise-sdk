@@ -494,6 +494,14 @@ This could lead to privacy leaks."""
             raise ValueError("Please pass AST to _execute_ast.")
 
         _orig_query = query
+
+        agg_names = []
+        for col in _orig_query.select.namedExpressions:
+            if isinstance(col.expression, ast.AggFunction):
+                agg_names.append(col.expression.name)
+            else:
+                agg_names.append(None)
+
         subquery, query = self._rewrite_ast(query)
 
         if pre_aggregated is not None:
@@ -614,6 +622,16 @@ This could lead to privacy leaks."""
         def process_out_row(row):
             bindings = dict((name.lower(), val) for name, val in zip(source_col_names, row))
             out_row = [c.expression.evaluate(bindings) for c in query.select.namedExpressions]
+            # fix up case where variance is negative
+            out_row_fixed = []
+            for val, agg in zip(out_row, agg_names):
+                if agg == 'VAR' and val < 0:
+                    out_row_fixed.append(0.0)
+                elif agg == 'STDDEV' and np.isnan(val):
+                    out_row_fixed.append(0.0)
+                else:
+                    out_row_fixed.append(val)
+            out_row = out_row_fixed
             try:
                 out_row =[convert(val, type) for val, type in zip(out_row, out_types)]
             except Exception as e:
