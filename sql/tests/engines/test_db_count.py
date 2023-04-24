@@ -41,10 +41,12 @@ class TestDbCounts:
         conn = test_databases.get_connection(database='PUMS_null', engine='postgres')
         if conn is not None:
             # pandas doesn't support multiple tables per metadata
+            table_name = conn.table_name
             conn = conn.connection
+            query = f'SELECT COUNT(age) FROM {table_name}'
             for meta in [two_table_meta_a, two_table_meta_b]:
                 reader = from_connection(conn, metadata=meta, privacy=privacy)
-                count_age = reader.execute('SELECT COUNT(age) FROM PUMS.PUMS')[1][0]
+                count_age = reader.execute(query)[1][0]
                 assert count_age > 890 and count_age < 1020
     def test_db_counts_star(self, test_databases):
         # Actual is 1000
