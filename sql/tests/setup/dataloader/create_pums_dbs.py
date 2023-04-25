@@ -24,20 +24,8 @@ def create_pums(engine):
             if engine.dialect.has_table(engine.connect(), 'pums'):
                 pums.drop(engine)
             metadata_obj.create_all(engine)
-    return()
     pums_df = pd.read_csv(pums_csv_path)
     pums_df.to_sql('pums', engine, if_exists='append', index=False, method='multi', chunksize=1000)
-    # with engine.begin() as conn:
-    #     for _, row in pums_df.iterrows():
-    #         ins = pums.insert().values(
-    #             sex = int(row['sex']),
-    #             age = int(row['age']),
-    #             educ = int(row['educ']),
-    #             race = int(row['race']),
-    #             income = int(row['income']),
-    #             married = int(row['married'])
-    #         )
-    #         conn.execute(ins)
  
 def create_pums_pid(engine):
     pums_pid_csv_path = os.path.join(root_url, "datasets", "PUMS_pid.csv")
