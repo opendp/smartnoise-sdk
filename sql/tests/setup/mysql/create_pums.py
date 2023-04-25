@@ -2,9 +2,9 @@ import os
 import subprocess
 import sys
 from urllib.parse import quote_plus
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 
-print("Installing test databases for PUMS\n")
+print("Installing test databases for PUMS\n", flush=True)
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 setup_path = os.path.abspath(
@@ -19,8 +19,6 @@ setup_path = os.path.abspath(
 sys.path.insert(0, setup_path)
 
 from dataloader.create_pums_dbs import *
-
-from sqlalchemy import create_engine
 
 # change these to match your install
 host = 'localhost'
@@ -37,14 +35,14 @@ engine = create_engine(url)
 
 conn = engine.connect()
 
-print("Creating databases\n")
+print("Creating databases\n", flush=True)
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_pid"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_dup"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_null"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_large"))
 
-print("Creating PUMS table\n")
+print("Creating PUMS table\n", flush=True)
 dburl = url + "/PUMS"
 engine = create_engine(dburl)
 create_pums(engine)
@@ -52,7 +50,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS has {count[0][0]} rows")
 
-print("Creating PUMS_pid table\n")
+print("Creating PUMS_pid table\n", flush=True)
 dburl = url + "/PUMS_pid"
 engine = create_engine(dburl)
 create_pums_pid(engine)
@@ -60,7 +58,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS_pid has {count[0][0]} rows")
 
-print("Creating PUMS_dup table\n")
+print("Creating PUMS_dup table\n", flush=True)
 dburl = url + "/PUMS_dup"
 engine = create_engine(dburl)
 create_pums_dup(engine)
@@ -68,7 +66,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS_pid has {count[0][0]} rows")
 
-print("Creating PUMS_null table\n")
+print("Creating PUMS_null table\n", flush=True)
 dburl = url + "/PUMS_null"
 engine = create_engine(dburl)
 create_pums_null(engine)
@@ -76,7 +74,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS_null has {count[0][0]} rows")
 
-print("Creating PUMS_large table\n")
+print("Creating PUMS_large table\n", flush=True)
 dburl = url + "/PUMS_large"
 engine = create_engine(dburl)
 create_pums_large(engine)

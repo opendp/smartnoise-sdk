@@ -47,6 +47,8 @@ jobs:
           pip install --no-cache-dir  .
       - name: Check database connections test fixture
         shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           cd sql
           mkdir ~/.smartnoise
