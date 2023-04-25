@@ -33,13 +33,16 @@ if not password:
 url = f"mysql+pymysql://{user}:{quote_plus(password)}@{host}:{port}"
 engine = create_engine(url)
 
-with engine.connect() as conn:
-    conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS"))
-    conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_pid"))
-    conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_dup"))
-    conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_null"))
-    conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_large"))
+conn = engine.connect()
 
+print("Creating databases\n")
+conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS"))
+conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_pid"))
+conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_dup"))
+conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_null"))
+conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_large"))
+
+print("Creating PUMS table\n")
 dburl = url + "/PUMS"
 engine = create_engine(dburl)
 create_pums(engine)
@@ -47,6 +50,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS has {count[0][0]} rows")
 
+print("Creating PUMS_pid table\n")
 dburl = url + "/PUMS_pid"
 engine = create_engine(dburl)
 create_pums_pid(engine)
@@ -54,6 +58,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS_pid has {count[0][0]} rows")
 
+print("Creating PUMS_dup table\n")
 dburl = url + "/PUMS_dup"
 engine = create_engine(dburl)
 create_pums_dup(engine)
@@ -61,6 +66,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS_pid has {count[0][0]} rows")
 
+print("Creating PUMS_null table\n")
 dburl = url + "/PUMS_null"
 engine = create_engine(dburl)
 create_pums_null(engine)
@@ -68,6 +74,7 @@ with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
     print(f"PUMS_null has {count[0][0]} rows")
 
+print("Creating PUMS_large table\n")
 dburl = url + "/PUMS_large"
 engine = create_engine(dburl)
 create_pums_large(engine)
