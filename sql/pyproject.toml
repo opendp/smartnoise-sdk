@@ -16,7 +16,7 @@ antlr4-python3-runtime = "4.9.3"
 PyYAML = "^5.4.1"
 graphviz = "^0.17"
 sqlalchemy = "^2.0.0"
-pandas = "^2.0.0"
+pandas = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 
