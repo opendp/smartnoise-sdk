@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from time import sleep
 from urllib.parse import quote_plus
 from sqlalchemy import create_engine, text
 
@@ -41,6 +42,7 @@ conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_pid"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_dup"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_null"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_large"))
+sleep(1)
 
 print("Creating PUMS table\n", flush=True)
 dburl = url + "/PUMS"
@@ -48,7 +50,8 @@ engine = create_engine(dburl)
 create_pums(engine)
 with engine.begin() as conn:
     count = list(conn.execute(text('SELECT COUNT(*) FROM pums')))
-    print(f"PUMS has {count[0][0]} rows")
+    print(f"PUMS has {count[0][0]} rows", flush=True)
+sleep(1)
 
 print("Creating PUMS_pid table\n", flush=True)
 dburl = url + "/PUMS_pid"
