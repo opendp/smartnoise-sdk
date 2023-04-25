@@ -60,6 +60,9 @@ class Query(SqlRel):
             self.sample_max_ids = any(tc.sample_max_ids for tc in tables)
             self.row_privacy = any(tc.row_privacy for tc in tables)
             self.censor_dims = any(tc.censor_dims for tc in tables)
+            self.clamp_counts = any(tc.clamp_counts for tc in tables)
+            self.clamp_columns = any(tc.clamp_columns for tc in tables)
+            self.use_dpsu = any(tc.use_dpsu for tc in tables)
 
         # get grouping expression symbols
         self._grouping_symbols = []
@@ -440,6 +443,9 @@ class Table(SqlRel):
                     sample_max_ids=table.sample_max_ids,
                     row_privacy=table.row_privacy,
                     censor_dims=table.censor_dims,
+                    clamp_columns=table.clamp_columns,
+                    clamp_counts=table.clamp_counts,
+                    use_dpsu=table.use_dpsu,
                     compare=metadata.compare
                 )
             self._select_symbols = [Symbol(get_table_expr(name), name) for name in tc.keys()]
@@ -540,7 +546,10 @@ class TableColumn(SqlExpr):
         compare=None,
         nullable = True,
         missing_value = None,
-        sensitivity = None
+        sensitivity = None,
+        clamp_counts = False,
+        clamp_columns = True,
+        use_dpsu = False,
     ):
         self.tablename = tablename
         self.colname = colname
@@ -556,6 +565,9 @@ class TableColumn(SqlExpr):
         self.nullable = nullable
         self.missing_value = missing_value
         self._sensitivity = sensitivity
+        self.clamp_counts = clamp_counts
+        self.clamp_columns = clamp_columns
+        self.use_dpsu = use_dpsu
         self.compare = compare
 
     def __str__(self):

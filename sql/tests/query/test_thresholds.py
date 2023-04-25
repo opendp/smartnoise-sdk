@@ -120,7 +120,7 @@ class TestQueryThresholds:
         private_reader._execute_ast(query, True)
         for i in range(3):
             trs = private_reader._execute_ast(query, True)
-            assert(len(trs) == 2)
+            assert(len(trs) == 1)
     def test_no_tau(self, test_databases):
         # should never drop rows
         privacy = Privacy(epsilon=4.0)
