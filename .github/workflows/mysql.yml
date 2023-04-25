@@ -41,8 +41,8 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           sudo mysql --user=root --password=root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
-          sudo mysql --user=root --password=root -e "CREATE USER 'runner_user'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
-          sudo mysql --user=root --password=root -e "GRANT CREATE ON *.* TO 'runner_user'@'localhost'; FLUSH PRIVILEGES;"
+          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "CREATE USER 'runner_user'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
+          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "GRANT CREATE ON *.* TO 'runner_user'@'localhost'; FLUSH PRIVILEGES;"
       - name: Setup SDK
         shell: bash -l {0}
         run: |
