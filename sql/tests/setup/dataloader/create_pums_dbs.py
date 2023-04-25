@@ -24,7 +24,7 @@ def create_pums(engine):
             pums.drop(engine)
         metadata_obj.create_all(engine)
     pums_df = pd.read_csv(pums_csv_path)
-    pums_df.to_sql('pums', engine, if_exists='append', index=False)
+    pums_df.to_sql('pums', engine, if_exists='append', index=False, method='multi', chunksize=1000)
     # with engine.begin() as conn:
     #     for _, row in pums_df.iterrows():
     #         ins = pums.insert().values(
