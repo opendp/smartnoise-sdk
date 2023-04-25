@@ -23,6 +23,7 @@ def create_pums(engine):
         if engine.dialect.has_table(engine.connect(), 'pums'):
             pums.drop(engine)
         metadata_obj.create_all(engine)
+    return
     pums_df = pd.read_csv(pums_csv_path)
     pums_df.to_sql('pums', engine, if_exists='append', index=False, method='multi', chunksize=1000)
     # with engine.begin() as conn:
