@@ -15,17 +15,14 @@ jobs:
       matrix:
         python-version: [3.9]
       max-parallel: 5
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_DATABASE: PUMS
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v2
+      - name: start mysql and set password
+        shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        run: |
+          sudo systemctl start mysql.service
       - name: Set up miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -38,6 +35,12 @@ jobs:
         run: |
           conda install pip
           conda update pip
+      - name: Set MySQL Root password
+        shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        run: |
+          mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${{env.MYSQL_PASSWORD}}';"
       - name: Setup SDK
         shell: bash -l {0}
         run: |
