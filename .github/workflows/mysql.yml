@@ -57,7 +57,6 @@ jobs:
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> $GITHUB_ENV
           cd sql/tests/setup/mysql
           python create_pums.py
       - name: Check DB install
@@ -65,7 +64,6 @@ jobs:
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> $GITHUB_ENV
           cd sql
           python tests/check_databases.py
       - name: Test SDK
@@ -73,7 +71,6 @@ jobs:
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> $GITHUB_ENV
           cd sql
           export SKIP_PANDAS=1
           pytest tests

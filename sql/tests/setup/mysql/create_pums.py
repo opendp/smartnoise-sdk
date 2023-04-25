@@ -4,6 +4,8 @@ import sys
 from urllib.parse import quote_plus
 from sqlalchemy import text
 
+print("Installing test databases for PUMS\n")
+
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 setup_path = os.path.abspath(
     os.path.join(
