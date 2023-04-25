@@ -24,7 +24,7 @@ from dataloader.create_pums_dbs import *
 # change these to match your install
 host = 'localhost'
 port = '3306'
-user = 'root'
+user = 'runner_user'
 
 password = os.environ.get('MYSQL_PASSWORD')
 if not password:

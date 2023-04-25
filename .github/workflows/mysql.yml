@@ -41,6 +41,8 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           sudo mysql --user=root --password=root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
+          sudo mysql --user=root --password=root -e "CREATE USER 'runner_user'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
+          sudo mysql --user=root --password=root -e "GRANT CREATE ON *.* TO 'runner_user'@'localhost'; FLUSH PRIVILEGES;"
       - name: Setup SDK
         shell: bash -l {0}
         run: |
@@ -64,7 +66,7 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           cd sql/tests/setup/mysql
-          conda run -n base sudo python create_pums.py
+          python create_pums.py
       - name: Check DB install
         shell: bash -l {0}
         env:
