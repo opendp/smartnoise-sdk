@@ -10,7 +10,7 @@ from sqlalchemy import Table, Column, Integer, Float, Boolean, MetaData
 
 def create_pums(engine):
     pums_csv_path = os.path.join(root_url, "datasets", "PUMS.csv")
-    with engine.connect as conn:
+    with engine.connect() as conn:
         with conn.begin():
             metadata_obj = MetaData()
             pums = Table('pums', metadata_obj,
