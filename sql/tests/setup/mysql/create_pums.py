@@ -44,6 +44,8 @@ conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_null"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_large"))
 sleep(1)
 
+exit()
+
 print("Creating PUMS table\n", flush=True)
 dburl = url + "/PUMS"
 engine = create_engine(dburl)
@@ -53,7 +55,6 @@ with engine.begin() as conn:
     print(f"PUMS has {count[0][0]} rows", flush=True)
 sleep(1)
 
-exit()
 
 print("Creating PUMS_pid table\n", flush=True)
 dburl = url + "/PUMS_pid"
