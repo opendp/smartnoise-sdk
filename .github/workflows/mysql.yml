@@ -40,7 +40,7 @@ jobs:
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          sudo mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${{env.MYSQL_PASSWORD}}';"
+          sudo mysql --user=root --password=root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${{env.MYSQL_PASSWORD}}';"
       - name: Setup SDK
         shell: bash -l {0}
         run: |
