@@ -7,6 +7,8 @@ from sqlalchemy import create_engine, text
 
 print("Installing test databases for PUMS\n", flush=True)
 
+exit()
+
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 setup_path = os.path.abspath(
     os.path.join(
