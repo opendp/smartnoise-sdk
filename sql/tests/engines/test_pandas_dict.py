@@ -32,5 +32,15 @@ class TestDictCounts:
         assert rs[1][0] > 900 and rs[1][0] < 1100
         rs = reader.execute("SELECT COUNT(*) FROM PUMS.PUMS_null")
         assert rs[1][0] > 1200
+    def test_pandas_dict_probe(self):
+        df_dict = {
+            'PUMS.PUMS': pd.read_csv(pums_path),
+            'PUMS.PUMS_null': pd.read_csv(pums_null_path)
+        }
+        reader = from_connection(df_dict, privacy=privacy, metadata=meta_path)
+        rs = reader.execute("SELECT COUNT(*) FROM PUMS.PUMS")
+        assert rs[1][0] > 900 and rs[1][0] < 1100
+        rs = reader.execute("SELECT COUNT(*) FROM PUMS.PUMS_null")
+        assert rs[1][0] > 1200
 
 

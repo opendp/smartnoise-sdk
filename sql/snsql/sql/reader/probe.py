@@ -4,6 +4,17 @@ class Probe:
         """
         Probes a connection and tries to determine which engine it uses
         """
+        if isinstance(conn, dict):
+            mods = []
+            classes = []
+            for k, v in conn.items():
+                mods.append(v.__class__.__module__)
+                classes.append(v.__class__.__name__)
+            mods = list(set(mods))
+            classes = list(set(classes))
+            if len(mods) == 1 and len(classes) == 1:
+                if mods[0] == 'pandas.core.frame' and classes[0] == 'DataFrame':
+                    return "pandas"
         conn_mod = conn.__class__.__module__
         conn_class = conn.__class__.__name__
         if (
