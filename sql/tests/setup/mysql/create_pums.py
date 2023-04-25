@@ -43,6 +43,9 @@ conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_dup"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_null"))
 conn.execute(text("CREATE DATABASE IF NOT EXISTS PUMS_large"))
 sleep(1)
+conn.commit()
+conn.close()
+conn = None
 
 print("Creating PUMS table\n", flush=True)
 dburl = url + "/PUMS"

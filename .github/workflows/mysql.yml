@@ -64,7 +64,7 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           cd sql/tests/setup/mysql
-          conda run sudo python create_pums.py
+          conda run -n base sudo python create_pums.py
       - name: Check DB install
         shell: bash -l {0}
         env:
