@@ -10,19 +10,20 @@ from sqlalchemy import Table, Column, Integer, Float, Boolean, MetaData
 
 def create_pums(engine):
     pums_csv_path = os.path.join(root_url, "datasets", "PUMS.csv")
-    with engine.begin():
-        metadata_obj = MetaData()
-        pums = Table('pums', metadata_obj,
-            Column('age', Integer),
-            Column('sex', Integer),
-            Column('educ', Integer),
-            Column('race', Integer),
-            Column('income', Integer),
-            Column('married', Integer)
-        )
-        if engine.dialect.has_table(engine.connect(), 'pums'):
-            pums.drop(engine)
-        metadata_obj.create_all(engine)
+    with engine.connect as conn:
+        with conn.begin():
+            metadata_obj = MetaData()
+            pums = Table('pums', metadata_obj,
+                Column('age', Integer),
+                Column('sex', Integer),
+                Column('educ', Integer),
+                Column('race', Integer),
+                Column('income', Integer),
+                Column('married', Integer)
+            )
+            if engine.dialect.has_table(engine.connect(), 'pums'):
+                pums.drop(engine)
+            metadata_obj.create_all(engine)
     return()
     pums_df = pd.read_csv(pums_csv_path)
     pums_df.to_sql('pums', engine, if_exists='append', index=False, method='multi', chunksize=1000)
