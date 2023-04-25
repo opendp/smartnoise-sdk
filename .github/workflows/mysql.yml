@@ -18,7 +18,7 @@ jobs:
       mysql:
         image: mysql:8
         env:
-          MYSQL_ROOT_PASSWORD: pass@word999
+          MYSQL_ROOT_PASSWORD: pass@word99
           MYSQL_DATABASE: PUMS
         ports:
           - 3306:3306
