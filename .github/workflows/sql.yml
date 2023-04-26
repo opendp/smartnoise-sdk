@@ -6,6 +6,10 @@ on:
       - 'sql/tests/**'
       - 'sql/snsql/**'
       - 'sql/pyproject.toml'
+      - '!sql/tests/setup/postgres'
+      - '!sql/tests/setup/sqlserver'
+      - '!sql/tests/setup/mysql'
+      - '!sql/tests/setup/biqquery'
   workflow_dispatch:
 
 jobs:
@@ -14,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
       max-parallel: 5
     steps:
     - uses: actions/checkout@v2

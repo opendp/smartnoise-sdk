@@ -10,31 +10,22 @@ from sqlalchemy import Table, Column, Integer, Float, Boolean, MetaData
 
 def create_pums(engine):
     pums_csv_path = os.path.join(root_url, "datasets", "PUMS.csv")
-    with engine.begin():
-        metadata_obj = MetaData()
-        pums = Table('pums', metadata_obj,
-            Column('age', Integer),
-            Column('sex', Integer),
-            Column('educ', Integer),
-            Column('race', Integer),
-            Column('income', Integer),
-            Column('married', Integer)
-        )
-        if engine.dialect.has_table(engine.connect(), 'pums'):
-            pums.drop(engine)
-        metadata_obj.create_all(engine)
-    pums_df = pd.read_csv(pums_csv_path)
-    with engine.begin() as conn:
-        for _, row in pums_df.iterrows():
-            ins = pums.insert().values(
-                sex = int(row['sex']),
-                age = int(row['age']),
-                educ = int(row['educ']),
-                race = int(row['race']),
-                income = int(row['income']),
-                married = int(row['married'])
+    with engine.connect() as conn:
+        with conn.begin():
+            metadata_obj = MetaData()
+            pums = Table('pums', metadata_obj,
+                Column('age', Integer),
+                Column('sex', Integer),
+                Column('educ', Integer),
+                Column('race', Integer),
+                Column('income', Integer),
+                Column('married', Integer)
             )
-            conn.execute(ins)
+            if engine.dialect.has_table(engine.connect(), 'pums'):
+                pums.drop(engine)
+            metadata_obj.create_all(engine)
+    pums_df = pd.read_csv(pums_csv_path)
+    pums_df.to_sql('pums', engine, if_exists='append', index=False, method='multi', chunksize=1000)
  
 def create_pums_pid(engine):
     pums_pid_csv_path = os.path.join(root_url, "datasets", "PUMS_pid.csv")

@@ -1,3 +1,11 @@
+# SmartNoise SQL v1.0.0 Release Notes
+
+* Switch to use Pandas 2.0 and SQLAlchemy 2.0
+* Remove dependency on pandasql
+* Allow multiple dataframes to be passed to `from_df`
+
+WARNING: While this release is intended to be backwards compatible with previous versions, this is a major change and may introduce bugs.  Please report any issues you find.
+
 # SmartNoise SQL v0.2.12 Release Notes
 
 * Fix bug where other counts would borrow `SELECT COUNT(*)` when `SELECT COUNT(*)` was used first

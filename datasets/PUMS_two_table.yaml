@@ -1,0 +1,43 @@
+"":
+  PUMS:
+    PUMS:
+      row_privacy: True
+      rows: 1000
+      age:
+        type: int
+        lower: 0
+        upper: 100
+      sex:
+        type: string
+      educ:
+        type: string
+      race:
+        type: string
+      income:
+        type: int
+        lower: 0
+        upper: 500000
+      married:
+        type: string
+    PUMS_null:
+      max_ids: 3
+      row_privacy: False
+      age:
+        type: int
+        lower: 0
+        upper: 100
+      sex:
+        type: string
+      educ:
+        type: string
+      race:
+        type: string
+      income:
+        type: int
+        lower: 0
+        upper: 500000
+      married:
+        type: string
+      pid:
+        type: int
+        private_id: True

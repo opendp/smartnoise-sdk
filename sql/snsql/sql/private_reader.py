@@ -51,6 +51,7 @@ class PrivateReader(Reader):
         self.metadata = Metadata.from_(metadata)
         self.rewriter = Rewriter(metadata)
         self._options = PrivateReaderOptions()
+        self._initial_options()
 
         if privacy:
             self.privacy = privacy
@@ -95,9 +96,7 @@ class PrivateReader(Reader):
         """
         return self.reader.engine
 
-    def _refresh_options(self):
-        self.rewriter = Rewriter(self.metadata, privacy=self.privacy)
-        self.metadata.compare = self.reader.compare
+    def _initial_options(self):
         tables = self.metadata.tables()
         self._options.row_privacy = any([t.row_privacy for t in tables])
         self._options.censor_dims = not any([not t.censor_dims for t in tables])
@@ -105,6 +104,9 @@ class PrivateReader(Reader):
         self._options.clamp_counts = any([t.clamp_counts for t in tables])
         self._options.use_dpsu = any([t.use_dpsu for t in tables])
         self._options.clamp_columns = any([t.clamp_columns for t in tables])
+    def _refresh_options(self):
+        self.rewriter = Rewriter(self.metadata, privacy=self.privacy)
+        self.metadata.compare = self.reader.compare
 
         self.rewriter.options.row_privacy = self._options.row_privacy
         self.rewriter.options.reservoir_sample = self._options.reservoir_sample
@@ -501,6 +503,14 @@ This could lead to privacy leaks."""
                 agg_names.append(col.expression.name)
             else:
                 agg_names.append(None)
+
+        self._options.row_privacy = query.row_privacy
+        self._options.censor_dims = query.censor_dims
+        self._options.reservoir_sample = query.sample_max_ids
+        self._options.clamp_counts = query.clamp_counts
+        self._options.use_dpsu = query.use_dpsu
+        self._options.clamp_columns = query.clamp_columns
+        self._refresh_options()
 
         subquery, query = self._rewrite_ast(query)
 

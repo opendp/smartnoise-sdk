@@ -5,30 +5,27 @@ on:
       - 'sql/tests/**'
       - 'sql/snsql/**'
       - 'sql/pyproject.toml'
+      - '!sql/tests/setup/postgres'
+      - '!sql/tests/setup/sqlserver'
+      - '!sql/tests/setup/biqquery'
   workflow_dispatch:
 jobs:
   container-job:
     runs-on: ubuntu-latest
+    environment: CI
     strategy:
       fail-fast: false
       matrix:
         python-version: [3.9]
       max-parallel: 5
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: pass@word999
-          MYSQL_DATABASE: PUMS
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v2
-      - name: Generate random password
+      - name: start mysql
         shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          echo "export MYSQL_PASSWORD=pass@word99" > pass.sh
+          sudo systemctl start mysql.service
       - name: Set up miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -41,6 +38,15 @@ jobs:
         run: |
           conda install pip
           conda update pip
+      - name: Set MySQL Root password
+        shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        run: |
+          sudo mysql --user=root --password=root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
+          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "CREATE USER 'runner'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
+          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "GRANT ALL ON *.* TO 'runner'@'localhost'; FLUSH PRIVILEGES;"
+          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "SHOW VARIABLES LIKE 'secure_file_priv';"
       - name: Setup SDK
         shell: bash -l {0}
         run: |
@@ -50,28 +56,41 @@ jobs:
           pip install --no-cache-dir  .
       - name: Check database connections test fixture
         shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_USER: runner
         run: |
-          source pass.sh
           cd sql
           mkdir ~/.smartnoise
           cp tests/setup/mysql/connections-unit.yaml ~/.smartnoise
           python tests/check_databases.py
+      - name: Copy CSV files
+        shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        run: |
+          cd sql/tests/setup/mysql
+          sudo python copy.py
       - name: Install Tables to MySQL
         shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          source pass.sh
           cd sql/tests/setup/mysql
-          python create_pums.py
+          mysql --user=runner --password=${{ secrets.MYSQL_PASSWORD }} < create_tables.sql
       - name: Check DB install
         shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_USER: runner
         run: |
-          source pass.sh
           cd sql
           python tests/check_databases.py
       - name: Test SDK
         shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          source pass.sh
           cd sql
           export SKIP_PANDAS=1
           pytest tests

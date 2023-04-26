@@ -18,5 +18,6 @@ class MySqlFactory(DbFactory):
                 table_name
             )
             print(f'MySQL: Connected {dataset} to {dbname} as {table_name}')
-        except:
+        except Exception as e:
             print(f"Unable to connect to MySQL database {dataset}.  Ensure connection info is correct and pymysql is installed.")
+            print(e)

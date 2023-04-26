@@ -5,11 +5,15 @@ on:
       - 'sql/tests/**'
       - 'sql/snsql/**'
       - 'sql/pyproject.toml'
+      - '!sql/tests/setup/postgres/**'
+      - '!sql/tests/setup/sqlserver/**'
+      - '!sql/tests/setup/mysql/**'
+      - '!sql/tests/setup/biqquery/**'
   workflow_dispatch:
   
 jobs:
   windows-localdb:
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
       - name: install smartnoise-sql
