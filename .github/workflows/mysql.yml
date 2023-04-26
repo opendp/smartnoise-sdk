@@ -73,7 +73,7 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           cd sql/tests/setup/mysql
-          sudo mysql --user=runner_user --password=${{ secrets.MYSQL_PASSWORD }} < create_tables.sql
+          sudo mysql --user=root --password=${{ secrets.MYSQL_PASSWORD }} < create_tables.sql
       - name: Check DB install
         shell: bash -l {0}
         env:
