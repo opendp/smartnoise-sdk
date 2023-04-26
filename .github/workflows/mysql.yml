@@ -23,13 +23,6 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           sudo systemctl start mysql.service
-      - name: Copy CSV files
-        shell: bash -l {0}
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        run: |
-          cd sql/tests/setup/mysql
-          sudo python copy.py
       - name: Set up miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -67,6 +60,13 @@ jobs:
           mkdir ~/.smartnoise
           cp tests/setup/mysql/connections-unit.yaml ~/.smartnoise
           python tests/check_databases.py
+      - name: Copy CSV files
+        shell: bash -l {0}
+        env:
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        run: |
+          cd sql/tests/setup/mysql
+          sudo python copy.py
       - name: Install Tables to MySQL
         shell: bash -l {0}
         env:
