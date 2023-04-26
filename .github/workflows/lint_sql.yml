@@ -4,11 +4,10 @@ on:
   pull_request:
     paths:
       - 'sql/snsql/**'
-    paths-ignore:
-      - 'sql/tests/setup/postgres'
-      - 'sql/tests/setup/sqlserver'
-      - 'sql/tests/setup/mysql'
-      - 'sql/tests/setup/biqquery'
+      - '!sql/tests/setup/postgres'
+      - '!sql/tests/setup/sqlserver'
+      - '!sql/tests/setup/mysql'
+      - '!sql/tests/setup/biqquery'
   workflow_dispatch:
 
 jobs:
