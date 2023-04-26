@@ -18,7 +18,7 @@ with open(source_path, 'r') as f:
     with open(dest_path, 'w') as f2:
         for line in lines:
             line_parts = line.split(',')
-            line_parts = [p if p is not '' else '\N' for p in line_parts]
+            line_parts = [p if p is not '' else "\\N" for p in line_parts]
             f2.write(','.join(line_parts))
             f2.write('\n')
 
