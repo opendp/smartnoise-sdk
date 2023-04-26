@@ -5,10 +5,9 @@ on:
       - 'sql/tests/**'
       - 'sql/snsql/**'
       - 'sql/pyproject.toml'
-    paths-ignore:
-      - 'sql/tests/setup/postgres'
-      - 'sql/tests/setup/sqlserver'
-      - 'sql/tests/setup/mysql'
+      - '!sql/tests/setup/postgres'
+      - '!sql/tests/setup/sqlserver'
+      - '!sql/tests/setup/mysql'
   workflow_dispatch:
 
 jobs:

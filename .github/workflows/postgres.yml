@@ -5,10 +5,9 @@ on:
       - 'sql/tests/**'
       - 'sql/snsql/**'
       - 'sql/pyproject.toml'
-    paths-ignore:
-      - 'sql/tests/setup/sqlserver'
-      - 'sql/tests/setup/mysql'
-      - 'sql/tests/setup/biqquery'
+      - '!sql/tests/setup/sqlserver'
+      - '!sql/tests/setup/mysql'
+      - '!sql/tests/setup/biqquery'
   workflow_dispatch:
 
 jobs:
