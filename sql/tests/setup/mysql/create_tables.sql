@@ -76,13 +76,13 @@ ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
--- USE PUMS_dup;
--- LOAD DATA INFILE '/var/lib/mysql-files/PUMS_dup.csv'
--- INTO TABLE pums
--- FIELDS TERMINATED BY ','
--- ENCLOSED BY '"'
--- LINES TERMINATED BY '\n'
--- IGNORE 1 ROWS;
+USE PUMS_dup;
+LOAD DATA INFILE '/var/lib/mysql-files/PUMS_dup.csv'
+INTO TABLE pums
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
 
 -- USE PUMS_large;
 -- LOAD DATA INFILE '/var/lib/mysql-files/PUMS_large.csv'
