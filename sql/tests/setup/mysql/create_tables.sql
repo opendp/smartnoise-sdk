@@ -84,13 +84,13 @@ ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
-USE PUMS_large;
-LOAD DATA INFILE '/var/lib/mysql-files/PUMS_large.csv'
-INTO TABLE pums_large
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS;
+-- USE PUMS_large;
+-- LOAD DATA INFILE '/var/lib/mysql-files/PUMS_large.csv'
+-- INTO TABLE pums_large
+-- FIELDS TERMINATED BY ','
+-- ENCLOSED BY '"'
+-- LINES TERMINATED BY '\n'
+-- IGNORE 1 ROWS;
 
 USE PUMS_null;
 LOAD DATA INFILE '/var/lib/mysql-files/PUMS_null.csv'
