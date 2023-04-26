@@ -16,34 +16,34 @@ CREATE TABLE IF NOT EXISTS PUMS.pums (
 
 
 CREATE TABLE IF NOT EXISTS PUMS_pid.pums (
-    pid INT PRIMARY KEY,
     age INT,
     sex INT,
     educ INT,
     race INT,
     income INT,
-    married INT
+    married INT,
+    pid INT PRIMARY KEY,
 );
 
 CREATE TABLE IF NOT EXISTS PUMS_dup.pums (
-    pid INT,
     age INT,
     sex INT,
     educ INT,
     race INT,
     income INT,
-    married INT
+    married INT,
+    pid INT,
 );
 
 
 CREATE TABLE IF NOT EXISTS PUMS_null.pums (
-    pid INT NULL,
     age INT NULL,
     sex INT NULL,
     educ INT NULL,
     race INT NULL,
     income INT NULL,
-    married INT NULL
+    married INT NULL,
+    pid INT NULL,
 );
 
 CREATE TABLE IF NOT EXISTS PUMS_large.pums_large (
