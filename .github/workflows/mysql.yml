@@ -68,6 +68,7 @@ jobs:
         run: |
           cd sql/tests/setup/mysql
           ls -l /etc/mysql
+          python copy.py
           sudo mysql --user=runner_user --password=${{ secrets.MYSQL_PASSWORD }} < create_tables.sql
 
       - name: Check DB install

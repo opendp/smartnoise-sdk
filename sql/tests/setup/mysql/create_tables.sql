@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS PUMS_large.pums_large (
 
 
 USE PUMS;
-LOAD DATA INFILE '../../../../datasets/PUMS.csv'
+LOAD DATA INFILE '/var/lib/mysql-files/PUMS.csv'
 INTO TABLE pums
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
