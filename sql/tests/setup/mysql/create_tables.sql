@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS PUMS_pid.pums (
     race INT,
     income INT,
     married INT,
-    pid INT PRIMARY KEY,
+    pid INT PRIMARY KEY
 );
 
 CREATE TABLE IF NOT EXISTS PUMS_dup.pums (
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS PUMS_dup.pums (
     race INT,
     income INT,
     married INT,
-    pid INT,
+    pid INT
 );
 
 
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS PUMS_null.pums (
     race INT NULL,
     income INT NULL,
     married INT NULL,
-    pid INT NULL,
+    pid INT NULL
 );
 
 CREATE TABLE IF NOT EXISTS PUMS_large.pums_large (
@@ -59,7 +59,6 @@ CREATE TABLE IF NOT EXISTS PUMS_large.pums_large (
     asian BOOLEAN,
     married BOOLEAN
 );
-
 
 USE PUMS;
 LOAD DATA INFILE '/var/lib/mysql-files/PUMS.csv'
