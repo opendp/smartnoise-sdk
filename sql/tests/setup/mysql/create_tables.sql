@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS PUMS_pid.pums (
     sex INT,
     educ INT,
     race INT,
-    income INT,
+    income FLOAT,
     married INT,
     pid INT PRIMARY KEY
 );
@@ -68,13 +68,13 @@ ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
--- USE PUMS_pid;
--- LOAD DATA INFILE '/var/lib/mysql-files/PUMS_pid.csv'
--- INTO TABLE pums
--- FIELDS TERMINATED BY ','
--- ENCLOSED BY '"'
--- LINES TERMINATED BY '\n'
--- IGNORE 1 ROWS;
+USE PUMS_pid;
+LOAD DATA INFILE '/var/lib/mysql-files/PUMS_pid.csv'
+INTO TABLE pums
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
 
 -- USE PUMS_dup;
 -- LOAD DATA INFILE '/var/lib/mysql-files/PUMS_dup.csv'
