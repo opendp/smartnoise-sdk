@@ -85,6 +85,9 @@ jobs:
           MYSQL_USER: runner
         run: |
           cd sql
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'SELECT COUNT(*) FROM PUMS_large.PUMS_large;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'SELECT COUNT(*) FROM PUMS.PUMS;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'SELECT COUNT(*) FROM PUMS_dup.PUMS;'
           python tests/check_databases.py
       - name: Test SDK
         shell: bash -l {0}

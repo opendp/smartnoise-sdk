@@ -1,6 +1,7 @@
 mysql:
   host: localhost
   user: runner
+  port: 3306
   datasets:
     PUMS: 
       dbname: pums
