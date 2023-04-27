@@ -71,7 +71,6 @@ jobs:
         run: |
           cd sql/tests/setup/mysql
           sudo python copy.py
-          sudo cat /var/lib/mysql-files/PUMS_null.csv
       - name: Install Tables to MySQL
         shell: bash -l {0}
         env:
