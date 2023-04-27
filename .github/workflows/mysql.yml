@@ -86,8 +86,10 @@ jobs:
         run: |
           cd sql
           mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_large; SELECT COUNT(*) FROM pums_large;'
-          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS; SELECT COUNT(*) FROM PUMS;'
-          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_dup; SELECT COUNT(*) FROM PUMS;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS; SELECT COUNT(*) FROM pums;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_dup; SELECT COUNT(*) FROM pums;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_null; SELECT COUNT(*) FROM pums;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_pid; SELECT COUNT(*) FROM pums;'
           python tests/check_databases.py
       - name: Test SDK
         shell: bash -l {0}

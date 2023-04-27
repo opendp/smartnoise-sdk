@@ -4,17 +4,17 @@ mysql:
   port: 3306
   datasets:
     PUMS: 
-      dbname: pums
-      table: pums.pums
+      dbname: PUMS
+      table: pums
     PUMS_large: 
-      dbname: pums_large
-      table: pums.pums_large
+      dbname: PUMS_large
+      table: pums_large
     PUMS_pid: 
       dbname: pums_pid
-      table: pums.pums
+      table: pums
     PUMS_dup: 
-      dbname: pums_dup
-      table: pums.pums
+      dbname: PUMS_dup
+      table: pums
     PUMS_null: 
-      dbname: pums_null
-      table: pums.pums
+      dbname: PUMS_null
+      table: pums
