@@ -10,7 +10,7 @@ mysql:
       dbname: PUMS_large
       table: pums_large
     PUMS_pid: 
-      dbname: pums_pid
+      dbname: PUMS_pid
       table: pums
     PUMS_dup: 
       dbname: PUMS_dup
