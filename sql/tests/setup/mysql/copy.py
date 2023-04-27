@@ -14,7 +14,7 @@ source_path = os.path.join(source_folder, 'PUMS_null.csv')
 dest_path = os.path.join(dest_folder, 'PUMS_null.csv')
 
 with open(source_path, 'r') as f:
-    lines = f.readlines()
+    lines = f.read.splitlines(keepends=False)
     with open(dest_path, 'w') as f2:
         for line in lines:
             line_parts = line.split(',')
