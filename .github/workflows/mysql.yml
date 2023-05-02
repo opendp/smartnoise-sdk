@@ -5,9 +5,9 @@ on:
       - 'sql/tests/**'
       - 'sql/snsql/**'
       - 'sql/pyproject.toml'
-      - '!sql/tests/setup/postgres'
-      - '!sql/tests/setup/sqlserver'
-      - '!sql/tests/setup/biqquery'
+      - '!sql/tests/setup/postgres/**'
+      - '!sql/tests/setup/sqlserver/**'
+      - '!sql/tests/setup/biqquery/**'
   workflow_dispatch:
 jobs:
   container-job:
@@ -85,6 +85,11 @@ jobs:
           MYSQL_USER: runner
         run: |
           cd sql
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_large; SELECT COUNT(*) FROM pums_large;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS; SELECT COUNT(*) FROM pums;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_dup; SELECT COUNT(*) FROM pums;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_null; SELECT COUNT(*) FROM pums;'
+          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_pid; SELECT COUNT(*) FROM pums;'
           python tests/check_databases.py
       - name: Test SDK
         shell: bash -l {0}
