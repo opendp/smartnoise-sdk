@@ -7,7 +7,6 @@ def test_real_vs_synthetic_data(real, synthetic, model, tsne=False, box=False, d
     import matplotlib.pyplot as plt
     
     synth_df = pd.DataFrame(synthetic, 
-        index=real.index,
         columns=real.columns)
 
     X = real.iloc[:, :-1]
