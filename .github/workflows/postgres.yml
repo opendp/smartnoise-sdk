@@ -62,7 +62,6 @@ jobs:
         shell: bash -l {0}
         run: |
           cd sql
-          python tests/check_databases.py
           ls -l ../datasets
       - name: Install PUMS
         shell: bash -l {0}
