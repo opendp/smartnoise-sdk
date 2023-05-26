@@ -3,8 +3,7 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- main
+trigger: none
 
 pool:
   vmImage: 'windows-2019'
@@ -19,7 +18,6 @@ steps:
 
 - task: EsrpMalwareScanning@1
     displayName: 'Run ESRP Malware Scan'
-    condition: and(succeeded(), eq(variables['codeSignEnabled'], 'true'))
     inputs:
       ConnectedServiceName: 'ESRP Malware Scanning service connection (PROD)'
       FolderPath: '$(ESRPScanFolder)'
