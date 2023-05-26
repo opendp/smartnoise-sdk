@@ -49,13 +49,7 @@ steps:
       ArtifactType: 'Container'
       AllTools: true
       ToolLogsNotFoundAction: 'Standard'
-      
-  - task: SFP.build-tasks.custom-build-task-2.EsrpMalwareScanning@2
-    displayName: 'ESRP MalwareScanning'
-    inputs:
-      ConnectedServiceName: 'AzureMobile ESRP Malware Scan'
-      Region: US
-   
+    
   - task: PostAnalysis@2
     inputs:
       AllTools: false
