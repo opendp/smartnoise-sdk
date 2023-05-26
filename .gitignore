@@ -126,16 +126,5 @@ sdk/opendp/v1/
 
 
 # datasets
-reddit.csv
-clean_askreddit.csv
-askreddit.csv.zip
 PUMS_1000.csv
-PUMS.csv
-PUMS_1000.csv
-PUMS_pid.csv
-PUMS_large.csv
-PUMS_dup.csv
-PUMS_null.csv
 *.db
-
-

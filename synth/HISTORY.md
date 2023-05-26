@@ -1,3 +1,10 @@
+# SmartNoise Synth v1.0.0 Release Notes
+
+* Update to SmartNoise SQL v1.0.0
+* Prepare for breaking changes to remove transformers to separate package and update to Torch 2.0 in future release
+* Fix MWEM samples
+
+
 # SmartNoise Synth v0.3.7 Release Notes
 
 * Update PAC-Synth to v0.0.8
