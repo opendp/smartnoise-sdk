@@ -7,13 +7,60 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'windows-2019'
+  
+variables:
+  codeSignPolicyFile: ''
+  codeSignEnabled: false
 
 steps:
 - script: echo Hello, worlds!
   displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: EsrpMalwareScanning@1
+    displayName: 'Run ESRP Malware Scan'
+    condition: and(succeeded(), eq(variables['codeSignEnabled'], 'true'))
+    inputs:
+      ConnectedServiceName: 'ESRP Malware Scanning service connection (PROD)'
+      FolderPath: '$(ESRPScanFolder)'
+      Pattern: '*.*'
+      Region: 'PuertoRico'
+      SessionTimeout: '60'
+      MaxConcurrency: '50'
+      MaxRetryAttempts: '5'
+
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-policheck.PoliCheck@1
+    displayName: 'Run PoliCheck'
+    inputs:
+      targetType: F
+      targetArgument: '$(Build.SourcesDirectory)\objects'
+    continueOnError: true
+
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
+    displayName: 'Run AntiMalware Scan'
+    inputs:
+      FileDirPath: '$(Build.SourcesDirectory)'
+      EnableServices: true
+      TreatSignatureUpdateFailureAs: 'Error'
+      TreatStaleSignatureAs: 'Error'
+    continueOnError: true
+
+  - task: CredScan@3
+    inputs:
+      toolMajorVersion: 'V2'
+
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-codesignvalidation.CodeSign@1
+    inputs:
+      Path: '$(Build.SourcesDirectory)\Communityhub\ConsoleExtension'
+      verboseOutput: true
+      PolicyType: 'Custom'
+      PolicyFile: '$(codeSignPolicyFile)'
+      ExcludePassesFromLog: false
+      FailIfNoTargetsFound: 'false'
+
+  - task: PublishSecurityAnalysisLogs@3
+    inputs:
+      ArtifactName: 'CodeAnalysisLogs'
+      ArtifactType: 'Container'
+      AllTools: true
+      ToolLogsNotFoundAction: 'Standard'
