@@ -40,7 +40,7 @@ steps:
       TreatStaleSignatureAs: 'Error'
     continueOnError: true
 
-  - task: CredScan@3
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@3
     inputs:
       toolMajorVersion: 'V2'
 
