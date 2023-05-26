@@ -13,10 +13,7 @@ variables:
   codeSignEnabled: false
 
 steps:
-- script: echo Hello, worlds!
-  displayName: 'Run a one-line script'
-
-- task: EsrpMalwareScanning@1
+  - task: EsrpMalwareScanning@1
     displayName: 'Run ESRP Malware Scan'
     inputs:
       ConnectedServiceName: 'ESRP Malware Scanning service connection (PROD)'
