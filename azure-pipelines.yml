@@ -17,7 +17,7 @@ steps:
     displayName: 'Run PoliCheck'
     inputs:
       targetType: F
-      targetArgument: '$(Build.SourcesDirectory)\objects'
+      targetArgument: '$(Build.SourcesDirectory)'
     continueOnError: true
 
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
