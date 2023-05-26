@@ -13,17 +13,6 @@ variables:
   codeSignEnabled: false
 
 steps:
-  - task: EsrpMalwareScanning@1
-    displayName: 'Run ESRP Malware Scan'
-    inputs:
-      ConnectedServiceName: 'ESRP Malware Scanning service connection (PROD)'
-      FolderPath: '$(ESRPScanFolder)'
-      Pattern: '*.*'
-      Region: 'PuertoRico'
-      SessionTimeout: '60'
-      MaxConcurrency: '50'
-      MaxRetryAttempts: '5'
-
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-policheck.PoliCheck@1
     displayName: 'Run PoliCheck'
     inputs:
