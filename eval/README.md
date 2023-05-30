@@ -1,27 +1,35 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8-blue)](https://www.python.org/)
+# SmartNoise Evaluator
 
-<a href="https://smartnoise.org"><img src="https://github.com/opendp/smartnoise-sdk/raw/main/images/SmartNoise/SVG/Logo%20Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
+The SmartNoise Evaluator is designed to help assess the privacy and accuracy of differentially private queries. It includes:
 
-## SmartNoise Stochastic Evaluator
+* Analyze: Analyze a dataset and provide information about cardinality, data types, independencies, and other information that is useful for creating a privacy pipeline
+* Runner: A tool that allows a privacy pipeline to be repeatedly run against a dataset, including with different parameters
+* Evaluator: Compares the privatized results to the true results and provides information about the accuracy and bias
+* Attack: Attempts powerful membership inference attacks against privatized results.  The attack depends on running privatized results against many neighboring datasets, with member population chosen to maximize the attack's power.
 
-Tests differential privacy algorithms for privacy, accuracy, and bias.  Privacy tests are based on the method described in [section 5.3 of this paper](https://arxiv.org/pdf/1909.01917.pdf).
+These tools are currently available as code samples, but may be released as a Python package as the interface stabilizes.
 
-## Installation
+The Analyze step can run against supported databases, text files or Parquet files, and can use a supplied TableTransformer.  The runner can run against any data sources, but must output CSV, TSV, or Parquet, since the evaluator and attack tools require these formats.
+
+```python
+from smartnoise.evaluation import Analyze
+
+analyze = Analyze(
+    source = "data.csv", # can be text file or df or parquet, or a spark session or database connection
+    table = None, # optional table name - required if source is a database or spark session
+    workload = [], # optional list of important queries
+    transformer = None, # optional TableTransformer
+    timeout = 60, # optional timeout for any analysis step
+    max_errors = 50, # optional maximum number of errors to ignore before failing
+    output_path = "analysis.json", # optional path to write analysis results
+    metadata = None, # optional metadata describing the columns
+
+)
+
+analyze.run()
 
 ```
-pip install smartnoise-eval
-```
 
-## Communication
+```python
+from smartnoise.evaluation import Runner
 
-- You are encouraged to join us on [GitHub Discussions](https://github.com/opendp/opendp/discussions/categories/smartnoise)
-- Please use [GitHub Issues](https://github.com/opendp/smartnoise-sdk/issues) for bug reports and feature requests.
-- For other requests, including security issues, please contact us at [smartnoise@opendp.org](mailto:smartnoise@opendp.org).
-
-## Releases and Contributing
-
-Please let us know if you encounter a bug by [creating an issue](https://github.com/opendp/smartnoise-sdk/issues).
-
-We appreciate all contributions. We welcome pull requests with bug-fixes without prior discussion.
-
-If you plan to contribute new features, utility functions or extensions to this system, please first open an issue and discuss the feature with us.
