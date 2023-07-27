@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "smartnoise-eval"
+version = "0.1.0"
+description = "Evaluation of differentially private tabular data"
+authors = ["SmartNoise Team <smartnoise@opendp.org>"]
+license = "MIT"
+packages = [{include="sneval"}]
+homepage = "https://smartnoise.org"
+repository = "https://github.com/opendp/smartnoise-sdk"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
