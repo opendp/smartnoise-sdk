@@ -1,3 +1,8 @@
+# SmartNoise Synth v1.0.1 Release Notes
+
+* Upgrade to OpenDP v0.7.0
+* Upgrade to SmartNoise SQL v1.0.1
+
 # SmartNoise Synth v1.0.0 Release Notes
 
 * Update to SmartNoise SQL v1.0.0

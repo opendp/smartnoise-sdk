@@ -1,3 +1,8 @@
+# SmartNoise SQL v1.0.1 Release Notes
+
+* Upgrade to OpenDP v0.7.0
+* Upgrade to PyYAML v6.0.1 (Thanks, @mhauru!)
+
 # SmartNoise SQL v1.0.0 Release Notes
 
 * Switch to use Pandas 2.0 and SQLAlchemy 2.0
