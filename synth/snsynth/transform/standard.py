@@ -1,7 +1,8 @@
 from snsynth.transform.definitions import ColumnType
 from .base import CachingColumnTransformer
 from opendp.mod import enable_features, binary_search_param
-from opendp.transformations import make_sized_bounded_mean, make_sized_bounded_variance, make_clamp, make_bounded_resize
+from opendp.transformations import make_sized_bounded_mean, make_sized_bounded_variance, make_clamp, make_resize
+from opendp.domains import atom_domain
 from opendp.measurements import make_base_laplace
 from snsql.sql._mechanisms.approx_bounds import approx_bounds
 from snsql.sql.privacy import Privacy
@@ -68,8 +69,8 @@ class StandardScaler(CachingColumnTransformer):
 
             enable_features("floating-point", "contrib")
 
-            var_pre =  make_clamp(bounds) >> make_bounded_resize(n, bounds, float(self.fit_lower)) >> make_sized_bounded_variance(size=n, bounds=bounds)
-            mean_pre =  make_clamp(bounds) >> make_bounded_resize(n, bounds, float(self.fit_lower)) >> make_sized_bounded_mean(size=n, bounds=bounds)
+            var_pre =  make_clamp(bounds) >> make_resize(n, atom_domain(bounds), float(self.fit_lower)) >> make_sized_bounded_variance(size=n, bounds=bounds)
+            mean_pre =  make_clamp(bounds) >> make_resize(n, atom_domain(bounds), float(self.fit_lower)) >> make_sized_bounded_mean(size=n, bounds=bounds)
 
             v_e = self.epsilon * 0.8
             m_e = self.epsilon - v_e
