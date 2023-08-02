@@ -11,8 +11,18 @@ These tools are currently available as code samples, but may be released as a Py
 
 The Analyze step can run against supported databases, text files or Parquet files, and can use a supplied TableTransformer.  The runner can run against any data sources, but must output CSV, TSV, or Parquet, since the evaluator and attack tools require these formats.
 
+## Analyze
+
+Analyze provides metrics about a single dataset.
+
+* Percent of all dimension combinations that are unique, k <5 an k < 10 (Count up to configurable “reporting length”)
+* Report which columns are “most linkable” 
+* Classification AUC 
+* t-sne
+
+
 ```python
-from smartnoise.evaluation import Analyze
+from sneval import Analyze
 
 analyze = Analyze(
     source = "data.csv", # can be text file or df or parquet, or a spark session or database connection
@@ -29,6 +39,21 @@ analyze = Analyze(
 analyze.run()
 
 ```
+
+## Evaluate
+
+Evaluate compares an original data file with one or more comparison files.  It can compare any of the single-file metrics computed in `Analyze` as well as a number of metrics that involve two datasets.  When more than one comparison dataset is provided, we can provide all of the two-way comparisons with the original, and allow the consumer to combine these measures (e.g. average over all datasets)
+
+* How many dimension combinations are suppressed 
+* How many dimension combinations are fabricated 
+* How many redacted rows (fully redacted vs. partly redacted) 
+* Mean absolute error by 1-way, 2-way, etc. up to reporting length
+* Also do for user specified dimension combinations 
+* Report by bin size (e.g., < 1000, >= 1000) 
+* Mean proportional error by 1-way, 2-way, etc. 
+
+
+## Run
 
 ```python
 from smartnoise.evaluation import Runner
