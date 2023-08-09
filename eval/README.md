@@ -15,9 +15,16 @@ The Analyze step can run against supported databases, text files or Parquet file
 
 Analyze provides metrics about a single dataset.
 
-* Percent of all dimension combinations that are unique, k <5 an k < 10 (Count up to configurable “reporting length”)
-* Report which columns are “most linkable” 
-* Classification AUC 
+* Percent of all dimension combinations that are unique, k < 5 and k < 10 (Count up to configurable “reporting length”)
+* Report which columns are “most linkable”
+* Marginal histograms up to n-way -- choose default with reasonable size (e.g. 10 per marginal, and up to 20 marginals -- allow override).  Trim and encode labels.
+* Number of rows
+* Number of distinct rows
+* Count, Mean, Variance, Min, Max, Median, Percentiles for each marginal
+* Classification AUC
+* Individual Cardinalities
+* Dimensionality, Sparsity
+* Independencies
 * t-sne
 
 
@@ -33,7 +40,6 @@ analyze = Analyze(
     max_errors = 50, # optional maximum number of errors to ignore before failing
     output_path = "analysis.json", # optional path to write analysis results
     metadata = None, # optional metadata describing the columns
-
 )
 
 analyze.run()
