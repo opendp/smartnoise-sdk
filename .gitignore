@@ -128,3 +128,6 @@ sdk/opendp/v1/
 # datasets
 PUMS_1000.csv
 *.db
+
+# parquet files
+PUMS_large.parquet/
