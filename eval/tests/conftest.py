@@ -21,7 +21,7 @@ if not os.path.exists(pums_large_path):
 
 
 def read_pums_large_csv(spark_session, pums_large_path):
-    df = spark.read.csv(pums_large_path, header=True)
+    df = spark_session.read.csv(pums_large_path, header=True)
     df = df.select(["sex","age","educ","married","latino","black","asian","income"])
     df = df.withColumn("income", df["income"].cast("int"))
     df = df.withColumn("age", df["age"].cast("int"))
@@ -93,6 +93,14 @@ def pums_id_dataset(pums_id_df):
         categorical_columns=["age", "sex", "educ", "race", "married"],
         measure_columns=["income"],
         id_column="pid"
+        )
+
+@pytest.fixture(scope="module")
+def pums_large_dataset(pums_large_df):
+    return Dataset(
+        pums_large_df,
+        categorical_columns=["sex","age","educ","latino","black","asian","married"],
+        measure_columns=["income"],
         )
 
 @pytest.fixture(scope="module")

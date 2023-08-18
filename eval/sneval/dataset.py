@@ -6,7 +6,9 @@ class Dataset:
     """
         Source must be a Spark dataframe.
     """
-    def __init__(self, source, *ignore, 
+    def __init__(self, 
+                 source : pyspark.sql.dataframe.DataFrame, 
+                 *ignore, 
                  categorical_columns=[],
                  measure_columns=[], 
                  sum_columns=[], 

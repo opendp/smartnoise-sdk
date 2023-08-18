@@ -1,5 +1,6 @@
 
 from .base import SingleColumnMetric, MultiColumnMetric
+from ...dataset import Dataset
 from pyspark.sql import functions as F
 
 class Cardinality(SingleColumnMetric):
@@ -20,6 +21,19 @@ class Mean(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data : Dataset) -> dict:
+        if not data.is_aggregated:
+            if self.column_name not in data.measure_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
+            value = data.source.agg(F.sum(self.column_name).alias("sum"), F.count('*').alias("count")).select(F.col("sum") / F.col("count")).collect()[0][0]
+        else:
+            if data.count_column is None:
+                raise ValueError("Dataset is aggregated but has no count column.")
+            value = data.source.agg(F.sum(self.column_name).alias("sum"), F.sum(data.count_column).alias("count")).select(F.col("sum") / F.col("count")).collect()[0][0]
+        response = self.to_dict()
+        response["value"] = value
+        return response
+
 
 class Median(SingleColumnMetric):
     # column must be numerical
