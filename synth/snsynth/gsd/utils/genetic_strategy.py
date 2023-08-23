@@ -1,14 +1,10 @@
 import jax.numpy as jnp
-import time
 import jax
 import chex
 from flax import struct
 from snsynth.gsd.utils import Dataset, Domain
 from functools import partial
 from typing import Tuple
-
-from typing import Callable
-
 
 
 @struct.dataclass
@@ -59,8 +55,6 @@ class SDStrategy:
         self.domain = domain
         self.num_devices = jax.device_count()
         self.domain = domain
-
-        # It's recommended to always set  muta_rate=muta_rate=1
         self.debugging = debugging
         self.update_candidate_vmap = jax.vmap(update_candidate, in_axes=(None, 0, 0))
 
@@ -76,18 +70,6 @@ class SDStrategy:
             best_fitness=jnp.finfo(jnp.float64).max
         )
 
-        # rng1, rng2 = jax.random.split(rng, 2)
-        # random_numbers = jax.random.permutation(rng1, self.data_size, independent=True)
-        # muta_fn = get_mutate_fn()
-        # mate_fn = get_categerical_mating_fn(self.domain)
-        # swap_fn = get_swap_operator()
-
-        # self.muta_vmap = jax.jit(jax.vmap(muta_fn, in_axes=(None, 0, 0, 0)))
-        # self.mate_vmap = jax.jit(jax.vmap(mate_fn, in_axes=(None, 0)))
-        # self.swap_vmap = jax.jit(jax.vmap(swap_fn, in_axes=(None, 0)))
-
-
-
         return state
 
     @partial(jax.jit, static_argnums=(0,))
@@ -102,54 +84,8 @@ class SDStrategy:
         pop = Dataset.synthetic_jax_rng(self.domain, self.population_size, rng)
         return pop
 
-
     def ask(self, rng: chex.PRNGKey, state: EvoState):
         pass
-
-    #
-    # def ask(self, rng: chex.PRNGKey, state: EvoState):
-    #
-    #     t0 = time.time()
-    #     # rng_ask, rng_samples = jax.random.split(rng, 2)
-    #     self.sample_id = (self.sample_id + 1) % len(self.column_ids)
-    #     column = self.column_ids[self.sample_id]
-    #     column_values = self.samplers[column](rng)
-    #     column_values.block_until_ready()
-    #     self.sampler_time += time.time() - t0
-    #
-    #     t0 = time.time()
-    #     pop = self.ask_strategy(rng, state, column, column_values)
-    #     pop.remove_row.block_until_ready()
-    #     self.ask_time += time.time() - t0
-    #     return pop
-
-
-    # @partial(jax.jit, static_argnums=(0,))
-    # def ask_strategy(self, rng_muta: chex.PRNGKey, state: EvoState, i: int, column_values: chex.Array):
-    #     pass
-    # @partial(jax.jit, static_argnums=(0,))
-    # def ask_strategy(self, rng_muta: chex.PRNGKey, state: EvoState, i: int, column_values: chex.Array):
-    #     rng_muta, rng_mate, rng_swap = jax.random.split(rng_muta, 3)
-    #
-    #     # Mutation
-    #     column_id = (jnp.ones(shape=(self.population_size_muta)) * i).astype(int)
-    #     rng_muta_split = jax.random.split(rng_muta, self.population_size_muta)
-    #     pop_muta = self.muta_vmap(state.best_member, rng_muta_split, column_id, column_values)
-    #
-    #     # Crossover
-    #     rng_mate_1, rng_mate_2 = jax.random.split(rng_mate, 2)
-    #     rng_mate_split = jax.random.split(rng_mate_1, self.population_size_cross)
-    #     pop_mate = self.mate_vmap(state.best_member, rng_mate_split)
-    #
-    #     # Swap operator
-    #     rng_swap_split = jax.random.split(rng_swap, self.population_swap)
-    #     pop_swap = self.swap_vmap(state.best_member, rng_swap_split)
-    #
-    #     population = PopulationState(
-    #         row_id=jnp.concatenate((pop_muta.row_id, pop_mate.row_id, pop_swap.row_id)),
-    #         remove_row=jnp.concatenate((pop_muta.remove_row, pop_mate.remove_row, pop_swap.remove_row), axis=0),
-    #         add_row=jnp.concatenate((pop_muta.add_row, pop_mate.add_row, pop_swap.add_row), axis=0))
-    #     return population
 
     @partial(jax.jit, static_argnums=(0,))
     def update_elite_candidates(self,
@@ -202,7 +138,6 @@ class SDStrategy:
         return new_state
 
 
-
 ####################################################################################################
 ####################################################################################################
 ####################################################################################################
@@ -230,8 +165,6 @@ class MutateStrategy(SDStrategy):
         self.muta_vmap = jax.jit(jax.vmap(muta_fn, in_axes=(None, 0, 0, 0)))
 
     def ask(self, rng: chex.PRNGKey, state: EvoState):
-
-        # rng_ask, rng_samples = jax.random.split(rng, 2)
         self.sample_id = (self.sample_id + 1) % len(self.column_ids)
         column = self.column_ids[self.sample_id]
         column_values = self.samplers[column](rng)
@@ -242,7 +175,6 @@ class MutateStrategy(SDStrategy):
     @partial(jax.jit, static_argnums=(0,))
     def ask_strategy(self, rng_muta: chex.PRNGKey, state: EvoState, i: int, column_values: chex.Array):
         rng_muta, rng_mate, rng_swap = jax.random.split(rng_muta, 3)
-
         # Mutation
         column_id = (jnp.ones(shape=(self.population_size)) * i).astype(int)
         rng_muta_split = jax.random.split(rng_muta, self.population_size)
@@ -255,13 +187,12 @@ class ContinuousDataStrategy(SDStrategy):
     def __init__(self, domain: Domain, data_size: int, population_size: int = 50, elite_size: int = 5, debugging=False):
         super().__init__(domain, data_size, population_size, elite_size, debugging)
 
-        self.continuous_columns = domain.get_numerical_cols()+domain.get_ordinal_cols()
+        self.continuous_columns = domain.get_continuous_cols() + domain.get_ordinal_cols()
         self.num_cont_cols = len(self.continuous_columns)
         self.cont_col_indices = domain.get_attribute_indices(self.continuous_columns)
         self.cont_col_id = -1
 
         self.quantiles = jnp.linspace(0, 1, 32)
-
 
         def muta_fn(
                 X0,
@@ -290,15 +221,13 @@ class ContinuousDataStrategy(SDStrategy):
         return thresholds
 
     def ask(self, rng: chex.PRNGKey, state: EvoState):
-
-        # rng_ask, rng_samples = jax.random.split(rng, 2)
         self.cont_col_id = (self.cont_col_id + 1) % self.num_cont_cols
         column = self.cont_col_indices[self.cont_col_id]
         pop = self.ask_strategy(rng, state, column)
         return pop
 
 
-    # @partial(jax.jit, static_argnums=(0,))
+    @partial(jax.jit, static_argnums=(0,))
     def ask_strategy(self, rng_muta: chex.PRNGKey, state: EvoState, i: int):
 
         # Mutation

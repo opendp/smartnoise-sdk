@@ -3,6 +3,14 @@ import jax.numpy as jnp
 import jax
 import numpy as np
 import random
+from enum import Enum
+
+
+class DataType(Enum):
+    CATEGORICAL = 'string'
+    CONTINUOUS = 'float'
+    ORDINAL = 'int'
+
 
 class Domain:
     def __init__(self, config: dict, null_cols: list = (), bin_edges: dict = None):
@@ -97,32 +105,38 @@ class Domain:
     def __eq__(self, other):
         return self.config == other.config
 
-    def get_numerical_cols(self):
+    def get_continuous_cols(self):
         n_cols = []
         for c in self.attrs:
-            if self.config[c]['type'] == 'numerical':
+            if self.config[c]['type'] in ('float', 'continuous'):
                 n_cols.append(c)
         return n_cols
 
     def get_ordinal_cols(self):
         n_cols = []
         for c in self.attrs:
-            if self.config[c]['type'] == 'ordinal':
+            if self.config[c]['type'] in ('int', 'ordinal'):
                 n_cols.append(c)
         return n_cols
 
     def get_categorical_cols(self):
         c_cols = []
         for c in self.attrs:
-            if self.config[c]['type'] == 'categorical':
+            if self.config[c]['type'] in ('string', 'categorical'):
                 c_cols.append(c)
         return c_cols
 
+    def is_continuous(self, c):
+        return self.config[c]['type'] in ('float', 'continuous')
 
-    def type(self, att):
-        return self.config[att]['type']
+    def is_categorical(self, c):
+        return self.config[c]['type'] in ('string', 'categorical')
+
+    def is_ordinal(self, c):
+        return self.config[c]['type'] in ('int', 'ordinal')
 
     def size(self, att):
+        if self.is_continuous(att): return 1
         return self.config[att]['size']
 
     def get_attribute_indices(self, atts: list) -> chex.Array:
@@ -141,11 +155,11 @@ class Domain:
 
     def get_sampler(self, col, samples):
 
-        if self. config[col]['type'] == 'categorical':
+        if self. config[col]['type'] in ('string', 'categorical'):
             return self.get_categorical_sampler_jax(col, samples)
-        if self. config[col]['type'] == 'numerical':
+        if self. config[col]['type'] in ('float', 'continuous'):
             return self.get_numerical_sampler_jax(col, samples)
-        if self. config[col]['type'] == 'ordinal':
+        if self. config[col]['type'] in ('int', 'ordinal'):
             return self.get_ordinal_sampler_jax(col, samples)
 
     def nulls_fn(self):

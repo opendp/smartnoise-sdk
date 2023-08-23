@@ -1,21 +1,16 @@
-import sys
 import pandas as pd
 import numpy as np
 import jax
-import warnings
-
+import itertools
 import jax.numpy as jnp
 print("For GSD support, please install jax: pip install --upgrade  \"jax[cuda11_cudnn82]==0.4.6\" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html")
 
-from typing import Callable
 from snsynth.base import Synthesizer
 from snsynth.utils import cdp_rho, exponential_mechanism, gaussian_noise, powerset
 from snsynth.transform import *
 from snsynth.transform.type_map import TypeMap, ColumnTransformer
-from snsynth.transform.definitions import ColumnType
 from snsynth.gsd.utils import Domain, Dataset
-from snsynth.gsd.utils.statistics import _get_mixed_marginal_fn, _get_bin_edges
-from snsynth.gsd.utils.genetic_strategy import EvoState, PopulationState, SDStrategy
+from snsynth.gsd.utils.statistics import _get_mixed_marginal_fn, _get_bin_edges, _get_density_fn, get_quantiles
 from snsynth.gsd.utils.generate_sync_data import generate, AVAILABLE_GENETIC_OPERATORS
 
 
@@ -37,11 +32,11 @@ class GSDSynthesizer(Synthesizer):
     def fit(
             self,
             data, *ignore,
+            meta_data: dict = None,
             transformer=None,
             categorical_columns: list = None,
             ordinal_columns: list = None,
             continuous_columns: list = None,
-            data_bounds: dict = None,
             preprocessor_eps: float = 0.0,
             nullable=False,
             N_prime : int = None,
@@ -49,14 +44,12 @@ class GSDSynthesizer(Synthesizer):
             seed=None):
 
 
-        self.data = self._get_data(data, preprocessor_eps, categorical_columns, ordinal_columns, continuous_columns,
-                              data_bounds, nullable)
+        self.data = self._get_data(data, meta_data, categorical_columns, ordinal_columns,
+                                   continuous_columns,preprocessor_eps,  nullable)
         self.dim = len(self.data.domain.attrs)
         self.N_prime = len(self.data.df) if N_prime is None else N_prime
 
-
-
-        self.true_stats, self.stat_fn = self.get_statistics()
+        self.true_stats, self.stat_fn = self.get_statistics(self.data)
 
         if self.verbose:
             print(f'Statistics size = {len(self.true_stats)}')
@@ -70,7 +63,6 @@ class GSDSynthesizer(Synthesizer):
 
         # Call genetic data generator
         self.sync_data = generate(self.key,
-                                  # self.g_strategy,
                                   domain=self.data.domain,
                                   N_prime=self.N_prime,
                                   num_generations=5000000,
@@ -83,56 +75,103 @@ class GSDSynthesizer(Synthesizer):
         self.sync_data_df = self._transformer.inverse_transform(data_list)
 
 
-    def get_quantiles(self, bins: dict, num_quantiles: int):
-        approx_quantiles = []
-        bin_data = 1/ num_quantiles
-        all_thresholds = bins['bins'][self.tree_height-1][0]
+    def get_statistics(self, data: Dataset):
+        dim = len(data.domain.attrs)
+        # Split privacy budget
+        numeric_features = data.domain.get_continuous_cols() + data.domain.get_ordinal_cols()
+        num_numeric_features = len(numeric_features)
+        rho_1 = None
+        rho_2 = None
+        if dim == 1:
+            rho_1 = self.rho
+        elif dim > 1 and num_numeric_features == 0:
+            rho_2 = self.rho
+            if self.verbose:
+                print(f'privacy budgets: Second moments = {rho_2:.6f}')
+        elif dim > 1 and num_numeric_features > 0:
+            num_2way_marginals = len(list(itertools.combinations(range(dim), 2)))
+            rho_1 = self.rho * num_numeric_features / (num_numeric_features + num_2way_marginals)
+            rho_2 = self.rho * num_2way_marginals / (num_numeric_features + num_2way_marginals)
 
-        num_thresholds = all_thresholds.shape[0]
-        num_bins = int(np.log2(num_thresholds-1))
+            if self.verbose:
+                print(f'privacy budgets: First moments = {rho_1:.6f}. Second moments = {rho_2:.6f}')
 
-        for i, tres in enumerate(all_thresholds-1):
-            binarystring = bin(i)
-            prefix_len = num_bins - (len(binarystring)-2)
-            binarystring = prefix_len * "0" + binarystring[2:]
-            print(binarystring)
-
-        return approx_quantiles
-
-
-    def get_statistics(self):
-        ### TODO: Split privacy budget
-        warnings.warn("Must split privacy budget")
-        print()
         tree_height  = self.tree_height
-        bin_edges = _get_bin_edges(domain=self.data.domain, tree_height=tree_height)
+        bin_edges = _get_bin_edges(domain=data.domain, tree_height=tree_height)
 
-        priv_stats_1k, stat_fn_1k, marginals_info = _get_mixed_marginal_fn(self.data, k=1, bin_edges=bin_edges, rho=self.rho,
-                                                           store_marginal_stats=True,
-                                                               verbose=self.verbose)
-
-        # Under development
-        # for col in self.data.domain.get_numerical_cols():
-        #     approx_quantiles = self.get_quantiles(marginals_info[(col,)], num_quantiles=32)
-        if self.dim == 1:
+        # Special case: 1-dimensional categorical data.
+        if dim==1 and num_numeric_features == 0:
+            priv_stats_1k, stat_fn_1k  = _get_mixed_marginal_fn(data, k=1, bin_edges=bin_edges, rho=rho_1,
+                                                                           features=data.domain.get_categorical_cols(),
+                                                                           verbose=self.verbose)
             return priv_stats_1k, stat_fn_1k
 
-        # Update bin edges so that continuous features have at most 32 bins.
+        if num_numeric_features>0:
+            # Compute thresholds for all numeric features using privacy budget rho_1
+            _, _, marginals_info = _get_mixed_marginal_fn(data, k=1, bin_edges=bin_edges, rho=rho_1,
+                                                           store_marginal_stats=True,
+                                                                           features=numeric_features,
+                                                               verbose=self.verbose)
 
-        bin_edges = _get_bin_edges(domain=self.data.domain, tree_height=5)
-        # Case d>1
-        priv_stats_2k, stat_fn_2k = _get_mixed_marginal_fn(self.data, k=2, bin_edges=bin_edges, rho=self.rho, verbose=self.verbose)
+            # Compute density function
+            density_fn_params = []
+            priv_density = []
+            for col in numeric_features:
+                thres_q, den_q, thres_all, density_all = get_quantiles(marginals_info[(col,)], 200)
+                # Save threshold for computing the density function
+                col_id = data.domain.get_attribute_index(col)
+                for q, d in zip(thres_q, den_q):
+                    density_fn_params.append([col_id, q])
+                    priv_density.append(d)
 
+            # Obtain first moment statistics and function.
+            priv_density_np = jnp.array(priv_density)
+            density_fn = _get_density_fn(jnp.array(density_fn_params))
 
-        priv_stats_all = jnp.concatenate((jnp.array(priv_stats_1k), jnp.array(priv_stats_2k)))
-        def stat_fn_all(X):
-            stat_1k = stat_fn_1k(X)
-            stat_2k = stat_fn_2k(X)
-            return jnp.concatenate((stat_1k, stat_2k))
-        return priv_stats_all, stat_fn_all
-        # return priv_stats_2k, stat_fn_2k
+            # Special case: 1-dimensional numeric dataset
+            if dim == 1:
+                return priv_density_np, density_fn
 
+            # Compute bins for 2-way marginals
+            # We use a smaller tree height for 2-way marginals due to computational limits
+            for col in numeric_features:
+                num_quantiles = 50
+                approx_quantiles, densities, _, _ = get_quantiles(marginals_info[(col,)], num_quantiles)
+                # Split approximate quantile thresholds into levels
+                approx_quantiles = np.array(approx_quantiles)
+                col_tree_height = int(np.log2(approx_quantiles.shape[0]))
+                if self.verbose:
+                    print(f'{col:>10}.tree_height = {col_tree_height}. Thresholds={approx_quantiles.shape[0]}')
+                temp_bins = {'tree_height': col_tree_height}
+                col_size = data.domain.size(col)
+                for h in range(col_tree_height):
+                    if h < col_tree_height-1:
+                        step = approx_quantiles.shape[0] // (2 ** (h+1))
+                        p = np.arange(0, approx_quantiles.shape[0]+1, step=step)[:-1]
+                        thresholds = np.concatenate((approx_quantiles[p], np.array([col_size + 1e-5])))
+                    else:
+                        thresholds = np.concatenate((approx_quantiles, np.array([col_size + 1e-5])))
+                    temp_bins[h] = thresholds
+                # Update bin edges of all numeric features
+                bin_edges[col] = temp_bins
 
+            # Get second moment statistics using privacy budget rho_2
+            priv_stats_2k, stat_fn_2k = _get_mixed_marginal_fn(data, k=2, bin_edges=bin_edges, rho=rho_2, verbose=self.verbose)
+
+            # Combine first and second moment statistics
+            def stat_fn_all(X):
+                stat_1k = density_fn(X)
+                stat_2k = stat_fn_2k(X)
+                return jnp.concatenate((stat_1k, stat_2k))
+
+            # General case: d-dimensional mixed-type dataset:
+            priv_stats_all = jnp.concatenate((jnp.array(priv_density_np), jnp.array(priv_stats_2k)))
+            return priv_stats_all, stat_fn_all
+        else:
+            # Special case: d-dimensional categorical data only:
+            priv_stats_2k, stat_fn_2k = _get_mixed_marginal_fn(data, k=2, bin_edges=bin_edges, rho=rho_2,
+                                                               verbose=self.verbose)
+            return priv_stats_2k, stat_fn_2k
 
     def get_values_as_list(self, domain: Domain, df: pd.DataFrame):
         data_as_list = []
@@ -144,12 +183,10 @@ class GSDSynthesizer(Synthesizer):
                     row_list.append(int(value))
                 if col in domain.get_ordinal_cols():
                     row_list.append(int(value))
-                if col in domain.get_numerical_cols():
+                if col in domain.get_continuous_cols():
                     row_list.append(float(value))
             data_as_list.append(row_list)
         return data_as_list
-
-
 
     def sample(self, samples=None):
         if samples is None:
@@ -168,22 +205,37 @@ class GSDSynthesizer(Synthesizer):
             return list(range(len(data[0])))
 
     def _get_data(self, data,
-                  preprocessor_eps,
-                  categorical_columns,
-                  ordinal_columns,
-                  continuous_columns,
-                  data_bounds: dict,
+                  meta_data: dict=None,
+                  categorical_columns=None,
+                  ordinal_columns=None,
+                  continuous_columns=None,
+                  preprocessor_eps: float = None,
                   nullable=False
                   ):
 
-        if data_bounds is None:
-            data_bounds = {}
+        columns = self.get_column_names(data)
+
+        if meta_data is None:
+            meta_data = {}
         if categorical_columns is None:
             categorical_columns = []
         if ordinal_columns is None:
             ordinal_columns = []
         if continuous_columns is None:
             continuous_columns = []
+        def add_unique(s , str_list: list):
+            if s not in str_list:
+                str_list.append(s)
+        if meta_data is not None:
+            for meta_col in columns:
+                if  meta_col in  meta_data.keys() and 'type' in meta_data[meta_col].keys():
+                    type = meta_data[meta_col]['type']
+                    if type == 'string':
+                        add_unique(meta_col, categorical_columns)
+                    if type == 'int':
+                        add_unique(meta_col, ordinal_columns)
+                    if type == 'float':
+                        add_unique(meta_col, continuous_columns)
 
         if len(continuous_columns) + len(ordinal_columns) + len(categorical_columns) == 0:
             inferred = TypeMap.infer_column_types(data)
@@ -193,23 +245,23 @@ class GSDSynthesizer(Synthesizer):
             if not nullable:
                 nullable = len(inferred['nullable_columns']) > 0
 
-        # columns = categorical_columns + ordinal_columns + continuous_columns
-        columns = self.get_column_names(data)
+        mapped_columns = categorical_columns + ordinal_columns + continuous_columns
+
+        assert len(mapped_columns) == len(columns), 'Column mismatch. Make sure that the meta_data configuration defines all columns.'
+
         col_tranformers = []
-        config = {}
         for col in columns:
             if col in categorical_columns:
                 t = LabelTransformer(nullable=nullable)
                 col_tranformers.append(t)
             elif col in ordinal_columns:
-                t = LabelTransformer(nullable=nullable)
+                lower = meta_data[col]['lower'] if col in meta_data  and 'lower'in meta_data[col] else None
+                upper = meta_data[col]['upper'] if col in meta_data and 'upper'in meta_data[col]else None
+                t = OrdinalTransformer(lower=lower, upper=upper, nullable=nullable)
                 col_tranformers.append(t)
             elif col in continuous_columns:
-                lower = None
-                upper = None
-                if col in data_bounds:
-                    lower = data_bounds[col]['lower']
-                    upper = data_bounds[col]['upper']
+                lower = meta_data[col]['lower'] if col in meta_data and 'lower'in meta_data[col] else None
+                upper = meta_data[col]['upper'] if col in meta_data and 'upper'in meta_data[col]else None
                 t = MinMaxTransformer(lower=lower, upper=upper, nullable=nullable, negative=False)
                 col_tranformers.append(t)
         self._transformer = TableTransformer(col_tranformers)
@@ -224,16 +276,17 @@ class GSDSynthesizer(Synthesizer):
             continuous_columns=continuous_columns
             )
 
+        config = {}
         for col_tt, col in zip(col_tranformers, columns):
             col_tt: ColumnTransformer
             if col in categorical_columns:
                 cat_size = col_tt.cardinality[0]
-                config[col] = {'type': 'categorical', 'size': cat_size}
+                config[col] = {'type': 'string', 'size': cat_size}
             if col in ordinal_columns:
                 ord_size = col_tt.cardinality[0]
-                config[col] = {'type': 'ordinal', 'size': ord_size}
+                config[col] = {'type': 'int', 'size': ord_size}
             if col in continuous_columns:
-                config[col] = {'type': 'numerical', 'size': 1}
+                config[col] = {'type': 'float', 'size': 1}
 
         domain = Domain(config)
         data = Dataset(pd.DataFrame(np.array(train_data), columns=columns), domain)
@@ -242,24 +295,3 @@ class GSDSynthesizer(Synthesizer):
         self.continuous_columns = continuous_columns
 
         return data
-
-
-if __name__ == "__main__":
-    # DEBUG:
-    columns = ['R1', 'R2']
-    col_bounds = {'R1': {'lower': 0, 'upper': 1}, 'R2': {'lower': 0, 'upper': 1}}
-    N = 10
-    data_array = np.column_stack([
-        0.37 * np.ones(N),
-        np.concatenate([0.64 * np.ones(N // 2), np.zeros(N // 2)]),
-    ])
-    df = pd.DataFrame(data_array, columns=columns)
-
-    # Since we are passing the data bounds, we do not need to provide privacy budget for preprocessing.
-    synth = GSDSynthesizer(1000000.0, 1e-5,
-                           tree_height=4,
-                           verbose=True)
-    synth.fit(df,  continuous_columns=columns, data_bounds=col_bounds)
-
-    max_error = np.abs(synth.stat_fn(synth.data.to_numpy()) - synth.stat_fn(synth.sync_data.to_numpy())).max()
-    assert max_error < 0.00

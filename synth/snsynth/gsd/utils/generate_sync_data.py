@@ -1,9 +1,12 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
 from typing import Callable
+import time
 from snsynth.gsd.utils import Dataset, Domain
-from snsynth.gsd.utils.genetic_strategy import (EvoState, PopulationState, MutateStrategy, SwapStrategy,
+from snsynth.gsd.utils.genetic_strategy import (PopulationState, MutateStrategy, SwapStrategy,
                                                 CategoricalCrossoverStrategy, ContinuousDataStrategy)
+from snsynth.gsd.utils.mw_jit import get_sample_arms_fn, get_update_weights_fn
 
 AVAILABLE_GENETIC_OPERATORS = ['mutate', 'continuous', 'cross', 'swap']
 
@@ -21,9 +24,8 @@ def generate(key,
     ]
     if 'mutate' in genetic_operators:
         strategies.append(MutateStrategy(domain=domain, data_size=N_prime))
-
     if 'continuous' in genetic_operators:
-        if len(domain.get_numerical_cols() + domain.get_ordinal_cols()) > 0:
+        if len(domain.get_continuous_cols() + domain.get_ordinal_cols()) > 0:
             strategies.append(ContinuousDataStrategy(domain=domain, data_size=N_prime))
     if 'swap' in genetic_operators:
         strategies.append(SwapStrategy(domain=domain, data_size=N_prime))
@@ -33,14 +35,11 @@ def generate(key,
         if len(domain.get_categorical_cols()) > 1:
             strategies.append(CategoricalCrossoverStrategy(domain=domain, data_size=N_prime, column_updates=2))
 
-
-
-
-    # N_prime = g_strategy.data_size
     if public_dataset is not None: assert N_prime == len(public_dataset.df), "Public data must have size=N_prime"
 
     private_statistics = jnp.array(private_statistics)
 
+    early_stop = max(100, N_prime)
     def fitness_fn(X):
         fitness = jnp.linalg.norm(private_statistics - statistics_fn(X), ord=2) ** 2
         return fitness
@@ -100,11 +99,21 @@ def generate(key,
     update_elite_stat_jit = jax.jit(update_elite_stat)
 
     LAST_LAG_FITNESS = 1e9
-    keys = jax.random.split(key, num_generations)
 
+
+    # Set up strategy samplers
     num_strategies = len(strategies)
+    update_weight = jax.jit(get_update_weights_fn(num_strategies))
+    sample = jax.jit(get_sample_arms_fn(num_strategies, early_stop+1))
+    strategy_rewards = []
+    key, key_sample = jax.random.split(key, 2)
+    weights = jnp.ones(num_strategies) / num_strategies
+    strategy_ids = list(np.array(sample(key_sample, weights)))
+
+    t0 = time.time()
+    keys = jax.random.split(key, num_generations)
     for t, ask_subkey in enumerate(keys):
-        strategy_id = (t % num_strategies)
+        strategy_id = strategy_ids.pop()
         g_strategy = strategies[strategy_id]
 
         # ASK: Produce a set of new synthetic data candidates
@@ -122,9 +131,18 @@ def generate(key,
         # UPDATE: Update the statistics of the best synthetic datasets so far
         elite_stat = update_elite_stat_jit(elite_stat, rep_best, remove_row, add_row).block_until_ready()
 
+        strategy_rewards.append([strategy_id, rep_best])
+
         # Early Stop:
-        if t % N_prime == 0:
-            print_progress_fn(t, state.best_fitness, print_progress)
+        if t % early_stop == 0 and t > 0:
+
+            key, key_sample = jax.random.split(key, 2)
+            rewards_jnp = jnp.array(strategy_rewards)
+            weights = update_weight(weights, rewards_jnp)
+            strategy_ids = list(np.array(sample(key_sample, weights)))
+            strategy_rewards = []           # reset strategy count
+
+            print_progress_fn(t, state.best_fitness, weights, time.time() - t0, print_progress)
             if check_early_stop(t, state.best_fitness, LAST_LAG_FITNESS, len(strategies) * N_prime, print_progress): break
             LAST_LAG_FITNESS = state.best_fitness
 
@@ -132,9 +150,9 @@ def generate(key,
     return sync_dataset
 
 
-def print_progress_fn(t, best_fitness, print_progress: False):
+def print_progress_fn(t, best_fitness, strategy_profile: jnp.ndarray, time, print_progress: False):
     if print_progress:
-        print(f'Gen={t:<4}: fitness={best_fitness:<5.6}.')
+        print(f'Gen={t:>10}: fitness={best_fitness:>10.9}. Strategy wins: ', strategy_profile.round(3), f'time={time:<5.2f}(s)')
 
 def check_early_stop(t, best_fitness, LAST_LAG_FITNESS, stop_early_min_generation, print_progress: False):
     if (t % stop_early_min_generation) > 0: return False

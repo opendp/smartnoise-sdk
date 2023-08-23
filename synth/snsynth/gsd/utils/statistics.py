@@ -1,8 +1,4 @@
-# try:
-from snsynth.utils import gaussian_noise, cdp_rho
-# except:
-#     from snsynth.utils import gaussian_noise, cdp_rho
-
+from snsynth.utils import gaussian_noise
 from jax.config import config; config.update("jax_enable_x64", True)
 import numpy as np
 import jax
@@ -61,6 +57,29 @@ def _get_stats_fn(k, query_params):
     return stat_fn
 
 
+def _get_density_fn(query_params):
+    these_queries = jnp.array(query_params, dtype=jnp.float64)
+
+    def answer_fn(x_row: chex.Array, query_single: chex.Array):
+        I = query_single[0].astype(int)
+        threshold = query_single[1].astype(float)
+        answer = (x_row[I] < threshold).astype(int)
+        return answer
+
+    temp_stat_fn = jax.vmap(answer_fn, in_axes=(None, 0))
+
+    def scan_fun(carry, x):
+        return carry + temp_stat_fn(x, these_queries), None
+
+    def stat_fn(X):
+        out = jax.eval_shape(temp_stat_fn, X[0], these_queries)
+        stats = jax.lax.scan(scan_fun, jnp.zeros(out.shape, out.dtype), X)[0]
+        stats = jnp.round(stats)
+        return stats / X.shape[0]
+
+    return stat_fn
+
+
 def _get_query_params(data, indices: list, marginal_bin_edges: list) -> (list, list):
     # indices = [data.domain.get_attribute_index(feature) for feature in features]
     answer_vectors = []
@@ -95,26 +114,69 @@ def _get_bin_edges(domain, tree_height):
 
     for col in domain.attrs:
         bins[col] = {}
-        if domain.type(col) == 'categorical':
+        if domain.is_categorical(col):
             size = domain.size(col)
             bins[col] = {'tree_height': 1, 0: np.linspace(0, size, size + 1) - 0.001}
 
-        if domain.type(col) == 'ordinal':
+        if domain.is_ordinal(col):
             size = domain.size(col)
-            ord_col_tree_height = min(int(np.log(size)+1), tree_height)
+            ord_col_tree_height = min(int(np.log2(size)+1), tree_height)
             bins[col] = {'tree_height': ord_col_tree_height}
             for h in range(ord_col_tree_height):
                 h_bins = 2**(h+1)
                 bins[col][h] = np.linspace(0, size, h_bins + 1)
                 bins[col][h][-1] += 1e-6
 
-        if domain.type(col) == 'numerical':
+        if domain.is_continuous(col):
             bins[col] = {'tree_height': tree_height}
             for h in range(tree_height):
                 h_bins = 2 ** (h + 1)
                 bins[col][h] = np.linspace(0, 1, h_bins + 1)
                 bins[col][h][-1] += 1e-6
     return bins
+
+
+def get_quantiles(bins: dict, num_quantiles: int):
+    tree_height = bins['tree_height']
+    all_thresholds = bins['bins'][tree_height-1][0]
+
+    num_thresholds = all_thresholds.shape[0]
+    num_bins = int(np.log2(num_thresholds-1))
+    threshold_density = []
+    threshold = []
+    for i, thres in enumerate(all_thresholds[:-1]):
+        if i == 0: continue
+        binarystring = bin(i)
+        prefix_len = num_bins - (len(binarystring)-2)
+        binarystring = prefix_len * "0" + binarystring[2:]
+        sum = 0
+        pos = 0
+        for tree_level, b in enumerate(binarystring):
+            if b == '1':
+                sum += bins['stats'][tree_level][pos]
+                pos  = 2  * pos + 2
+            else:
+                pos  = 2  * pos
+        sum = np.clip(sum, 0, 1)
+        threshold.append(thres)
+        threshold_density.append(sum)
+
+    # Find quantiles
+    quantile = 1 / num_quantiles
+    last_density = 0
+    approx_quantiles = [0]
+    densities = [0]
+    for j in range(len(threshold_density)-1):
+        edge = threshold[j]
+        stat_lo = threshold_density[j]
+        stat_hi = threshold_density[j+1]
+        if (stat_hi - last_density) > quantile:
+            approx_quantiles.append(edge)
+            densities.append(stat_lo)
+            last_density  = stat_lo
+
+    return approx_quantiles, densities, threshold, threshold_density
+
 
 def _get_height_edges(column_bin_edges: dict, h):
     max_level = column_bin_edges['tree_height'] - 1
@@ -129,10 +191,12 @@ def _get_mixed_marginal_fn(data: Dataset,
                            rho: float = None,
                            output_query_params: bool = False,
                            store_marginal_stats: bool = False,
+                           features=None,
                            verbose=False):
     domain = data.domain
 
-    features = domain.get_numerical_cols() + domain.get_ordinal_cols() + domain.get_categorical_cols()
+    if features is None:
+        features = domain.get_continuous_cols() + domain.get_ordinal_cols() + domain.get_categorical_cols()
     for c in conditional_column:
         features.remove(c)
     k_total = k + len(conditional_column)
@@ -150,18 +214,18 @@ def _get_mixed_marginal_fn(data: Dataset,
     marginal_info = {}
     for marginal in marginals_list:
         cond_marginal = list(marginal) + list(conditional_column)
-        marginal_info[tuple(cond_marginal)] = {'bins': {}, 'stats': {}}
 
         num_col_tree_height = [bin_edges[col]['tree_height'] for col in marginal]
-        top_level = max(num_col_tree_height)
+        max_height = max(num_col_tree_height)
         marginal_max_size = maximum_size // (total_marginals) if maximum_size else None
         # marginal_max_size = min(marginal_max_size, N) if marginal_max_size else None
+        marginal_info[tuple(cond_marginal)] = {'tree_height': max_height, 'bins': {}, 'stats': {}}
 
-        rho_split_level = _divide_privacy_budget(rho_split, top_level)  # Divide budget between tree_height
+        rho_split_level = _divide_privacy_budget(rho_split, max_height)  # Divide budget between tree_height
 
         sigma = get_sigma(rho_split_level, sensitivity=np.sqrt(2) / N)
         if verbose:
-            print('Cond.Marginal=', cond_marginal, f'. Sigma={sigma:.4f}. Top.Level={top_level}. Max.Size={marginal_max_size}')
+            print('Cond.Marginal=', cond_marginal, f'. Sigma={sigma:.4f}. Top.Level={max_height}. Max.Size={marginal_max_size}')
 
         # Get the answers and select the bins with most information
         # indices = domain.get_attribute_indices(marginal)
@@ -170,7 +234,7 @@ def _get_mixed_marginal_fn(data: Dataset,
         marginal_stats = []
         marginal_params = []
         L = None
-        for L in range(top_level):
+        for L in range(max_height):
             kway_edges = [_get_height_edges(bin_edges[col_name], L) for col_name in marginal] + \
                          [bin_edges[cat_col][0] for cat_col in conditional_column]
             stats, query_params = _get_query_params(data, indices, kway_edges)
