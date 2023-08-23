@@ -1,9 +1,14 @@
 import pandas as pd
 import numpy as np
-import jax
-import itertools
-import jax.numpy as jnp
+
 print("For GSD support, please install jax: pip install --upgrade  \"jax[cuda11_cudnn82]==0.4.6\" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html")
+
+try:
+    import jax
+    import itertools
+    import jax.numpy as jnp
+except ImportError:
+    print("Please install jax and flax:\nFor example you can run the install_cpu.sh script.")
 
 from snsynth.base import Synthesizer
 from snsynth.utils import cdp_rho, exponential_mechanism, gaussian_noise, powerset
