@@ -1,14 +1,6 @@
 import os.path
-
-import numpy as np
 import pandas as pd
 
-# NOTE: Temporary
-# We add a memory cap here for now, which
-# forces a subsampling of particularly large
-# datasets in order to not overwhelm
-# joblib 
-# MEM_CAP = 1500000 # 500KB
 
 def load_data(req_datasets):
     """

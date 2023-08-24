@@ -24,7 +24,7 @@ class GSDSynthesizer(Synthesizer):
     Based on the paper: https://arxiv.org/abs/2306.03257
     """
 
-    def __init__(self, epsilon=1., delta=1e-9, tree_height=10, verbose=False, *args, **kwargs):
+    def __init__(self, epsilon=1., delta=1e-9, tree_height=20, verbose=False, *args, **kwargs):
         # GSDSynthesizer.__init__()
         super().__init__(*args, **kwargs)
         self.epsilon = epsilon
