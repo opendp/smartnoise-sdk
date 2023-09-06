@@ -2,6 +2,7 @@
 from .base import SingleColumnMetric, MultiColumnMetric
 from ...dataset import Dataset
 from pyspark.sql import functions as F
+from pyspark.sql import Window
 
 class Cardinality(SingleColumnMetric):
     # column must be categorical
@@ -39,6 +40,26 @@ class Median(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data : Dataset) -> dict:
+        if not data.is_aggregated:
+            if self.column_name not in data.measure_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
+            value = data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
+        else:
+            if data.count_column is None:
+                raise ValueError("Dataset is aggregated but has no count column.")
+            raise ValueError("Cannot acquire the median for aggregated dataset.")
+            # window_spec = Window.orderBy(F.col(self.column_name))
+            # total_count = data.source.select(F.sum(data.count_column)).collect()[0][0]
+            # value = data.source.withColumn("cumulative_count", F.sum(data.count_column).over(window_spec)) \
+            #     .filter(F.col("cumulative_count") >= total_count / 2) \
+            #     .limit(1) \
+            #     .select(F.col(self.column_name) / F.col(data.count_column)) \
+            #     .collect()[0][0]
+        response = self.to_dict()
+        response["value"] = value
+        return response
+
 
 class Variance(SingleColumnMetric):
     # column must be numerical
