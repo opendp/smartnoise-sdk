@@ -17,6 +17,24 @@ class Entropy(SingleColumnMetric):
     # column must be categorical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data : Dataset) -> dict:
+        if not data.is_aggregated:
+            if self.column_name not in data.categorical_columns:
+                raise ValueError("Column {} is not categorical.".format(self.column_name))
+            total_count = data.source.count()
+            grouped_data = data.source.groupBy(self.column_name).agg(F.count('*').alias("count")) \
+                .withColumn("probability", F.col("count") / total_count)
+        else:
+            if data.count_column is None:
+                raise ValueError("Dataset is aggregated but has no count column.")
+            total_count = data.source.select(F.sum(data.count_column)).collect()[0][0]
+            grouped_data = data.source.groupBy(self.column_name).agg(F.sum(data.count_column).alias("count_by_category")) \
+                .withColumn("probability", F.col("count_by_category") / total_count)
+        value = - grouped_data.select(F.sum(F.when(F.col("probability") != 0, F.col("probability") * F.log2(F.col("probability"))).otherwise(0)).alias("entropy")).collect()[0]["entropy"]
+        response = self.to_dict()
+        response["value"] = value
+        return response
+
 
 class Mean(SingleColumnMetric):
     # column must be numerical
@@ -40,25 +58,15 @@ class Median(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
-    def compute(self, data : Dataset) -> dict:
+    def compute(self, data : Dataset):
         if not data.is_aggregated:
             if self.column_name not in data.measure_columns:
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
-            value = data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
+            return data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
         else:
             if data.count_column is None:
                 raise ValueError("Dataset is aggregated but has no count column.")
             raise ValueError("Cannot acquire the median for aggregated dataset.")
-            # window_spec = Window.orderBy(F.col(self.column_name))
-            # total_count = data.source.select(F.sum(data.count_column)).collect()[0][0]
-            # value = data.source.withColumn("cumulative_count", F.sum(data.count_column).over(window_spec)) \
-            #     .filter(F.col("cumulative_count") >= total_count / 2) \
-            #     .limit(1) \
-            #     .select(F.col(self.column_name) / F.col(data.count_column)) \
-            #     .collect()[0][0]
-        response = self.to_dict()
-        response["value"] = value
-        return response
 
 
 class Variance(SingleColumnMetric):
