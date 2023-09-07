@@ -1,4 +1,5 @@
 
+from sneval.dataset import Dataset
 from .base import SingleColumnMetric, MultiColumnMetric
 from ...dataset import Dataset
 from pyspark.sql import functions as F
@@ -64,25 +65,47 @@ class Median(SingleColumnMetric):
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
             return data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
         else:
-            if data.count_column is None:
-                raise ValueError("Dataset is aggregated but has no count column.")
-            raise ValueError("Cannot acquire the median for aggregated dataset.")
+            raise ValueError("Cannot compute the median for aggregated dataset.")
 
 
 class Variance(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data: Dataset):
+        if not data.is_aggregated:
+            if self.column_name not in data.measure_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
+            return data.source.select(F.variance(self.column_name)).collect()[0][0]
+        else:
+            raise ValueError("Cannot compute the variance for aggregated dataset.")
+                  
 
 class StandardDeviation(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data: Dataset):
+        if not data.is_aggregated:
+            if self.column_name not in data.measure_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
+            return data.source.select(F.stddev(self.column_name)).collect()[0][0]
+        else:
+            raise ValueError("Cannot compute the standard deviation for aggregated dataset.")
+        
 
 class Skewness(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data: Dataset):
+        if not data.is_aggregated:
+            if self.column_name not in data.measure_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
+            return data.source.select(F.skewness(self.column_name)).collect()[0][0]
+        else:
+            raise ValueError("Cannot compute the skewness for aggregated dataset.")
+        
 
 class Kurtosis(SingleColumnMetric):
     # column must be numerical
@@ -93,6 +116,14 @@ class Range(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data: Dataset):
+        if not data.is_aggregated:
+            if self.column_name not in data.measure_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
+            return (data.source.select(F.min(self.column_name)).collect()[0][0], data.source.select(F.max(self.column_name)).collect()[0][0])
+        else:
+            raise ValueError("Cannot get the accurate range for aggregated dataset.")
+
 
 class DiscreteMutualInformation(MultiColumnMetric):
     # columns must be categorical
