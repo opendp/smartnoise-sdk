@@ -65,7 +65,7 @@ class Median(SingleColumnMetric):
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
             return data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
         else:
-            raise ValueError("Cannot compute the median for aggregated dataset.")
+            raise ValueError("Median is not available for aggregated dataset.")
 
 
 class Variance(SingleColumnMetric):
@@ -78,7 +78,7 @@ class Variance(SingleColumnMetric):
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
             return data.source.select(F.variance(self.column_name)).collect()[0][0]
         else:
-            raise ValueError("Cannot compute the variance for aggregated dataset.")
+            raise ValueError("Variance is not available for aggregated dataset.")
                   
 
 class StandardDeviation(SingleColumnMetric):
@@ -91,7 +91,7 @@ class StandardDeviation(SingleColumnMetric):
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
             return data.source.select(F.stddev(self.column_name)).collect()[0][0]
         else:
-            raise ValueError("Cannot compute the standard deviation for aggregated dataset.")
+            raise ValueError("Standard deviation is not available for aggregated dataset.")
         
 
 class Skewness(SingleColumnMetric):
@@ -104,13 +104,21 @@ class Skewness(SingleColumnMetric):
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
             return data.source.select(F.skewness(self.column_name)).collect()[0][0]
         else:
-            raise ValueError("Cannot compute the skewness for aggregated dataset.")
+            raise ValueError("Skewness is not available for aggregated dataset.")
         
 
 class Kurtosis(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
+    def compute(self, data: Dataset):
+        if not data.is_aggregated:
+            if self.column_name not in data.measure_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
+            return data.source.select(F.kurtosis(self.column_name)).collect()[0][0]
+        else:
+            raise ValueError("Kurtosis is not available for aggregated dataset.")
+
 
 class Range(SingleColumnMetric):
     # column must be numerical
@@ -122,13 +130,36 @@ class Range(SingleColumnMetric):
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
             return (data.source.select(F.min(self.column_name)).collect()[0][0], data.source.select(F.max(self.column_name)).collect()[0][0])
         else:
-            raise ValueError("Cannot get the accurate range for aggregated dataset.")
+            raise ValueError("Range is not available for aggregated dataset.")
 
 
 class DiscreteMutualInformation(MultiColumnMetric):
     # columns must be categorical
     def __init__(self, column_names):
+        if len(column_names) != 2:
+            raise ValueError("DiscreteMutualInformation requires two columns.")
         super().__init__(column_names)
+    def compute(self, data):
+        if not set(self.column_names).issubset(set(data.categorical_columns)):
+            raise ValueError("Columns {} are not categorical.".format(self.column_names))
+        
+        c1, c2 = self.column_names[0], self.column_names[1]
+        if data.count_column is not None:
+            total_count = data.source.select(F.sum(data.count_column)).collect()[0][0]
+            joint_probs = data.source.groupBy(*self.column_names).agg(F.sum(data.count_column).alias("count_joint")).withColumn("joint_prob", F.col("count_joint") / total_count)
+            marginal_probs_c1 = data.source.groupBy(c1).agg(F.sum(data.count_column).alias("count_c1")).withColumn("marginal_prob_c1", F.col("count_c1") / total_count)
+            marginal_probs_c2 = data.source.groupBy(c2).agg(F.sum(data.count_column).alias("count_c2")).withColumn("marginal_prob_c2", F.col("count_c2") / total_count)
+        else:
+            total_count = data.source.count()
+            joint_probs = data.source.groupBy(*self.column_names).agg(F.count('*').alias("count_joint")).withColumn("joint_prob", F.col("count_joint") / total_count)
+            marginal_probs_c1 = data.source.groupBy(c1).agg(F.count('*').alias("count_c1")).withColumn("marginal_prob_c1", F.col("count_c1") / total_count)
+            marginal_probs_c2 = data.source.groupBy(c2).agg(F.count('*').alias("count_c2")).withColumn("marginal_prob_c2", F.col("count_c2") / total_count)
+
+        mutual_information = joint_probs.join(marginal_probs_c1, c1, "inner") \
+            .join(marginal_probs_c2, c2, "inner") \
+            .withColumn("mutual_info", (F.col("joint_prob") * F.log2(F.col("joint_prob") / (F.col("marginal_prob_c1") * F.col("marginal_prob_c2")))))
+        return mutual_information.selectExpr("sum(mutual_info)").collect()[0][0]
+
 
 class Dimensionality(MultiColumnMetric):
     # columns must be categorical
@@ -153,6 +184,7 @@ class BelowK(MultiColumnMetric):
             return data.source.groupBy(*self.column_names).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
         else:
             return data.source.groupBy(*self.column_names).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+
 
 class DistinctCount(MultiColumnMetric):
     # columns must be categorical
