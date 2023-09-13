@@ -3,7 +3,6 @@ from sneval.dataset import Dataset
 from .base import SingleColumnMetric, MultiColumnMetric
 from ...dataset import Dataset
 from pyspark.sql import functions as F
-from pyspark.sql import Window
 
 class Cardinality(SingleColumnMetric):
     # column must be categorical
