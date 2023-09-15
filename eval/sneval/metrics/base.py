@@ -4,7 +4,7 @@ import json
 class Metric:
     @classmethod
     def create(cls, name, *args, **kwargs):
-        position_args = ['column_name', 'column_names', 'categorical_columns', 'measure_columns']
+        position_args = ['column_name', 'column_names', 'categorical_columns', 'measure_columns', 'label_column', 'prediction_column']
         if not args:
             args = [kwargs.pop(arg) for arg in position_args if arg in kwargs]
         module = importlib.import_module('sneval.metrics')

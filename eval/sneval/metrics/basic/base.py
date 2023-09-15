@@ -22,3 +22,12 @@ class MultiColumnMetric(Metric):
         return len(self.column_names)
     def compute(self, data : Dataset) -> dict:
         raise NotImplementedError
+    
+class BinaryClassificationMetric(Metric):
+    def __init__(self, label_column, prediction_column):
+        self.label_column = label_column
+        self.prediction_column = prediction_column
+    def param_names(self):
+        return super().param_names() + ["label_column", "prediction_column"]
+    def compute(self, data : Dataset) -> dict:
+        raise NotImplementedError
