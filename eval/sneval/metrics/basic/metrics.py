@@ -1,8 +1,9 @@
 
 from sneval.dataset import Dataset
-from .base import SingleColumnMetric, MultiColumnMetric
+from .base import SingleColumnMetric, MultiColumnMetric, BinaryClassificationMetric
 from ...dataset import Dataset
 from pyspark.sql import functions as F
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
 
 class Cardinality(SingleColumnMetric):
     # column must be categorical
@@ -35,7 +36,6 @@ class Entropy(SingleColumnMetric):
         response["value"] = value
         return response
 
-
 class Mean(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
@@ -53,7 +53,6 @@ class Mean(SingleColumnMetric):
         response["value"] = value
         return response
 
-
 class Median(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
@@ -65,7 +64,6 @@ class Median(SingleColumnMetric):
             return data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
         else:
             raise ValueError("Median is not available for aggregated dataset.")
-
 
 class Variance(SingleColumnMetric):
     # column must be numerical
@@ -79,7 +77,6 @@ class Variance(SingleColumnMetric):
         else:
             raise ValueError("Variance is not available for aggregated dataset.")
                   
-
 class StandardDeviation(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
@@ -91,7 +88,6 @@ class StandardDeviation(SingleColumnMetric):
             return data.source.select(F.stddev(self.column_name)).collect()[0][0]
         else:
             raise ValueError("Standard deviation is not available for aggregated dataset.")
-        
 
 class Skewness(SingleColumnMetric):
     # column must be numerical
@@ -104,7 +100,6 @@ class Skewness(SingleColumnMetric):
             return data.source.select(F.skewness(self.column_name)).collect()[0][0]
         else:
             raise ValueError("Skewness is not available for aggregated dataset.")
-        
 
 class Kurtosis(SingleColumnMetric):
     # column must be numerical
@@ -118,7 +113,6 @@ class Kurtosis(SingleColumnMetric):
         else:
             raise ValueError("Kurtosis is not available for aggregated dataset.")
 
-
 class Range(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
@@ -130,7 +124,6 @@ class Range(SingleColumnMetric):
             return (data.source.select(F.min(self.column_name)).collect()[0][0], data.source.select(F.max(self.column_name)).collect()[0][0])
         else:
             raise ValueError("Range is not available for aggregated dataset.")
-
 
 class DiscreteMutualInformation(MultiColumnMetric):
     # columns must be categorical
@@ -159,11 +152,20 @@ class DiscreteMutualInformation(MultiColumnMetric):
             .withColumn("mutual_info", (F.col("joint_prob") * F.log2(F.col("joint_prob") / (F.col("marginal_prob_c1") * F.col("marginal_prob_c2")))))
         return mutual_information.selectExpr("sum(mutual_info)").collect()[0][0]
 
-
 class Dimensionality(MultiColumnMetric):
     # columns must be categorical
-    def __init__(self, column_name):
-        super().__init__(column_name)
+    def __init__(self, column_names):
+        if len(column_names) == 0:
+            raise ValueError("Dimensionality requires at least one column.")
+        super().__init__(column_names)
+    def compute(self, data):
+        dimensionality = 1
+        for col in self.column_names:
+            unique_count = data.source.select(col).distinct().count()
+            dimensionality *= unique_count
+        response = self.to_dict()
+        response["value"] = dimensionality
+        return response
 
 class BelowK(MultiColumnMetric):
     # columns must be categorical
@@ -184,12 +186,46 @@ class BelowK(MultiColumnMetric):
         else:
             return data.source.groupBy(*self.column_names).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
 
-
 class DistinctCount(MultiColumnMetric):
     # columns must be categorical
     def __init__(self, column_names):
+        if len(column_names) == 0:
+            raise ValueError("DistinctCount requires at least one column.")
         super().__init__(column_names)
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         return data.source.select(self.column_names).distinct().count()
+
+class RedactedRowCount(MultiColumnMetric):
+    # columns must be categorical
+    def __init__(self, column_names):
+        if len(column_names) == 0:
+            raise ValueError("RedactedRowCount requires at least one column.")
+        super().__init__(column_names)
+    def compute(self, data):
+        if not set(self.column_names).issubset(set(data.categorical_columns)):
+            raise ValueError("Columns {} are not categorical.".format(self.column_names))
+        
+        # Create an additional column that counts the number of "unknown" values per row
+        df_with_unknown_count = data.source.withColumn("unknown_count", sum(F.when(F.col(c) == "unknown", 1).otherwise(0) for c in self.column_names))
+        
+        # Count the number of rows with partly unknown values (some, but not all columns are "unknown")
+        partly_redacted = df_with_unknown_count.filter((F.col("unknown_count") > 0) & (F.col("unknown_count") < len(self.column_names))).count()
+        # Count the number of rows with fully unknown values (all columns are "unknown")
+        fully_redacted = df_with_unknown_count.filter(F.col("unknown_count") == len(self.column_names)).count()
+
+        response = self.to_dict()
+        response["value"] = {"partly redacted row count": partly_redacted, "fully redacted row count": fully_redacted}
+        return response
+    
+class AUCMetric(BinaryClassificationMetric):
+    def __init__(self, label_column, prediction_column):
+        super().__init__(label_column, prediction_column)
+    def compute(self, data):
+        response = self.to_dict()
+        evaluator = BinaryClassificationEvaluator(rawPredictionCol=self.prediction_column,
+                                                  labelCol=self.label_column,
+                                                  metricName="areaUnderROC")
+        response["value"] = evaluator.evaluate(data.source)
+        return response
