@@ -197,6 +197,19 @@ class DistinctCount(MultiColumnMetric):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         return data.source.select(self.column_names).distinct().count()
 
+class BelowKPercentage(MultiColumnMetric):
+    # columns must be categorical
+    def __init__(self, column_names, k):
+        if len(column_names) == 0:
+            raise ValueError("BelowKPercentage requires at least one column.")
+        super().__init__(column_names)
+        self.blow_k = BelowK(column_names, k)
+        self.distinct_count = DistinctCount(column_names)
+    def compute(self, data):
+        if not set(self.column_names).issubset(set(data.categorical_columns)):
+            raise ValueError("Columns {} are not categorical.".format(self.column_names))
+        return (self.blow_k.compute(data) / self.distinct_count.compute(data)) * 100
+
 class RedactedRowCount(MultiColumnMetric):
     # columns must be categorical
     def __init__(self, column_names):
