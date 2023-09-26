@@ -12,7 +12,9 @@ class Cardinality(SingleColumnMetric):
     def compute(self, data):
         if self.column_name not in data.categorical_columns:
             raise ValueError("Column {} is not categorical.".format(self.column_name))
-        return data.source.select(self.column_name).distinct().count()
+        response = self.to_dict()
+        response["value"] = data.source.select(self.column_name).distinct().count()
+        return response
 
 class Entropy(SingleColumnMetric):
     # column must be categorical
@@ -58,72 +60,76 @@ class Median(SingleColumnMetric):
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data : Dataset):
-        if not data.is_aggregated:
-            if self.column_name not in data.measure_columns:
-                raise ValueError("Column {} is not numerical.".format(self.column_name))
-            return data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
-        else:
+        if data.is_aggregated:
             raise ValueError("Median is not available for aggregated dataset.")
+        if self.column_name not in data.measure_columns:
+            raise ValueError("Column {} is not numerical.".format(self.column_name))
+        response = self.to_dict()
+        response["value"] = data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
+        return response
 
 class Variance(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if not data.is_aggregated:
-            if self.column_name not in data.measure_columns:
-                raise ValueError("Column {} is not numerical.".format(self.column_name))
-            return data.source.select(F.variance(self.column_name)).collect()[0][0]
-        else:
+        if data.is_aggregated:
             raise ValueError("Variance is not available for aggregated dataset.")
+        if self.column_name not in data.measure_columns:
+            raise ValueError("Column {} is not numerical.".format(self.column_name))
+        response = self.to_dict()
+        response["value"] = data.source.select(F.variance(self.column_name)).collect()[0][0]
+        return response
                   
 class StandardDeviation(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if not data.is_aggregated:
-            if self.column_name not in data.measure_columns:
-                raise ValueError("Column {} is not numerical.".format(self.column_name))
-            return data.source.select(F.stddev(self.column_name)).collect()[0][0]
-        else:
+        if data.is_aggregated:
             raise ValueError("Standard deviation is not available for aggregated dataset.")
+        if self.column_name not in data.measure_columns:
+            raise ValueError("Column {} is not numerical.".format(self.column_name))
+        response = self.to_dict()
+        response["value"] = data.source.select(F.stddev(self.column_name)).collect()[0][0]
+        return response
 
 class Skewness(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if not data.is_aggregated:
-            if self.column_name not in data.measure_columns:
-                raise ValueError("Column {} is not numerical.".format(self.column_name))
-            return data.source.select(F.skewness(self.column_name)).collect()[0][0]
-        else:
+        if data.is_aggregated:
             raise ValueError("Skewness is not available for aggregated dataset.")
+        if self.column_name not in data.measure_columns:
+            raise ValueError("Column {} is not numerical.".format(self.column_name))
+        response = self.to_dict()
+        response["value"] = data.source.select(F.skewness(self.column_name)).collect()[0][0]
+        return response
 
 class Kurtosis(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if not data.is_aggregated:
-            if self.column_name not in data.measure_columns:
-                raise ValueError("Column {} is not numerical.".format(self.column_name))
-            return data.source.select(F.kurtosis(self.column_name)).collect()[0][0]
-        else:
+        if data.is_aggregated:
             raise ValueError("Kurtosis is not available for aggregated dataset.")
+        if self.column_name not in data.measure_columns:
+            raise ValueError("Column {} is not numerical.".format(self.column_name))
+        response = self.to_dict()
+        response["value"] = data.source.select(F.kurtosis(self.column_name)).collect()[0][0]
+        return response
 
 class Range(SingleColumnMetric):
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if not data.is_aggregated:
-            if self.column_name not in data.measure_columns:
-                raise ValueError("Column {} is not numerical.".format(self.column_name))
-            return (data.source.select(F.min(self.column_name)).collect()[0][0], data.source.select(F.max(self.column_name)).collect()[0][0])
-        else:
-            raise ValueError("Range is not available for aggregated dataset.")
+        if self.column_name not in data.measure_columns:
+            raise ValueError("Column {} is not numerical.".format(self.column_name))
+        response = self.to_dict()
+        response["value"] = (data.source.select(F.min(self.column_name)).collect()[0][0], data.source.select(F.max(self.column_name)).collect()[0][0])
+        return response
 
 class DiscreteMutualInformation(MultiColumnMetric):
     # columns must be categorical
@@ -150,7 +156,9 @@ class DiscreteMutualInformation(MultiColumnMetric):
         mutual_information = joint_probs.join(marginal_probs_c1, c1, "inner") \
             .join(marginal_probs_c2, c2, "inner") \
             .withColumn("mutual_info", (F.col("joint_prob") * F.log2(F.col("joint_prob") / (F.col("marginal_prob_c1") * F.col("marginal_prob_c2")))))
-        return mutual_information.selectExpr("sum(mutual_info)").collect()[0][0]
+        response = self.to_dict()
+        response["value"] = mutual_information.selectExpr("sum(mutual_info)").collect()[0][0]
+        return response
 
 class Dimensionality(MultiColumnMetric):
     # columns must be categorical
@@ -159,12 +167,25 @@ class Dimensionality(MultiColumnMetric):
             raise ValueError("Dimensionality requires at least one column.")
         super().__init__(column_names)
     def compute(self, data):
-        dimensionality = 1
+        value = 1
         for col in self.column_names:
             unique_count = data.source.select(col).distinct().count()
-            dimensionality *= unique_count
+            value *= unique_count
         response = self.to_dict()
-        response["value"] = dimensionality
+        response["value"] = value
+        return response
+
+class Sparsity(MultiColumnMetric):
+    # columns must be categorical
+    def __init__(self, column_names):
+        if len(column_names) == 0:
+            raise ValueError("Sparsity requires at least one column.")
+        super().__init__(column_names)
+        self.dimensionality = Dimensionality(column_names)
+        self.distinct_count = DistinctCount(column_names)
+    def compute(self, data):
+        response = self.to_dict()
+        response["value"] = self.distinct_count.compute(data)["value"] / self.dimensionality.compute(data)["value"]
         return response
 
 class BelowK(MultiColumnMetric):
@@ -179,12 +200,29 @@ class BelowK(MultiColumnMetric):
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
+        value = 0
         if data.count_column is not None:
-            return data.source.groupBy(*self.column_names).agg(F.sum(data.count_column).alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+            value = data.source.groupBy(*self.column_names).agg(F.sum(data.count_column).alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
         elif data.id_column is not None:
-            return data.source.groupBy(*self.column_names).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+            value = data.source.groupBy(*self.column_names).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
         else:
-            return data.source.groupBy(*self.column_names).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+            value = data.source.groupBy(*self.column_names).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+        response = self.to_dict()
+        response["value"] = value
+        return response
+
+class RowCount(MultiColumnMetric):
+    # columns must be categorical
+    def __init__(self, column_names):
+        if len(column_names) == 0:
+            raise ValueError("RowCount requires at least one column.")
+        super().__init__(column_names)
+    def compute(self, data):
+        if not set(self.column_names).issubset(set(data.categorical_columns)):
+            raise ValueError("Columns {} are not categorical.".format(self.column_names))
+        response = self.to_dict()
+        response["value"] = data.source.select(self.column_names).count()
+        return response
 
 class DistinctCount(MultiColumnMetric):
     # columns must be categorical
@@ -195,7 +233,9 @@ class DistinctCount(MultiColumnMetric):
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
-        return data.source.select(self.column_names).distinct().count()
+        response = self.to_dict()
+        response["value"] = data.source.select(self.column_names).distinct().count()
+        return response
 
 class BelowKPercentage(MultiColumnMetric):
     # columns must be categorical
@@ -208,20 +248,50 @@ class BelowKPercentage(MultiColumnMetric):
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
-        return (self.blow_k.compute(data) / self.distinct_count.compute(data)) * 100
+        response = self.to_dict()
+        response["value"] = self.blow_k.compute(data)["value"] / self.distinct_count.compute(data)["value"] * 100
+        return response
+
+class MostLinkable(MultiColumnMetric):
+    # columns must be categorical
+    def __init__(self, column_names, linkable_k=10, top_n=5):
+        if len(column_names) == 0:
+            raise ValueError("MostLinkable requires at least one column.")
+        super().__init__(column_names)
+        self.linkable_k = linkable_k
+        self.top_n = top_n
+    def compute(self, data):
+        if not set(self.column_names).issubset(set(data.categorical_columns)):
+            raise ValueError("Columns {} are not categorical.".format(self.column_names))
+        linkable_counts_dict = {}
+        for col in self.column_names:
+            if data.count_column is not None:
+                linkable_count = data.source.groupBy(col).agg(F.sum(data.count_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
+            elif data.id_column is not None:
+                linkable_count = data.source.groupBy(col).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
+            else:
+                linkable_count = data.source.groupBy(col).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")         
+            total_linkable_count = linkable_count.agg(F.sum("count_below_k").alias("total_count_below_k")).collect()[0]["total_count_below_k"]
+            if total_linkable_count:
+                linkable_counts_dict[col] = total_linkable_count
+        most_linkable_columns = sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n]
+        response = self.to_dict()
+        response["value"] = most_linkable_columns
+        return response
 
 class RedactedRowCount(MultiColumnMetric):
     # columns must be categorical
-    def __init__(self, column_names):
+    def __init__(self, column_names, redacted_keyword="unknown"):
         if len(column_names) == 0:
             raise ValueError("RedactedRowCount requires at least one column.")
         super().__init__(column_names)
+        self.redacted_keyword = redacted_keyword
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         
         # Create an additional column that counts the number of "unknown" values per row
-        df_with_unknown_count = data.source.withColumn("unknown_count", sum(F.when(F.col(c) == "unknown", 1).otherwise(0) for c in self.column_names))
+        df_with_unknown_count = data.source.withColumn("unknown_count", sum(F.when(F.col(c) == self.redacted_keyword, 1).otherwise(0) for c in self.column_names))
         
         # Count the number of rows with partly unknown values (some, but not all columns are "unknown")
         partly_redacted = df_with_unknown_count.filter((F.col("unknown_count") > 0) & (F.col("unknown_count") < len(self.column_names))).count()
