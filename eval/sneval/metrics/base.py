@@ -36,10 +36,11 @@ class Metric:
     
     def to_dict(self):
         out = {
-            "name": self.name
+            "name": self.name,
+            "parameters": {}
         }
         for param in self.param_names():
-            out[param] = getattr(self, param)
+            out["parameters"][param] = getattr(self, param)
         return out
     @classmethod
     def from_dict(cls, d):
