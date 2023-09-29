@@ -144,7 +144,7 @@ class SuppressedCombinationCount(CompareMetric):
         return value_dict
     
 class FabricatedCombinationCount(CompareMetric):
-    def __init__(self, categorical_columns=[], unknown_keyword="unknown"):
+    def __init__(self, categorical_columns=[], unknown_keyword="Unknown"):
         if len(categorical_columns) == 0:
             raise ValueError("FabricatedCombinationCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)

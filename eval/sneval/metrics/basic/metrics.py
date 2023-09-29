@@ -245,6 +245,8 @@ class BelowKPercentage(MultiColumnMetric):
         super().__init__(column_names)
         self.blow_k = BelowK(column_names, k)
         self.distinct_count = DistinctCount(column_names)
+    def param_names(self):
+        return super().param_names() + ["k"]
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
@@ -260,18 +262,20 @@ class MostLinkable(MultiColumnMetric):
         super().__init__(column_names)
         self.linkable_k = linkable_k
         self.top_n = top_n
+    def param_names(self):
+        return super().param_names() + ["linkable_k", "top_n"]
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         linkable_counts_dict = {}
         for col in self.column_names:
             if data.count_column is not None:
-                linkable_count = data.source.groupBy(col).agg(F.sum(data.count_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
+                linkable_df = data.source.groupBy(col).agg(F.sum(data.count_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
             elif data.id_column is not None:
-                linkable_count = data.source.groupBy(col).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
+                linkable_df = data.source.groupBy(col).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
             else:
-                linkable_count = data.source.groupBy(col).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")         
-            total_linkable_count = linkable_count.agg(F.sum("count_below_k").alias("total_count_below_k")).collect()[0]["total_count_below_k"]
+                linkable_df = data.source.groupBy(col).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")         
+            total_linkable_count = linkable_df.agg(F.sum("count_below_k").alias("total_count_below_k")).collect()[0]["total_count_below_k"]
             if total_linkable_count:
                 linkable_counts_dict[col] = total_linkable_count
         most_linkable_columns = sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n]
@@ -281,7 +285,7 @@ class MostLinkable(MultiColumnMetric):
 
 class RedactedRowCount(MultiColumnMetric):
     # columns must be categorical
-    def __init__(self, column_names, redacted_keyword="unknown"):
+    def __init__(self, column_names, redacted_keyword="Unknown"):
         if len(column_names) == 0:
             raise ValueError("RedactedRowCount requires at least one column.")
         super().__init__(column_names)

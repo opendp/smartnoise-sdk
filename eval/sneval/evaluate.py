@@ -1,4 +1,4 @@
-from dataset import Dataset
+from .dataset import Dataset
 
 class Evaluate:
     def __init__(
