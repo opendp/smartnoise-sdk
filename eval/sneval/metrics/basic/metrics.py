@@ -290,6 +290,8 @@ class RedactedRowCount(MultiColumnMetric):
             raise ValueError("RedactedRowCount requires at least one column.")
         super().__init__(column_names)
         self.redacted_keyword = redacted_keyword
+    def param_names(self):
+        return super().param_names() + ["redacted_keyword"]
     def compute(self, data):
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))

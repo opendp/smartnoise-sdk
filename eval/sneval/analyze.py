@@ -1,4 +1,4 @@
-import importlib
+from sneval import Metric
 import json
 import os
 import subprocess
@@ -56,12 +56,7 @@ class Analyze:
         return False
 
     def _compute_metric(self, name, params):
-        module = importlib.import_module('sneval.metrics')
-        if not hasattr(module, name):
-            raise ValueError("Module {} does not have attribute {}.".format(module, name))
-        metric_cls = getattr(module, name)
-
-        metric_instance = metric_cls(**params)
+        metric_instance = Metric.create(name, **params)
         return metric_instance.compute(self.dataset)
     
     def run(self):

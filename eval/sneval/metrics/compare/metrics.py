@@ -31,6 +31,8 @@ class MeanAbsoluteError(CompareMetric):
             raise ValueError("MeanAbsoluteError requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns, measure_columns, sum_columns)
         self.edges = edges
+    def param_names(self):
+        return super().param_names() + ["edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
         
@@ -57,6 +59,8 @@ class MeanAbsoluteErrorInCount(CompareMetric):
             raise ValueError("MeanAbsoluteErrorInCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
         self.edges = edges
+    def param_names(self):
+        return super().param_names() + ["edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
         
@@ -83,6 +87,8 @@ class MeanProportionalError(CompareMetric):
             raise ValueError("MeanProportionalError requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns, measure_columns, sum_columns)
         self.edges = edges
+    def param_names(self):
+        return super().param_names() + ["edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
 
@@ -109,6 +115,8 @@ class MeanProportionalErrorInCount(CompareMetric):
             raise ValueError("MeanProportionalErrorInCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
         self.edges = edges
+    def param_names(self):
+        return super().param_names() + ["edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
         
@@ -149,6 +157,8 @@ class FabricatedCombinationCount(CompareMetric):
             raise ValueError("FabricatedCombinationCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
         self.unknown_keyword = unknown_keyword
+    def param_names(self):
+        return super().param_names() + ["unknown_keyword"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
 
