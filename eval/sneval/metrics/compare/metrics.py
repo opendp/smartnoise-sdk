@@ -24,25 +24,29 @@ def get_count(data, categorical_columns):
     return df
 
 class MeanAbsoluteError(CompareMetric):
-    def __init__(self, categorical_columns=[], measure_columns=[], sum_columns=[], edges=[1, 10, 100, 1000]):
-        if len(measure_columns) + len(sum_columns) == 0 or len(measure_columns) + len(sum_columns) > 2:
-            raise ValueError("MeanAbsoluteError requires exactly one measure and/or one sum column.")
+    def __init__(self, categorical_columns=[], measure_columns=[], edges=[1, 10, 100, 1000]):
+        if len(measure_columns) != 1:
+            raise ValueError("MeanAbsoluteError requires exactly one measure or one sum column.")
         if len(categorical_columns) == 0:
             raise ValueError("MeanAbsoluteError requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
-        super().__init__(categorical_columns, measure_columns, sum_columns)
+        super().__init__(categorical_columns)
         self.edges = edges
+        self.measure_columns = measure_columns
     def param_names(self):
-        return super().param_names() + ["edges"]
+        return super().param_names() + ["measure_columns", "edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
         
-        orig_value_column = self.sum_columns[0] if original.is_aggregated else self.measure_columns[0]
-        original_df = get_mean(original, self.categorical_columns, orig_value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
+        if original.is_aggregated and not set(self.measure_columns).issubset(set(original.sum_columns)):
+            raise ValueError("Make sure column {} is summed up for aggregated dataset.".format(self.measure_columns))
+        if not original.is_aggregated and not set(self.measure_columns).issubset(set(original.measure_columns)):
+            raise ValueError("Column {} is not numerical.".format(self.measure_columns))
+        value_column = self.measure_columns[0]
+
+        original_df = get_mean(original, self.categorical_columns, value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
         bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
         original_df = original_df.withColumn("bin_number", bin_expr)
-
-        synth_value_column = self.sum_columns[0] if synthetic.is_aggregated else self.measure_columns[0]
-        synthetic_df = get_mean(synthetic, self.categorical_columns, synth_value_column).withColumnRenamed("avg_value", "synth_avg_value").drop("total_count")
+        synthetic_df = get_mean(synthetic, self.categorical_columns, value_column).withColumnRenamed("avg_value", "synth_avg_value").drop("total_count")
 
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_avg_value": 0})
         abs_diff_df = joined_df.withColumn("abs_diff_value", F.abs(F.col("orig_avg_value") - F.col("synth_avg_value")))
@@ -80,25 +84,29 @@ class MeanAbsoluteErrorInCount(CompareMetric):
         return value_dict       
 
 class MeanProportionalError(CompareMetric):
-    def __init__(self, categorical_columns=[], measure_columns=[], sum_columns=[], edges=[1, 10, 100, 1000]):
-        if len(measure_columns) + len(sum_columns) == 0 or len(measure_columns) + len(sum_columns) > 2:
-            raise ValueError("MeanProportionalError requires exactly one measure column.")
+    def __init__(self, categorical_columns=[], measure_columns=[], edges=[1, 10, 100, 1000]):
+        if len(measure_columns) != 1:
+            raise ValueError("MeanProportionalError requires exactly one measure or one sum column.")
         if len(categorical_columns) == 0:
             raise ValueError("MeanProportionalError requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
-        super().__init__(categorical_columns, measure_columns, sum_columns)
+        super().__init__(categorical_columns)
         self.edges = edges
+        self.measure_columns = measure_columns
     def param_names(self):
-        return super().param_names() + ["edges"]
+        return super().param_names() + ["measure_columns", "edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
 
-        orig_value_column = self.sum_columns[0] if original.is_aggregated else self.measure_columns[0]
-        original_df = get_mean(original, self.categorical_columns, orig_value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
+        if original.is_aggregated and not set(self.measure_columns).issubset(set(original.sum_columns)):
+            raise ValueError("Make sure column {} is summed up for aggregated dataset.".format(self.measure_columns))
+        if not original.is_aggregated and not set(self.measure_columns).issubset(set(original.measure_columns)):
+            raise ValueError("Column {} is not numerical.".format(self.measure_columns))
+        value_column = self.measure_columns[0]
+
+        original_df = get_mean(original, self.categorical_columns, value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
         bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
         original_df = original_df.withColumn("bin_number", bin_expr)
-
-        synth_value_column = self.sum_columns[0] if synthetic.is_aggregated else self.measure_columns[0]
-        synthetic_df = get_mean(synthetic, self.categorical_columns, synth_value_column).withColumnRenamed("avg_value", "synth_avg_value").drop("total_count")
+        synthetic_df = get_mean(synthetic, self.categorical_columns, value_column).withColumnRenamed("avg_value", "synth_avg_value").drop("total_count")
     
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_avg_value": 0})
         mpe_df = joined_df.withColumn("mpe_part", (F.col("orig_avg_value") - F.col("synth_avg_value")) / F.col("orig_avg_value"))
