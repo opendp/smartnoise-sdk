@@ -50,6 +50,8 @@ class Mean(SingleColumnMetric):
         else:
             if data.count_column is None:
                 raise ValueError("Dataset is aggregated but has no count column.")
+            if self.column_name not in data.sum_columns:
+                raise ValueError("Column {} is not numerical.".format(self.column_name))
             value = data.source.agg(F.sum(self.column_name).alias("sum"), F.sum(data.count_column).alias("count")).select(F.col("sum") / F.col("count")).collect()[0][0]
         response = self.to_dict()
         response["value"] = value
@@ -243,7 +245,8 @@ class BelowKPercentage(MultiColumnMetric):
         if len(column_names) == 0:
             raise ValueError("BelowKPercentage requires at least one column.")
         super().__init__(column_names)
-        self.blow_k = BelowK(column_names, k)
+        self.k = k
+        self.blow_k = BelowK(column_names, self.k)
         self.distinct_count = DistinctCount(column_names)
     def param_names(self):
         return super().param_names() + ["k"]
@@ -278,7 +281,7 @@ class MostLinkable(MultiColumnMetric):
             total_linkable_count = linkable_df.agg(F.sum("count_below_k").alias("total_count_below_k")).collect()[0]["total_count_below_k"]
             if total_linkable_count:
                 linkable_counts_dict[col] = total_linkable_count
-        most_linkable_columns = sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n]
+        most_linkable_columns = dict(sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n])
         response = self.to_dict()
         response["value"] = most_linkable_columns
         return response

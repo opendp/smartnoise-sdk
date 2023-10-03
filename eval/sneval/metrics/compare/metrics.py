@@ -1,6 +1,7 @@
 from .base import CompareMetric
 from pyspark.sql import functions as F
 from functools import reduce
+from pyspark.ml.evaluation import RegressionEvaluator
 
 def get_mean(data, categorical_columns, value_column):
     if data.count_column is not None:
@@ -24,24 +25,24 @@ def get_count(data, categorical_columns):
     return df
 
 class MeanAbsoluteError(CompareMetric):
-    def __init__(self, categorical_columns=[], measure_columns=[], edges=[1, 10, 100, 1000]):
-        if len(measure_columns) != 1:
+    def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000]):
+        if len(measure_sum_columns) != 1:
             raise ValueError("MeanAbsoluteError requires exactly one measure or one sum column.")
         if len(categorical_columns) == 0:
             raise ValueError("MeanAbsoluteError requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
         self.edges = edges
-        self.measure_columns = measure_columns
+        self.measure_sum_columns = measure_sum_columns
     def param_names(self):
-        return super().param_names() + ["measure_columns", "edges"]
+        return super().param_names() + ["measure_sum_columns", "edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
         
-        if original.is_aggregated and not set(self.measure_columns).issubset(set(original.sum_columns)):
-            raise ValueError("Make sure column {} is summed up for aggregated dataset.".format(self.measure_columns))
-        if not original.is_aggregated and not set(self.measure_columns).issubset(set(original.measure_columns)):
-            raise ValueError("Column {} is not numerical.".format(self.measure_columns))
-        value_column = self.measure_columns[0]
+        if original.is_aggregated and not set(self.measure_sum_columns).issubset(set(original.sum_columns)):
+            raise ValueError("Make sure column {} is summed up for aggregated dataset.".format(self.measure_sum_columns))
+        if not original.is_aggregated and not set(self.measure_sum_columns).issubset(set(original.measure_columns)):
+            raise ValueError("Column {} is not numerical.".format(self.measure_sum_columns))
+        value_column = self.measure_sum_columns[0]
 
         original_df = get_mean(original, self.categorical_columns, value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
         bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
@@ -84,24 +85,24 @@ class MeanAbsoluteErrorInCount(CompareMetric):
         return value_dict       
 
 class MeanProportionalError(CompareMetric):
-    def __init__(self, categorical_columns=[], measure_columns=[], edges=[1, 10, 100, 1000]):
-        if len(measure_columns) != 1:
+    def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000]):
+        if len(measure_sum_columns) != 1:
             raise ValueError("MeanProportionalError requires exactly one measure or one sum column.")
         if len(categorical_columns) == 0:
             raise ValueError("MeanProportionalError requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
         self.edges = edges
-        self.measure_columns = measure_columns
+        self.measure_sum_columns = measure_sum_columns
     def param_names(self):
-        return super().param_names() + ["measure_columns", "edges"]
+        return super().param_names() + ["measure_sum_columns", "edges"]
     def compute(self, original, synthetic):
         self.validate(original, synthetic)
 
-        if original.is_aggregated and not set(self.measure_columns).issubset(set(original.sum_columns)):
-            raise ValueError("Make sure column {} is summed up for aggregated dataset.".format(self.measure_columns))
-        if not original.is_aggregated and not set(self.measure_columns).issubset(set(original.measure_columns)):
-            raise ValueError("Column {} is not numerical.".format(self.measure_columns))
-        value_column = self.measure_columns[0]
+        if original.is_aggregated and not set(self.measure_sum_columns).issubset(set(original.sum_columns)):
+            raise ValueError("Make sure column {} is summed up for aggregated dataset.".format(self.measure_sum_columns))
+        if not original.is_aggregated and not set(self.measure_sum_columns).issubset(set(original.measure_columns)):
+            raise ValueError("Column {} is not numerical.".format(self.measure_sum_columns))
+        value_column = self.measure_sum_columns[0]
 
         original_df = get_mean(original, self.categorical_columns, value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
         bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
