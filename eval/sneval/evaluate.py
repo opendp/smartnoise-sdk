@@ -1,9 +1,9 @@
 import importlib
 from sneval import Metric
-from sneval.metrics import CompareMetric
 import json
 import os
 import subprocess
+import sneval.metrics.compare as CompareModule
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -61,16 +61,15 @@ class Evaluate:
 
     def _compute_metric(self, name, params):
         metric_instance = Metric.create(name, **params)
-        if not isinstance(metric_instance, CompareMetric):
-            raise ValueError("Metric {} requires only one dataset.".format(name))
         return metric_instance.compute(self.original_dataset, self.synthetic_dataset)
-
+    
     def run(self):
         for item in self.workload:
             name = item["metric"]
             params = item["params"]
 
-            if self._is_metric_computed(name, params):
+            is_metric_defined = name in vars(CompareModule) and isinstance(vars(CompareModule)[name], type)
+            if self._is_metric_computed(name, params) or not is_metric_defined:
                 continue  # Skip this metric and move to the next
 
             try:

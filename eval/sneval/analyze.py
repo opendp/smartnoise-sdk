@@ -2,6 +2,7 @@ from sneval import Metric
 import json
 import os
 import subprocess
+import sneval.metrics.basic as BasicModule
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -64,7 +65,8 @@ class Analyze:
             name = item["metric"]
             params = item["params"]
 
-            if self._is_metric_computed(name, params):
+            is_metric_defined = name in vars(BasicModule) and isinstance(vars(BasicModule)[name], type)
+            if self._is_metric_computed(name, params) or not is_metric_defined:
                 continue  # Skip this metric and move to the next
 
             try:
