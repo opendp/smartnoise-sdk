@@ -18,6 +18,7 @@ def generate(key,
              statistics_fn: Callable,
              genetic_operators=('mutate', ),
              public_dataset: Dataset = None,
+             early_stop_threshold: float = 0.0001,
              print_progress=False) -> Dataset:
 
     strategies = [
@@ -133,6 +134,9 @@ def generate(key,
 
         strategy_rewards.append([strategy_id, rep_best])
 
+        if t % early_stop == 0:
+            print_progress_fn(t, state.best_fitness, LAST_LAG_FITNESS, weights, time.time() - t0, print_progress)
+
         # Early Stop:
         if t % early_stop == 0 and t > 0:
 
@@ -142,25 +146,31 @@ def generate(key,
             strategy_ids = list(np.array(sample(key_sample, weights)))
             strategy_rewards = []           # reset strategy count
 
-            print_progress_fn(t, state.best_fitness, weights, time.time() - t0, print_progress)
-            if check_early_stop(t, state.best_fitness, LAST_LAG_FITNESS, len(strategies) * N_prime, print_progress): break
+            if check_early_stop(t, state.best_fitness, LAST_LAG_FITNESS, N_prime, early_stop_threshold, print_progress): break
             LAST_LAG_FITNESS = state.best_fitness
 
     sync_dataset = Dataset.from_numpy_to_dataset(domain, state.best_member)
     return sync_dataset
 
-
-def print_progress_fn(t, best_fitness, strategy_profile: jnp.ndarray, time, print_progress: False):
-    if print_progress:
-        print(f'Gen={t:>10}: fitness={best_fitness:>10.9}. Strategy wins: ', strategy_profile.round(3), f'time={time:<5.2f}(s)')
-
-def check_early_stop(t, best_fitness, LAST_LAG_FITNESS, stop_early_min_generation, print_progress: False):
+def check_early_stop(t, best_fitness, LAST_LAG_FITNESS, stop_early_min_generation, early_stop_threshold, print_progress: False):
     if (t % stop_early_min_generation) > 0: return False
     if (t <= stop_early_min_generation): return False
     if t == 0: return False
     loss_change = jnp.abs(LAST_LAG_FITNESS - best_fitness) / LAST_LAG_FITNESS
-    if loss_change < 0.0001:
+    if loss_change < early_stop_threshold:
         if print_progress:
             print(f'\t\t ### Stop early at {t} ###')
         return True
     return False
+
+def print_progress_fn(t, best_fitness, LAST_LAG_FITNESS,  strategy_profile: jnp.ndarray, time, print_progress: False):
+    if print_progress:
+        loss_change = jnp.abs(LAST_LAG_FITNESS - best_fitness) / LAST_LAG_FITNESS
+        print(f'Gen={t:>10}: '
+              f'fitness={best_fitness:>10.9}. '
+              f'fitness change={loss_change:.8f}',
+              f' Strategy weights: ',
+              strategy_profile.round(3),
+              f'time={time:<5.2f}(s)')
+
+

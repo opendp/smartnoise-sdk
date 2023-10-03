@@ -7,8 +7,8 @@ import chex
 import pandas as pd
 from snsynth.gsd.utils import Dataset, Domain
 import itertools
-
 from snsynth.gsd.utils.utils import get_sigma, _divide_privacy_budget
+
 
 def get_thresholds_categorical(data_df: pd.Series,
                                size,
@@ -154,10 +154,10 @@ def get_quantiles(bins: dict, num_quantiles: int):
         for tree_level, b in enumerate(binarystring):
             if b == '1':
                 sum += bins['stats'][tree_level][pos]
-                pos  = 2  * pos + 2
+                pos = 2 * pos + 2
             else:
-                pos  = 2  * pos
-        sum = np.clip(sum, 0, 1)
+                pos = 2 * pos
+        # sum = np.clip(sum, 0, 1)
         threshold.append(thres)
         threshold_density.append(sum)
 
@@ -173,7 +173,7 @@ def get_quantiles(bins: dict, num_quantiles: int):
         if (stat_hi - last_density) > quantile:
             approx_quantiles.append(edge)
             densities.append(stat_lo)
-            last_density  = stat_lo
+            last_density = stat_lo
 
     return approx_quantiles, densities, threshold, threshold_density
 
@@ -182,28 +182,38 @@ def _get_height_edges(column_bin_edges: dict, h):
     max_level = column_bin_edges['tree_height'] - 1
     return column_bin_edges[min(max_level, h)]
 
+def get_k_way_marginals(domain: Domain, k: int, conditional_column: list=()):
 
-def _get_mixed_marginal_fn(data: Dataset,
-                           k: int,
-                           bin_edges: dict,
-                           maximum_size: int = None,
-                           conditional_column: list=(),
-                           rho: float = None,
-                           output_query_params: bool = False,
-                           store_marginal_stats: bool = False,
-                           features=None,
-                           verbose=False):
-    domain = data.domain
-
-    if features is None:
-        features = domain.get_continuous_cols() + domain.get_ordinal_cols() + domain.get_categorical_cols()
+    features = domain.get_continuous_cols() + domain.get_ordinal_cols() + domain.get_categorical_cols()
     for c in conditional_column:
         features.remove(c)
-    k_total = k + len(conditional_column)
     marginals_list = []
     for marginal in [list(idx) for idx in itertools.combinations(features, k)]:
         marginals_list.append(marginal)
+    return marginals_list
+
+def check_marginals_lits_size(marginals_list):
+    # Marginals must have the same size
+    for m in marginals_list:
+        assert len(m) == len(marginals_list[0])
+
+
+def _get_mixed_marginal_fn(data: Dataset,
+                           marginals_list: list[tuple],
+                           bin_edges: dict,
+                           maximum_size: int = None,
+                           rho: float = None,
+                           output_query_params: bool = False,
+                           store_marginal_stats: bool = False,
+                           verbose=False):
+    domain = data.domain
+    if marginals_list is None:
+        # Default statistics is the 2-way marginals
+        marginals_list = get_k_way_marginals(domain, k=2)
+    check_marginals_lits_size(marginals_list)
+
     total_marginals = len(marginals_list)
+    k_total = len(marginals_list[0])
 
     # Divide privacy budget and query capacity
     N = len(data.df)
@@ -213,37 +223,36 @@ def _get_mixed_marginal_fn(data: Dataset,
 
     marginal_info = {}
     for marginal in marginals_list:
-        cond_marginal = list(marginal) + list(conditional_column)
+        # cond_marginal = list(marginal) + list(conditional_column)
 
         num_col_tree_height = [bin_edges[col]['tree_height'] for col in marginal]
         max_height = max(num_col_tree_height)
         marginal_max_size = maximum_size // (total_marginals) if maximum_size else None
         # marginal_max_size = min(marginal_max_size, N) if marginal_max_size else None
-        marginal_info[tuple(cond_marginal)] = {'tree_height': max_height, 'bins': {}, 'stats': {}}
+        marginal_info[tuple(marginal)] = {'tree_height': max_height, 'bins': {}, 'stats': {}}
 
         rho_split_level = _divide_privacy_budget(rho_split, max_height)  # Divide budget between tree_height
 
         sigma = get_sigma(rho_split_level, sensitivity=np.sqrt(2) / N)
         if verbose:
-            print('Cond.Marginal=', cond_marginal, f'. Sigma={sigma:.4f}. Top.Level={max_height}. Max.Size={marginal_max_size}')
+            print('Marginal=', marginal, f'. Sigma={sigma:.4f}. Top.Level={max_height}. Max.Size={marginal_max_size}')
 
         # Get the answers and select the bins with most information
         # indices = domain.get_attribute_indices(marginal)
-        indices = [domain.get_attribute_index(col_name) for col_name in cond_marginal]
+        indices = [domain.get_attribute_index(col_name) for col_name in marginal]
 
         marginal_stats = []
         marginal_params = []
-        L = None
         for L in range(max_height):
-            kway_edges = [_get_height_edges(bin_edges[col_name], L) for col_name in marginal] + \
-                         [bin_edges[cat_col][0] for cat_col in conditional_column]
+            kway_edges = [_get_height_edges(bin_edges[col_name], L) for col_name in marginal]
             stats, query_params = _get_query_params(data, indices, kway_edges)
             priv_stats = np.array(stats)
-            if sigma > 0: priv_stats = np.clip(priv_stats + gaussian_noise(sigma=sigma, size=len(stats)), 0, 1) # Add DP
+            # if sigma > 0: priv_stats = np.clip(priv_stats + gaussian_noise(sigma=sigma, size=len(stats)), 0, 1) # Add DP
+            if sigma > 0: priv_stats = priv_stats + gaussian_noise(sigma=sigma, size=len(stats)) # Add DP
 
             if store_marginal_stats:
-                marginal_info[tuple(cond_marginal)]['bins'][L] = kway_edges
-                marginal_info[tuple(cond_marginal)]['stats'][L] = list(priv_stats)
+                marginal_info[tuple(marginal)]['bins'][L] = kway_edges
+                marginal_info[tuple(marginal)]['stats'][L] = list(priv_stats)
 
             marginal_stats += list(priv_stats)
             marginal_params += query_params

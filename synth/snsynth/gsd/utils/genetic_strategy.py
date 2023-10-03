@@ -190,6 +190,7 @@ class ContinuousDataStrategy(SDStrategy):
         self.continuous_columns = domain.get_continuous_cols() + domain.get_ordinal_cols()
         self.num_cont_cols = len(self.continuous_columns)
         self.cont_col_indices = domain.get_attribute_indices(self.continuous_columns)
+        self.column_sizes = [domain.size(col) for col in self.continuous_columns]
         self.cont_col_id = -1
 
         self.quantiles = jnp.linspace(0, 1, 32)
@@ -216,24 +217,27 @@ class ContinuousDataStrategy(SDStrategy):
         self.muta_vmap = jax.jit(jax.vmap(muta_fn, in_axes=(None, 0, None, None)))
 
     @partial(jax.jit, static_argnums=(0,))
-    def compute_quantiles(self, values):
-        thresholds = jnp.quantile(values, q=self.quantiles)
+    def compute_quantiles(self, values, column_size):
+        thresholds = jnp.concatenate([jnp.zeros((1,)),
+                                      jnp.quantile(values, q=self.quantiles),
+                                      column_size * jnp.ones((1,))])
         return thresholds
 
     def ask(self, rng: chex.PRNGKey, state: EvoState):
         self.cont_col_id = (self.cont_col_id + 1) % self.num_cont_cols
         column = self.cont_col_indices[self.cont_col_id]
-        pop = self.ask_strategy(rng, state, column)
+        column_size = self.column_sizes[self.cont_col_id]
+        pop = self.ask_strategy(rng, state, column, column_size)
         return pop
 
 
     @partial(jax.jit, static_argnums=(0,))
-    def ask_strategy(self, rng_muta: chex.PRNGKey, state: EvoState, i: int):
+    def ask_strategy(self, rng_muta: chex.PRNGKey, state: EvoState, column_id: int, column_size: int):
 
         # Mutation
-        thresholds = self.compute_quantiles(state.best_member[:, i])
+        thresholds = self.compute_quantiles(state.best_member[:, column_id], column_size)
         rng_muta_split = jax.random.split(rng_muta, self.population_size)
-        pop_muta = self.muta_vmap(state.best_member, rng_muta_split, i, thresholds)
+        pop_muta = self.muta_vmap(state.best_member, rng_muta_split, column_id, thresholds)
 
         return pop_muta
 

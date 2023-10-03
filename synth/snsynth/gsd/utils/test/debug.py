@@ -1,18 +1,8 @@
 import os
-import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-import subprocess
-from snsynth import Synthesizer
 from snsynth.gsd import GSDSynthesizer
-import time
-
-
 from load_data import load_data
 from sklearn.model_selection import train_test_split
-
-
 
 
 if __name__ == "__main__":
@@ -39,11 +29,12 @@ if __name__ == "__main__":
     # Split into train/test sets for machine learning evaluation.
     adult_df_train, adult_df_test = train_test_split(adult_df, test_size=0.2)
     # Still need to implement
-    epsilon = 1.0
+    epsilon = 10.0
 
-    synth = GSDSynthesizer(epsilon, 1e-5, verbose=True)
+    synth = GSDSynthesizer(epsilon, 1e-5, tree_height=10, verbose=True)
     synth.fit(adult_df_train, meta_data=config,
-              N_prime=5000)
+              early_stop_threshold=0.001,
+              N_prime=1000)
 
     max_error = np.abs(synth.stat_fn(synth.data.to_numpy()) - synth.stat_fn(synth.sync_data.to_numpy())).max()
     print(f'Statistical error:', max_error)
