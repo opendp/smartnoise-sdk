@@ -192,7 +192,7 @@ class Sparsity(MultiColumnMetric):
 
 class BelowK(MultiColumnMetric):
     # columns must be categorical
-    def __init__(self, column_names, k):
+    def __init__(self, column_names, k=10):
         if len(column_names) == 0:
             raise ValueError("BelowK requires at least one column.")
         super().__init__(column_names)
@@ -241,7 +241,7 @@ class DistinctCount(MultiColumnMetric):
 
 class BelowKPercentage(MultiColumnMetric):
     # columns must be categorical
-    def __init__(self, column_names, k):
+    def __init__(self, column_names, k=10):
         if len(column_names) == 0:
             raise ValueError("BelowKPercentage requires at least one column.")
         super().__init__(column_names)

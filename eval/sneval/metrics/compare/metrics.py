@@ -25,7 +25,7 @@ def get_count(data, categorical_columns):
     return df
 
 class MeanAbsoluteError(CompareMetric):
-    def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000]):
+    def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(measure_sum_columns) != 1:
             raise ValueError("MeanAbsoluteError requires exactly one measure or one sum column.")
         if len(categorical_columns) == 0:
@@ -45,8 +45,15 @@ class MeanAbsoluteError(CompareMetric):
         value_column = self.measure_sum_columns[0]
 
         original_df = get_mean(original, self.categorical_columns, value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
-        bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
-        original_df = original_df.withColumn("bin_number", bin_expr)
+        # Create the first condition for values less than the smallest edge
+        bin_expr = 'CASE WHEN orig_total_count < {} THEN 0 '.format(self.edges[0])
+        for i in range(len(self.edges)-1):
+            bin_expr += 'WHEN orig_total_count >= {} AND orig_total_count < {} THEN {} '.format(self.edges[i], self.edges[i+1], i+1)
+        # Add the last condition for values greater than or equal to the largest edge
+        bin_expr += 'WHEN orig_total_count >= {} THEN {} '.format(self.edges[-1], len(self.edges))
+        bin_expr += 'END as bin_number'
+        original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
+
         synthetic_df = get_mean(synthetic, self.categorical_columns, value_column).withColumnRenamed("avg_value", "synth_avg_value").drop("total_count")
 
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_avg_value": 0})
@@ -55,11 +62,11 @@ class MeanAbsoluteError(CompareMetric):
 
         abs_diff_dict = {row["bin_number"]: row["abs_diff_value"] for row in abs_diff_df.collect()}
         value_dict = self.to_dict()
-        value_dict["value"] = {f"Bin {bin+1}": abs_diff_dict.get(bin+1, 'NA') for bin in range(len(self.edges)-1)}
+        value_dict["value"] = {f"Bin {bin}": abs_diff_dict.get(bin, 'NA') for bin in range(len(self.edges)+1)}
         return value_dict
 
 class MeanAbsoluteErrorInCount(CompareMetric):
-    def __init__(self, categorical_columns=[], edges=[1, 10, 100, 1000]):
+    def __init__(self, categorical_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(categorical_columns) == 0:
             raise ValueError("MeanAbsoluteErrorInCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
@@ -70,22 +77,29 @@ class MeanAbsoluteErrorInCount(CompareMetric):
         self.validate(original, synthetic)
         
         original_df = get_count(original, self.categorical_columns).withColumnRenamed("total_count", "orig_total_count")
-        bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
-        original_df = original_df.withColumn("bin_number", bin_expr)
-
+        # Create the first condition for values less than the smallest edge
+        bin_expr = 'CASE WHEN orig_total_count < {} THEN 0 '.format(self.edges[0])
+        for i in range(len(self.edges)-1):
+            bin_expr += 'WHEN orig_total_count >= {} AND orig_total_count < {} THEN {} '.format(self.edges[i], self.edges[i+1], i+1)
+        # Add the last condition for values greater than or equal to the largest edge
+        bin_expr += 'WHEN orig_total_count >= {} THEN {} '.format(self.edges[-1], len(self.edges))
+        bin_expr += 'END as bin_number'
+        original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
+        
         synthetic_df = get_count(synthetic, self.categorical_columns).withColumnRenamed("total_count", "synth_total_count")
 
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_total_count": 0})
         abs_diff_df = joined_df.withColumn("abs_diff_count", F.abs(F.col("orig_total_count") - F.col("synth_total_count")))
-        abs_diff_df = abs_diff_df.groupBy("bin_number").agg(F.avg("abs_diff_count").alias("abs_diff_count"))
 
+        abs_diff_df = abs_diff_df.groupBy("bin_number").agg(F.avg("abs_diff_count").alias("abs_diff_count"))
         abs_diff_dict = {row["bin_number"]: row["abs_diff_count"] for row in abs_diff_df.collect()}
+
         value_dict = self.to_dict()
-        value_dict["value"] = {f"Bin {bin+1}": abs_diff_dict.get(bin+1, 'NA') for bin in range(len(self.edges)-1)}
-        return value_dict       
+        value_dict["value"] = {f"Bin {bin}": abs_diff_dict.get(bin, 'NA') for bin in range(len(self.edges)+1)}
+        return value_dict
 
 class MeanProportionalError(CompareMetric):
-    def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000]):
+    def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(measure_sum_columns) != 1:
             raise ValueError("MeanProportionalError requires exactly one measure or one sum column.")
         if len(categorical_columns) == 0:
@@ -105,8 +119,15 @@ class MeanProportionalError(CompareMetric):
         value_column = self.measure_sum_columns[0]
 
         original_df = get_mean(original, self.categorical_columns, value_column).withColumnRenamed("avg_value", "orig_avg_value").withColumnRenamed("total_count", "orig_total_count")
-        bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
-        original_df = original_df.withColumn("bin_number", bin_expr)
+        # Create the first condition for values less than the smallest edge
+        bin_expr = 'CASE WHEN orig_total_count < {} THEN 0 '.format(self.edges[0])
+        for i in range(len(self.edges)-1):
+            bin_expr += 'WHEN orig_total_count >= {} AND orig_total_count < {} THEN {} '.format(self.edges[i], self.edges[i+1], i+1)
+        # Add the last condition for values greater than or equal to the largest edge
+        bin_expr += 'WHEN orig_total_count >= {} THEN {} '.format(self.edges[-1], len(self.edges))
+        bin_expr += 'END as bin_number'
+        original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
+
         synthetic_df = get_mean(synthetic, self.categorical_columns, value_column).withColumnRenamed("avg_value", "synth_avg_value").drop("total_count")
     
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_avg_value": 0})
@@ -115,11 +136,11 @@ class MeanProportionalError(CompareMetric):
 
         mpe_dict = {row["bin_number"]: row["mpe_value"] for row in mpe_df.collect()}
         value_dict = self.to_dict()
-        value_dict["value"] = {f"Bin {bin+1}": mpe_dict.get(bin+1, 'NA') for bin in range(len(self.edges)-1)}
+        value_dict["value"] = {f"Bin {bin}": mpe_dict.get(bin, 'NA') for bin in range(len(self.edges)+1)}
         return value_dict
 
 class MeanProportionalErrorInCount(CompareMetric):
-    def __init__(self, categorical_columns=[], edges=[1, 10, 100, 1000]):
+    def __init__(self, categorical_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(categorical_columns) == 0:
             raise ValueError("MeanProportionalErrorInCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
@@ -130,8 +151,14 @@ class MeanProportionalErrorInCount(CompareMetric):
         self.validate(original, synthetic)
         
         original_df = get_count(original, self.categorical_columns).withColumnRenamed("total_count", "orig_total_count")
-        bin_expr = F.expr('CASE ' + ' '.join([f'WHEN orig_total_count BETWEEN {self.edges[i]} AND {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]) + ' END as bin_number')
-        original_df = original_df.withColumn("bin_number", bin_expr)
+        # Create the first condition for values less than the smallest edge
+        bin_expr = 'CASE WHEN orig_total_count < {} THEN 0 '.format(self.edges[0])
+        for i in range(len(self.edges)-1):
+            bin_expr += 'WHEN orig_total_count >= {} AND orig_total_count < {} THEN {} '.format(self.edges[i], self.edges[i+1], i+1)
+        # Add the last condition for values greater than or equal to the largest edge
+        bin_expr += 'WHEN orig_total_count >= {} THEN {} '.format(self.edges[-1], len(self.edges))
+        bin_expr += 'END as bin_number'
+        original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
 
         synthetic_df = get_count(synthetic, self.categorical_columns).withColumnRenamed("total_count", "synth_total_count")
 
@@ -141,7 +168,7 @@ class MeanProportionalErrorInCount(CompareMetric):
 
         mpe_dict = {row["bin_number"]: row["mpe_count"] for row in mpe_df.collect()}
         value_dict = self.to_dict()
-        value_dict["value"] = {f"Bin {bin+1}": mpe_dict.get(bin+1, 'NA') for bin in range(len(self.edges)-1)}
+        value_dict["value"] = {f"Bin {bin}": mpe_dict.get(bin, 'NA') for bin in range(len(self.edges)+1)}
         return value_dict
 
 class SuppressedCombinationCount(CompareMetric):
