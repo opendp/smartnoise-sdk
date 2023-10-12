@@ -87,13 +87,12 @@ class MeanAbsoluteErrorInCount(CompareMetric):
         original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
         
         synthetic_df = get_count(synthetic, self.categorical_columns).withColumnRenamed("total_count", "synth_total_count")
-
+        
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_total_count": 0})
         abs_diff_df = joined_df.withColumn("abs_diff_count", F.abs(F.col("orig_total_count") - F.col("synth_total_count")))
-
         abs_diff_df = abs_diff_df.groupBy("bin_number").agg(F.avg("abs_diff_count").alias("abs_diff_count"))
-        abs_diff_dict = {row["bin_number"]: row["abs_diff_count"] for row in abs_diff_df.collect()}
 
+        abs_diff_dict = {row["bin_number"]: row["abs_diff_count"] for row in abs_diff_df.collect()} 
         value_dict = self.to_dict()
         value_dict["value"] = {f"Bin {bin}": abs_diff_dict.get(bin, 'NA') for bin in range(len(self.edges)+1)}
         return value_dict
