@@ -1,3 +1,21 @@
+"""
+CompareMetrics Module
+=====================
+
+This module contains a collection of classes for calculating various comparison metrics
+between two datasets. These metrics help assess the quality and differences between 
+the datasets in terms of specified categorical and numerical attributes.
+
+Classes:
+--------
+- `MeanAbsoluteError`: Calculate the Mean Absolute Error (MAE) between two numerical columns.
+- `MeanAbsoluteErrorInCount`: Calculate the MAE based on the count of data points.
+- `MeanProportionalError`: Calculate the Mean Proportional Error (MPE) between two numerical columns.
+- `MeanProportionalErrorInCount`: Calculate the MPE based on the count of data points.
+- `SuppressedCombinationCount`: Calculate the count of suppressed combinations in specified categorical columns.
+- `FabricatedCombinationCount`: Calculate the count of fabricated combinations in specified categorical columns.
+"""
+
 from .base import CompareMetric
 from pyspark.sql import functions as F
 from functools import reduce
@@ -25,6 +43,35 @@ def get_count(data, categorical_columns):
     return df
 
 class MeanAbsoluteError(CompareMetric):
+    """
+    Compute the Mean Absolute Error (MAE) metric based on the comparison of
+    measure or sum columns within specified categorical columns.
+
+    This metric calculates the Mean Absolute Error between the values of a specified
+    measure/sum column in two datasets (e.g., original and synthetic). It groups data 
+    points into bins based on the total count of specified categorical columns and 
+    computes the mean value of the measure/sum column's values within each bin. It then 
+    computes the average absolute difference between the mean values of the measure/sum 
+    column in the two datasets for each bin size.
+
+    :param categorical_columns: List of categorical columns to group data by.
+    :type categorical_columns: list, optional
+    :param measure_sum_columns: List of measure or sum columns to compare.
+                                Only one column should be provided.
+    :type measure_sum_columns: list, optional
+    :param edges: List of bin edges for splitting data points based on total count.
+                  Default bin edges are [1, 10, 100, 1000, 10000, 100000].
+    :type edges: list, optional
+
+    :raises ValueError: If there are issues with the provided columns or input data.
+
+    Example usage:
+
+    .. code-block:: python
+
+        mae_metric = Metric.create("MeanAbsoluteError", categorical_columns=["category"], measure_sum_columns=['value'])
+        result = mae_metric.compute(original_data, synthetic_data)
+    """
     def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(measure_sum_columns) != 1:
             raise ValueError("MeanAbsoluteError requires exactly one measure or one sum column.")
@@ -36,6 +83,16 @@ class MeanAbsoluteError(CompareMetric):
     def param_names(self):
         return super().param_names() + ["measure_sum_columns", "edges"]
     def compute(self, original, synthetic):
+        """
+        Compute the MAE between the original and synthetic datasets.
+
+        :param original: The original dataset.
+        :type original: Dataset
+        :param synthetic: The synthetic dataset.
+        :type synthetic: Dataset
+        :return: Dictionary containing the computed MAE values for each size of bin.
+        :rtype: dict
+        """
         self.validate(original, synthetic)
         
         if original.is_aggregated and not set(self.measure_sum_columns).issubset(set(original.sum_columns)):
@@ -66,6 +123,31 @@ class MeanAbsoluteError(CompareMetric):
         return value_dict
 
 class MeanAbsoluteErrorInCount(CompareMetric):
+    """
+    Compute the Mean Absolute Error (MAE) metric based on the count of data points
+    within specified categorical columns.
+
+    This metric calculates the Mean Absolute Error between the counts of data points
+    within the specified categorical columns of two datasets. It groups the data points
+    into bins based on the total count of the categorical columns and computes the 
+    absolute difference in counts within each bin. It then computes the average 
+    absolute difference for each bin size.
+
+    :param categorical_columns: List of categorical columns to group data by.
+    :type categorical_columns: list, optional
+    :param edges: List of bin edges for splitting data points based on total count.
+                  Default bin edges are [1, 10, 100, 1000, 10000, 100000].
+    :type edges: list, optional
+
+    :raises ValueError: If there are issues with the provided columns or input data.
+
+    Example usage:
+
+    .. code-block:: python
+
+        mae_count_metric = Metric.create("MeanAbsoluteErrorInCount", categorical_columns=["category"])
+        result = mae_count_metric.compute(original_data, synthetic_data)
+    """
     def __init__(self, categorical_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(categorical_columns) == 0:
             raise ValueError("MeanAbsoluteErrorInCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
@@ -74,6 +156,17 @@ class MeanAbsoluteErrorInCount(CompareMetric):
     def param_names(self):
         return super().param_names() + ["edges"]
     def compute(self, original, synthetic):
+        """
+        Compute the MAE of count values within specified categorical columns between the 
+        original and synthetic datasets.
+
+        :param original: The original dataset.
+        :type original: Dataset
+        :param synthetic: The synthetic dataset.
+        :type synthetic: Dataset
+        :return: Dictionary containing the computed MAE values for each size of bin.
+        :rtype: dict
+        """        
         self.validate(original, synthetic)
         
         original_df = get_count(original, self.categorical_columns).withColumnRenamed("total_count", "orig_total_count")
@@ -98,6 +191,35 @@ class MeanAbsoluteErrorInCount(CompareMetric):
         return value_dict
 
 class MeanProportionalError(CompareMetric):
+    """
+    Compute the Mean Proportional Error (MPE) metric based on the comparison of
+    measure or sum columns within specified categorical columns.
+
+    This metric calculates the Mean Proportional Error by comparing the values of a 
+    specified measure/sum column between two datasets within specified categorical 
+    columns. It categorizes data points into bins based on the total count of the 
+    categorical columns and computes the mean value of the measure/sum column's 
+    values within each bin. It then computes the average proportional error in 
+    percentage between the mean measure/sum values for each bin size.
+
+    :param categorical_columns: List of categorical columns to group data by.
+    :type categorical_columns: list, optional
+    :param measure_sum_columns: List of measure or sum columns to compare.
+                                Only one column should be provided.
+    :type measure_sum_columns: list, optional
+    :param edges: List of bin edges for splitting data points based on total count.
+                  Default bin edges are [1, 10, 100, 1000, 10000, 100000].
+    :type edges: list, optional
+
+    :raises ValueError: If there are issues with the provided columns or input data.
+
+    Example usage:
+
+    .. code-block:: python
+
+        mpe_metric = Metric.create("MeanProportionalError", categorical_columns=["category"], measure_sum_columns=['value'])
+        result = mpe_metric.compute(original_data, synthetic_data)
+    """
     def __init__(self, categorical_columns=[], measure_sum_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(measure_sum_columns) != 1:
             raise ValueError("MeanProportionalError requires exactly one measure or one sum column.")
@@ -109,6 +231,16 @@ class MeanProportionalError(CompareMetric):
     def param_names(self):
         return super().param_names() + ["measure_sum_columns", "edges"]
     def compute(self, original, synthetic):
+        """
+        Compute the MPE between the original and synthetic datasets.
+
+        :param original: The original dataset.
+        :type original: Dataset
+        :param synthetic: The synthetic dataset.
+        :type synthetic: Dataset
+        :return: Dictionary containing the computed MPE values for each size of bin.
+        :rtype: dict
+        """
         self.validate(original, synthetic)
 
         if original.is_aggregated and not set(self.measure_sum_columns).issubset(set(original.sum_columns)):
@@ -139,6 +271,30 @@ class MeanProportionalError(CompareMetric):
         return value_dict
 
 class MeanProportionalErrorInCount(CompareMetric):
+    """
+    Compute the Mean Proportional Error (MPE) metric based on the count of data points
+    within specified categorical columns.
+
+    This metric calculates the Mean Proportional Error between the counts of data points
+    within the specified categorical columns of two datasets. It groups the data points
+    into bins based on the total count of the categorical columns and computes the average 
+    proportional error in percentage between the counts for each size of bin.
+
+    :param categorical_columns: List of categorical columns to group data by.
+    :type categorical_columns: list, optional
+    :param edges: List of bin edges for splitting data points based on total count.
+                  Default bin edges are [1, 10, 100, 1000, 10000, 100000].
+    :type edges: list, optional
+
+    :raises ValueError: If there are issues with the provided columns or input data.
+
+    Example usage:
+
+    .. code-block:: python
+
+        mpe_count_metric = Metric.create("MeanProportionalErrorInCount", categorical_columns=["category"])
+        result = mpe_count_metric.compute(original_data, synthetic_data)
+    """
     def __init__(self, categorical_columns=[], edges=[1, 10, 100, 1000, 10000, 100000]):
         if len(categorical_columns) == 0:
             raise ValueError("MeanProportionalErrorInCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
@@ -147,6 +303,17 @@ class MeanProportionalErrorInCount(CompareMetric):
     def param_names(self):
         return super().param_names() + ["edges"]
     def compute(self, original, synthetic):
+        """
+        Compute the MPE of count values within specified categorical columns between the 
+        original and synthetic datasets.
+
+        :param original: The original dataset.
+        :type original: Dataset
+        :param synthetic: The synthetic dataset.
+        :type synthetic: Dataset
+        :return: Dictionary containing the computed MPE values for each size of bin.
+        :rtype: dict
+        """     
         self.validate(original, synthetic)
         
         original_df = get_count(original, self.categorical_columns).withColumnRenamed("total_count", "orig_total_count")
@@ -171,11 +338,41 @@ class MeanProportionalErrorInCount(CompareMetric):
         return value_dict
 
 class SuppressedCombinationCount(CompareMetric):
+    """
+    Calculate the count of suppressed combinations within specified categorical columns.
+
+    This metric calculates the count of combinations within the specified categorical columns
+    that are present in the original dataset but are suppressed or missing in the synthetic dataset.
+    A suppressed combination refers to a unique set of values across the categorical columns that
+    exists in the original dataset but not in the synthetic dataset.
+
+    :param categorical_columns: List of categorical columns to consider.
+    :type categorical_columns: list, optional
+
+    :raises ValueError: If there are issues with the provided columns or input data.
+
+    Example usage:
+
+    .. code-block:: python
+
+        suppressed_count_metric = Metric.create("SuppressedCombinationCount", categorical_columns=["category"])
+        result = suppressed_count_metric.compute(original_data, synthetic_data)
+    """
     def __init__(self, categorical_columns=[]):
         if len(categorical_columns) == 0:
             raise ValueError("SuppressedCombinationCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
         super().__init__(categorical_columns)
     def compute(self, original, synthetic):
+        """
+        Computes the count of suppressed combinations.
+
+        :param original: The original dataset.
+        :type original: Dataset
+        :param synthetic: The synthetic dataset.
+        :type synthetic: Dataset
+        :return: Dictionary containing the count of suppressed combinations within the specified categorical columns.
+        :rtype: dict
+        """    
         self.validate(original, synthetic)
 
         synthetic_df = synthetic.source.select(self.categorical_columns).distinct()
@@ -187,6 +384,32 @@ class SuppressedCombinationCount(CompareMetric):
         return value_dict
     
 class FabricatedCombinationCount(CompareMetric):
+    """
+    Calculate the count of fabricated combinations within specified categorical columns.
+
+    This metric calculates the count of combinations within the specified categorical columns
+    that are present in the synthetic dataset but are not present in the original dataset.
+    A fabricated combination refers to a unique set of values across the categorical columns that
+    exists in the synthetic dataset but not in the original dataset.
+
+    :param categorical_columns: List of categorical columns to consider.
+    :type categorical_columns: list, optional
+    :param unknown_keyword: Keyword to represent "unknown" values in the data.
+                            Default is "Unknown."
+    :type unknown_keyword: str, optional
+
+    :raises ValueError: If there are issues with the provided columns or input data.
+
+    Example usage:
+
+    .. code-block:: python
+
+        fabricated_count_metric = Metric.create("FabricatedCombinationCount", categorical_columns=["category"])
+        result = fabricated_count_metric.compute(original_data, synthetic_data)
+
+    Note: For rows with "unknown" values, this metric ignores the "unknown" columns 
+    and only compares the columns not equal to "unknown."
+    """
     def __init__(self, categorical_columns=[], unknown_keyword="Unknown"):
         if len(categorical_columns) == 0:
             raise ValueError("FabricatedCombinationCount requires at least one categorical column. Use all categorical columns if you want all aggregates measured.")
@@ -195,6 +418,16 @@ class FabricatedCombinationCount(CompareMetric):
     def param_names(self):
         return super().param_names() + ["unknown_keyword"]
     def compute(self, original, synthetic):
+        """
+        Computes the count of fabricated combinations.
+
+        :param original: The original dataset.
+        :type original: Dataset
+        :param synthetic: The synthetic dataset.
+        :type synthetic: Dataset
+        :return: Dictionary containing the count of fabricated combinations within the specified categorical columns.
+        :rtype: dict
+        """  
         self.validate(original, synthetic)
 
         synthetic_df = synthetic.source.select(self.categorical_columns).distinct()

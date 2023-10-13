@@ -6,10 +6,42 @@ from pyspark.sql import functions as F
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 
 class Cardinality(SingleColumnMetric):
+    """
+    Calculate the cardinality (number of unique values) within a categorical column.
+
+    This metric calculates the number of unique values within a specified categorical column.
+    It is particularly useful for understanding the diversity or uniqueness of values in a
+    categorical attribute.
+
+    :param column_name: The name of the categorical column to calculate cardinality for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not categorical.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Cardinality metric for the 'category' column
+        cardinality_metric = Metric.create("Cardinality", column_name="Category")
+
+        # Compute the cardinality value for the 'category' column in the dataset
+        result = cardinality_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Cardinality', 'column': 'Category', 'value': 5}
+    """
     # column must be categorical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data):
+        """
+        Compute the cardinality of a categorical column in the dataset.
+
+        :param data: The dataset containing the categorical column.
+        :type data: Dataset
+        :returns: A dictionary containing the computed cardinality value.
+        :rtype: dict
+        """
         if self.column_name not in data.categorical_columns:
             raise ValueError("Column {} is not categorical.".format(self.column_name))
         response = self.to_dict()
@@ -17,10 +49,37 @@ class Cardinality(SingleColumnMetric):
         return response
 
 class Entropy(SingleColumnMetric):
+    """
+    Calculate the entropy of a categorical column.
+
+    This metric calculates the entropy of a specified categorical column, which measures the degree of randomness
+    or uncertainty in the distribution of values within the column. Entropy provides insights into how uniformly
+    data points are distributed among different categories within the column.
+
+    :param column_name: The name of the categorical column to calculate entropy for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not categorical or if the dataset is not properly aggregated.
+
+    Example usage:
+
+    .. code-block:: python
+
+        entropy_metric = Metric.create("Entropy", column_name="Category")
+        result = entropy_metric.compute(dataset)
+    """
     # column must be categorical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data : Dataset) -> dict:
+        """
+        Compute the entropy of a categorical column in the dataset.
+
+        :param data: The dataset containing the categorical column.
+        :type data: Dataset
+        :returns: A dictionary containing the computed entropy value.
+        :rtype: dict
+        """
         if not data.is_aggregated:
             if self.column_name not in data.categorical_columns:
                 raise ValueError("Column {} is not categorical.".format(self.column_name))
@@ -39,10 +98,36 @@ class Entropy(SingleColumnMetric):
         return response
 
 class Mean(SingleColumnMetric):
+    """
+    Calculate the mean (average) value of a numerical column.
+
+    This metric calculates the mean (average) value of a specified numerical column.
+    The mean provides insights into the central tendency or typical value within the column.
+
+    :param column_name: The name of the numerical column to calculate the mean for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not numerical or if the dataset is not properly aggregated.
+
+    Example usage:
+
+    .. code-block:: python
+
+        mean_metric = Metric.create("Mean", column_name="value")
+        result = mean_metric.compute(dataset)
+    """
     # column must be numerical
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data : Dataset) -> dict:
+        """
+        Compute the mean value of a numerical column in the dataset.
+
+        :param data: The dataset containing the numerical column.
+        :type data: Dataset
+        :returns: A dictionary containing the computed mean value.
+        :rtype: dict
+        """
         if not data.is_aggregated:
             if self.column_name not in data.measure_columns:
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
@@ -58,12 +143,41 @@ class Mean(SingleColumnMetric):
         return response
 
 class Median(SingleColumnMetric):
-    # column must be numerical
+    """
+    Calculate the median value of a numerical column.
+
+    This metric calculates the median value of a specified numerical column. The median is the
+    middle value in a dataset, separating the higher half from the lower half. It provides
+    insights into the central tendency of the data, especially in the presence of outliers.
+
+    :param column_name: The name of the numerical column to calculate the median for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not numerical.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Median metric for the 'income' column
+        median_metric = Metric.create("Median", column_name="income")
+
+        # Compute the median value for the 'income' column in the dataset
+        result = median_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Median', 'column': 'income', 'value': 45000.0}
+    """
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data : Dataset):
-        if data.is_aggregated:
-            raise ValueError("Median is not available for aggregated dataset.")
+        """
+        Compute the median value of a numerical column in the dataset.
+
+        :param data: The dataset to compute the median for.
+        :type data: Dataset
+        :return: A dictionary containing the computed median value.
+        :rtype: dict
+        """
         if self.column_name not in data.measure_columns:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
@@ -71,12 +185,42 @@ class Median(SingleColumnMetric):
         return response
 
 class Variance(SingleColumnMetric):
-    # column must be numerical
+    """
+    Calculate the variance of a numerical column.
+
+    This metric calculates the variance of a specified numerical column. Variance measures
+    how much the values in the column differ from the mean. It provides insights into the
+    dispersion or spread of the data.
+
+    :param column_name: The name of the numerical column to calculate the variance for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not numerical or if the dataset is missing required columns.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Variance metric for the 'income' column
+        variance_metric = Metric.create("Variance", column_name="income")
+
+        # Compute the variance for the 'income' column in the dataset
+        result = variance_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Variance', 'column': 'income', 'value': 2500000.0}
+
+    """
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if data.is_aggregated:
-            raise ValueError("Variance is not available for aggregated dataset.")
+        """
+        Compute the variance of a numerical column in the dataset.
+
+        :param data: The dataset to compute the variance for.
+        :type data: Dataset
+        :return: A dictionary containing the computed variance value.
+        :rtype: dict
+        """
         if self.column_name not in data.measure_columns:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
@@ -84,12 +228,41 @@ class Variance(SingleColumnMetric):
         return response
                   
 class StandardDeviation(SingleColumnMetric):
-    # column must be numerical
+    """
+    Calculate the standard deviation of a numerical column.
+
+    This metric calculates the standard deviation of a specified numerical column.
+    Standard deviation measures the amount of variation or dispersion in the data.
+    It indicates how spread out the values are around the mean.
+
+    :param column_name: The name of the numerical column to calculate the standard deviation for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not numerical or if the dataset is missing required columns.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the StandardDeviation metric for the 'income' column
+        stddev_metric = Metric.create("StandardDeviation", column_name="income")
+
+        # Compute the standard deviation for the 'income' column in the dataset
+        result = stddev_metric.compute(dataset)
+
+        print(result)  # {'metric': 'StandardDeviation', 'column': 'income', 'value': 1581.1388300841898}
+    """
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if data.is_aggregated:
-            raise ValueError("Standard deviation is not available for aggregated dataset.")
+        """
+        Compute the standard deviation of a numerical column in the dataset.
+
+        :param data: The dataset to compute the standard deviation for.
+        :type data: Dataset
+        :return: A dictionary containing the computed standard deviation value.
+        :rtype: dict
+        """
         if self.column_name not in data.measure_columns:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
@@ -97,12 +270,41 @@ class StandardDeviation(SingleColumnMetric):
         return response
 
 class Skewness(SingleColumnMetric):
-    # column must be numerical
+    """
+    Calculate the skewness of a numerical column.
+
+    This metric calculates the skewness of a specified numerical column.
+    Skewness is a measure of the asymmetry of the probability distribution of a real-valued random variable.
+    A negative skewness indicates a left-skewed distribution, while a positive skewness indicates a right-skewed distribution.
+
+    :param column_name: The name of the numerical column to calculate skewness for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not numerical or if the dataset is missing required columns.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Skewness metric for the 'income' column
+        skewness_metric = Metric.create("Skewness", column_name="income")
+
+        # Compute the skewness for the 'income' column in the dataset
+        result = skewness_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Skewness', 'column': 'income', 'value': 1.3217279838342987}
+    """
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if data.is_aggregated:
-            raise ValueError("Skewness is not available for aggregated dataset.")
+        """
+        Compute the skewness of a numerical column in the dataset.
+
+        :param data: The dataset to compute the skewness for.
+        :type data: Dataset
+        :return: A dictionary containing the computed skewness value.
+        :rtype: dict
+        """
         if self.column_name not in data.measure_columns:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
@@ -110,12 +312,41 @@ class Skewness(SingleColumnMetric):
         return response
 
 class Kurtosis(SingleColumnMetric):
-    # column must be numerical
+    """
+    Calculate the kurtosis of a numerical column.
+
+    This metric calculates the kurtosis of a specified numerical column.
+    Kurtosis is a measure of the "tailedness" of the probability distribution of a real-valued random variable.
+    A positive kurtosis indicates heavy tails (more extreme values), while a negative kurtosis indicates light tails (fewer extreme values).
+
+    :param column_name: The name of the numerical column to calculate kurtosis for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not numerical or if the dataset is missing required columns.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Kurtosis metric for the 'income' column
+        kurtosis_metric = Metric.create("Kurtosis", column_name="income")
+
+        # Compute the kurtosis for the 'income' column in the dataset
+        result = kurtosis_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Kurtosis', 'column': 'income', 'value': 2.8739356846481846}
+    """
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
-        if data.is_aggregated:
-            raise ValueError("Kurtosis is not available for aggregated dataset.")
+        """
+        Compute the kurtosis of a numerical column in the dataset.
+
+        :param data: The dataset to compute the kurtosis for.
+        :type data: Dataset
+        :return: A dictionary containing the computed kurtosis value.
+        :rtype: dict
+        """
         if self.column_name not in data.measure_columns:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
@@ -123,10 +354,40 @@ class Kurtosis(SingleColumnMetric):
         return response
 
 class Range(SingleColumnMetric):
-    # column must be numerical
+    """
+    Calculate the range of a numerical column.
+
+    This metric calculates the range of a specified numerical column, which is the difference
+    between the maximum and minimum values in the column.
+
+    :param column_name: The name of the numerical column to calculate the range for.
+    :type column_name: str
+
+    :raises ValueError: If the provided column is not numerical or if the dataset is missing required columns.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Range metric for the 'age' column
+        range_metric = Metric.create("Range", column_name="age")
+
+        # Compute the range for the 'age' column in the dataset
+        result = range_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Range', 'column': 'age', 'value': (25, 75)}
+    """
     def __init__(self, column_name):
         super().__init__(column_name)
     def compute(self, data: Dataset):
+        """
+        Compute the range of a numerical column in the dataset.
+
+        :param data: The dataset to compute the range for.
+        :type data: Dataset
+        :return: A dictionary containing a tuple of the minimum and maximum values in the column.
+        :rtype: dict
+        """
         if self.column_name not in data.measure_columns:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
@@ -134,12 +395,43 @@ class Range(SingleColumnMetric):
         return response
 
 class DiscreteMutualInformation(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the discrete mutual information between two categorical columns.
+
+    This metric calculates the discrete mutual information between two specified categorical columns.
+    Mutual information measures the degree of statistical dependence between two variables and is often
+    used to assess the information shared between categorical attributes.
+
+    :param column_names: A list containing two column names for which mutual information will be computed.
+    :type column_names: list
+
+    :raises ValueError: If the wrong number of columns are provided or if the columns are not categorical.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the DiscreteMutualInformation metric for the 'A' and 'B' columns
+        mi_metric = Metric.create("DiscreteMutualInformation", column_names=["A", "B"])
+
+        # Compute the mutual information between columns 'A' and 'B' in the dataset
+        result = mi_metric.compute(dataset)
+
+        print(result)  # {'metric': 'DiscreteMutualInformation', 'columns': ['A', 'B'], 'value': 0.1234}
+    """
     def __init__(self, column_names):
         if len(column_names) != 2:
             raise ValueError("DiscreteMutualInformation requires two columns.")
         super().__init__(column_names)
     def compute(self, data):
+        """
+        Compute the discrete mutual information between two categorical columns in the dataset.
+
+        :param data: The dataset to compute mutual information for.
+        :type data: Dataset
+        :return: A dictionary containing the computed mutual information value between the columns.
+        :rtype: dict
+        """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         
@@ -163,12 +455,43 @@ class DiscreteMutualInformation(MultiColumnMetric):
         return response
 
 class Dimensionality(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the dimensionality (number of possible unique combinations) of categorical columns.
+
+    This metric calculates the dimensionality, which represents the number of unique combinations
+    of values across the specified categorical columns. It provides insights into the diversity and
+    complexity of the categorical attributes.
+
+    :param column_names: A list containing the column names for which dimensionality will be computed.
+    :type column_names: list
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Dimensionality metric for columns 'A' and 'B'
+        dimensionality_metric = Metric.create("Dimensionality", column_names=["A", "B"])
+
+        # Compute the dimensionality of the columns in the dataset
+        result = dimensionality_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Dimensionality', 'columns': ['A', 'B'], 'value': 15}
+    """
     def __init__(self, column_names):
         if len(column_names) == 0:
             raise ValueError("Dimensionality requires at least one column.")
         super().__init__(column_names)
     def compute(self, data):
+        """
+        Compute the dimensionality based on unique combinations of values in the specified columns.
+
+        :param data: The dataset to compute dimensionality for.
+        :type data: Dataset
+        :return: A dictionary containing the computed dimensionality value.
+        :rtype: dict
+        """
         value = 1
         for col in self.column_names:
             unique_count = data.source.select(col).distinct().count()
@@ -178,7 +501,30 @@ class Dimensionality(MultiColumnMetric):
         return response
 
 class Sparsity(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the sparsity (proportion of distinct combinations presented in the data) of categorical columns.
+
+    This metric calculates the sparsity, which represents the proportion of distinct combinations presented 
+    over the total possible combinations (dimensionality) within the specified categorical columns. It provides 
+    insights into how densely populated the categorical attributes are with unique combinations.
+
+    :param column_names: A list containing the column names for which sparsity will be computed.
+    :type column_names: list
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Sparsity metric for columns 'A' and 'B'
+        sparsity_metric = Metric.create("Sparsity", column_names=["A", "B"])
+
+        # Compute the sparsity of the columns in the dataset
+        result = sparsity_metric.compute(dataset)
+
+        print(result)  # {'metric': 'Sparsity', 'columns': ['A', 'B'], 'value': 0.6}
+    """
     def __init__(self, column_names):
         if len(column_names) == 0:
             raise ValueError("Sparsity requires at least one column.")
@@ -186,12 +532,46 @@ class Sparsity(MultiColumnMetric):
         self.dimensionality = Dimensionality(column_names)
         self.distinct_count = DistinctCount(column_names)
     def compute(self, data):
+        """
+        Compute the sparsity based on the proportion of distinct combinations in the specified columns.
+
+        :param data: The dataset to compute sparsity for.
+        :type data: Dataset
+        :return: A dictionary containing the computed sparsity value, 
+                which is the ratio of distinct values to the dimensionality of the specified columns.
+        :rtype: dict
+        """
         response = self.to_dict()
         response["value"] = self.distinct_count.compute(data)["value"] / self.dimensionality.compute(data)["value"]
         return response
 
 class BelowK(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the count of categorical combinations occurring below a specified threshold.
+
+    This metric calculates the count of distinct combinations within the specified categorical columns
+    that occur below a specified threshold (k). It is useful for identifying the number of unique
+    combinations that are relatively less frequent in the data.
+
+    :param column_names: A list containing the column names for which the count will be calculated.
+    :type column_names: list
+    :param k: The threshold value. Combinations occurring less than 'k' times are counted.
+    :type k: int, optional (default=10)
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the BelowK metric for columns 'A' and 'B' with a threshold of 5
+        below_k_metric = Metric.create("BelowK", column_names=["A", "B"], k=5)
+
+        # Compute the count of combinations occurring below the threshold in the dataset
+        result = below_k_metric.compute(dataset)
+
+        print(result)  # {'metric': 'BelowK', 'columns': ['A', 'B'], 'k': 5, 'value': 7}
+    """
     def __init__(self, column_names, k=10):
         if len(column_names) == 0:
             raise ValueError("BelowK requires at least one column.")
@@ -200,6 +580,14 @@ class BelowK(MultiColumnMetric):
     def param_names(self):
         return super().param_names() + ["k"]
     def compute(self, data):
+        """
+        Compute the count of categorical combinations occurring below the specified threshold 'k'.
+
+        :param data: The dataset to compute the count for.
+        :type data: Dataset
+        :return: A dictionary containing the computed count of combinations below the threshold 'k'.
+        :rtype: dict
+        """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         value = 0
@@ -227,12 +615,43 @@ class RowCount(MultiColumnMetric):
         return response
 
 class DistinctCount(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the count of distinct combinations within specified categorical columns.
+
+    This metric calculates the count of distinct combinations of values within the specified
+    categorical columns. It provides insights into the variety and diversity of unique combinations
+    present in the data.
+
+    :param column_names: A list containing the column names for which the distinct count will be calculated.
+    :type column_names: list
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the DistinctCount metric for columns 'A' and 'B'
+        distinct_count_metric = Metric.create("DistinctCount", column_names=["A", "B"])
+
+        # Compute the count of distinct combinations within the specified columns in the dataset
+        result = distinct_count_metric.compute(dataset)
+
+        print(result)  # {'metric': 'DistinctCount', 'columns': ['A', 'B'], 'value': 42}
+    """
     def __init__(self, column_names):
         if len(column_names) == 0:
             raise ValueError("DistinctCount requires at least one column.")
         super().__init__(column_names)
     def compute(self, data):
+        """
+        Compute the count of distinct combinations within the specified categorical columns.
+
+        :param data: The dataset to compute the count for.
+        :type data: Dataset
+        :return: A dictionary containing the computed count of distinct combinations.
+        :rtype: dict
+        """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         response = self.to_dict()
@@ -240,7 +659,32 @@ class DistinctCount(MultiColumnMetric):
         return response
 
 class BelowKPercentage(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the percentage of distinct combinations appearing fewer than 'k' times.
+
+    This metric calculates the percentage of distinct combinations of values within the specified
+    categorical columns that appear fewer than 'k' times in the dataset. It provides insights into
+    the distribution and sparsity of unique combinations.
+
+    :param column_names: A list containing the column names for which the percentage will be calculated.
+    :type column_names: list
+    :param k: The threshold value for counting combinations. Combinations appearing fewer than 'k' times are considered.
+    :type k: int, optional
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the BelowKPercentage metric for columns 'A' and 'B' with a threshold of 10
+        below_k_percentage_metric = Metric.create("BelowKPercentage", column_names=["A", "B"], k=10)
+
+        # Compute the percentage of distinct combinations appearing below the specified threshold in the dataset
+        result = below_k_percentage_metric.compute(dataset)
+
+        print(result)  # {'metric': 'BelowKPercentage', 'columns': ['A', 'B'], 'k': 10, 'value': 23.5}
+    """
     def __init__(self, column_names, k=10):
         if len(column_names) == 0:
             raise ValueError("BelowKPercentage requires at least one column.")
@@ -251,6 +695,17 @@ class BelowKPercentage(MultiColumnMetric):
     def param_names(self):
         return super().param_names() + ["k"]
     def compute(self, data):
+        """
+        Compute the percentage of distinct combinations appearing fewer than 'k' times.
+
+        :param data: The dataset to compute the percentage for.
+        :type data: Dataset
+
+        :return: A dictionary containing the computed percentage of distinct combinations appearing below 'k' times.
+        :rtype: dict
+
+        :raises ValueError: If no columns are provided or if the columns are not categorical.
+        """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         response = self.to_dict()
@@ -258,7 +713,37 @@ class BelowKPercentage(MultiColumnMetric):
         return response
 
 class MostLinkable(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the most linkable categorical columns.
+
+    This metric calculates the most linkable categorical columns by identifying columns where
+    a high proportion of distinct combinations appear fewer than 'linkable_k' times. It provides
+    insights into columns that are potentially at a high risk of privacy leakage.
+
+    :param column_names: A list containing the column names to evaluate for linkability.
+    :type column_names: list
+    :param linkable_k: The threshold value for counting linkable combinations. Combinations appearing fewer than 'linkable_k' times are considered.
+    :type linkable_k: int, optional
+    :param top_n: The number of top linkable columns to return.
+    :type top_n: int, optional
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the MostLinkable metric for columns 'A' and 'B' with a linkable threshold of 10
+        most_linkable_metric = Metric.create("MostLinkable", column_names=["A", "B"], linkable_k=10, top_n=5)
+
+        # Compute the most linkable columns in the dataset
+        result = most_linkable_metric.compute(dataset)
+
+        print(result)  # {'metric': 'MostLinkable', 'columns': {'A': 25, 'B': 20}, 'linkable_k': 10, 'top_n': 5}
+
+    The `compute` method returns a dictionary containing the computed most linkable categorical columns
+    and their respective counts of distinct combinations that appear fewer than 'linkable_k' times.
+    """
     def __init__(self, column_names, linkable_k=10, top_n=5):
         if len(column_names) == 0:
             raise ValueError("MostLinkable requires at least one column.")
@@ -268,6 +753,17 @@ class MostLinkable(MultiColumnMetric):
     def param_names(self):
         return super().param_names() + ["linkable_k", "top_n"]
     def compute(self, data):
+        """
+        Compute the most linkable categorical columns.
+
+        :param data: The dataset to compute the most linkable columns for.
+        :type data: Dataset
+
+        :return: A dictionary containing the computed most linkable categorical columns and their counts.
+        :rtype: dict
+
+        :raises ValueError: If no columns are provided or if the columns are not categorical.
+        """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         linkable_counts_dict = {}
@@ -287,7 +783,35 @@ class MostLinkable(MultiColumnMetric):
         return response
 
 class RedactedRowCount(MultiColumnMetric):
-    # columns must be categorical
+    """
+    Calculate the count of rows with redacted or partially redacted values.
+
+    This metric calculates the count of rows where values in the specified categorical columns are redacted
+    or partially redacted. It helps in identifying the extent of redacted data in the dataset.
+
+    :param column_names: A list containing the column names to evaluate for redacted values.
+    :type column_names: list
+    :param redacted_keyword: The keyword used to represent redacted or unknown values in the data.
+                             Default is "Unknown."
+    :type redacted_keyword: str, optional
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the RedactedRowCount metric for columns 'A' and 'B' with a redacted keyword of "Unknown"
+        redacted_count_metric = Metric.create("RedactedRowCount", column_names=["A", "B"], redacted_keyword="Unknown")
+
+        # Compute the count of rows with redacted values in the dataset
+        result = redacted_count_metric.compute(dataset)
+
+        print(result)  # {'metric': 'RedactedRowCount', 'columns': {'A': 20, 'B': 15}, 'redacted_keyword': 'Unknown'}
+
+    The `compute` method returns a dictionary containing the computed counts of rows with redacted or partially
+    redacted values in the specified categorical columns.
+    """
     def __init__(self, column_names, redacted_keyword="Unknown"):
         if len(column_names) == 0:
             raise ValueError("RedactedRowCount requires at least one column.")
@@ -296,6 +820,17 @@ class RedactedRowCount(MultiColumnMetric):
     def param_names(self):
         return super().param_names() + ["redacted_keyword"]
     def compute(self, data):
+        """
+        Compute the count of rows with redacted or partially redacted values.
+
+        :param data: The dataset to compute the count of redacted rows for.
+        :type data: Dataset
+
+        :return: A dictionary containing the computed counts of rows with redacted or partially redacted values.
+        :rtype: dict
+
+        :raises ValueError: If no columns are provided or if the columns are not categorical.
+        """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         
