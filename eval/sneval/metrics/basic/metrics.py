@@ -716,16 +716,15 @@ class MostLinkable(MultiColumnMetric):
     """
     Calculate the most linkable categorical columns.
 
-    This metric calculates the most linkable categorical columns by identifying columns where
-    a high proportion of distinct combinations appear fewer than 'linkable_k' times. It provides
-    insights into columns that are potentially at a high risk of privacy leakage.
+    This metric calculates the most linkable categorical column by identifying columns where
+    a high proportion of distinct values appear fewer than 'linkable_k' times. Linkable data 
+    might be used to make inferences about individuals, even without direct identification. 
+    So this metric provides insights into columns that potentially pose privacy concerns.
 
     :param column_names: A list containing the column names to evaluate for linkability.
     :type column_names: list
-    :param linkable_k: The threshold value for counting linkable combinations. Combinations appearing fewer than 'linkable_k' times are considered.
+    :param linkable_k: The threshold value for counting linkable values. Values appearing fewer than 'linkable_k' times are considered.
     :type linkable_k: int, optional
-    :param top_n: The number of top linkable columns to return.
-    :type top_n: int, optional
 
     :raises ValueError: If no columns are provided.
 
@@ -734,32 +733,32 @@ class MostLinkable(MultiColumnMetric):
     .. code-block:: python
 
         # Create an instance of the MostLinkable metric for columns 'A' and 'B' with a linkable threshold of 10
-        most_linkable_metric = Metric.create("MostLinkable", column_names=["A", "B"], linkable_k=10, top_n=5)
+        most_linkable_metric = Metric.create("MostLinkable", column_names=["A", "B"], linkable_k=10)
 
         # Compute the most linkable columns in the dataset
         result = most_linkable_metric.compute(dataset)
 
-        print(result)  # {'metric': 'MostLinkable', 'columns': {'A': 25, 'B': 20}, 'linkable_k': 10, 'top_n': 5}
+        print(result)  # {'metric': 'MostLinkable', 'value': {'A': 25}}
 
-    The `compute` method returns a dictionary containing the computed most linkable categorical columns
-    and their respective counts of distinct combinations that appear fewer than 'linkable_k' times.
+    The `compute` method returns a dictionary containing the computed most linkable categorical column
+    and its respective counts of distinct values that appear fewer than 'linkable_k' times.
     """
-    def __init__(self, column_names, linkable_k=10, top_n=5):
+    def __init__(self, column_names, linkable_k=10):
         if len(column_names) == 0:
             raise ValueError("MostLinkable requires at least one column.")
         super().__init__(column_names)
         self.linkable_k = linkable_k
-        self.top_n = top_n
+        # self.top_n = top_n
     def param_names(self):
-        return super().param_names() + ["linkable_k", "top_n"]
+        return super().param_names() + ["linkable_k"]
     def compute(self, data):
         """
-        Compute the most linkable categorical columns.
+        Compute the most linkable categorical column.
 
-        :param data: The dataset to compute the most linkable columns for.
+        :param data: The dataset to compute the most linkable column for.
         :type data: Dataset
 
-        :return: A dictionary containing the computed most linkable categorical columns and their counts.
+        :return: A dictionary containing the computed most linkable categorical column and its counts.
         :rtype: dict
 
         :raises ValueError: If no columns are provided or if the columns are not categorical.
@@ -777,7 +776,8 @@ class MostLinkable(MultiColumnMetric):
             total_linkable_count = linkable_df.agg(F.sum("count_below_k").alias("total_count_below_k")).collect()[0]["total_count_below_k"]
             if total_linkable_count:
                 linkable_counts_dict[col] = total_linkable_count
-        most_linkable_columns = dict(sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n])
+        # most_linkable_columns = dict(sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n])
+        most_linkable_columns = dict(sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[0])
         response = self.to_dict()
         response["value"] = most_linkable_columns
         return response
@@ -791,9 +791,9 @@ class RedactedRowCount(MultiColumnMetric):
 
     :param column_names: A list containing the column names to evaluate for redacted values.
     :type column_names: list
-    :param redacted_keyword: The keyword used to represent redacted or unknown values in the data.
+    :param keyword: The keyword used to represent redacted or unknown values in the data.
                              Default is "Unknown."
-    :type redacted_keyword: str, optional
+    :type keyword: str, optional
 
     :raises ValueError: If no columns are provided.
 
@@ -802,23 +802,23 @@ class RedactedRowCount(MultiColumnMetric):
     .. code-block:: python
 
         # Create an instance of the RedactedRowCount metric for columns 'A' and 'B' with a redacted keyword of "Unknown"
-        redacted_count_metric = Metric.create("RedactedRowCount", column_names=["A", "B"], redacted_keyword="Unknown")
+        redacted_count_metric = Metric.create("RedactedRowCount", column_names=["A", "B"], keyword="Unknown")
 
         # Compute the count of rows with redacted values in the dataset
         result = redacted_count_metric.compute(dataset)
 
-        print(result)  # {'metric': 'RedactedRowCount', 'columns': {'A': 20, 'B': 15}, 'redacted_keyword': 'Unknown'}
+        print(result)  # {'metric': 'RedactedRowCount', 'value': {'partly redacted': 20, 'fully redacted': 10}}
 
     The `compute` method returns a dictionary containing the computed counts of rows with redacted or partially
     redacted values in the specified categorical columns.
     """
-    def __init__(self, column_names, redacted_keyword="Unknown"):
+    def __init__(self, column_names, keyword="Unknown"):
         if len(column_names) == 0:
             raise ValueError("RedactedRowCount requires at least one column.")
         super().__init__(column_names)
-        self.redacted_keyword = redacted_keyword
+        self.redacted_keyword = keyword
     def param_names(self):
-        return super().param_names() + ["redacted_keyword"]
+        return super().param_names() + ["keyword"]
     def compute(self, data):
         """
         Compute the count of rows with redacted or partially redacted values.
@@ -843,7 +843,7 @@ class RedactedRowCount(MultiColumnMetric):
         fully_redacted = df_with_unknown_count.filter(F.col("unknown_count") == len(self.column_names)).count()
 
         response = self.to_dict()
-        response["value"] = {"partly redacted row count": partly_redacted, "fully redacted row count": fully_redacted}
+        response["value"] = {"partly redacted": partly_redacted, "fully redacted": fully_redacted}
         return response
     
 class AUCMetric(BinaryClassificationMetric):

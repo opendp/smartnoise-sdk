@@ -5,6 +5,7 @@ import subprocess
 import sneval.metrics.compare as CompareModule
 from .metrics.compare.base import CompareMetric
 import inspect
+import csv
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -19,7 +20,7 @@ class Evaluate:
             timeout=None,
             max_retry=3,
             max_errors=50,
-            output_path=os.path.join(git_root_dir, "eval/evaluate_output.json")
+            output_path=os.path.join(git_root_dir, "eval")
         ):
         self.original_dataset = original_dataset
         self.synthetic_datasets = synthetic_datasets
@@ -28,7 +29,8 @@ class Evaluate:
         self.timeout = timeout
         self.max_retry = max_retry
         self.max_errors = max_errors
-        self.output_path = output_path
+        self.json_output_path = os.path.join(output_path, "evaluate_output.json")
+        self.csv_output_path = os.path.join(output_path, "evaluate_output.csv")
         self.error_count = 0
 
     def _load_previous_results(self):
@@ -36,7 +38,7 @@ class Evaluate:
         Load results from previous runs if available.
         """
         try:
-            with open(self.output_path, 'r') as f:
+            with open(self.json_output_path, 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
             return []
@@ -47,7 +49,7 @@ class Evaluate:
         """
         current_results = self._load_previous_results()
         current_results += result
-        with open(self.output_path, 'w') as f:
+        with open(self.json_output_path, 'w') as f:
             json.dump(current_results, f, indent=4)
 
     def _is_metric_computed(self, name, params):
@@ -62,10 +64,12 @@ class Evaluate:
 
     def _compute_metric(self, name, params):
         metric_instance = Metric.create(name, **params)
-        result = []
-        for synth_dataset in self.synthetic_datasets:
-            result.append(metric_instance.compute(self.original_dataset, synth_dataset))
-        return result
+        results = []
+        for i, synth_dataset in enumerate(self.synthetic_datasets):
+            res = metric_instance.compute(self.original_dataset, synth_dataset)
+            res['data pair'] = f'0 - {i}'
+            results.append(res)
+        return results
     
     def run(self):
         metric_names = [name for name, obj in inspect.getmembers(CompareModule) if inspect.isclass(obj) and name != "CompareMetric"]
@@ -113,3 +117,55 @@ class Evaluate:
                     self._save_intermediate_results([error_result])
                 if self.error_count > self.max_errors:
                     raise Exception(f"Exceeded the maximum error limit of {self.max_errors}")
+                json_data = self._load_previous_results()
+        
+        json_data = self._load_previous_results()
+        csv_data = {}
+        for entry in json_data:
+            metric_name = entry['name']
+            data_pair = entry['data pair']
+            if data_pair not in csv_data:
+                csv_data[data_pair] = {}
+
+            # Retrieve the parameters.
+            params = entry.get('parameters', {})
+            categorical_columns = params.get('categorical_columns')
+            measure_sum_columns = params.get('measure_sum_columns')
+
+            if categorical_columns is not None and len(categorical_columns) > 0:
+                column_identifier = ', '.join(sorted(categorical_columns))
+            else:
+                continue
+
+            if column_identifier not in csv_data[data_pair]:
+                csv_data[data_pair][column_identifier] = {}
+
+            # Constructing new metric descriptors
+            metric_descriptor = metric_name
+            if measure_sum_columns is not None and len(measure_sum_columns) > 0:
+                metric_descriptor = f"{metric_descriptor}_{measure_sum_columns[0]}"  # Only one measure/sum column will be taken
+            
+            edges = params.get('edges')
+            metric_descriptor_list = []
+            if edges is not None and len(edges) > 0:
+                metric_descriptor_list.append(f'{metric_descriptor} (bin < {edges[0]})')
+                for i in range(1, len(edges)):
+                    metric_descriptor_list.append(f'{metric_descriptor} (bin [{edges[i-1]}, {edges[i]}))')
+                metric_descriptor_list.append(f'{metric_descriptor} (bin >= {edges[-1]})')
+            
+            if len(metric_descriptor_list) > 0:  
+                for i, descriptor in enumerate(metric_descriptor_list):
+                    csv_data[data_pair][column_identifier][descriptor] = 'N/A' if 'error' in entry else entry.get('value').get(f'Bin {i}', 'N/A')
+            else:
+                csv_data[data_pair][column_identifier][metric_descriptor] = 'N/A' if 'error' in entry else entry.get('value', 'N/A')
+        
+        headers = ['data pair', 'columns'] + sorted(list(set(metric_descriptor for data_pairs in csv_data.values() for columns in data_pairs.values() for metric_descriptor in columns)))
+        with open(self.csv_output_path, 'w', newline='') as csvfile:
+            csvwriter = csv.DictWriter(csvfile, fieldnames=headers)
+            csvwriter.writeheader()
+            for data_pair, data in csv_data.items():
+                row = {'data pair': data_pair} 
+                for column_identifier, metrics in data.items():
+                    row.update({'columns': column_identifier})
+                    row.update(metrics)  # Fill in the metric values for this column identifier.
+                    csvwriter.writerow(row)
