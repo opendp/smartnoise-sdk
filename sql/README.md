@@ -22,7 +22,9 @@ pip install smartnoise-sql
 
 ## Querying a Pandas DataFrame
 
-Use the `from_df` method to create a private reader that can issue queries against a pandas dataframe.
+Use the `from_df` method to create a private reader that can issue queries against a pandas dataframe. Example below uses datasets
+`PUMS.csv` and `PUMS.yaml` can be found in the [datasets](../datasets/) folder in the root directory.
+
 
 ```python
 import snsql
