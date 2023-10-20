@@ -43,7 +43,10 @@ result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex
 
 ## Querying a SQL Database
 
-Use `from_connection` to wrap an existing database connection.
+Use `from_connection` to wrap an existing database connection. 
+
+The connection must be to a database that supports the SQL standard, 
+in this example the database must be configured with the name `PUMS`, have a schema called `PUMS` and a table called `PUMS`, and the data from `PUMS.csv` needs to be in that table.
 
 ```python
 import snsql
