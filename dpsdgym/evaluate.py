@@ -21,8 +21,8 @@ from joblib import Parallel, delayed
 
 import conf
 from metrics.sra import sra
-from metrics.wasserstein import wasserstein_randomization
-from metrics.pmse import pmse_ratio
+from metrics.wasserstein import WassersteinRandomizationMetric
+from metrics.pmse import PMSERatioMetric
 
 class dumb_predictor():
     """
@@ -40,7 +40,8 @@ def wasserstein_test(args):
     Parallelizable
     """
     d1, d2, iterations, mlflow_step, name, epsilon, synth_name, dataset_name = args
-    wass = wasserstein_randomization(d1, d2, iterations)
+    wass_metric = WassersteinRandomizationMetric()
+    wass = wass_metric._compute(d1, d2, iters=iterations)
     with mlflow.start_run(nested=True):
         mlflow.set_tags(
             {'metric_name': str(name),
@@ -74,7 +75,8 @@ def pMSE_test(args):
     Parallelizable
     """
     d1, d2, mlflow_step, name, epsilon, synth_name, dataset_name = args
-    pmse = pmse_ratio(d1, d2)
+    pmse_metric = PMSERatioMetric()
+    pmse = pmse_metric._compute(d1, d2)
     with mlflow.start_run(nested=True):
         mlflow.set_tags(
             {'metric_name': str(name),

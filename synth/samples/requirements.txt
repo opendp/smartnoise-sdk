@@ -12,3 +12,7 @@ tqdm
 zipcodes
 opendp
 diffprivlib
+
+# for sdmetrics samples
+sdmetrics
+sdgym
