@@ -28,7 +28,7 @@ class Cardinality(SingleColumnMetric):
         # Compute the cardinality value for the 'category' column in the dataset
         result = cardinality_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Cardinality', 'column': 'Category', 'value': 5}
+        print(result)  # {'name': 'Cardinality', 'value': 5}
     """
     # column must be categorical
     def __init__(self, column_name):
@@ -165,7 +165,7 @@ class Median(SingleColumnMetric):
         # Compute the median value for the 'income' column in the dataset
         result = median_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Median', 'column': 'income', 'value': 45000.0}
+        print(result)  # {'name': 'Median', 'value': 45000.0}
     """
     def __init__(self, column_name):
         super().__init__(column_name)
@@ -207,7 +207,7 @@ class Variance(SingleColumnMetric):
         # Compute the variance for the 'income' column in the dataset
         result = variance_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Variance', 'column': 'income', 'value': 2500000.0}
+        print(result)  # {'name': 'Variance', 'value': 2500000.0}
 
     """
     def __init__(self, column_name):
@@ -250,7 +250,7 @@ class StandardDeviation(SingleColumnMetric):
         # Compute the standard deviation for the 'income' column in the dataset
         result = stddev_metric.compute(dataset)
 
-        print(result)  # {'metric': 'StandardDeviation', 'column': 'income', 'value': 1581.1388300841898}
+        print(result)  # {'name': 'StandardDeviation', 'value': 1581.1388300841898}
     """
     def __init__(self, column_name):
         super().__init__(column_name)
@@ -267,6 +267,61 @@ class StandardDeviation(SingleColumnMetric):
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         response["value"] = data.source.select(F.stddev(self.column_name)).collect()[0][0]
+        return response
+
+class Percentiles(SingleColumnMetric):
+    """
+    Calculate the percentiles of a numerical column.
+
+    This metric calculates specific percentiles of a specified numerical column.
+    Percentiles are measures that indicate the value below which a given percentage 
+    of observations in a group of observations fall. They are useful for understanding
+    the distribution and dispersion of the data.
+
+    :param column_name: The name of the numerical column to calculate the percentiles for.
+    :type column_name: str
+    :param percentiles: List of desired percentile values as decimals between 0 and 1.
+                        Default percentiles are [0.25, 0.50, 0.75], representing the 
+                        25th, 50th, and 75th percentiles, respectively.
+                        Default percentiles are [0.25, 0.50, 0.75].
+    :type percentiles: list, optional
+
+    :raises ValueError: If the provided column is not numerical or if the dataset is missing required columns.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the Percentiles metric for the 'income' column
+        stddev_metric = Metric.create("Percentiles", column_name="income")
+
+        # Compute the percentiles for the 'income' column in the dataset
+        result = stddev_metric.compute(dataset)
+
+        print(result)  # {'name': 'Percentiles', 'value': {P-0.25: 25000, P-0.50: 52000, P-0.75: 86500}}
+    """
+    def __init__(self, column_name, percentiles=[0.25, 0.50, 0.75]):
+        super().__init__(column_name)
+        self.percentiles = percentiles
+    def param_names(self):
+        return super().param_names() + ["percentiles"]
+    def compute(self, data: Dataset):
+        """
+        Compute the percentiles of a numerical column in the dataset.
+
+        This function calculates the specified percentiles for the numerical column
+        defined in the class instance, providing a view of the distribution of the column's data.
+        
+        :param data: The dataset to compute the percentiles for.
+        :type data: Dataset
+        :return: A dictionary containing the computed percentile value for the specified column.
+        :rtype: dict
+        """
+        if self.column_name not in data.measure_columns:
+            raise ValueError("Column {} is not numerical.".format(self.column_name))
+        response = self.to_dict()
+        result = data.source.agg(F.percentile_approx(F.col(self.column_name), self.percentiles)).collect()[0][0]
+        response["value"] = {f"P-{p}": result[i] for i, p in enumerate(self.percentiles)}
         return response
 
 class Skewness(SingleColumnMetric):
@@ -292,7 +347,7 @@ class Skewness(SingleColumnMetric):
         # Compute the skewness for the 'income' column in the dataset
         result = skewness_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Skewness', 'column': 'income', 'value': 1.3217279838342987}
+        print(result)  # {'name': 'Skewness', 'value': 1.3217279838342987}
     """
     def __init__(self, column_name):
         super().__init__(column_name)
@@ -334,7 +389,7 @@ class Kurtosis(SingleColumnMetric):
         # Compute the kurtosis for the 'income' column in the dataset
         result = kurtosis_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Kurtosis', 'column': 'income', 'value': 2.8739356846481846}
+        print(result)  # {'name': 'Kurtosis', 'value': 2.8739356846481846}
     """
     def __init__(self, column_name):
         super().__init__(column_name)
@@ -375,7 +430,7 @@ class Range(SingleColumnMetric):
         # Compute the range for the 'age' column in the dataset
         result = range_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Range', 'column': 'age', 'value': (25, 75)}
+        print(result)  # {'name': 'Range', 'value': (25, 75)}
     """
     def __init__(self, column_name):
         super().__init__(column_name)
@@ -417,7 +472,7 @@ class DiscreteMutualInformation(MultiColumnMetric):
         # Compute the mutual information between columns 'A' and 'B' in the dataset
         result = mi_metric.compute(dataset)
 
-        print(result)  # {'metric': 'DiscreteMutualInformation', 'columns': ['A', 'B'], 'value': 0.1234}
+        print(result)  # {'name': 'DiscreteMutualInformation', 'value': 0.1234}
     """
     def __init__(self, column_names):
         if len(column_names) != 2:
@@ -477,7 +532,7 @@ class Dimensionality(MultiColumnMetric):
         # Compute the dimensionality of the columns in the dataset
         result = dimensionality_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Dimensionality', 'columns': ['A', 'B'], 'value': 15}
+        print(result)  # {'name': 'Dimensionality', 'value': 15}
     """
     def __init__(self, column_names):
         if len(column_names) == 0:
@@ -523,7 +578,7 @@ class Sparsity(MultiColumnMetric):
         # Compute the sparsity of the columns in the dataset
         result = sparsity_metric.compute(dataset)
 
-        print(result)  # {'metric': 'Sparsity', 'columns': ['A', 'B'], 'value': 0.6}
+        print(result)  # {'name': 'Sparsity', 'value': 0.6}
     """
     def __init__(self, column_names):
         if len(column_names) == 0:
@@ -570,7 +625,7 @@ class BelowK(MultiColumnMetric):
         # Compute the count of combinations occurring below the threshold in the dataset
         result = below_k_metric.compute(dataset)
 
-        print(result)  # {'metric': 'BelowK', 'columns': ['A', 'B'], 'k': 5, 'value': 7}
+        print(result)  # {'name': 'BelowK', 'value': 7}
     """
     def __init__(self, column_names, k=10):
         if len(column_names) == 0:
@@ -637,7 +692,7 @@ class DistinctCount(MultiColumnMetric):
         # Compute the count of distinct combinations within the specified columns in the dataset
         result = distinct_count_metric.compute(dataset)
 
-        print(result)  # {'metric': 'DistinctCount', 'columns': ['A', 'B'], 'value': 42}
+        print(result)  # {'name': 'DistinctCount', 'value': 42}
     """
     def __init__(self, column_names):
         if len(column_names) == 0:
@@ -683,7 +738,7 @@ class BelowKPercentage(MultiColumnMetric):
         # Compute the percentage of distinct combinations appearing below the specified threshold in the dataset
         result = below_k_percentage_metric.compute(dataset)
 
-        print(result)  # {'metric': 'BelowKPercentage', 'columns': ['A', 'B'], 'k': 10, 'value': 23.5}
+        print(result)  # {'name': 'BelowKPercentage', 'value': 23.5}
     """
     def __init__(self, column_names, k=10):
         if len(column_names) == 0:
@@ -738,7 +793,7 @@ class MostLinkable(MultiColumnMetric):
         # Compute the most linkable columns in the dataset
         result = most_linkable_metric.compute(dataset)
 
-        print(result)  # {'metric': 'MostLinkable', 'value': {'A': 25}}
+        print(result)  # {'name': 'MostLinkable', 'value': {'A': 25}}
 
     The `compute` method returns a dictionary containing the computed most linkable categorical column
     and its respective counts of distinct values that appear fewer than 'linkable_k' times.
@@ -807,7 +862,7 @@ class RedactedRowCount(MultiColumnMetric):
         # Compute the count of rows with redacted values in the dataset
         result = redacted_count_metric.compute(dataset)
 
-        print(result)  # {'metric': 'RedactedRowCount', 'value': {'partly redacted': 20, 'fully redacted': 10}}
+        print(result)  # {'name': 'RedactedRowCount', 'value': {'partly redacted': 20, 'fully redacted': 10}}
 
     The `compute` method returns a dictionary containing the computed counts of rows with redacted or partially
     redacted values in the specified categorical columns.
