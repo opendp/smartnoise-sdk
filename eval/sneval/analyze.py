@@ -18,7 +18,7 @@ class Analyze:
             run_len=2,
             timeout=None,
             max_retry=3,
-            max_errors=50,
+            max_errors=100,
             output_path=os.path.join(git_root_dir, "eval")
         ):
         self.dataset = dataset
@@ -61,8 +61,24 @@ class Analyze:
         return False
 
     def _compute_metric(self, name, params):
-        metric_instance = Metric.create(name, **params)
-        return metric_instance.compute(self.dataset)
+        if self._is_metric_computed(name, params):
+            pass
+        else:
+            try:
+                metric_instance = Metric.create(name, **params)
+                res = metric_instance.compute(self.dataset)
+                self._save_intermediate_results(res)
+            except Exception as e:
+                self.error_count += 1
+                error_result = {
+                    "name": name,
+                    "parameters": params,
+                    "value": None,
+                    "error": str(e)
+                }
+                self._save_intermediate_results(error_result)
+            if self.error_count > self.max_errors:
+                raise Exception(f"Exceeded the maximum error limit of {self.max_errors}")    
     
     def run(self):
         metric_names = [name for name, obj in inspect.getmembers(BasicModule) 
@@ -79,30 +95,25 @@ class Analyze:
                 # params = params["params"]
                 cls = getattr(BasicModule, name)
                 if issubclass(cls, SingleColumnMetric):
-                    new_params = {k: params[k] for k in ["column_name"] if k in params}
+                    if params["column_name"] is None:  # compute SingleColumnMetric for each col in column_names if column_name is not provided
+                        for col in params["column_names"]:
+                            new_params = {"column_name": col}
+                            self._compute_metric(name, new_params)
+                        continue
+                    else:         
+                        new_params = {"column_name": params["column_name"]}
                 elif issubclass(cls, MultiColumnMetric):
-                    new_params = {k: params[k] for k in ["column_names"] if k in params}
+                    new_params = {"column_names": params["column_names"]}
+                    if name in ("BelowK", "BelowKPercentage"):
+                        for k in (1, 5, 10):
+                            new_params["k"] = k
+                            self._compute_metric(name, new_params)
+                        continue
                 else:
                     continue
 
                 # is_metric_defined = name in vars(BasicModule) and isinstance(vars(BasicModule)[name], type)
-                if self._is_metric_computed(name, new_params):
-                    continue  # Skip this metric and move to the next
-
-                try:
-                    result = self._compute_metric(name, new_params)
-                    self._save_intermediate_results(result)
-                except Exception as e:
-                    self.error_count += 1
-                    error_result = {
-                        "name": name,
-                        "parameters": new_params,
-                        "value": None,
-                        "error": str(e)
-                    }
-                    self._save_intermediate_results(error_result)
-                if self.error_count > self.max_errors:
-                    raise Exception(f"Exceeded the maximum error limit of {self.max_errors}")
+                self._compute_metric(name, new_params)
         
         json_data = self._load_previous_results()
         csv_data = {}

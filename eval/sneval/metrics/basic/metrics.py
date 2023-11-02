@@ -129,7 +129,7 @@ class Mean(SingleColumnMetric):
         :rtype: dict
         """
         if not data.is_aggregated:
-            if self.column_name not in data.measure_columns:
+            if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
                 raise ValueError("Column {} is not numerical.".format(self.column_name))
             value = data.source.agg(F.sum(self.column_name).alias("sum"), F.count('*').alias("count")).select(F.col("sum") / F.col("count")).collect()[0][0]
         else:
@@ -178,7 +178,7 @@ class Median(SingleColumnMetric):
         :return: A dictionary containing the computed median value.
         :rtype: dict
         """
-        if self.column_name not in data.measure_columns:
+        if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         response["value"] = data.source.approxQuantile(self.column_name, [0.5], 0.001)[0]
@@ -221,7 +221,7 @@ class Variance(SingleColumnMetric):
         :return: A dictionary containing the computed variance value.
         :rtype: dict
         """
-        if self.column_name not in data.measure_columns:
+        if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         response["value"] = data.source.select(F.variance(self.column_name)).collect()[0][0]
@@ -263,7 +263,7 @@ class StandardDeviation(SingleColumnMetric):
         :return: A dictionary containing the computed standard deviation value.
         :rtype: dict
         """
-        if self.column_name not in data.measure_columns:
+        if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         response["value"] = data.source.select(F.stddev(self.column_name)).collect()[0][0]
@@ -317,7 +317,7 @@ class Percentiles(SingleColumnMetric):
         :return: A dictionary containing the computed percentile value for the specified column.
         :rtype: dict
         """
-        if self.column_name not in data.measure_columns:
+        if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         result = data.source.agg(F.percentile_approx(F.col(self.column_name), self.percentiles)).collect()[0][0]
@@ -360,7 +360,7 @@ class Skewness(SingleColumnMetric):
         :return: A dictionary containing the computed skewness value.
         :rtype: dict
         """
-        if self.column_name not in data.measure_columns:
+        if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         response["value"] = data.source.select(F.skewness(self.column_name)).collect()[0][0]
@@ -402,7 +402,7 @@ class Kurtosis(SingleColumnMetric):
         :return: A dictionary containing the computed kurtosis value.
         :rtype: dict
         """
-        if self.column_name not in data.measure_columns:
+        if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         response["value"] = data.source.select(F.kurtosis(self.column_name)).collect()[0][0]
@@ -443,7 +443,7 @@ class Range(SingleColumnMetric):
         :return: A dictionary containing a tuple of the minimum and maximum values in the column.
         :rtype: dict
         """
-        if self.column_name not in data.measure_columns:
+        if self.column_name not in data.measure_columns and self.column_name not in data.count_column:
             raise ValueError("Column {} is not numerical.".format(self.column_name))
         response = self.to_dict()
         response["value"] = (data.source.select(F.min(self.column_name)).collect()[0][0], data.source.select(F.max(self.column_name)).collect()[0][0])
@@ -829,10 +829,9 @@ class MostLinkable(MultiColumnMetric):
             else:
                 linkable_df = data.source.groupBy(col).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")         
             total_linkable_count = linkable_df.agg(F.sum("count_below_k").alias("total_count_below_k")).collect()[0]["total_count_below_k"]
-            if total_linkable_count:
-                linkable_counts_dict[col] = total_linkable_count
+            linkable_counts_dict[col] = total_linkable_count if total_linkable_count else 0
         # most_linkable_columns = dict(sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n])
-        most_linkable_columns = dict(sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[0])
+        most_linkable_columns = dict([sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[0]])
         response = self.to_dict()
         response["value"] = most_linkable_columns
         return response
@@ -871,7 +870,7 @@ class RedactedRowCount(MultiColumnMetric):
         if len(column_names) == 0:
             raise ValueError("RedactedRowCount requires at least one column.")
         super().__init__(column_names)
-        self.redacted_keyword = keyword
+        self.keyword = keyword
     def param_names(self):
         return super().param_names() + ["keyword"]
     def compute(self, data):
@@ -890,7 +889,7 @@ class RedactedRowCount(MultiColumnMetric):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
         
         # Create an additional column that counts the number of "unknown" values per row
-        df_with_unknown_count = data.source.withColumn("unknown_count", sum(F.when(F.col(c) == self.redacted_keyword, 1).otherwise(0) for c in self.column_names))
+        df_with_unknown_count = data.source.withColumn("unknown_count", sum(F.when(F.col(c) == self.keyword, 1).otherwise(0) for c in self.column_names))
         
         # Count the number of rows with partly unknown values (some, but not all columns are "unknown")
         partly_redacted = df_with_unknown_count.filter((F.col("unknown_count") > 0) & (F.col("unknown_count") < len(self.column_names))).count()
