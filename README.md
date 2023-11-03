@@ -40,6 +40,8 @@ result = reader.execute('SELECT sex, AVG(age) AS age FROM PUMS.PUMS GROUP BY sex
 print(result)
 ```
 
+`PUMS.csv` and `PUMS.yaml` can be found in the [datasets](datasets/) folder.
+
 See the [SQL project](sql/README.md)
 
 ## Synthesizers
