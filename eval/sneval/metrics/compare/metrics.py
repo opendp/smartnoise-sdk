@@ -22,23 +22,27 @@ from functools import reduce
 
 def get_mean(data, categorical_columns, value_column):
     if data.count_column is not None:
-        df = data.source.groupBy(categorical_columns).agg(F.sum(value_column).alias("total_value"), F.sum(data.count_column).alias("total_count")) \
-            .withColumn("avg_value", F.col("total_value") / F.col("total_count")).drop("total_value")
+        total_count_agg = F.sum(data.count_column).alias("total_count")
     elif data.id_column is not None:
-        df = data.source.groupBy(categorical_columns).agg(F.sum(value_column).alias("total_value"), F.countDistinct(data.id_column).alias("total_count")) \
-            .withColumn("avg_value", F.col("total_value") / F.col("total_count")).drop("total_value")
+        total_count_agg = F.countDistinct(data.id_column).alias("total_count")
     else:
-        df = data.source.groupBy(categorical_columns).agg(F.sum(value_column).alias("total_value"), F.count('*').alias("total_count")) \
-            .withColumn("avg_value", F.col("total_value") / F.col("total_count")).drop("total_value")
+        total_count_agg = F.count('*').alias("total_count")
+
+    df = (data.source.groupBy(categorical_columns)
+          .agg(F.sum(value_column).alias("total_value"), total_count_agg)
+          .withColumn("avg_value", F.col("total_value") / F.col("total_count"))
+          .drop("total_value"))
     return df
 
 def get_count(data, categorical_columns):
     if data.count_column is not None:
-        df = data.source.groupBy(categorical_columns).agg(F.sum(data.count_column).alias("total_count"))
+        total_count_agg = F.sum(data.count_column).alias("total_count")
     elif data.id_column is not None:
-        df = data.source.groupBy(categorical_columns).agg(F.countDistinct(data.id_column).alias("total_count"))
+        total_count_agg = F.countDistinct(data.id_column).alias("total_count")
     else:
-        df = data.source.groupBy(categorical_columns).agg(F.count('*').alias("total_count"))
+        total_count_agg = F.count('*').alias("total_count")
+
+    df = data.source.groupBy(categorical_columns).agg(total_count_agg)
     return df
 
 class MeanAbsoluteError(CompareMetric):
@@ -169,20 +173,23 @@ class MeanAbsoluteErrorInCount(CompareMetric):
         self.validate(original, synthetic)
         
         original_df = get_count(original, self.categorical_columns).withColumnRenamed("total_count", "orig_total_count")
-        # Create the first condition for values less than the smallest edge
-        bin_expr = 'CASE WHEN orig_total_count < {} THEN 0 '.format(self.edges[0])
-        for i in range(len(self.edges)-1):
-            bin_expr += 'WHEN orig_total_count >= {} AND orig_total_count < {} THEN {} '.format(self.edges[i], self.edges[i+1], i+1)
-        # Add the last condition for values greater than or equal to the largest edge
-        bin_expr += 'WHEN orig_total_count >= {} THEN {} '.format(self.edges[-1], len(self.edges))
-        bin_expr += 'END as bin_number'
+
+        conditions = [f'WHEN orig_total_count >= {self.edges[i]} AND orig_total_count < {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]
+        conditions.insert(0, f'CASE WHEN orig_total_count < {self.edges[0]} THEN 0')
+        conditions.append(f'WHEN orig_total_count >= {self.edges[-1]} THEN {len(self.edges)}')
+        bin_expr = ' '.join(conditions) + ' END as bin_number'
+
         original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
-        
+   
         synthetic_df = get_count(synthetic, self.categorical_columns).withColumnRenamed("total_count", "synth_total_count")
-        
+
+        original_df = original_df.repartition(*self.categorical_columns)
+        synthetic_df = synthetic_df.repartition(*self.categorical_columns)
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_total_count": 0})
-        abs_diff_df = joined_df.withColumn("abs_diff_count", F.abs(F.col("orig_total_count") - F.col("synth_total_count")))
-        abs_diff_df = abs_diff_df.groupBy("bin_number").agg(F.avg("abs_diff_count").alias("abs_diff_count"))
+    
+        abs_diff_df = (joined_df.withColumn("abs_diff_count", F.abs(F.col("orig_total_count") - F.col("synth_total_count")))
+                       .groupBy("bin_number")
+                       .agg(F.avg("abs_diff_count").alias("abs_diff_count")))
 
         abs_diff_dict = {row["bin_number"]: row["abs_diff_count"] for row in abs_diff_df.collect()} 
         value_dict = self.to_dict()
@@ -316,20 +323,22 @@ class MeanProportionalErrorInCount(CompareMetric):
         self.validate(original, synthetic)
         
         original_df = get_count(original, self.categorical_columns).withColumnRenamed("total_count", "orig_total_count")
-        # Create the first condition for values less than the smallest edge
-        bin_expr = 'CASE WHEN orig_total_count < {} THEN 0 '.format(self.edges[0])
-        for i in range(len(self.edges)-1):
-            bin_expr += 'WHEN orig_total_count >= {} AND orig_total_count < {} THEN {} '.format(self.edges[i], self.edges[i+1], i+1)
-        # Add the last condition for values greater than or equal to the largest edge
-        bin_expr += 'WHEN orig_total_count >= {} THEN {} '.format(self.edges[-1], len(self.edges))
-        bin_expr += 'END as bin_number'
-        original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
+        conditions = [f'WHEN orig_total_count >= {self.edges[i]} AND orig_total_count < {self.edges[i+1]} THEN {i+1}' for i in range(len(self.edges)-1)]
+        conditions.insert(0, f'CASE WHEN orig_total_count < {self.edges[0]} THEN 0')
+        conditions.append(f'WHEN orig_total_count >= {self.edges[-1]} THEN {len(self.edges)}')
+        bin_expr = ' '.join(conditions) + ' END as bin_number'
 
+        original_df = original_df.withColumn("bin_number", F.expr(bin_expr))
+   
         synthetic_df = get_count(synthetic, self.categorical_columns).withColumnRenamed("total_count", "synth_total_count")
 
+        original_df = original_df.repartition(*self.categorical_columns)
+        synthetic_df = synthetic_df.repartition(*self.categorical_columns)
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_total_count": 0})
-        mpe_df = joined_df.withColumn("mpe_part", (F.col("orig_total_count") - F.col("synth_total_count")) / F.col("orig_total_count"))
-        mpe_df = mpe_df.groupBy("bin_number").agg((F.sum("mpe_part") * 100 / F.count('*')).alias("mpe_count"))
+    
+        mpe_df = (joined_df.withColumn("mpe_part", (F.col("orig_total_count") - F.col("synth_total_count")) / F.col("orig_total_count"))
+                  .groupBy("bin_number")
+                  .agg((F.sum("mpe_part") * 100 / F.count('*')).alias("mpe_count")))
 
         mpe_dict = {row["bin_number"]: row["mpe_count"] for row in mpe_df.collect()}
         value_dict = self.to_dict()
@@ -378,7 +387,6 @@ class SuppressedCombinationCount(CompareMetric):
         original_df = original.source.select(self.categorical_columns).distinct()
         
         value_dict = self.to_dict()
-        # Subtract synthetic from original based on dimension columns only
         value_dict["value"] = original_df.subtract(synthetic_df).count()
         return value_dict
     
@@ -429,28 +437,33 @@ class FabricatedCombinationCount(CompareMetric):
         """  
         self.validate(original, synthetic)
 
-        synthetic_df = synthetic.source.select(self.categorical_columns).distinct()
+        ''' ## This is a more complex version for a nuanced comparision. Will require significant memory
         original_df = original.source.select(self.categorical_columns).distinct()
+        synthetic_df = synthetic.source.select(self.categorical_columns).distinct()
 
-        # Count a combination with "unknown" values as fabricated?
+        # Separate synthetic rows with 'unknown'
         synthetic_unknown = synthetic_df.filter(" or ".join(["{} = '{}'".format(c, self.unknown_keyword) for c in synthetic_df.columns]))
         synthetic_no_unknown = synthetic_df.subtract(synthetic_unknown)
+        synthetic_unknown.show(50)
 
         # Generate custom matching conditions for rows with "unknown" values and other rows
         # 1. For rows with "unknown" values, subtract them by comparing only the columns not equal to "unknown".
         # 2. For other rows, perform a normal subtract. 
-        def generate_conditions(columns, unknown_value):
-            conditions = [F.when((F.col("df1." + c) == unknown_value) | (F.col("df1." + c) == F.col("df2." + c)), True).otherwise(False) for c in columns]
-            return reduce(lambda x, y: x & y, conditions)
-        conditions = generate_conditions(self.categorical_columns, self.unknown_keyword)
-        # Subtract rows with "unknown" in synthetic_unknown based on the custom conditions
-        matches_unknown = synthetic_unknown.alias("df1").crossJoin(original_df.alias("df2")).filter(conditions)
-        fabricated_part1 = synthetic_unknown.join(matches_unknown.select(*["df1." + c for c in self.categorical_columns]), on=self.categorical_columns, how="left_anti")
+        conditions = reduce(lambda x, y: x & y, [(F.col("df1." + c) == self.unknown_keyword) | (F.col("df1." + c) == F.col("df2." + c)) for c in self.categorical_columns])
+        fabricated_part1 = synthetic_unknown.alias("df1").join(original_df.alias("df2"), on=conditions, how="left_anti")
 
-        # Perform normal subtract for rows without "unknown"
+        # Normal subtract for rows without "unknown"
         fabricated_part2 = synthetic_no_unknown.subtract(original_df)
 
         value_dict = self.to_dict()
         value_dict["value"] = fabricated_part1.unionByName(fabricated_part2).count()
         return value_dict
-    
+        '''
+
+        ## This is a simplified version for limited memory
+        original_df = original.source.select(self.categorical_columns).distinct()
+        synthetic_df = synthetic.source.select(self.categorical_columns).distinct()
+        
+        value_dict = self.to_dict()
+        value_dict["value"] = synthetic_df.subtract(original_df).count()
+        return value_dict
