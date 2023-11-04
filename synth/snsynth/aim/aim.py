@@ -74,6 +74,8 @@ class AIMSynthesizer(Synthesizer):
 
     def __init__(self, epsilon=1., delta=1e-9, max_model_size=80, degree=2, num_marginals=None, max_cells: int = 10000,
                  rounds=None, verbose=False):
+        if isinstance(epsilon, int):
+            epsilon = float(epsilon)
         self.rounds = rounds
         self.max_model_size = max_model_size
         self.max_cells = max_cells

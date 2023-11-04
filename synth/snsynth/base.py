@@ -202,6 +202,8 @@ class Synthesizer(SDGYMBaseSynthesizer):
         :type kwargs: dict, optional
 
         """
+        if isinstance(epsilon, int):
+            epsilon = float(epsilon)
         if synth is None or (isinstance(synth, type) and issubclass(synth, Synthesizer)):
             clsname = cls.__module__ + '.' + cls.__name__ if synth is None else synth.__module__ + '.' + synth.__name__
             if clsname == 'snsynth.base.Synthesizer':
