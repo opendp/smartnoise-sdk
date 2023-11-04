@@ -5,4 +5,8 @@ mlflow
 scikit-learn
 numpy
 pytest
+jax==0.4.6
+jaxlib
+chex
+flax
 git+https://github.com/ryan112358/private-pgm.git
