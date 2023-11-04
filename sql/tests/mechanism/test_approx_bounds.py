@@ -42,3 +42,18 @@ class TestApproximateBounds:
         vals = [1, 3, 5, -6, -4.5, 25, -3, 299, 899] * 100
         min, max = approx_bounds(vals, 1.0)
         assert (min < -6 and max > 899)
+    def test_bounds_extreme_values(self):
+        vals = [-1 * 2 ** 65, 2.0**65] * 50
+        min, max = approx_bounds(vals, 1.0)
+        assert min < 10E-17
+        assert max > 10E17
+
+        vals = [-1 * 2 ** 65, 2.0**65, -np.inf, np.inf, np.nan] * 50
+        min, max = approx_bounds(vals, 1.0)
+        assert min < 10E-17
+        assert max > 10E17
+    def test_bounds_nan(self):
+        vals = [-np.inf, np.inf, np.nan] * 50
+        min, max = approx_bounds(vals, 1.0)
+        assert min is None
+        assert max is None

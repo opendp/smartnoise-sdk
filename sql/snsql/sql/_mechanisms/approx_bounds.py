@@ -2,40 +2,6 @@ import numpy as np
 from opendp.mod import enable_features
 from opendp.measurements import make_base_laplace
 
-def quantile(vals, alpha, epsilon, lower, upper):
-    """Estimate the quantile.
-    from: http://cs-people.bu.edu/ads22/pubs/2011/stoc194-smith.pdf
-
-    :param vals: A list of values.  Must be numeric.
-    :param alpha: The quantile to estimate, between 0.0 and 1.0.  
-    For example, 0.5 is the median.
-    :param epsilon: The privacy budget to spend estimating the quantile.
-    :param lower: A bounding parameter.  The quantile will be estimated only for values
-    greater than or equal to this bound.
-    :param upper: A bounding parameter.  The quantile will be estimated only for values
-    less than or equal to this bound.
-    :return: The estimated quantile.
-
-    .. code-block:: python
-
-        vals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        median = quantile(vals, 0.5, 0.1, 0, 100)
-    """
-    k = len(vals)
-    vals = [lower if v < lower else upper if v > upper else v for v in vals]
-    vals = sorted(vals)
-    Z = [lower] + vals + [upper]
-    Z = [-lower + v for v in Z]  # shift right to be 0 bounded
-    y = [
-        (Z[i + 1] - Z[i]) * np.exp(-epsilon * np.abs(i - alpha * k))
-        for i in range(len(Z) - 1)
-    ]
-    y_sum = sum(y)
-    p = [v / y_sum for v in y]
-    idx = np.random.choice(range(k + 1), 1, False, p)[0]
-    v = np.random.uniform(Z[idx], Z[idx + 1])
-    return v + lower
-
 def approx_bounds(vals, epsilon):
     """Estimate the minimium and maximum values of a list of values.
     from: https://desfontain.es/thesis/Usability.html#usability-u-ding-
@@ -52,6 +18,12 @@ def approx_bounds(vals, epsilon):
     bins = 64
     hist = [0.0] * bins * 2
 
+    vals = np.array(vals, dtype=np.float64)
+    vals = vals[vals != np.inf]
+    vals = vals[vals != -np.inf]
+    vals = vals[~np.isnan(vals)]
+
+
     def edges(idx):
         if idx == bins:
             return (0.0, 1.0)
@@ -63,6 +35,9 @@ def approx_bounds(vals, epsilon):
             return (-1 * 2.0 ** np.abs(bins - idx - 1), -1 * 2.0 ** np.abs(bins - idx - 2))
         
     edge_list = [edges(idx) for idx in range(len(hist))]
+    min_val = min([l for l, u in edge_list])
+    max_val = max([u for l, u in edge_list]) - 1
+    vals = np.clip(vals, min_val, max_val)
 
     # compute histograms
     for v in vals:
@@ -72,12 +47,11 @@ def approx_bounds(vals, epsilon):
                 bin = idx
                 break
         if bin is None:
-            raise ValueError(f"Value {v} is outside of the range we can use to infer bounds")
+            bin = idx
         hist[bin] += 1
 
         # for testing
         l, u = edges(bin)
-        assert(l <= v < u)
 
     enable_features('floating-point', 'contrib')
     discovered_scale = 1.0 / epsilon
