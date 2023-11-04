@@ -46,7 +46,8 @@ class MSTSynthesizer(Synthesizer):
                  *ignore,
                  verbose=False
                  ):
-
+        if isinstance(epsilon, int):
+            epsilon = float(epsilon)
         self.epsilon = epsilon
         self.delta = delta
         self.verbose = verbose

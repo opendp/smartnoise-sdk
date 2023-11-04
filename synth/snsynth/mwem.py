@@ -263,6 +263,8 @@ class MWEMSynthesizer(Synthesizer):
         mult_weights_iterations=20,
         verbose=False
     ):
+        if isinstance(epsilon, int):
+            epsilon = float(epsilon)
         self.epsilon = epsilon
         self.q_count = q_count
         self.iterations = iterations
