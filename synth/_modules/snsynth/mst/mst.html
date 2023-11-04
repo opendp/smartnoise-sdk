@@ -331,9 +331,8 @@
 <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">logsumexp</span>
-<span class="kn">from</span> <span class="nn">snsynth.cdp2adp</span> <span class="kn">import</span> <span class="n">cdp_rho</span>
 <span class="kn">from</span> <span class="nn">snsynth.base</span> <span class="kn">import</span> <span class="n">Synthesizer</span>
-<span class="kn">from</span> <span class="nn">snsynth.utils</span> <span class="kn">import</span> <span class="n">gaussian_noise</span>
+<span class="kn">from</span> <span class="nn">snsynth.utils</span> <span class="kn">import</span> <span class="n">cdp_rho</span><span class="p">,</span> <span class="n">gaussian_noise</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Wrapper for MST synthesizer from Private PGM:</span>
@@ -367,7 +366,8 @@
                  <span class="o">*</span><span class="n">ignore</span><span class="p">,</span>
                  <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
                  <span class="p">):</span>
-
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">epsilon</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">epsilon</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">epsilon</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
