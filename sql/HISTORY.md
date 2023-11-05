@@ -1,3 +1,8 @@
+# SmartNoise SQL v1.0.2 Release Notes
+
+* Fix privacy bug in approx_bounds (thanks, @TedTed)
+* Remove buggy dead code for quantile computation
+
 # SmartNoise SQL v1.0.1 Release Notes
 
 * Upgrade to OpenDP v0.7.0
