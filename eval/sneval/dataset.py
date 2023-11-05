@@ -4,20 +4,31 @@ from pyspark.sql.types import DoubleType, FloatType, IntegerType, LongType
 
 class Dataset:
     """
-        Source must be a Spark dataframe.
+        Wrapper for information about a datasource.
     """
     def __init__(self, 
                  source : pyspark.sql.dataframe.DataFrame, 
                  *ignore, 
                  categorical_columns=[],
-                 measure_columns=[], 
-                 sum_columns=[], 
+                 measure_columns=[],
+                 sum_columns=[],
                  avg_columns=[],
-                 count_column=None, 
+                 count_column=None,
                  id_column=None,
                  idx=None
                 ):
+        """Create a new Dataset that wraps an existing Spark DataFrame.
 
+            :param source: The Spark DataFrame to wrap.
+            :param categorical_columns: A list of categorical columns in the dataset.
+            :param measure_columns: A list of measure columns in the dataset.
+            :param sum_columns: A list of sum columns in the dataset.
+            :param avg_columns: A list of average columns in the dataset.
+            :param count_column: The name of the column that contains the count of rows in the dataset.
+            :param id_column: The name of the column that contains the unique identifier representing an individual.
+            :param idx: An optional index t
+
+        """
         self.source = source
         
         # must be a dataframe

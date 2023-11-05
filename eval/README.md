@@ -3,13 +3,9 @@
 The SmartNoise Evaluator is designed to help assess the privacy and accuracy of differentially private queries. It includes:
 
 * Analyze: Analyze a dataset and provide information about cardinality, data types, independencies, and other information that is useful for creating a privacy pipeline
-* Runner: A tool that allows a privacy pipeline to be repeatedly run against a dataset, including with different parameters
 * Evaluator: Compares the privatized results to the true results and provides information about the accuracy and bias
-* Attack: Attempts powerful membership inference attacks against privatized results.  The attack depends on running privatized results against many neighboring datasets, with member population chosen to maximize the attack's power.
 
-These tools are currently available as code samples, but may be released as a Python package as the interface stabilizes.
-
-The Analyze step can run against supported databases, text files or Parquet files, and can use a supplied TableTransformer.  The runner can run against any data sources, but must output CSV, TSV, or Parquet, since the evaluator and attack tools require these formats.
+These tools currently require PySpark.
 
 ## Analyze
 

@@ -19,7 +19,6 @@ Classes:
 from .base import CompareMetric
 from pyspark.sql import functions as F
 from functools import reduce
-from pyspark.ml.evaluation import RegressionEvaluator
 
 def get_mean(data, categorical_columns, value_column):
     if data.count_column is not None:
