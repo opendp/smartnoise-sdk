@@ -51,6 +51,10 @@ Preprocessor Hints
 
 When inferring a preprocessor, the synthesizer first attempts to determine whether each column is categorical, ordinal, or continuous.  To skip this step and tell the synthesizer how to treat each column, you can pass in the ``categorical_columns``, ``ordinal_columns``, and ``continuous_columns`` arguments to the ``fit()`` method.  Additionally, if you know that columns can have missing values, you can specify ``nullable=True``.
 
+.. note::
+
+  Before using the MST synthesizer, please install ``mbi`` by running ``pip install git+https://github.com/ryan112358/private-pgm.git``.
+
 .. code-block:: python
 
   from snsynth import Synthesizer

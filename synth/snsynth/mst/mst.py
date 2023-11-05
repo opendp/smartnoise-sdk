@@ -5,7 +5,7 @@ try:
     from mbi import FactoredInference, Dataset, Domain
 except ImportError:
     print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git")
-
+    raise ImportError
 from scipy import sparse
 from disjoint_set import DisjointSet
 import networkx as nx

@@ -1,3 +1,8 @@
+# SmartNoise Synth v1.0.2 Release Notes
+
+* Switch to use SmartNoise SQL v1.0.2
+* Synthesizers now convert integer epsilon to float rather than crashing (thanks, @lo2aayy)
+
 # SmartNoise Synth v1.0.1 Release Notes
 
 * Upgrade to OpenDP v0.7.0
