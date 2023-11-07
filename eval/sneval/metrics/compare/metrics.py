@@ -196,6 +196,57 @@ class MeanAbsoluteErrorInCount(CompareMetric):
         value_dict["value"] = {f"Bin {bin}": abs_diff_dict.get(bin, 'NA') for bin in range(len(self.edges)+1)}
         return value_dict
 
+class MeanError(CompareMetric):
+    """
+    The `MeanError` class is designed to calculate the average error between
+    the original and synthetic datasets for specified categorical columns.
+
+    The `compute` method performs the calculation in three steps:
+    1. Count the occurrences of each category in the specified columns for both datasets.
+    2. Compute the difference in counts for each category between the two datasets.
+    3. Average these differences to provide the mean error across all categories.
+
+    :param categorical_columns: List of categorical columns to group data by.
+    :type categorical_columns: list, optional
+
+    :raises ValueError: If there are issues with the provided columns or input data.
+
+    Example usage:
+
+    .. code-block:: python
+
+        mae_count_metric = Metric.create("MeanError", categorical_columns=["category"])
+        result = mae_count_metric.compute(original_data, synthetic_data)
+    """
+    def __init__(self, categorical_columns=[]):
+        if len(categorical_columns) == 0:
+            raise ValueError("MeanError requires at least one categorical column.")
+        super().__init__(categorical_columns)
+    def compute(self, original, synthetic):
+        """
+        Computes the mean error between original and synthetic datasets for the specified 
+        categorical columns.
+
+        :param original: The original dataset.
+        :type original: Dataset
+        :param synthetic: The synthetic dataset.
+        :type synthetic: Dataset
+        :return: .
+        :rtype: dict
+        """        
+        self.validate(original, synthetic)
+        
+        original_df = get_count(original, self.categorical_columns).withColumnRenamed("total_count", "orig_total_count")
+        synthetic_df = get_count(synthetic, self.categorical_columns).withColumnRenamed("total_count", "synth_total_count")
+
+        original_df = original_df.repartition(*self.categorical_columns)
+        synthetic_df = synthetic_df.repartition(*self.categorical_columns)
+        joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_total_count": 0})
+    
+        value_dict = self.to_dict()
+        value_dict["value"] = joined_df.withColumn("diff_count", F.col("synth_total_count") - F.col("orig_total_count")).agg(F.avg("diff_count")).collect()[0][0]
+        return value_dict
+
 class MeanProportionalError(CompareMetric):
     """
     Compute the Mean Proportional Error (MPE) metric based on the comparison of
@@ -268,8 +319,9 @@ class MeanProportionalError(CompareMetric):
         synthetic_df = get_mean(synthetic, self.categorical_columns, value_column).withColumnRenamed("avg_value", "synth_avg_value").drop("total_count")
     
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_avg_value": 0})
-        mpe_df = joined_df.withColumn("mpe_part", (F.col("orig_avg_value") - F.col("synth_avg_value")) / F.col("orig_avg_value"))
-        mpe_df = mpe_df.groupBy("bin_number").agg((F.sum("mpe_part") * 100 / F.count('*')).alias("mpe_value"))
+        mpe_df = (joined_df.withColumn("mpe_part", (F.col("synth_avg_value") - F.col("orig_avg_value")) / F.col("orig_avg_value"))
+                  .groupBy("bin_number")
+                  .agg((F.sum("mpe_part") * 100 / F.count('*')).alias("mpe_value")))
 
         mpe_dict = {row["bin_number"]: row["mpe_value"] for row in mpe_df.collect()}
         value_dict = self.to_dict()
@@ -336,7 +388,7 @@ class MeanProportionalErrorInCount(CompareMetric):
         synthetic_df = synthetic_df.repartition(*self.categorical_columns)
         joined_df = original_df.join(synthetic_df, on=self.categorical_columns, how="left").fillna({"synth_total_count": 0})
     
-        mpe_df = (joined_df.withColumn("mpe_part", (F.col("orig_total_count") - F.col("synth_total_count")) / F.col("orig_total_count"))
+        mpe_df = (joined_df.withColumn("mpe_part", (F.col("synth_total_count") - F.col("orig_total_count")) / F.col("orig_total_count"))
                   .groupBy("bin_number")
                   .agg((F.sum("mpe_part") * 100 / F.count('*')).alias("mpe_count")))
 

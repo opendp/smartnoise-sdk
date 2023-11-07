@@ -24,7 +24,7 @@ class Analyze:
         ):
         self.dataset = dataset
         self.workload = workload
-        self.run_len = run_len
+        self.run_len = run_len if run_len <= 3 else 2  # do 3-way computations at most
         self.timeout = timeout
         self.max_retry = max_retry
         self.max_errors = max_errors
@@ -100,15 +100,15 @@ class Analyze:
             param_list = []
             if not wl:  # do a default 1-way and 2-way computation
                 param_list.append({"column_names": self.dataset.categorical_columns})
-
-                # 1-way metric computation
-                for col in (self.dataset.categorical_columns + self.dataset.measure_columns + [self.dataset.count_column]):  
-                    param_list.append({"column_name": col})
-
-                if len(self.dataset.categorical_columns) > 2:  # 2-way metric computation
-                    _2way_combos = [list(combo) for combo in combinations(self.dataset.categorical_columns, 2)]
-                    for _2way_combo in _2way_combos:
-                        param_list.append({"column_names": _2way_combo})
+                n_way = self.run_len
+                while n_way >= 1:
+                    if n_way >= 2:  # 2-way or 3-way metric computation
+                        current_combs = [list(combo) for combo in combinations(self.dataset.categorical_columns, n_way)]
+                        for col_comb in current_combs:
+                            param_list.append({"column_names": col_comb})
+                    else:  # 1-way metric computation
+                        for col in (self.dataset.categorical_columns + self.dataset.measure_columns + [self.dataset.count_column]):  
+                            param_list.append({"column_name": col})
             else:
                 if wl.get("column_names") is not None:
                     param_list.append({"column_names": wl.get("column_names")})

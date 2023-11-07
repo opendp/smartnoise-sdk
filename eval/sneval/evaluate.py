@@ -27,7 +27,7 @@ class Evaluate:
         self.original_dataset = original_dataset
         self.synthetic_datasets = synthetic_datasets
         self.workload = workload
-        self.run_len = run_len
+        self.run_len = run_len if run_len <= 3 else 2  # do 3-way computations at most
         self.timeout = timeout
         self.max_retry = max_retry
         self.max_errors = max_errors
@@ -90,7 +90,6 @@ class Evaluate:
                     self._save_intermediate_results([error_result])          
                 if self.error_count > self.max_errors:
                     raise Exception(f"Exceeded the maximum error limit of {self.max_errors}")
-            # gc.collect()
     
     def run(self):
         metric_names = [name for name, obj in inspect.getmembers(CompareModule) if inspect.isclass(obj) and name != "CompareMetric"]
@@ -100,9 +99,12 @@ class Evaluate:
             param_list = []
             if not wl:  # do a default 2-way computation
                 param_list.append({"categorical_columns": self.original_dataset.categorical_columns})
-                _2way_combos = [list(combo) for combo in combinations(self.original_dataset.categorical_columns, 2)]
-                for _2way_combo in _2way_combos:
-                    param_list.append({"categorical_columns": _2way_combo})
+                n_way = self.run_len
+                while n_way >= 1:
+                    current_combs = [list(combo) for combo in combinations(self.original_dataset.categorical_columns, n_way)]
+                    for col_comb in current_combs:
+                        param_list.append({"categorical_columns": col_comb})
+                    n_way -= 1
             else:
                 params = {}
                 params["categorical_columns"] = wl.get("categorical_columns")
