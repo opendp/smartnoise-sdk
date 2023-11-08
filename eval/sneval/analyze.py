@@ -109,6 +109,7 @@ class Analyze:
                     else:  # 1-way metric computation
                         for col in (self.dataset.categorical_columns + self.dataset.measure_columns + [self.dataset.count_column]):  
                             param_list.append({"column_name": col})
+                    n_way -= 1
             else:
                 if wl.get("column_names") is not None:
                     param_list.append({"column_names": wl.get("column_names")})
