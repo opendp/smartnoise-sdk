@@ -62,7 +62,7 @@ pygments_style = 'sphinx'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> Documentation".
-html_title = 'OpenDP SmartNoise SQL'
+html_title = 'OpenDP SmartNoise Eval'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

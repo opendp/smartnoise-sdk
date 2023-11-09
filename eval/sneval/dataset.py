@@ -3,8 +3,24 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import DoubleType, FloatType, IntegerType, LongType
 
 class Dataset:
-    """
-        Wrapper for information about a datasource.
+    """A Dataset wraps an existing Spark DataFrame and provides important metadata.
+
+        :param source: The Spark DataFrame to wrap. The DataFrame must be either row-level, where each row
+            represents separate observation, or aggregated, where each row represents a group of observations.
+        :param categorical_columns: A list of categorical columns in the dataset.
+        :param measure_columns: A list of measure columns in the dataset. Measure columns
+            are numeric columns that are not aggregated.
+        :param sum_columns: A list of sum columns in the dataset. Sum columns are summed measures in
+            aggregated datasets.
+        :param avg_columns: A list of average columns in the dataset. Average columns are averaged measures
+            in aggregated datasets.
+        :param count_column: The name of the column that contains the count of rows in the dataset.
+            Count column is only needed in aggregated datasets, and is required if sum_columns or avg_columns
+            are specified.
+        :param id_column: The name of the column that contains the unique identifier representing an
+            individual. If not specified, the dataset is assumed to be row-level privacy.
+        :param idx: An optional index to allow multiple runs of a privacy algorithm to be compared
+
     """
     def __init__(self, 
                  source : pyspark.sql.dataframe.DataFrame, 
@@ -17,23 +33,11 @@ class Dataset:
                  id_column=None,
                  idx=None
                 ):
-        """Create a new Dataset that wraps an existing Spark DataFrame.
-
-            :param source: The Spark DataFrame to wrap.
-            :param categorical_columns: A list of categorical columns in the dataset.
-            :param measure_columns: A list of measure columns in the dataset.
-            :param sum_columns: A list of sum columns in the dataset.
-            :param avg_columns: A list of average columns in the dataset.
-            :param count_column: The name of the column that contains the count of rows in the dataset.
-            :param id_column: The name of the column that contains the unique identifier representing an individual.
-            :param idx: An optional index t
-
-        """
         self.source = source
         
         # must be a dataframe
         if not isinstance(source, pyspark.sql.dataframe.DataFrame):
-            raise TypeError("Source must be a Spark dataframe.")
+            raise TypeError("Source must be a Spark DataFrame.")
 
         # must be either aggregated or not, but no mix
         if len(sum_columns) > 0 or len(avg_columns) > 0:
@@ -74,6 +78,10 @@ class Dataset:
 
     @property
     def idx(self):
+        """The index of the dataset.  This is an optional index that can be used to compare
+            multiple runs of a privacy algorithm.  If not specified, the index will be the id 
+            of the source dataframe.
+        """
         if self.idx_ is None:
             return id(self.source)
         else:
@@ -82,10 +90,12 @@ class Dataset:
         return hash(self.id)
     @property
     def is_aggregated(self):
+        """True if the dataset is aggregated, False otherwise."""
         return self.count_column is not None
 
     @property
     def is_row_privacy(self):
+        """True if the dataset is row-level privacy, False otherwise."""
         if self.is_aggregated:
             return False
         if self.id_column is None:
@@ -93,7 +103,10 @@ class Dataset:
         else:
             return False
     
-    def aggregate(self):
+    def aggregate(self) -> 'Dataset':
+        """Aggregate the dataset if it is not already aggregated.  If the dataset is already aggregated,
+            this function returns the dataset unchanged. Returns a new Dataset object over the
+            aggregated dataframe."""
         if self.is_aggregated:
             return self
         grouped = self.source.groupBy(self.categorical_columns)
@@ -122,6 +135,10 @@ class Dataset:
             )
 
     def matches(self, other):
+        """Returns True if the other dataset has the same metadata as this one. Matching datasets
+            will not typically point to the same dataframe. Two different dataframes must have matching
+            metadata in order to compare them.
+        """
         if not isinstance(other, Dataset):
             return False
         return self.count_column == other.count_column and \

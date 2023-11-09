@@ -1,4 +1,4 @@
-from sneval import Metric
+from sneval import Metric, Dataset
 import json
 import os
 import subprocess
@@ -10,16 +10,42 @@ import csv
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 class Analyze:
+    """The Analysis class is used to analyze a dataset to provide information 
+        useful for planning a privacy mitigation. You pass in a dataset, call run(),
+        and then review the results.
+        
+        :param dataset:  The dataset to analyze. Must be a Dataset object, wrapping a Spark DataFrame.
+        :param workload: By default, Analyze will analyze one-way and two way marginals,
+            if you want to analyze specific marginals, you can pass them in as a list
+            of tuples, with each tuple containing the column names to include in the marginal.
+        :type workload: list, optional
+        :param metrics: If not specified, Analyze will compute a default set of metrics. To specify
+            a specific set of metrics, pass in as JSON here. See the documentation for more details.
+        :type metrics: dict, optional
+        :param run_len: The maximum marginal width to analyze. Defaults to 2. You may set this to
+            zero if you don't want to measure any marginal-based metrics, or if you only want to measure
+            the marginals you specified in the workload parameter.
+        :type run_len: int, optional
+        :param timeout: The maximum amount of time to spend computing all metrics. Defaults to None,
+            which means no timeout.
+        :type timeout: int, optional
+        :param max_retry: The maximum number of times to retry a metric computation if it fails.
+            Defaults to 3.
+        :type max_retry: int, optional
+        :param max_errors: The maximum number of errors to allow before giving up. Defaults to 100.
+        :type max_errors: int, optional
+    """
     def __init__(
             self, 
-            dataset, 
+            dataset : Dataset, 
             *ignore, 
             workload=[],
+            metrics={},
             run_len=2,
             timeout=None,
             max_retry=3,
             max_errors=100,
-            output_path=os.path.join(git_root_dir, "eval")
+            output_path="eval_output"
         ):
         self.dataset = dataset
         self.workload = workload
@@ -28,6 +54,7 @@ class Analyze:
         self.max_retry = max_retry
         self.max_errors = max_errors
         self.error_count = 0
+        self.metrics = metrics
         self.json_output_path = os.path.join(output_path, "analyze_output.json")
         self.csv_output_path = os.path.join(output_path, "analyze_output.csv")
 
@@ -81,6 +108,9 @@ class Analyze:
                 raise Exception(f"Exceeded the maximum error limit of {self.max_errors}")    
     
     def run(self):
+        """Run the analysis.  This will compute all metrics specified in the constructor, and
+            store the results as JSON
+        """
         metric_names = [name for name, obj in inspect.getmembers(BasicModule) 
                         if inspect.isclass(obj) and not name in ["SingleColumnMetric", "MultiColumnMetric"]]
         for wl in self.workload:

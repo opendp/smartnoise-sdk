@@ -2,6 +2,7 @@ from sneval import Metric
 import json
 import os
 import subprocess
+from sneval.dataset import Dataset
 import sneval.metrics.compare as CompareModule
 from .metrics.compare.base import CompareMetric
 import inspect
@@ -10,12 +11,40 @@ import csv
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 class Evaluate:
+    """The Evaluate class is is used to compare the original dataset with one or more synthetic
+        datasets or private synopses, to understand the utility impact of the privacy mitigations.
+
+        :param original_dataset: The original dataset to compare against. Must be a Dataset object, wrapping a Spark DataFrame.
+        :param synthetic_datasets: A list of synthetic datasets to compare against. Each dataset must be a Dataset object, wrapping a Spark DataFrame.
+        :param workload: By default, Analyze will analyze one-way and two way marginals,
+            if you want to analyze specific marginals, you can pass them in as a list
+            of tuples, with each tuple containing the column names to include in the marginal.
+        :type workload: list, optional
+        :param metrics: If not specified, Analyze will compute a default set of metrics. To specify
+            a specific set of metrics, pass in as JSON here. See the documentation for more details.
+        :type metrics: dict, optional
+        :param run_len: The maximum marginal width to analyze. Defaults to 2. You may set this to
+            zero if you don't want to measure any marginal-based metrics, or if you only want to measure
+            the marginals you specified in the workload parameter.
+        :type run_len: int, optional
+        :param timeout: The maximum amount of time to spend computing all metrics. Defaults to None,
+            which means no timeout.
+        :type timeout: int, optional
+        :param max_retry: The maximum number of times to retry a metric computation if it fails.
+            Defaults to 3.
+        :type max_retry: int, optional
+        :param max_errors: The maximum number of errors to allow before giving up. Defaults to 100.
+        :type max_errors: int, optional
+
+    """
+
     def __init__(
             self, 
-            original_dataset,
-            synthetic_datasets,
+            original_dataset : Dataset,
+            synthetic_datasets : list[Dataset],
             *ignore, 
             workload=[],
+            metrics={},
             run_len=2,
             timeout=None,
             max_retry=3,
@@ -25,6 +54,7 @@ class Evaluate:
         self.original_dataset = original_dataset
         self.synthetic_datasets = synthetic_datasets
         self.workload = workload
+        self.metrics = metrics
         self.run_len = run_len
         self.timeout = timeout
         self.max_retry = max_retry
@@ -72,6 +102,9 @@ class Evaluate:
         return results
     
     def run(self):
+        """Run the analysis.  This will compute all metrics specified in the constructor, and
+            store the results as JSON
+        """
         metric_names = [name for name, obj in inspect.getmembers(CompareModule) if inspect.isclass(obj) and name != "CompareMetric"]
         for wl in self.workload:
             names = wl.get("metrics", metric_names)

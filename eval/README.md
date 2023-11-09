@@ -21,26 +21,7 @@ Analyze provides metrics about a single dataset.
 * Individual Cardinalities
 * Dimensionality, Sparsity
 * Independencies
-* t-sne
 
-
-```python
-from sneval import Analyze
-
-analyze = Analyze(
-    source = "data.csv", # can be text file or df or parquet, or a spark session or database connection
-    table = None, # optional table name - required if source is a database or spark session
-    workload = [], # optional list of important queries
-    transformer = None, # optional TableTransformer
-    timeout = 60, # optional timeout for any analysis step
-    max_errors = 50, # optional maximum number of errors to ignore before failing
-    output_path = "analysis.json", # optional path to write analysis results
-    metadata = None, # optional metadata describing the columns
-)
-
-analyze.run()
-
-```
 
 ## Evaluate
 
@@ -53,10 +34,3 @@ Evaluate compares an original data file with one or more comparison files.  It c
 * Also do for user specified dimension combinations 
 * Report by bin size (e.g., < 1000, >= 1000) 
 * Mean proportional error by 1-way, 2-way, etc. 
-
-
-## Run
-
-```python
-from smartnoise.evaluation import Runner
-
