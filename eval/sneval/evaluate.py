@@ -7,6 +7,8 @@ import sneval.metrics.compare as CompareModule
 from .metrics.compare.base import CompareMetric
 import inspect
 import csv
+from itertools import combinations
+import gc
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -48,7 +50,7 @@ class Evaluate:
             run_len=2,
             timeout=None,
             max_retry=3,
-            max_errors=50,
+            max_errors=100,
             output_path=os.path.join(git_root_dir, "eval")
         ):
         self.original_dataset = original_dataset
@@ -93,13 +95,31 @@ class Evaluate:
         return False
 
     def _compute_metric(self, name, params):
-        metric_instance = Metric.create(name, **params)
-        results = []
-        for i, synth_dataset in enumerate(self.synthetic_datasets):
-            res = metric_instance.compute(self.original_dataset, synth_dataset)
-            res['data pair'] = f'0 - {i}'
-            results.append(res)
-        return results
+        if self._is_metric_computed(name, params):
+            pass
+        else:
+            metric_instance = Metric.create(name, **params)
+            for i, synth_dataset in enumerate(self.synthetic_datasets):
+                try:
+                    res = metric_instance.compute(self.original_dataset, synth_dataset)
+                    res['data pair'] = f'0 - {i}'
+                    self._save_intermediate_results([res])
+
+                    # If datasets are cached, unpersist them
+                    self.original_dataset.source.unpersist()
+                    synth_dataset.source.unpersist()
+                except Exception as e:
+                    self.error_count += 1
+                    error_result = {
+                        "name": name,
+                        "parameters": params,
+                        "value": None,
+                        "error": str(e),
+                        "data_pair": f'0 - {i}'
+                    }
+                    self._save_intermediate_results([error_result])          
+                if self.error_count > self.max_errors:
+                    raise Exception(f"Exceeded the maximum error limit of {self.max_errors}")
     
     def run(self):
         """Run the analysis.  This will compute all metrics specified in the constructor, and
@@ -108,49 +128,45 @@ class Evaluate:
         metric_names = [name for name, obj in inspect.getmembers(CompareModule) if inspect.isclass(obj) and name != "CompareMetric"]
         for wl in self.workload:
             names = wl.get("metrics", metric_names)
-            params = {}
-            params["categorical_columns"] = wl.get("categorical_columns")
-            if params["categorical_columns"] is None:
-                continue
-            params["measure_sum_columns"] = wl.get("measure_sum_columns")
-            params["edges"] = wl.get("edges", [1, 10, 100, 1000, 10000, 100000])
-            params["unknown_keyword"] = wl.get("unknown_keyword", "Unknown")
 
-            for name in names:
-                cls = getattr(CompareModule, name)
-                if not issubclass(cls, CompareMetric):
+            param_list = []
+            if not wl:  # do a default 2-way computation
+                param_list.append({"categorical_columns": self.original_dataset.categorical_columns})
+                n_way = self.run_len
+                while n_way >= 1:
+                    current_combs = [list(combo) for combo in combinations(self.original_dataset.categorical_columns, n_way)]
+                    for col_comb in current_combs:
+                        param_list.append({"categorical_columns": col_comb})
+                    n_way -= 1
+            else:
+                params = {}
+                params["categorical_columns"] = wl.get("categorical_columns")
+                if params["categorical_columns"] is None:
                     continue
+                params["measure_sum_columns"] = wl.get("measure_sum_columns")
+                params["edges"] = wl.get("edges", [1, 10, 100, 1000, 10000, 100000])
+                params["unknown_keyword"] = wl.get("unknown_keyword", "Unknown")
+                param_list.append(params)
 
-                if name in ["MeanAbsoluteError", "MeanProportionalError"]:
-                    if params["measure_sum_columns"] is None:
+
+            for par in param_list:
+                for name in names:
+                    cls = getattr(CompareModule, name)
+                    if not issubclass(cls, CompareMetric):
                         continue
-                    new_params = {k: params[k] for k in ["categorical_columns", "measure_sum_columns", "edges"] if k in params}
-                elif name in ["MeanAbsoluteErrorInCount", "MeanProportionalErrorInCount"]:
-                    new_params = {k: params[k] for k in ["categorical_columns", "edges"] if k in params}
-                elif name == "FabricatedCombinationCount":
-                    new_params = {k: params[k] for k in ["categorical_columns", "unknown_keyword"] if k in params} 
-                else:
-                    new_params = {"categorical_columns": params["categorical_columns"]} 
-
-                # is_metric_defined = name in vars(CompareModule) and isinstance(vars(CompareModule)[name], type)
-                if self._is_metric_computed(name, new_params):
-                    continue  # Skip this metric and move to the next
-
-                try:
-                    result = self._compute_metric(name, new_params)
-                    self._save_intermediate_results(result)
-                except Exception as e:
-                    self.error_count += 1
-                    error_result = {
-                        "name": name,
-                        "parameters": new_params,
-                        "value": None,
-                        "error": str(e)
-                    }
-                    self._save_intermediate_results([error_result])
-                if self.error_count > self.max_errors:
-                    raise Exception(f"Exceeded the maximum error limit of {self.max_errors}")
-                json_data = self._load_previous_results()
+                    new_par = {"categorical_columns": par["categorical_columns"]}
+                    if name in ["MeanAbsoluteError", "MeanProportionalError"]:
+                        if par.get("measure_sum_columns") is None:
+                            continue
+                        new_par["measure_sum_columns"] = par.get("measure_sum_columns")
+                        new_par["edges"] = par.get("edges", [1, 10, 100, 1000, 10000, 100000])
+                    elif name in ["MeanAbsoluteErrorInCount", "MeanProportionalErrorInCount"]:
+                        new_par["edges"] = par.get("edges", [1, 10, 100, 1000, 10000, 100000])
+                    elif name == "FabricatedCombinationCount":
+                        new_par["unknown_keyword"] = par.get("unknown_keyword", "Unknown")
+                    else:
+                        pass
+                    self._compute_metric(name, new_par)
         
         json_data = self._load_previous_results()
         csv_data = {}

@@ -6,6 +6,7 @@ import sneval.metrics.basic as BasicModule
 from .metrics.basic.base import SingleColumnMetric, MultiColumnMetric
 import inspect
 import csv
+from itertools import combinations
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
@@ -49,7 +50,7 @@ class Analyze:
         ):
         self.dataset = dataset
         self.workload = workload
-        self.run_len = run_len
+        self.run_len = run_len if run_len <= 3 else 2  # do 3-way computations at most
         self.timeout = timeout
         self.max_retry = max_retry
         self.max_errors = max_errors
@@ -95,6 +96,10 @@ class Analyze:
                 metric_instance = Metric.create(name, **params)
                 res = metric_instance.compute(self.dataset)
                 self._save_intermediate_results(res)
+
+                # If datasets are cached, unpersist them
+                if self.dataset.source.is_cached:
+                    self.dataset.source.unpersist()
             except Exception as e:
                 self.error_count += 1
                 error_result = {
@@ -113,37 +118,53 @@ class Analyze:
         """
         metric_names = [name for name, obj in inspect.getmembers(BasicModule) 
                         if inspect.isclass(obj) and not name in ["SingleColumnMetric", "MultiColumnMetric"]]
+        
+        def generate_params(column_names, metric_name):
+            if metric_name in ("BelowKCombs", "BelowKCount"):
+                return [{"column_names": column_names, "k": k} for k in (5, 10)]
+            return [{"column_names": column_names}]
+        
         for wl in self.workload:
             names = wl.get("metrics", metric_names)
-            params = {}
-            params["column_name"] = wl.get("column_name")
-            params["column_names"] = wl.get("column_names")
-            if params["column_name"] is None and params["column_names"] is None:
-                continue
 
-            for name in names:
-                # params = params["params"]
-                cls = getattr(BasicModule, name)
-                if issubclass(cls, SingleColumnMetric):
-                    if params["column_name"] is None:  # compute SingleColumnMetric for each col in column_names if column_name is not provided
-                        for col in params["column_names"]:
-                            new_params = {"column_name": col}
-                            self._compute_metric(name, new_params)
-                        continue
-                    else:         
-                        new_params = {"column_name": params["column_name"]}
-                elif issubclass(cls, MultiColumnMetric):
-                    new_params = {"column_names": params["column_names"]}
-                    if name in ("BelowK", "BelowKPercentage"):
-                        for k in (1, 5, 10):
-                            new_params["k"] = k
-                            self._compute_metric(name, new_params)
-                        continue
-                else:
-                    continue
+            param_list = []
+            if not wl:  # do a default 1-way and 2-way computation
+                param_list.append({"column_names": self.dataset.categorical_columns})
+                n_way = self.run_len
+                while n_way >= 1:
+                    if n_way >= 2:  # 2-way or 3-way metric computation
+                        current_combs = [list(combo) for combo in combinations(self.dataset.categorical_columns, n_way)]
+                        for col_comb in current_combs:
+                            param_list.append({"column_names": col_comb})
+                    else:  # 1-way metric computation
+                        for col in (self.dataset.categorical_columns + self.dataset.measure_columns + [self.dataset.count_column]):  
+                            param_list.append({"column_name": col})
+                    n_way -= 1
+            else:
+                if wl.get("column_names") is not None:
+                    param_list.append({"column_names": wl.get("column_names")})
+                if wl.get("column_name") is not None:    
+                    param_list.append({"column_name": wl.get("column_name")})
+                
 
-                # is_metric_defined = name in vars(BasicModule) and isinstance(vars(BasicModule)[name], type)
-                self._compute_metric(name, new_params)
+            for par in param_list:
+                for name in names:
+                    new_pars = []
+                    cls = getattr(BasicModule, name)
+                    if issubclass(cls, SingleColumnMetric):
+                        if "column_name" not in par:
+                            continue
+                        new_pars.append(par)
+                    elif issubclass(cls, MultiColumnMetric):
+                        if "column_names" not in par:
+                            continue
+                        new_pars.extend(generate_params(par["column_names"], name))
+                    else:
+                        continue
+
+                    # is_metric_defined = name in vars(BasicModule) and isinstance(vars(BasicModule)[name], type)
+                    for new_par in new_pars:
+                        self._compute_metric(name, new_par)
         
         json_data = self._load_previous_results()
         csv_data = {}

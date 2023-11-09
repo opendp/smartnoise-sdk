@@ -600,13 +600,13 @@ class Sparsity(MultiColumnMetric):
         response["value"] = self.distinct_count.compute(data)["value"] / self.dimensionality.compute(data)["value"]
         return response
 
-class BelowK(MultiColumnMetric):
+class BelowKCombs(MultiColumnMetric):
     """
-    Calculate the count of categorical combinations occurring below a specified threshold.
+    Calculate the count of categorical combinations that occur fewer than or equal to 'k' times.
 
-    This metric calculates the count of distinct combinations within the specified categorical columns
-    that occur below a specified threshold (k). It is useful for identifying the number of unique
-    combinations that are relatively less frequent in the data.
+    This metric calculates the count and percentage of distinct combinations within the specified 
+    categorical columns that occur below a specified threshold (k). It is useful for identifying 
+    the number of unique combinations that are relatively less frequent in the data.
 
     :param column_names: A list containing the column names for which the count will be calculated.
     :type column_names: list
@@ -619,24 +619,24 @@ class BelowK(MultiColumnMetric):
 
     .. code-block:: python
 
-        # Create an instance of the BelowK metric for columns 'A' and 'B' with a threshold of 5
-        below_k_metric = Metric.create("BelowK", column_names=["A", "B"], k=5)
+        # Create an instance of the BelowKCombs metric for columns 'A' and 'B' with a threshold of 5
+        below_k_metric = Metric.create("BelowKCombs", column_names=["A", "B"], k=5)
 
         # Compute the count of combinations occurring below the threshold in the dataset
         result = below_k_metric.compute(dataset)
 
-        print(result)  # {'name': 'BelowK', 'value': 7}
+        print(result)  # {'name': 'BelowKCombs', 'value': {'Count': 7, 'Percentage': 10.2}}
     """
     def __init__(self, column_names, k=10):
         if len(column_names) == 0:
-            raise ValueError("BelowK requires at least one column.")
+            raise ValueError("BelowKCombs requires at least one column.")
         super().__init__(column_names)
         self.k = k
     def param_names(self):
         return super().param_names() + ["k"]
     def compute(self, data):
         """
-        Compute the count of categorical combinations occurring below the specified threshold 'k'.
+        Compute the count and percentage of categorical combinations occurring below the specified threshold 'k'.
 
         :param data: The dataset to compute the count for.
         :type data: Dataset
@@ -645,15 +645,77 @@ class BelowK(MultiColumnMetric):
         """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
-        value = 0
+        
         if data.count_column is not None:
-            value = data.source.groupBy(*self.column_names).agg(F.sum(data.count_column).alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+            below_k_comb_count = data.source.groupBy(*self.column_names).agg(F.sum(data.count_column).alias("agg_count")).filter(f"agg_count < {self.k}").count()
         elif data.id_column is not None:
-            value = data.source.groupBy(*self.column_names).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+            below_k_comb_count = data.source.groupBy(*self.column_names).agg(F.countDistinct(data.id_column).alias("agg_count")).filter(f"agg_count < {self.k}").count()
         else:
-            value = data.source.groupBy(*self.column_names).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.k}").count()
+            below_k_comb_count = data.source.groupBy(*self.column_names).agg(F.count('*').alias("agg_count")).filter(f"agg_count < {self.k}").count()
+        below_k_comb_count = below_k_comb_count or 0
+
+        distinct_count = data.source.select(self.column_names).distinct().count()
         response = self.to_dict()
-        response["value"] = value
+        response["value"] = {"Count": below_k_comb_count, "Percentage": below_k_comb_count / distinct_count * 100}
+        return response
+
+class BelowKCount(MultiColumnMetric):
+    """
+    Aggregate the count for a specificed combinations that occur fewer than or equal to 'k' times.
+
+    This metric computes the sum of counts and its percentage for combinations from the specified categorical 
+    columns that appear less frequently than or equal to a given threshold (k). It provides insights into the 
+    cumulative distribution of rarer combinations in the dataset.
+
+    :param column_names: A list containing the column names for which the count will be calculated.
+    :type column_names: list
+    :param k: The threshold value. Combinations occurring less than 'k' times are counted.
+    :type k: int, optional (default=10)
+
+    :raises ValueError: If no columns are provided.
+
+    Example usage:
+
+    .. code-block:: python
+
+        # Create an instance of the BelowKCount metric for columns 'A' and 'B' with a threshold of 5
+        below_k_metric = Metric.create("BelowKCount", column_names=["A", "B"], k=5)
+        result = below_k_metric.compute(dataset)
+        print(result)  # {'name': 'BelowKCount', 'value': {'Count': 1052, 'Percentage': 8.1}}
+    """
+    def __init__(self, column_names, k=10):
+        if len(column_names) == 0:
+            raise ValueError("BelowKCount requires at least one column.")
+        super().__init__(column_names)
+        self.k = k
+    def param_names(self):
+        return super().param_names() + ["k"]
+    def compute(self, data):
+        """
+        Aggregate the count for a specificed combinations that occur fewer than or equal to 'k' times 
+        and compute its percentage.
+
+        :param data: The dataset to compute the count for.
+        :type data: Dataset
+        :return: A dictionary containing the computed count of combinations below the threshold 'k'.
+        :rtype: dict
+        """
+        if not set(self.column_names).issubset(set(data.categorical_columns)):
+            raise ValueError("Columns {} are not categorical.".format(self.column_names))
+
+        if data.count_column is not None:
+            below_k_agg = data.source.groupBy(*self.column_names).agg(F.sum(data.count_column).alias("agg_count")) \
+                        .filter(f"agg_count < {self.k}") \
+                        .select(F.sum("agg_count")).collect()
+            total_count = data.source.select(F.sum(data.count_column)).collect()[0][0]
+        else:
+            below_k_agg = data.source.groupBy(*self.column_names).agg(F.count('*').alias("agg_count")) \
+                        .filter(f"agg_count < {self.k}") \
+                        .select(F.sum("agg_count")).collect()
+            total_count = data.source.count()
+        below_k_agg_count = below_k_agg[0][0] if below_k_agg and below_k_agg[0][0] is not None else 0
+        response = self.to_dict()
+        response["value"] = {"Count": below_k_agg_count, "Percentage": below_k_agg_count / total_count * 100}
         return response
 
 class RowCount(MultiColumnMetric):
@@ -713,18 +775,15 @@ class DistinctCount(MultiColumnMetric):
         response["value"] = data.source.select(self.column_names).distinct().count()
         return response
 
-class BelowKPercentage(MultiColumnMetric):
+class SingledOutCount(MultiColumnMetric):
     """
-    Calculate the percentage of distinct combinations appearing fewer than 'k' times.
+    Calculate the count of combinations that are singled out or unique within the specified categorical columns.
 
-    This metric calculates the percentage of distinct combinations of values within the specified
-    categorical columns that appear fewer than 'k' times in the dataset. It provides insights into
-    the distribution and sparsity of unique combinations.
+    This metric determines the number of unique combinations of specified categorical columns. It's useful
+    for identifying the combinations that have a unique occurrence in the dataset.
 
-    :param column_names: A list containing the column names for which the percentage will be calculated.
+    :param column_names: A list containing the column names for which the unique combination count will be calculated.
     :type column_names: list
-    :param k: The threshold value for counting combinations. Combinations appearing fewer than 'k' times are considered.
-    :type k: int, optional
 
     :raises ValueError: If no columns are provided.
 
@@ -732,39 +791,39 @@ class BelowKPercentage(MultiColumnMetric):
 
     .. code-block:: python
 
-        # Create an instance of the BelowKPercentage metric for columns 'A' and 'B' with a threshold of 10
-        below_k_percentage_metric = Metric.create("BelowKPercentage", column_names=["A", "B"], k=10)
+        # Create an instance of the SingledOutCount metric for columns 'A' and 'B'
+        unique_count_metric = Metric.create("SingledOutCount", column_names=["A", "B"])
 
-        # Compute the percentage of distinct combinations appearing below the specified threshold in the dataset
-        result = below_k_percentage_metric.compute(dataset)
+        # Compute the count of unique combinations within the specified columns in the dataset
+        result = unique_count_metric.compute(dataset)
 
-        print(result)  # {'name': 'BelowKPercentage', 'value': 23.5}
+        print(result)  # {'name': 'SingledOutCount', 'value': {'Count': 7, 'Percentage': 14.0}}
     """
-    def __init__(self, column_names, k=10):
+    def __init__(self, column_names):
         if len(column_names) == 0:
-            raise ValueError("BelowKPercentage requires at least one column.")
+            raise ValueError("SingledCount requires at least one column.")
         super().__init__(column_names)
-        self.k = k
-        self.blow_k = BelowK(column_names, self.k)
-        self.distinct_count = DistinctCount(column_names)
-    def param_names(self):
-        return super().param_names() + ["k"]
     def compute(self, data):
         """
-        Compute the percentage of distinct combinations appearing fewer than 'k' times.
+        Compute the count of combinations that are singled out or unique within the specified categorical columns.
 
-        :param data: The dataset to compute the percentage for.
+        :param data: The dataset to compute the count for.
         :type data: Dataset
-
-        :return: A dictionary containing the computed percentage of distinct combinations appearing below 'k' times.
+        :return: A dictionary containing the computed count of unique combinations.
         :rtype: dict
-
-        :raises ValueError: If no columns are provided or if the columns are not categorical.
         """
         if not set(self.column_names).issubset(set(data.categorical_columns)):
             raise ValueError("Columns {} are not categorical.".format(self.column_names))
+
+        if data.count_column is not None:
+            unique_agg_count = data.source.groupBy(*self.column_names).agg(F.sum(data.count_column).alias("agg_count")).filter(f"agg_count == 1").count()
+            total_count = data.source.select(F.sum(data.count_column)).collect()[0][0]
+        else:
+            unique_agg_count = data.source.groupBy(*self.column_names).agg(F.count('*').alias("agg_count")).filter(f"agg_count == 1").count()
+            total_count = data.source.count()
+        unique_agg_count = unique_agg_count or 0
         response = self.to_dict()
-        response["value"] = self.blow_k.compute(data)["value"] / self.distinct_count.compute(data)["value"] * 100
+        response["value"] = {"Count": unique_agg_count, "Percentage": unique_agg_count / total_count * 100}
         return response
 
 class MostLinkable(MultiColumnMetric):
@@ -823,13 +882,14 @@ class MostLinkable(MultiColumnMetric):
         linkable_counts_dict = {}
         for col in self.column_names:
             if data.count_column is not None:
-                linkable_df = data.source.groupBy(col).agg(F.sum(data.count_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
+                linkable_df = data.source.groupBy(col).agg(F.sum(data.count_column).alias("agg_count")).filter(f"agg_count < {self.linkable_k}")
             elif data.id_column is not None:
-                linkable_df = data.source.groupBy(col).agg(F.countDistinct(data.id_column).alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")
+                linkable_df = data.source.groupBy(col).agg(F.countDistinct(data.id_column).alias("agg_count")).filter(f"agg_count < {self.linkable_k}")
             else:
-                linkable_df = data.source.groupBy(col).agg(F.count('*').alias("count_below_k")).filter(f"count_below_k < {self.linkable_k}")         
-            total_linkable_count = linkable_df.agg(F.sum("count_below_k").alias("total_count_below_k")).collect()[0]["total_count_below_k"]
-            linkable_counts_dict[col] = total_linkable_count if total_linkable_count else 0
+                linkable_df = data.source.groupBy(col).agg(F.count('*').alias("agg_count")).filter(f"agg_count < {self.linkable_k}")
+
+            linkable_counts_dict[col] = linkable_df.select(F.sum("agg_count")).collect()[0][0] or 0
+        
         # most_linkable_columns = dict(sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[:self.top_n])
         most_linkable_columns = dict([sorted(linkable_counts_dict.items(), key=lambda x: x[1], reverse=True)[0]])
         response = self.to_dict()
