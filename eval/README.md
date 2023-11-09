@@ -3,7 +3,7 @@
 The SmartNoise Evaluator is designed to help assess the privacy and accuracy of differentially private queries. It includes:
 
 * Analyze: Analyze a dataset and provide information about cardinality, data types, independencies, and other information that is useful for creating a privacy pipeline
-* Evaluator: Compares the privatized results to the true results and provides information about the accuracy and bias
+* Evaluate: Compares the privatized results to the true results and provides information about the accuracy and bias
 
 These tools currently require PySpark.
 
@@ -29,8 +29,9 @@ Evaluate compares an original data file with one or more comparison files.  It c
 
 * How many dimension combinations are suppressed 
 * How many dimension combinations are fabricated 
-* How many redacted rows (fully redacted vs. partly redacted) 
+* How many redacted rows (fully redacted vs. partly redacted)
+* Mean error in the count across categories by 1-way, 2-way, etc.
 * Mean absolute error by 1-way, 2-way, etc. up to reporting length
-* Also do for user specified dimension combinations 
-* Report by bin size (e.g., < 1000, >= 1000) 
+  * Also do for user specified dimension combinations 
+  * Report by bin size (e.g., < 1000, >= 1000) 
 * Mean proportional error by 1-way, 2-way, etc. 
