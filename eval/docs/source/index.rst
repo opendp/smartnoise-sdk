@@ -1,21 +1,50 @@
-Welcome
-=======
+===============
+SmartNoise Eval
+===============
 
-SmartNoise documentation is organized into the guides below.
-Return home by clicking the OpenDP logo in the header.
-Each section in the header bar corresponds to a top-level section below.
-When you are in a top-level section, the left panel contains a table of contents for the section,
-and the right panel contains a table of contents for the current document.
-Documentation for past releases are available in the drop down on the left panel.
-In addition to browsing, you can :ref:`search <search>`.
+This library contains two primary components:
 
-.. toctree::
-  :glob:
-  :titlesonly:
-  :maxdepth: 2
+1. `Analyze`: Analyzes your source data to help you decide the best approach to producing synthetic data or private synopsis. Gives information on dimensionality, sparsity, and distribution of your data.
 
-  quickstart
-  API <api/index>
+2. `Evaluate`: Evaluates the quality of your synthetic data or private synopsis. Compares the original data with the synthetic data or private synopsis to give you a sense of how well the synthetic data or private synopsis preserves the original data.
+
+.. contents:: Table of Contents
+  :local:
+  :depth: 3
+
+Getting Started
+===============
+
+
+API Reference
+=============
+
+Analyze
+-------
+
+.. autoclass:: sneval.Analyze
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Dataset
+-------
+
+.. autoclass:: sneval.Dataset
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Evaluate
+--------
+
+.. autoclass:: sneval.Evaluate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+
 
 This is version |version| of the guides, last built on |today|.
 

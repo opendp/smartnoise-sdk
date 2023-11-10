@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 # We're inside source when this runs.
-sys.path.append(os.path.abspath('../../python/src'))
+sys.path.append(os.path.abspath('../..'))
 # print("*****************************************")
 # [print(p) for p in sys.path]
 # print("*****************************************")
@@ -62,7 +62,7 @@ pygments_style = 'sphinx'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> Documentation".
-html_title = 'OpenDP SmartNoise'
+html_title = 'OpenDP SmartNoise Eval'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -74,7 +74,12 @@ html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
+html_theme = 'pydata_sphinx_theme'
+
 html_theme_options = {
+    "logo": {
+        "link": "http://docs.smartnoise.org"
+    },
     "icon_links": [
         {
             "name": "GitHub Discussions",
@@ -83,10 +88,8 @@ html_theme_options = {
         },
     ],
     "twitter_url": "https://twitter.com/opendp_org",
-    "github_url": "https://github.com/opendp/smartnoise"
+    "github_url": "https://github.com/opendp/smartnoise-sdk"
 }
-
-html_theme = 'pydata_sphinx_theme'
 
 # See https://pydata-sphinx-theme.readthedocs.io/en/v0.6.3/user_guide/configuring.html#configure-the-sidebar
 # Note: Overridden in the Makefile for local builds. Be sure to update both places.
@@ -127,7 +130,7 @@ smv_prebuild_command = '&&'.join([version_cmd, sphinx_apidoc_cmd])
 #html_file_suffix = None
 htmlhelp_basename = 'OpenDPdoc'
 
-# html_logo = "_static/images/opendp-logo.png"
+html_logo = "_static/images/smartnoise-logo.svg"
 
 rst_prolog = """
 .. |toctitle| replace:: Contents:

@@ -1,27 +1,37 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8-blue)](https://www.python.org/)
+# SmartNoise Evaluator
 
-<a href="https://smartnoise.org"><img src="https://github.com/opendp/smartnoise-sdk/raw/main/images/SmartNoise/SVG/Logo%20Mark_grey.svg" align="left" height="65" vspace="8" hspace="18"></a>
+The SmartNoise Evaluator is designed to help assess the privacy and accuracy of differentially private queries. It includes:
 
-## SmartNoise Stochastic Evaluator
+* Analyze: Analyze a dataset and provide information about cardinality, data types, independencies, and other information that is useful for creating a privacy pipeline
+* Evaluate: Compares the privatized results to the true results and provides information about the accuracy and bias
 
-Tests differential privacy algorithms for privacy, accuracy, and bias.  Privacy tests are based on the method described in [section 5.3 of this paper](https://arxiv.org/pdf/1909.01917.pdf).
+These tools currently require PySpark.
 
-## Installation
+## Analyze
 
-```
-pip install smartnoise-eval
-```
+Analyze provides metrics about a single dataset.
 
-## Communication
+* Percent of all dimension combinations that are unique, k < 5 and k < 10 (Count up to configurable “reporting length”)
+* Report which columns are “most linkable”
+* Marginal histograms up to n-way -- choose default with reasonable size (e.g. 10 per marginal, and up to 20 marginals -- allow override).  Trim and encode labels.
+* Number of rows
+* Number of distinct rows
+* Count, Mean, Variance, Min, Max, Median, Percentiles for each marginal
+* Classification AUC
+* Individual Cardinalities
+* Dimensionality, Sparsity
+* Independencies
 
-- You are encouraged to join us on [GitHub Discussions](https://github.com/opendp/opendp/discussions/categories/smartnoise)
-- Please use [GitHub Issues](https://github.com/opendp/smartnoise-sdk/issues) for bug reports and feature requests.
-- For other requests, including security issues, please contact us at [smartnoise@opendp.org](mailto:smartnoise@opendp.org).
 
-## Releases and Contributing
+## Evaluate
 
-Please let us know if you encounter a bug by [creating an issue](https://github.com/opendp/smartnoise-sdk/issues).
+Evaluate compares an original data file with one or more comparison files.  It can compare any of the single-file metrics computed in `Analyze` as well as a number of metrics that involve two datasets.  When more than one comparison dataset is provided, we can provide all of the two-way comparisons with the original, and allow the consumer to combine these measures (e.g. average over all datasets)
 
-We appreciate all contributions. We welcome pull requests with bug-fixes without prior discussion.
-
-If you plan to contribute new features, utility functions or extensions to this system, please first open an issue and discuss the feature with us.
+* How many dimension combinations are suppressed 
+* How many dimension combinations are fabricated 
+* How many redacted rows (fully redacted vs. partly redacted)
+* Mean error in the count across categories by 1-way, 2-way, etc.
+* Mean absolute error by 1-way, 2-way, etc. up to reporting length
+  * Also do for user specified dimension combinations 
+  * Report by bin size (e.g., < 1000, >= 1000) 
+* Mean proportional error by 1-way, 2-way, etc. 

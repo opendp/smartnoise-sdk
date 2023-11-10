@@ -29,6 +29,14 @@ cp -R build/html /tmp/docs/en/stable/synth
 make clean
 cd ../..
 
+cd eval
+pip install -e .
+cd docs
+make html
+cp -R build/html /tmp/docs/en/stable/eval
+make clean
+cd ../..
+
 open /tmp/docs/index.html
 
 
