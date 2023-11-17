@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, TypeAlias, Union
+from typing import TYPE_CHECKING, Iterable, Union
 import yaml
 import io
 from os import path
@@ -363,7 +363,7 @@ class Unknown:
     def unbounded(self):
         return True
 
-Column: TypeAlias = Union[Boolean, DateTime, Int, Float, String, Unknown]
+Column = Union[Boolean, DateTime, Int, Float, String, Unknown]
 
 class CollectionYamlLoader:
     def __init__(self, file: Union[Path, str, io.IOBase]) -> None:
