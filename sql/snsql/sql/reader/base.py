@@ -14,7 +14,7 @@ class SqlReader(Reader):
             if str(eng).lower() == engine.lower():
                 prefix = str(eng)
         if prefix == "":
-            return SqlReader()  # should this throw?
+            return SqlReader  # should this throw?
         else:
             mod_path = f"snsql.sql.reader.{Engine.class_map[prefix]}"
             module = importlib.import_module(mod_path)
