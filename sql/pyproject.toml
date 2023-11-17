@@ -19,7 +19,16 @@ sqlalchemy = "^2.0.0"
 pandas = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
+pyright = "^1"
 
 [build-system]
 requires = ["setuptools", "poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+# These are the only files for which, so far, we have checked that pyright passes.
+# To be expanded as more type hints are added.
+include = [
+    "snsql/metadata.py",
+    "snsql/sql/reader/base.py",
+]
