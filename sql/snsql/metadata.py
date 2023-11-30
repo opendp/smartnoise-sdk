@@ -1,7 +1,12 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Union
 import yaml
 import io
 from os import path
 import warnings
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from pathlib import Path
 
 from snsql.sql.reader.base import NameCompare
 
@@ -10,7 +15,7 @@ from snsql.sql.reader.base import NameCompare
 class Metadata:
     """Information about a collection of tabular data sources"""
 
-    def __init__(self, tables, engine=None, compare=None, dbname=None):
+    def __init__(self, tables: Iterable[Table], engine=None, compare=None, dbname=None):
         """Instantiate a metadata object with information about tabular data sources
 
         :param tables: A list of Table descriptions
@@ -25,7 +30,7 @@ class Metadata:
         self.compare = NameCompare.get_name_compare(engine) if compare is None else compare
         self.dbname = dbname if dbname else None
 
-    def __getitem__(self, tablename):
+    def __getitem__(self, tablename: str):
         schema_name = ""
         dbname = ""
         parts = tablename.split(".")
@@ -72,19 +77,19 @@ class Metadata:
         return self.tables()
 
     @staticmethod
-    def from_file(file):
+    def from_file(file: Union[str, io.IOBase]) -> Metadata:
         """Load the metadata about this collection from a YAML file"""
         ys = CollectionYamlLoader(file)
         return ys.read_file()
 
     @staticmethod
-    def from_dict(schema_dict):
+    def from_dict(schema_dict: dict):
         """Load the metadata from a dict object"""
         ys = CollectionYamlLoader("dummy")
         return ys._create_metadata_object(schema_dict)
 
     @classmethod 
-    def from_(cls, val):
+    def from_(cls, val : Union[Metadata, str, io.IOBase, dict]):
         if isinstance(val, Metadata):
             return val
         elif isinstance(val, (str, io.IOBase)):
@@ -109,9 +114,9 @@ class Table:
         self,
         schema,
         name,
-        columns,
+        columns: Iterable[Column],
         *ignore,
-        rowcount=0,
+        rowcount:int=0,
         rows_exact=None,
         row_privacy=False,
         max_ids=1,
@@ -147,8 +152,11 @@ class Table:
 
         if clamp_columns:
             for col in self.m_columns.values():
-                if col.typename() in ["int", "float"] and (col.lower is None or col.upper is None):
-                    if col.sensitivity is not None:
+                if (
+                    col.typename() in ["int", "float"]
+                    and (col.lower is None or col.upper is None)  # type: ignore
+                    and col.sensitivity is not None  # type: ignore
+                ):
                         raise ValueError(
                             f"Column {col.name} has sensitivity and no bounds, but table specifies clamp_columns. "
                             "clamp_columns should be False, or bounds should be provided."
@@ -355,11 +363,13 @@ class Unknown:
     def unbounded(self):
         return True
 
+Column = Union[Boolean, DateTime, Int, Float, String, Unknown]
+
 class CollectionYamlLoader:
-    def __init__(self, file):
+    def __init__(self, file: Union[Path, str, io.IOBase]) -> None:
         self.file = file
 
-    def read_file(self):
+    def read_file(self) -> Metadata:
         if isinstance(self.file, io.IOBase):
             try:
                 c_s = yaml.safe_load(self.file)
@@ -376,7 +386,7 @@ class CollectionYamlLoader:
                     raise
             return self._create_metadata_object(c_s)
 
-    def _create_metadata_object(self, c_s):
+    def _create_metadata_object(self, c_s: Mapping) -> Metadata:
         if not hasattr(c_s, "keys"):
             raise ValueError("Metadata must be a YAML dictionary")
         keys = list(c_s.keys())
@@ -407,7 +417,7 @@ class CollectionYamlLoader:
 
         return Metadata(tables, engine, dbname=collection)
 
-    def load_table(self, schema, table, t):
+    def load_table(self, schema, table, t) -> Table:
         rowcount = int(t["rows"]) if "rows" in t else 0
         rows_exact = int(t["rows_exact"]) if "rows_exact" in t else None
         row_privacy = bool(t["row_privacy"]) if "row_privacy" in t else False
@@ -453,7 +463,7 @@ class CollectionYamlLoader:
             censor_dims=censor_dims,
         )
 
-    def load_column(self, column, c):
+    def load_column(self, column, c) -> Column:
         lower = float(c["lower"]) if "lower" in c else None
         upper = float(c["upper"]) if "upper" in c else None
         is_key = False if "private_id" not in c else bool(c["private_id"])
@@ -492,7 +502,7 @@ class CollectionYamlLoader:
         else:
             raise ValueError("Unknown column type for column {0}: {1}".format(column, c))
 
-    def write_file(self, collection_metadata, collection_name):
+    def write_file(self, collection_metadata, collection_name) -> None:
 
         engine = collection_metadata.engine
         schemas = {}
