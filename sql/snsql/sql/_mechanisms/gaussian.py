@@ -1,20 +1,19 @@
 import math
-from opendp.transformations import make_bounded_sum, make_clamp
-from opendp.mod import binary_search_param, enable_features
-from opendp.measurements import make_base_discrete_gaussian, make_base_gaussian
+from opendp.mod import enable_features
+from opendp.measurements import make_gaussian
 from opendp.accuracy import gaussian_scale_to_accuracy
-from opendp.combinators import make_zCDP_to_approxDP, make_fix_delta
 from opendp.typing import set_default_int_type
 from .base import AdditiveNoiseMechanism, Mechanism
 from .normal import _normal_dist_inv_cdf
+import opendp.prelude as dp
 
-class DiscreteGaussian(AdditiveNoiseMechanism):
+class Gaussian(AdditiveNoiseMechanism):
     def __init__(
             self, epsilon, *ignore, delta, sensitivity=None, max_contrib=1, upper=None, lower=None, **kwargs
         ):
         super().__init__(
                 epsilon,
-                mechanism=Mechanism.discrete_gaussian,
+                mechanism=Mechanism.gaussian,
                 delta=delta,
                 sensitivity=sensitivity,
                 max_contrib=max_contrib,
@@ -38,17 +37,21 @@ class DiscreteGaussian(AdditiveNoiseMechanism):
         if rough_scale > 10_000_000:
             raise ValueError(f"Noise scale is too large using epsilon={self.epsilon} and bounds ({lower}, {upper}) with {self.mechanism}.  Try preprocessing to reduce senstivity, or try different privacy parameters.")
         enable_features('floating-point', 'contrib')
-        bounded_sum = (
-            make_clamp(bounds=bounds) >>
-            make_bounded_sum(bounds=bounds)
-        )
+
+        input_domain = dp.vector_domain(dp.atom_domain(T=float))
+        input_metric = dp.symmetric_distance()
+
+        bounded_sum = (input_domain, input_metric) >> dp.t.then_clamp(bounds=bounds) >> dp.t.then_sum()
+        
         try:
-            def make_dp_sum(scale):
-                adp = make_zCDP_to_approxDP(make_base_gaussian(scale))
-                return bounded_sum >> make_fix_delta(adp, delta=self.delta)
-            discovered_scale = binary_search_param(
-                lambda s: make_dp_sum(scale=s),
-                d_in=1,
+            def make_adp_sum(scale):
+                dp_sum = bounded_sum >> dp.m.then_gaussian(scale)
+                adp_sum = dp.c.make_zCDP_to_approxDP(dp_sum)
+                return dp.c.make_fix_delta(adp_sum, delta=self.delta)
+
+            discovered_scale = dp.binary_search_param(
+                lambda s: make_adp_sum(scale=s),
+                d_in=max_contrib,
                 d_out=(self.epsilon, self.delta))
         except Exception as e:
             raise ValueError(f"Unable to find appropriate noise scale for with {self.mechanism} with epsilon={self.epsilon} and bounds ({lower}, {upper}).  Try preprocessing to reduce senstivity, or try different privacy parameters.\n{e}")
@@ -65,8 +68,8 @@ class DiscreteGaussian(AdditiveNoiseMechanism):
         enable_features('contrib')
         bit_depth = self.bit_depth
         set_default_int_type(f"i{bit_depth}")
-        meas = make_base_discrete_gaussian(self.scale)
-        vals = [meas(int(round(v))) for v in vals]
+        meas = make_gaussian(dp.atom_domain(T=float), dp.absolute_distance(T=float), self.scale)
+        vals = [meas(float(v)) for v in vals]
         return vals
     def accuracy(self, alpha):
         bit_depth = self.bit_depth

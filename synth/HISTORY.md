@@ -1,3 +1,7 @@
+# SmartNoise Synth v1.0.3 Release Notes
+
+* Switch to use SmartNoise SQL v1.0.3
+
 # SmartNoise Synth v1.0.2 Release Notes
 
 * Switch to use SmartNoise SQL v1.0.2

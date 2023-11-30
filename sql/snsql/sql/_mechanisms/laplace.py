@@ -1,10 +1,12 @@
 import math
 
-from opendp.transformations import make_bounded_sum, make_clamp
+from opendp.transformations import make_sum, make_clamp
 from .base import AdditiveNoiseMechanism, Mechanism
 from opendp.mod import binary_search_param, enable_features
-from opendp.measurements import make_base_laplace
+from opendp.measurements import make_laplace
 from opendp.accuracy import laplacian_scale_to_accuracy
+
+import opendp.prelude as dp
 
 class Laplace(AdditiveNoiseMechanism):
     def __init__(
@@ -35,13 +37,15 @@ class Laplace(AdditiveNoiseMechanism):
         search_lower = rough_scale / 10E+6
 
         enable_features('floating-point', 'contrib')
-        bounded_sum = (
-            make_clamp(bounds=bounds) >>
-            make_bounded_sum(bounds=bounds)
-        )
+
+        input_domain = dp.vector_domain(dp.atom_domain(T=float))
+        input_metric = dp.symmetric_distance()
+
+        bounded_sum = (input_domain, input_metric) >> dp.t.then_clamp(bounds=bounds) >> dp.t.then_sum()
+        
         try:
             discovered_scale = binary_search_param(
-                lambda s: bounded_sum >> make_base_laplace(scale=s),
+                lambda s: bounded_sum >> dp.m.then_laplace(s),
                 bounds=(search_lower, search_upper),
                 d_in=max_contrib,
                 d_out=(self.epsilon))
@@ -60,7 +64,9 @@ class Laplace(AdditiveNoiseMechanism):
         return thresh
     def release(self, vals):
         enable_features('floating-point', 'contrib')
-        meas = make_base_laplace(self.scale)
+        input_domain = dp.atom_domain(T=float)
+        input_metric = dp.absolute_distance(T=float)
+        meas = make_laplace(input_domain, input_metric, self.scale)
         vals = [meas(float(v)) for v in vals]
         return vals
     def accuracy(self, alpha):

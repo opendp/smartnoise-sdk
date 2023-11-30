@@ -1,6 +1,7 @@
 import numpy as np
 from opendp.mod import enable_features
-from opendp.measurements import make_base_laplace
+from opendp.measurements import make_laplace
+import opendp.prelude as dp
 
 def approx_bounds(vals, epsilon):
     """Estimate the minimium and maximum values of a list of values.
@@ -56,7 +57,10 @@ def approx_bounds(vals, epsilon):
     enable_features('floating-point', 'contrib')
     discovered_scale = 1.0 / epsilon
 
-    meas = make_base_laplace(discovered_scale)
+    input_domain = dp.atom_domain(T=float)
+    input_metric = dp.absolute_distance(T=float)
+
+    meas = make_laplace(input_domain, input_metric, discovered_scale)
     hist = [meas(v) for v in hist]
     n_bins = len(hist)
 

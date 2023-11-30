@@ -1,6 +1,5 @@
 from .laplace import Laplace
-from .discrete_laplace import DiscreteLaplace
-from .discrete_gaussian import DiscreteGaussian
+from .gaussian import Gaussian
 from .base import Mechanism, Unbounded
 
-__all__ = ["Laplace", "DiscreteLaplace", "DiscreteGaussian", "Mechanism", "Unbounded",]
+__all__ = ["Laplace", "Gaussian", "Mechanism", "Unbounded",]

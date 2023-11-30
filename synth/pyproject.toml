@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smartnoise-synth"
-version = "1.0.2"
+version = "1.0.3"
 description = "Differentially Private Synthetic Data"
 authors = ["SmartNoise Team <smartnoise@opendp.org>"]
 license = "MIT"
@@ -11,11 +11,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.7,<=3.11"
-opendp = "^0.7.0"
 opacus = "^0.14.0"
 torch = "<2.0.0"
 pac-synth = "^0.0.8"
-smartnoise-sql = "^1.0.2"
+smartnoise-sql = "^1.0.3"
 Faker = "^15.0.0"
 
 [tool.poetry.dev-dependencies]

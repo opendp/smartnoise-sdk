@@ -99,7 +99,7 @@ class TestQueryThresholds:
             for d in max_contribs:
                 for delta in deltas:
                     privacy = Privacy(epsilon=eps, delta=delta)
-                    privacy.mechanisms.map[Stat.threshold] = Mechanism.discrete_gaussian
+                    privacy.mechanisms.map[Stat.threshold] = Mechanism.gaussian
                     # crude smoke test; compare threshold from discrete gaussian to threshold from gaussian,
                     # and check that the threshold isn't widly different
                     gaus_scale = math.sqrt(d) * math.sqrt(2 * math.log(1.25/delta))/eps
