@@ -1,3 +1,8 @@
+# SmartNoise SQL v1.0.3 Release Notes
+
+* Upgrade to OpenDP v0.8.0
+* Better type hints (thanks, @mhauru!)
+
 # SmartNoise SQL v1.0.2 Release Notes
 
 * Fix privacy bug in approx_bounds (thanks, @TedTed)

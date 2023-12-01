@@ -112,7 +112,7 @@ You can override the default mechanisms used for differentially private summary 
     privacy = Privacy(epsilon=1.0)
     print(f"We default to using {privacy.mechanisms.map[Stat.count]} for counts.")
     print("Switching to use gaussian")
-    privacy.mechanisms.map[Stat.count] = Mechanism.discrete_gaussian
+    privacy.mechanisms.map[Stat.count] = Mechanism.gaussian
 
 The list of statistics that can be mapped is in the ``Stat`` enumeration, and the mechanisms available are listed in the ``Mechanism`` enumeration.  The ``AVG`` sumamry statistic is computed from a sum and a count, each of which can be overriden.
 

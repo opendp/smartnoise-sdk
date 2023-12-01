@@ -120,24 +120,15 @@ class PrivateReader(Reader):
         """
         mechs = self.privacy.mechanisms
         tables = self.metadata.tables()
-        floats = []
         large_ints = []
         large = mechs.large
         for table in tables:
             for col in table.columns():
-                if col.typename() == 'float':
-                    floats.append(col.name)
-                elif col.typename() == 'int' and not col.unbounded:
+                if col.typename() == 'int' and not col.unbounded:
                     if col.sensitivity and col.sensitivity >= large:
                         large_ints.append(col.name)
                     elif col.upper - col.lower >= large:
                         large_ints.append(col.name)
-        if floats:
-            warnings.warn(
-f"""The following columns are of type float: {', '.join(floats)}. 
-summary statistics over floats will use {mechs.map[Stat.sum_float]}, which is not floating-point safe, 
-This could lead to privacy leaks."""
-            )
     def _grouping_columns(self, query: Query):
         """
         Return a vector of boolean corresponding to the columns of the

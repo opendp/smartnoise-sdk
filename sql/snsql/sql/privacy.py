@@ -15,9 +15,9 @@ class Mechanisms:
     def __init__(self):
         self.classes = {
             Mechanism.laplace: Laplace,
-            Mechanism.geometric: DiscreteLaplace,
-            Mechanism.discrete_laplace: DiscreteLaplace,
-            Mechanism.discrete_gaussian: DiscreteGaussian
+            Mechanism.geometric: Laplace,
+            Mechanism.discrete_laplace: Laplace,
+            Mechanism.gaussian: Gaussian
         }
         self.large = 1000
         self.map = {
