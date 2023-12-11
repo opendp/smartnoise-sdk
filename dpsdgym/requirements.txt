@@ -1,7 +1,7 @@
 pyemd
 imblearn
 scipy
-mlflow==2.8.1
+mlflow==2.9.0
 diffprivlib
 pandas==0.25.3
 opacus
