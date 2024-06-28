@@ -133,7 +133,7 @@ class AIMSynthesizer(Synthesizer):
         domain = Domain(colnames, cards)
         self.num_rows = len(data)
 
-        self.rho = 0 if self.delta == 0 else cdp_rho(self.epsilon, self.delta)
+        self.rho = 0.0 if self.delta == 0.0 else cdp_rho(self.epsilon, self.delta)
 
         data = pd.DataFrame(train_data, columns=colnames)
         data = Dataset(df=data, domain=domain)

@@ -5,8 +5,7 @@ class Mechanism(Enum):
     # gaussian = 1
     laplace = 2
     geometric = 3 # discrete laplace
-    # analytic_gaussian = 4
-    discrete_gaussian = 5
+    gaussian = 5
     discrete_laplace = 6
 
 class AdditiveNoiseMechanism:
