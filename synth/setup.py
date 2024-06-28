@@ -16,11 +16,11 @@ package_data = \
 {'': ['*']}
 
 install_requires = \
-['Faker>=15.0.0,<16.0.0',
+['Faker>=17.0.0',
  'opacus>=0.14.0,<0.15.0',
  'opendp>=0.7.0,<0.8.0',
  'pac-synth>=0.0.8,<0.0.9',
- 'smartnoise-sql>=1.0.1,<2.0.0',
+ 'smartnoise-sql>=1.0.2,<2.0.0',
  'torch<2.0.0']
 
 setup_kwargs = {
