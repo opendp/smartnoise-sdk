@@ -1,4 +1,3 @@
-from numpy.lib.arraysetops import isin
 from snsql._ast.tokens import *
 import numpy as np
 import operator
