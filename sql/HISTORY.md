@@ -1,3 +1,7 @@
+# SmartNoise SQL v1.0.4 Release Notes
+
+* Upgrade to OpenDP v0.10.0
+
 # SmartNoise SQL v1.0.3 Release Notes
 
 * Upgrade to OpenDP v0.8.0
