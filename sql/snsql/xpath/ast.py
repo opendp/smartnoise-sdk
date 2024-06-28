@@ -1,7 +1,6 @@
 from typing import Union, Sequence, Iterable
 import operator
 import numpy as np
-from numpy.lib.arraysetops import isin
 from pandas.core.indexing import IndexSlice
 
 ops = {
