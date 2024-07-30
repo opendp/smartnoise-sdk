@@ -4,6 +4,7 @@ import os
 import pytest
 import pandas as pd
 
+
 from diffprivlib.models import LogisticRegression as DPLR
 
 from snsynth.pytorch import PytorchDPSynthesizer
@@ -24,8 +25,8 @@ del df["income"]
 
 
 @pytest.mark.torch
-class TestQUAIL:
-    def setup(self):
+class TestQUAIL():
+    def setup_method(self):
         def QuailClassifier(epsilon):
             return DPLR(epsilon=epsilon)
 

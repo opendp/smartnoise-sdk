@@ -4,6 +4,7 @@ import os
 import pytest
 import pandas as pd
 
+
 from snsynth.pytorch import PytorchDPSynthesizer
 from snsynth.pytorch.nn import DPGAN, DPCTGAN, PATECTGAN
 from snsynth.transform.table import TableTransformer
@@ -26,8 +27,8 @@ nf_non_continuous = df_non_continuous.to_numpy()
 
 
 @pytest.mark.torch
-class TestPytorchDPSynthesizer_DPGAN:
-    def setup(self):
+class TestPytorchDPSynthesizer_DPGAN():
+    def setup_method(self):
         self.dpgan = PytorchDPSynthesizer(1.0, DPGAN(), None)
 
     def test_fit(self):
@@ -52,8 +53,8 @@ class TestPytorchDPSynthesizer_DPGAN:
         assert synth_data.shape == df_continuous.shape
 
 
-class TestPytorchDPSynthesizer_DPCTGAN:
-    def setup(self):
+class TestPytorchDPSynthesizer_DPCTGAN():
+    def setup_method(self):
         self.dpctgan = PytorchDPSynthesizer(1.0, DPCTGAN(), None)
 
     def test_fit(self):
@@ -81,8 +82,8 @@ class TestPytorchDPSynthesizer_DPCTGAN:
         dpctgan.train(nf_non_continuous, preprocessor_eps=0.5, categorical_columns=[0, 1, 2, 3])
 
 
-class TestPytorchDPSynthesizer_PATECTGAN:
-    def setup(self):
+class TestPytorchDPSynthesizer_PATECTGAN():
+    def setup_method(self):
         self.patectgan = PytorchDPSynthesizer(1.0, PATECTGAN(), None)
 
     def test_fit(self):
@@ -106,8 +107,8 @@ class TestPytorchDPSynthesizer_PATECTGAN:
         assert synth_data.shape == df.shape
 
 
-class TestPytorchDPSynthesizer_PATECTDRAGAN:
-    def setup(self):
+class TestPytorchDPSynthesizer_PATECTDRAGAN():
+    def setup_method(self):
         self.patectgan = PytorchDPSynthesizer(
             1.0, PATECTGAN(regularization="dragan"), None
         )

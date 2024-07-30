@@ -5,6 +5,7 @@ import pytest
 import string
 import pandas as pd
 
+
 # try:
 from snsynth.pytorch import PytorchDPSynthesizer
 from snsynth.pytorch.nn import PATEGAN
@@ -21,8 +22,8 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS_pid.csv"))
 df = pd.read_csv(csv_path)
 
 @pytest.mark.torch
-class TestDPGAN:
-    def setup(self):
+class TestDPGAN():
+    def setup_method(self):
         self.pategan = PytorchDPSynthesizer(1.0, PATEGAN(1.0), None)
 
     def test_fit(self):

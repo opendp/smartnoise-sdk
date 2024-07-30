@@ -1,3 +1,10 @@
+# SmartNoise Synth v1.0.4 Release Notes
+
+* Use newer faker versions
+* Support Python 3.12
+* Switch to use SmartNoise SQL v1.0.4
+* Switch to torch >=2.2.0
+
 # SmartNoise Synth v1.0.3 Release Notes
 
 * Switch to use SmartNoise SQL v1.0.3

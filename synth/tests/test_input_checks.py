@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 from snsynth.pytorch import PytorchDPSynthesizer
 from snsynth.pytorch.nn import PATECTGAN, PATEGAN
 
@@ -13,7 +14,7 @@ np_data_xy = (
 )
 
 
-class TestDPGANInputChecks:
+class TestDPGANInputChecks():
     def test_train_patectgan_continuous(self):
         dpgan = PATECTGAN(epsilon=eps, batch_size=batch_size)
         try:

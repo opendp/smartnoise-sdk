@@ -9,7 +9,7 @@ class TestAIM(TestCase):
     aim = None
 
     @classmethod
-    def setUpClass(cls) -> None:
+    def setup_class(cls) -> None:
         cls.example_df = pd.read_csv(cls.input_data_path)
         cls.aim = AIMSynthesizer()
 
