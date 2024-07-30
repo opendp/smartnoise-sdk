@@ -10,7 +10,7 @@ repository = "https://github.com/opendp/smartnoise-sdk"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.13"
+python = ">=3.9,<3.13"
 opacus = "^0.14.0"
 torch = {version = ">=2.2.0", optional = true}
 pac-synth = "^0.0.8"
