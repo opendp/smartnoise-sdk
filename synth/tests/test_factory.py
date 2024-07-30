@@ -2,6 +2,7 @@ import os
 import subprocess
 import pandas as pd
 from sklearn import preprocessing
+from unittest import TestCase
 from snsynth import *
 
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
@@ -10,7 +11,7 @@ csv_path = os.path.join(git_root_dir, os.path.join("datasets", "PUMS.csv"))
 
 df = pd.read_csv(csv_path, index_col=None)
 
-class TestFactory:
+class TestFactory(TestCase):
     def test_create_empty(self):
         for synth in Synthesizer.list_synthesizers():
             _ = Synthesizer.create(synth, epsilon=1.0)

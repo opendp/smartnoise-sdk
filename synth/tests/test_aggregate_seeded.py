@@ -10,6 +10,7 @@ import numpy as np
 import json
 import pytest
 
+
 from snsynth.transform.table import NoTransformer
 
 def gen_data_frame_with_schema(schema, n_records):
@@ -57,8 +58,8 @@ def gen_data_frame(number_of_records_to_generate):
     )
 
 
-class TestAggregateSeeded:
-    def setup(self):
+class TestAggregateSeeded():
+    def setup_method(self):
         self.sensitive_df = gen_data_frame(10000)
 
     def test_synth_creation_with_default_params(self):

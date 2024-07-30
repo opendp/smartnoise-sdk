@@ -12,16 +12,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.8,<3.13"
 opacus = "^0.14.0"
-torch = {version = "<2.0.0", optional = true, markers = "extra != 'notorch'"}
+torch = {version = ">=2.2.0", optional = true}
 pac-synth = "^0.0.8"
 smartnoise-sql = "^1.0.4"
 Faker = ">=17.0.0"
-
-[tool.poetry.extras]
-notorch = []
+private-pgm = { git = "https://github.com/ryan112358/private-pgm.git", rev = "01f02f17eba440f4e76c1d06fa5ee9eed0bd2bca" }
 
 [tool.poetry.dev-dependencies]
 
 [build-system]
-requires = ["setuptools", "poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

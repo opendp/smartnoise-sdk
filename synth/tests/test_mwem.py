@@ -29,7 +29,7 @@ test_histogram = [[[1., 0., 0.],
 
 test_histogram_dims = (3,3,3)
 
-class TestMWEM:
+class TestMWEM():
     def test_short_import_works(self):
         assert MWEMSynthesizer == ShortMWEMSynthesizer
 

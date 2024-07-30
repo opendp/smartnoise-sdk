@@ -1,6 +1,7 @@
 import subprocess
 import os
 
+
 import numpy as np
 import pandas as pd
 
@@ -14,10 +15,14 @@ df = pd.read_csv(csv_path)
 df = df.drop(["income"], axis=1)
 df = df.sample(frac=1, random_state=42)
 
-class TestMST:
+class TestMST():
 
-    def setup(self):
-        self.mst = MSTSynthesizer()
+    @classmethod
+    def setup_class(cls) -> None:
+        print("Setting up class")
+        cls.mst = MSTSynthesizer()
+        print("Setup class")
+        print(cls.mst)
 
     def test_fit(self):
         self.df_non_continuous = df[['sex','educ','race','married']]

@@ -16,7 +16,7 @@ narrrow_columns = ["income", "married"]
 narrow_df = pd.read_csv(csv_path, index_col=None, usecols=narrrow_columns)
 
 
-class TestSampleConditional:
+class TestSampleConditional():
     def test_n_row_invalid(self):
         dummy_synth = Synthesizer()
         for n_row in [-np.inf, -1, 0, 0.9]:
