@@ -1,3 +1,9 @@
+# SmartNoise Synth v1.0.4 Release Notes
+
+* Allow use of newer faker versions
+* Allow Python 3.12
+* Switch to use SmartNoise SQL v1.0.4
+
 # SmartNoise Synth v1.0.3 Release Notes
 
 * Switch to use SmartNoise SQL v1.0.3
