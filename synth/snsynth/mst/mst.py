@@ -4,7 +4,7 @@ import pandas as pd
 try:
     from mbi import FactoredInference, Dataset, Domain
 except ImportError:
-    print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git")
+    print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git@01f02f17eba440f4e76c1d06fa5ee9eed0bd2bca")
     raise ImportError
 from scipy import sparse
 from disjoint_set import DisjointSet
