@@ -20,7 +20,7 @@ install_requires = \
 ['PyYAML>=6.0.1,<7.0.0',
  'antlr4-python3-runtime==4.9.3',
  'graphviz>=0.17,<0.18',
- 'opendp>=0.10.0,<0.11.0',
+ 'opendp>=0.11.0,<0.12.0',
  'pandas>=2.0.1,<3.0.0',
  'sqlalchemy>=2.0.0,<3.0.0']
 
