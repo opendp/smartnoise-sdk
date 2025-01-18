@@ -1,3 +1,7 @@
+# SmartNoise SQL v1.0.6 Release Notes
+
+* Allow newer versions of Graphviz
+
 # SmartNoise SQL v1.0.5 Release Notes
 
 * Upgrade to OpenDP v0.12.0
