@@ -573,7 +573,7 @@ class MWEMSynthesizer(Synthesizer):
             # our ranges above
             if any([a > 0 for a in mins_data]):
                 warnings.warn("Data should be preprocessed to have 0 based indices.")
-            dimensionality = np.product(dims_sizes)
+            dimensionality = np.prod(dims_sizes)
             if dimensionality > 1e8:
                 warnings.warn(f"Dimensionality of histogram is {dimensionality:,}, consider using splits.")
             histogram, bins = np.histogramdd(split_data, bins=dims_sizes)
