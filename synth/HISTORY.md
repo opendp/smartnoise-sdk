@@ -1,7 +1,7 @@
 # SmartNoise Synth v1.0.5 Release Notes
 
 * Upgrade to OpenDP v0.12.0
-* Switch np.product to np.prod in MWEM
+* Switch np.product to np.prod in MWEM (thanks, @lucid-jake!)
 
 # SmartNoise Synth v1.0.4 Release Notes
 
