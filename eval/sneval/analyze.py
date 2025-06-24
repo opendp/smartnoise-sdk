@@ -46,7 +46,7 @@ class Analyze:
             timeout=None,
             max_retry=3,
             max_errors=100,
-            output_path="eval_output"
+            output_path=os.path.join(git_root_dir, "eval")
         ):
         self.dataset = dataset
         self.workload = workload
