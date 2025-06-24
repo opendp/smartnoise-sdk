@@ -13,7 +13,7 @@ import gc
 git_root_dir = subprocess.check_output("git rev-parse --show-toplevel".split(" ")).decode("utf-8").strip()
 
 class Evaluate:
-    """The Evaluate class is is used to compare the original dataset with one or more synthetic
+    """The Evaluate class is used to compare the original dataset with one or more synthetic
         datasets or private synopses, to understand the utility impact of the privacy mitigations.
 
         :param original_dataset: The original dataset to compare against. Must be a Dataset object, wrapping a Spark DataFrame.
@@ -115,7 +115,7 @@ class Evaluate:
                         "parameters": params,
                         "value": None,
                         "error": str(e),
-                        "data_pair": f'0 - {i}'
+                        "data pair": f'0 - {i}'
                     }
                     self._save_intermediate_results([error_result])          
                 if self.error_count > self.max_errors:
