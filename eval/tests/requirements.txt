@@ -1,2 +1,8 @@
+smartnoise-sql
 smartnoise-eval
-pytest
+pytest 7.4.2
+pyspark 3.5.0
+py4j 0.10.9.7
+numpy 1.26.0
+PySocks 1.7.1
+scipy 1.12.0
