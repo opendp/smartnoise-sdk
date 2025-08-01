@@ -2,13 +2,13 @@
 from setuptools import setup
 
 packages = \
-['sneval', 'sneval.metrics', 'sneval.metrics.basic', 'sneval.metrics.compare']
+['sneval', 'sneval.metrics', 'sneval.metrics.basic', 'sneval.metrics.compare', 'sneval.utils']
 
 package_data = \
 {'': ['*']}
 
 install_requires = \
-['numpy>=1.26.1,<2.0.0', 'pyspark>=3.5.0,<4.0.0']
+['numpy>=1.26.0,<2.0.0', 'pyspark>=3.5.0,<4.0.0']
 
 setup_kwargs = {
     'name': 'smartnoise-eval',
