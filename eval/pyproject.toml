@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smartnoise-eval"
-version = "0.3.0"
+version = "0.3.1"
 description = "Evaluation of differentially private tabular data"
 authors = ["SmartNoise Team <smartnoise@opendp.org>"]
 license = "MIT"
