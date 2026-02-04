@@ -4,8 +4,6 @@ Adaptive Iterative Mechanism (AIM)
 
  `AIM <https://arxiv.org/abs/2201.12677>`_ is a workload-adaptive algorithm, within the paradigm of algorithms that first selects a set of queries, then privately measures those queries, and finally generates synthetic data from the noisy measurements. It uses a set of innovative features to iteratively select the most useful measurements, reflecting both their relevance to the workload and their value in approximating the input data. AIM consistently outperforms a wide variety of existing mechanisms across a variety of experimental settings.
 
-Before using AIM, install `Private-PGM <https://github.com/ryan112358/private-pgm.git>`_ :
-
 .. code-block:: bash
 
   pip install git+https://github.com/ryan112358/private-pgm.git

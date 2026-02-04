@@ -1,32 +1,13 @@
 import numpy as np
 import pandas as pd
 
-try:
-    from mbi import FactoredInference, Dataset, Domain, GraphicalModel
-except ImportError:
-    print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git@01f02f17eba440f4e76c1d06fa5ee9eed0bd2bca")
-
+from mbi import Dataset, Domain, LinearMeasurement, estimation, MarkovRandomField, marginal_oracles
 import itertools
 from snsynth.base import Synthesizer
-from mbi import Dataset, FactoredInference, Domain
 from snsynth.utils import cdp_rho, exponential_mechanism, gaussian_noise, powerset
 from scipy import sparse
 
 prng = np.random
-
-
-class Identity(sparse.linalg.LinearOperator):
-    def __init__(self, n):
-        self.shape = (n,n)
-        self.dtype = np.float64
-    def _matmat(self, X):
-        return X
-    def __matmul__(self, X):
-        return X
-    def _transpose(self):
-        return self
-    def _adjoint(self):
-        return self
 
 def downward_closure(Ws):
     ans = set()
@@ -36,8 +17,9 @@ def downward_closure(Ws):
 
 
 def hypothetical_model_size(domain, cliques):
-    model = GraphicalModel(domain, cliques)
-    return model.size * 8 / 2 ** 20
+    """Estimate model size based on domain size and cliques"""
+    total_size = sum(domain.size(cl) for cl in cliques)
+    return total_size * 8 / 2 ** 20
 
 
 def compile_workload(workload):
@@ -69,7 +51,7 @@ class AIMSynthesizer(Synthesizer):
     :type verbose: bool
 
     Based on the code available in:
-    https://github.com/ryan112358/private-pgm/blob/master/mechanisms/aim.py
+    https://github.com/ryan112358/mbi/blob/master/mechanisms/aim.py
     """
 
     def __init__(self, epsilon=1., delta=1e-9, max_model_size=80, degree=2, num_marginals=None, max_cells: int = 10000,
@@ -135,8 +117,7 @@ class AIMSynthesizer(Synthesizer):
 
         self.rho = 0.0 if self.delta == 0.0 else cdp_rho(self.epsilon, self.delta)
 
-        data = pd.DataFrame(train_data, columns=colnames)
-        data = Dataset(df=data, domain=domain)
+        data = Dataset(pd.DataFrame(train_data, columns=colnames), domain=domain)
         workload = self.get_workload(
             data, degree=self.degree, max_cells=self.max_cells, num_marginals=self.num_marginals
         )
@@ -147,7 +128,11 @@ class AIMSynthesizer(Synthesizer):
         if samples is None:
             samples = self.num_rows
         data = self.synthesizer.synthetic_data(rows=samples)
-        data_iter = [tuple([c for c in t[1:]]) for t in data.df.itertuples()]
+
+        # need to reorder columns to match expected order
+        colnames = ["col" + str(i) for i in range(self._transformer.output_width)]
+        df = data.df[colnames]
+        data_iter = [tuple([c for c in t[1:]]) for t in df.itertuples()]
         return self._transformer.inverse_transform(data_iter)
 
     @staticmethod
@@ -179,6 +164,7 @@ class AIMSynthesizer(Synthesizer):
         # workload = [cl for cl, _ in W]
         candidates = compile_workload(workload)
         answers = {cl: data.project(cl).datavector() for cl in candidates}
+        total = float(len(data.df))
 
         oneway = [cl for cl in candidates if len(cl) == 1]
 
@@ -189,13 +175,11 @@ class AIMSynthesizer(Synthesizer):
         print('Initial Sigma', sigma)
         rho_used = len(oneway) * 0.5 / sigma ** 2
         for cl in oneway:
-            x = data.project(cl).datavector()
-            y = x + gaussian_noise(sigma, x.size)
-            I = Identity(y.size)
-            measurements.append((I, y, sigma, cl))
+            x = np.asarray(data.project(cl).datavector())
+            y = x + np.asarray(gaussian_noise(sigma, x.size))
+            measurements.append(LinearMeasurement(y, cl, sigma))
 
-        engine = FactoredInference(data.domain, iters=1000, warm_start=True)
-        model = engine.estimate(measurements)
+        model = estimation.mirror_descent(data.domain, measurements, known_total=total, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
 
         t = 0
         terminate = False
@@ -215,13 +199,14 @@ class AIMSynthesizer(Synthesizer):
             cl = self._worst_approximated(small_candidates, answers, model, epsilon, sigma)
 
             n = data.domain.size(cl)
-            Q = Identity(n)
-            x = data.project(cl).datavector()
-            y = x + gaussian_noise(sigma, n)
-            measurements.append((Q, y, sigma, cl))
-            z = model.project(cl).datavector()
 
-            model = engine.estimate(measurements)
+            x = np.asarray(data.project(cl).datavector())
+            y = x + np.asarray(gaussian_noise(sigma, n))
+            z = model.project(cl).datavector()
+            measurements.append(LinearMeasurement(y, cl, sigma))
+
+            model = estimation.mirror_descent(data.domain, measurements, known_total=total, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
+
             w = model.project(cl).datavector()
             if self.verbose:
                 print('Selected', cl, 'Size', n, 'Budget Used', rho_used / self.rho)
@@ -231,8 +216,8 @@ class AIMSynthesizer(Synthesizer):
                 sigma /= 2
                 epsilon *= 2
 
-        engine.iters = 2500
-        model = engine.estimate(measurements)
+        model = estimation.mirror_descent(data.domain, measurements, known_total=total, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
+
 
         if self.verbose:
             print("Estimating marginals")

@@ -1,11 +1,7 @@
 import numpy as np
 import pandas as pd
 
-try:
-    from mbi import FactoredInference, Dataset, Domain
-except ImportError:
-    print("Please install mbi with:\n   pip install git+https://github.com/ryan112358/private-pgm.git@01f02f17eba440f4e76c1d06fa5ee9eed0bd2bca")
-    raise ImportError
+from mbi import Dataset, Domain, LinearMeasurement, estimation, marginal_oracles
 from scipy import sparse
 from disjoint_set import DisjointSet
 import networkx as nx
@@ -16,7 +12,7 @@ from snsynth.utils import cdp_rho, gaussian_noise
 
 """
 Wrapper for MST synthesizer from Private PGM:
-https://github.com/ryan112358/private-pgm/tree/e9ea5fcac62e2c5b92ae97f7afe2648c04432564
+https://github.com/ryan112358/mbi/tree/667facacbf29bd554c9a33e79bee57f1af2efa74
 
 This is a generalization of the winning mechanism from the
 2018 NIST Differential Privacy Synthetic Data Competition.
@@ -98,8 +94,7 @@ class MSTSynthesizer(Synthesizer):
         domain = Domain(colnames, cards)
         self.num_rows = len(data)
 
-        data = pd.DataFrame(train_data, columns=colnames)
-        data = Dataset(df=data, domain=domain)
+        data = Dataset(pd.DataFrame(train_data, columns=colnames).values, domain=domain)
 
         self.MST(data, self.epsilon, self.delta)
 
@@ -115,6 +110,7 @@ class MSTSynthesizer(Synthesizer):
         rho = cdp_rho(epsilon, delta)
         sigma = np.sqrt(3/(2*rho))
         cliques = [(col,) for col in data.domain]
+        total = len(data.df)
         if self.verbose:
             print("Getting cliques")
         log1 = self.measure(data, cliques, sigma)
@@ -123,12 +119,11 @@ class MSTSynthesizer(Synthesizer):
         # Here's the decompress function
         self.undo_compress_fn = undo_compress_fn
 
-        cliques = self.select(data, rho/3.0, log1)
+        cliques = self.select(data, rho/3.0, log1, total)
         log2 = self.measure(data, cliques, sigma)
-        engine = FactoredInference(data.domain, iters=5000)
         if self.verbose:
             print("Estimating marginals")
-        est = engine.estimate(log1+log2)
+        est = estimation.mirror_descent(data.domain, log1+log2, known_total=float(total), iters=5000, marginal_oracle=marginal_oracles.message_passing_stable)
 
         # Here's the synthesizer
 
@@ -140,28 +135,60 @@ class MSTSynthesizer(Synthesizer):
         weights = np.array(weights) / np.linalg.norm(weights)
         measurements = []
         for proj, wgt in zip(cliques, weights):
-            x = data.project(proj).datavector()
-            y = x + gaussian_noise(sigma/wgt, x.size)
-            Q = sparse.eye(x.size)
-            measurements.append((Q, y, sigma/wgt, proj))
+            x = np.asarray(data.project(proj).datavector())
+            y = x + np.array(gaussian_noise(sigma/wgt, x.size))
+            measurements.append(LinearMeasurement(y, proj, sigma/wgt))
         return measurements
 
     def compress_domain(self, data, measurements):
         supports = {}
         new_measurements = []
-        for Q, y, sigma, proj in measurements:
+        # for Q, y, sigma, proj in measurements:
+        #     col = proj[0]
+        #     sup = y >= 3*sigma
+        #     supports[col] = sup
+        #     if supports[col].sum() == y.size:
+        #         new_measurements.append((Q, y, sigma, proj))
+        #     else:  # need to re-express measurement over the new domain
+        #         y2 = np.append(y[sup], y[~sup].sum())
+        #         I2 = np.ones(y2.size)
+        #         I2[-1] = 1.0 / np.sqrt(y.size - y2.size + 1.0)
+        #         y2[-1] /= np.sqrt(y.size - y2.size + 1.0)
+        #         I2 = sparse.diags(I2)
+        #         new_measurements.append((I2, y2, sigma, proj))
+        for m in measurements:
+            y = np.asarray(m.noisy_measurement)
+            sigma = m.stddev
+            proj = m.clique
             col = proj[0]
             sup = y >= 3*sigma
-            supports[col] = sup
-            if supports[col].sum() == y.size:
-                new_measurements.append((Q, y, sigma, proj))
-            else:  # need to re-express measurement over the new domain
-                y2 = np.append(y[sup], y[~sup].sum())
-                I2 = np.ones(y2.size)
-                I2[-1] = 1.0 / np.sqrt(y.size - y2.size + 1.0)
-                y2[-1] /= np.sqrt(y.size - y2.size + 1.0)
-                I2 = sparse.diags(I2)
-                new_measurements.append((I2, y2, sigma, proj))
+            
+            # skip compression if it would result in less than 2 bits
+            num_kept = sup.sum()
+            if num_kept < 2 and y.size >= 2:
+                supports[col] = np.ones(y.size, dtype=bool)
+                new_measurements.append(m)
+            elif supports.get(col) is None or num_kept == y.size:
+                supports[col] = sup if num_kept >= 2 else np.ones(y.size, dtype=bool)
+                if num_kept == y.size:
+                    new_measurements.append(m)
+                else:  # need to re-express measurement over the new domain
+                    y2 = np.append(y[sup], y[~sup].sum())
+                    scale_factor = 1.0 / np.sqrt(y.size - num_kept + 1.0)
+                    y2[-1] *= scale_factor
+                    new_measurements.append(LinearMeasurement(y2, proj, sigma))
+            else:
+                supports[col] = sup
+                if sup.sum() == y.size:
+                    new_measurements.append(m)
+                else:
+                    y2 = np.append(y[sup], y[~sup].sum())
+                    scale_factor = 1.0 / np.sqrt(y.size - sup.sum() + 1.0)
+                    y2[-1] *= scale_factor
+                    new_measurements.append(LinearMeasurement(y2, proj, sigma))
+
+
+
 
         undo_compress_fn = lambda data: self.reverse_data(data, supports)  # noqa: E731
 
@@ -173,9 +200,8 @@ class MSTSynthesizer(Synthesizer):
         probas = np.exp(scores - logsumexp(scores))
         return prng.choice(q.size, p=probas)
 
-    def select(self, data, rho, measurement_log, cliques=[]):
-        engine = FactoredInference(data.domain, iters=1000)
-        est = engine.estimate(measurement_log)
+    def select(self, data, rho, measurement_log, total, cliques=[]):
+        est = estimation.mirror_descent(data.domain, measurement_log, known_total=float(total), iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
 
         weights = {}
         candidates = list(itertools.combinations(data.domain.attrs, 2))
