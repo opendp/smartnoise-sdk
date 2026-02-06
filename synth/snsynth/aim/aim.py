@@ -164,7 +164,6 @@ class AIMSynthesizer(Synthesizer):
         # workload = [cl for cl, _ in W]
         candidates = compile_workload(workload)
         answers = {cl: data.project(cl).datavector() for cl in candidates}
-        total = float(len(data.df))
 
         oneway = [cl for cl in candidates if len(cl) == 1]
 
@@ -179,7 +178,7 @@ class AIMSynthesizer(Synthesizer):
             y = x + np.asarray(gaussian_noise(sigma, x.size))
             measurements.append(LinearMeasurement(y, cl, sigma))
 
-        model = estimation.mirror_descent(data.domain, measurements, known_total=total, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
+        model = estimation.mirror_descent(data.domain, measurements, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
 
         t = 0
         terminate = False
@@ -205,7 +204,7 @@ class AIMSynthesizer(Synthesizer):
             z = model.project(cl).datavector()
             measurements.append(LinearMeasurement(y, cl, sigma))
 
-            model = estimation.mirror_descent(data.domain, measurements, known_total=total, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
+            model = estimation.mirror_descent(data.domain, measurements, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
 
             w = model.project(cl).datavector()
             if self.verbose:
@@ -216,7 +215,7 @@ class AIMSynthesizer(Synthesizer):
                 sigma /= 2
                 epsilon *= 2
 
-        model = estimation.mirror_descent(data.domain, measurements, known_total=total, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
+        model = estimation.mirror_descent(data.domain, measurements, iters=1000, marginal_oracle=marginal_oracles.message_passing_stable)
 
 
         if self.verbose:
