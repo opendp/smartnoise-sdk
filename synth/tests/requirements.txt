@@ -1,7 +1,6 @@
 diffprivlib
 seaborn
 gym
-mlflow
 scikit-learn
 numpy
 pytest
