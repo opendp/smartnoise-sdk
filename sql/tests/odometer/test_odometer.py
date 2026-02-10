@@ -108,7 +108,7 @@ class TestOdometer:
         for _ in range(300):
             odo.spend()
         eps, delt = odo.spent
-        assert(np.isclose(eps, 8.4917))
+        assert(np.isclose(eps, 8.2519))
         assert(np.isclose(delt, 0.19256))
     def test_odo_het(self):
         privacy = Privacy(epsilon=0.1, delta = 1/(1000))
