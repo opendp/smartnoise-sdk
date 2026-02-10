@@ -29,7 +29,7 @@ class Odometer:
         basic = self.k * epsilon
         optimal_left_side = ((np.exp(epsilon) - 1) * epsilon * self.k)/(np.exp(epsilon) + 1)
         optimal_a = optimal_left_side + epsilon * np.sqrt(2 * self.k * np.log(epsilon + (np.sqrt(self.k*epsilon*epsilon)/tol)))
-        optimal_b = optimal_left_side + epsilon * np.sqrt(2 * self.k * (1/tol))
+        optimal_b = optimal_left_side + epsilon * np.sqrt(2 * self.k * np.log(1 / tol))
         delta = 1 - (1 - delta) ** self.k
         delta = delta * (1 - delta) + self.tol
         return tuple([min(basic, optimal_a, optimal_b), delta])

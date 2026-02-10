@@ -112,7 +112,7 @@ class DPcovariance:
             u = np.random.uniform(size=n)
             return q_lap_iter(u, b=noise_scale)
 
-        true_val = covar(data.values.T, self.intercept)
+        true_val = covar(new_data.values.T, self.intercept)
         scale = self.sens / self.epsilon
         val = np.array(true_val) + dp_noise(n=len(true_val), noise_scale=scale)
         return list(val)

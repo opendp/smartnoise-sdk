@@ -1,6 +1,9 @@
 import pandas as pd
 from sklearn.base import RegressorMixin, MultiOutputMixin
-from sklearn.linear_model.base import LinearModel
+try:
+    from sklearn.linear_model.base import LinearModel
+except ImportError:
+    from sklearn.linear_model._base import LinearModel
 from .dp_covariance import DPcovariance
 
 
