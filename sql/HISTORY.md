@@ -1,3 +1,7 @@
+# SmartNoise SQL v1.0.7 Release Notes
+
+* Fix odomoter accounting bug (thanks @tudorcebere!)
+
 # SmartNoise SQL v1.0.6 Release Notes
 
 * Allow newer versions of Graphviz

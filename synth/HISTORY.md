@@ -1,3 +1,7 @@
+# SmartNoise Synth v1.0.6 Release Notes
+
+* Fix privacy leak in covariance (thanks, @tudorcebere!)
+
 # SmartNoise Synth v1.0.5 Release Notes
 
 * Upgrade to OpenDP v0.12.0
