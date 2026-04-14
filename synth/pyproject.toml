@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smartnoise-synth"
-version = "1.0.6"
+version = "1.0.7"
 description = "Differentially Private Synthetic Data"
 authors = ["SmartNoise Team <smartnoise@opendp.org>"]
 license = "MIT"
@@ -10,11 +10,11 @@ repository = "https://github.com/opendp/smartnoise-sdk"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.10,<3.15"
 opacus = "^0.14.0"
 torch = {version = ">=2.2.0", optional = true}
 pac-synth = "^0.0.8"
-smartnoise-sql = ">=1.0.7"
+smartnoise-sql = ">=1.0.10"
 disjoint-set = "^0.9.0"
 Faker = ">=17.0.0"
 mbi = {git = "https://github.com/ryan112358/private-pgm.git", rev = "667facacbf29bd554c9a33e79bee57f1af2efa74"}

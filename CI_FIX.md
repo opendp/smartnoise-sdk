@@ -5,7 +5,7 @@ This plan is scoped so that **one agent can complete one phase in a single sessi
 ## Planning baseline
 
 - [x] Audited the current workflow set in `.github/workflows/`.
-- [x] Confirmed the package support window overlap is **Python 3.9-3.12** (`sql` allows `<3.14`, while `synth` and `eval` allow `<3.13`).
+- [x] Confirmed the package support window overlap is **Python 3.10-3.14** (`sql`, `synth`, and `eval` now all allow `>=3.10,<3.15`).
 - [x] Confirmed the workflows still rely heavily on outdated Actions and bootstrap steps (`actions/checkout@v2/v3`, `actions/setup-python@v2`, `conda-incubator/setup-miniconda@v2`, `hashicorp/setup-terraform@v1`, manual `conda install pip`, and legacy `pip` flows).
 - [x] Confirmed recent failure signatures that should shape the first implementation passes:
 - [x] `synth.yml` fails because `smartnoise-synth` resolves `smartnoise-sql>=1.0.7` from PyPI instead of the local checkout.
@@ -17,7 +17,7 @@ This plan is scoped so that **one agent can complete one phase in a single sessi
 
 **Goal:** establish a supported Python policy and one modern environment bootstrap pattern before editing individual workflows.
 
-- [x] Set the canonical CI support window to **3.9-3.12** unless package metadata is intentionally changed in the same PR.
+- [x] Set the canonical CI support window to **3.10-3.14** for the packages that intentionally changed metadata in this branch.
 - [x] Decide the default single-version job runtime as **3.12**, with an expanded matrix used only where it adds value.
 - [x] Establish the Conda replacement pattern with `actions/setup-python` plus `astral-sh/setup-uv` and shared caching.
 - [x] Choose one reusable install pattern for local packages, test requirements, and editable installs across `sql`, `synth`, and `eval`.
@@ -43,7 +43,7 @@ This plan is scoped so that **one agent can complete one phase in a single sessi
 
 **Exit criteria:** the repo has a modern, uv-based PR gate for SQL and synth that can validate PR #626 without relying on stale package publishing behavior.
 
-**Phase 2 handoff:** `sql.yml`, `synth.yml`, `lint_sql.yml`, and `synth_lint.yml` now use `.github/actions/setup-python-uv` and current checkout majors. The SQL test job keeps the 3.9-3.12 support-window matrix, while the single-version synth and SQL lint jobs now default to 3.12. `synth.yml` installs local `sql` before `synth`, its pull request paths now include `sql/snsql/**` plus `sql/pyproject.toml`, `synth/pyproject.toml` now declares `disjoint-set` so MST tests install cleanly through package metadata, and `synth/tests/requirements.txt` now pins `scikit-learn<1.8` to stay compatible with the current `diffprivlib` path. Phase 2 also fixed an upper-bound off-by-one in `synth/snsynth/transform/bin.py` and added a regression test so the factory/MST coverage stays green under the modernized workflow. `synth_lint.yml` was modernized on the same helper but remains manual-only because the existing synth tree still has unrelated flake8 debt. Phase 3 should carry the same helper into `postgres.yml`, `mysql.yml`, and `windows.yml` while reevaluating database service/container setup instead of the old OS-level package bootstraps.
+**Phase 2 handoff:** `sql.yml`, `synth.yml`, `lint_sql.yml`, and `synth_lint.yml` now use `.github/actions/setup-python-uv` and current checkout majors. The SQL test job now tracks the 3.10-3.14 support-window matrix, while the single-version synth and SQL lint jobs still default to 3.12. `synth.yml` installs local `sql` before `synth`, its pull request paths now include `sql/snsql/**` plus `sql/pyproject.toml`, `synth/pyproject.toml` now declares `disjoint-set` so MST tests install cleanly through package metadata, and `synth/tests/requirements.txt` now pins `scikit-learn<1.8` to stay compatible with the current `diffprivlib` path. Phase 2 also fixed an upper-bound off-by-one in `synth/snsynth/transform/bin.py` and added a regression test so the factory/MST coverage stays green under the modernized workflow. `synth_lint.yml` was modernized on the same helper but remains manual-only because the existing synth tree still has unrelated flake8 debt. Phase 3 should carry the same helper into `postgres.yml`, `mysql.yml`, and `windows.yml` while reevaluating database service/container setup instead of the old OS-level package bootstraps.
 
 ## Phase 3 - Refresh local database integration workflows
 
@@ -98,7 +98,7 @@ This plan is scoped so that **one agent can complete one phase in a single sessi
 **Goal:** bring the non-core workflows up to current Python/tooling and fix obvious repository drift.
 
 - [x] Update `docs.yml` and `samples-test.yml` to current Actions versions and the shared Python/uv bootstrap.
-- [x] Remove Python 3.8-era assumptions and keep these jobs inside the supported 3.9-3.12 window.
+- [x] Remove Python 3.8-era assumptions and keep these jobs inside the supported 3.10-3.14 window.
 - [x] Reconcile stale repository assumptions in the sample workflow, including the current `./sdk` install path.
 - [x] Revisit old Sphinx pins and Python-stdlib backports such as `pathlib` so docs install cleanly on supported Python.
 - [x] Decide whether these workflows should stay manual-only or become PR / push checks after they are green.
@@ -128,6 +128,6 @@ This plan is scoped so that **one agent can complete one phase in a single sessi
 ## Notes for implementation agents
 
 - Prefer **uv** for dependency installation and caching unless a phase uncovers a hard blocker.
-- Treat **Python 3.13+ and 3.14** as out of scope for CI until package metadata is intentionally updated.
+- Treat **Python 3.10-3.14** as the current SQL, synth, and eval support window after the package metadata updates on this branch.
 - Keep phases focused: do not mix BigQuery auth work into core PR gate cleanup, and do not expand Spark debugging into unrelated SQL workflow churn.
 - When a phase finishes, update its completed tasks here from `[ ]` to `[x]` in the same PR so the next agent starts from the current state.

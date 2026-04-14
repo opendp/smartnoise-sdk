@@ -1,3 +1,8 @@
+# SmartNoise SQL v1.0.10 Release Notes
+
+* Require OpenDP >=0.14.1,<0.15 and fix floating-point domains to reject implicit `NaN` values under OpenDP 0.14.x (thanks, @LancelotMarti!)
+* Accept newer PySpark classic DataFrame module paths for pre-aggregated inputs.
+
 # SmartNoise SQL v1.0.7 Release Notes
 
 * Fix odomoter accounting bug (thanks @tudorcebere!)

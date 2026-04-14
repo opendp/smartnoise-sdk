@@ -1,3 +1,10 @@
+# SmartNoise Synth v1.0.7 Release Notes
+
+* Update AIM and MST to use the latest MBI build and package the dependency directly (thanks, @tjh2822!)
+* Switch to SmartNoise SQL v1.0.10.
+* Support OpenDP >=0.14.1,<0.15 by tightening floating-point domains to reject implicit `NaN` values (thanks, @LancelotMarti!)
+* Fix `BinTransformer` so values at the declared upper bound map into the last bin.
+
 # SmartNoise Synth v1.0.6 Release Notes
 
 * Fix privacy leak in covariance (thanks, @tudorcebere!)
