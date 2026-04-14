@@ -4,7 +4,7 @@ GitHub Actions for continuous integration.
 
 ## Repo-wide CI contract
 
-- Supported CI Python window: **3.9-3.12**
+- Supported CI Python window: **3.10-3.14**
 - Default single-version runtime for jobs that do not benefit from a matrix: **3.12**
 - Shared bootstrap surface: **`.github/actions/setup-python-uv`**
 - Preferred install pattern:
@@ -32,7 +32,7 @@ The current core PR gates (`sql.yml`, `synth.yml`, and `lint_sql.yml`) already u
       flake8
 ```
 
-`ci_contract.yml` is the proving workflow for this contract. It keeps 3.12 as the default runtime while using an explicit 3.9-3.12 matrix only where validating the support window adds value.
+`ci_contract.yml` is the proving workflow for this contract. It keeps 3.12 as the default runtime while using an explicit 3.10-3.14 matrix only where validating the support window adds value.
 
 ## Reproducing the shared bootstrap locally
 
@@ -71,8 +71,8 @@ The branch-protection API for `main` currently reports no required status-check 
 
 | Workflow file | Actions workflow name | Job check name(s) | Trigger | Notes |
 | --- | --- | --- | --- | --- |
-| `ci_contract.yml` | `CI bootstrap contract` | `Default runtime install smoke (sql)`; `Default runtime install smoke (synth)`; `Default runtime install smoke (eval)`; `Support window smoke (Python 3.9)`; `Support window smoke (Python 3.10)`; `Support window smoke (Python 3.11)`; `Support window smoke (Python 3.12)` | `pull_request`, `workflow_dispatch` | Bootstrap proving workflow for the shared Python/uv contract |
-| `sql.yml` | `SQL on Pandas` | `SQL on Pandas (Python 3.9)`; `SQL on Pandas (Python 3.10)`; `SQL on Pandas (Python 3.11)`; `SQL on Pandas (Python 3.12)` | `pull_request`, `workflow_dispatch` | Core SQL PR gate |
+| `ci_contract.yml` | `CI bootstrap contract` | `Default runtime install smoke (sql)`; `Default runtime install smoke (synth)`; `Default runtime install smoke (eval)`; `Support window smoke (Python 3.10)`; `Support window smoke (Python 3.11)`; `Support window smoke (Python 3.12)`; `Support window smoke (Python 3.13)`; `Support window smoke (Python 3.14)` | `pull_request`, `workflow_dispatch` | Bootstrap proving workflow for the shared Python/uv contract |
+| `sql.yml` | `SQL on Pandas` | `SQL on Pandas (Python 3.10)`; `SQL on Pandas (Python 3.11)`; `SQL on Pandas (Python 3.12)`; `SQL on Pandas (Python 3.13)`; `SQL on Pandas (Python 3.14)` | `pull_request`, `workflow_dispatch` | Core SQL PR gate |
 | `lint_sql.yml` | `SQL code linter` | `SQL code linter` | `pull_request`, `workflow_dispatch` | Fast SQL lint gate |
 | `synth.yml` | `Synthesizers Unit Tests` | `Synthesizers Unit Tests` | `pull_request`, `workflow_dispatch` | Installs local `sql` before local `synth` |
 | `postgres.yml` | `PostgreSQL and SQLite Integration Tests` | `PostgreSQL and SQLite Integration Tests` | `pull_request`, `workflow_dispatch` | Uses a `postgres:16` service container |
