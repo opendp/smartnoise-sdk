@@ -1,5 +1,6 @@
 # Environment variables
 .secrets
+gha-creds-*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

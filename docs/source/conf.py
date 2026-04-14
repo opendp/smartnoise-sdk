@@ -91,10 +91,14 @@ html_theme_options = {
 html_theme = 'pydata_sphinx_theme'
 
 # See https://pydata-sphinx-theme.readthedocs.io/en/v0.6.3/user_guide/configuring.html#configure-the-sidebar
-# Note: Overridden in the Makefile for local builds. Be sure to update both places.
-html_sidebars = {
-   '**': ['sidebar-nav-bs.html', 'versioning.html'],
-}
+if os.getenv("SPHINX_LOCAL_BUILD") == "1":
+    html_sidebars = {
+        '**': ['sidebar-nav-bs.html'],
+    }
+else:
+    html_sidebars = {
+        '**': ['sidebar-nav-bs.html', 'versioning.html'],
+    }
 
 # SPHINX-MULTIVERSION STUFF
 # Whitelist pattern for tags (set to None to ignore all tags)

@@ -3,61 +3,61 @@ name: SQL on Spark
 on:
   pull_request:
     paths:
-      - 'sql/tests/**'
-      - 'sql/snsql/**'
-      - 'sql/pyproject.toml'
-      - '!sql/tests/setup/postgres/**'
-      - '!sql/tests/setup/sqlserver/**'
-      - '!sql/tests/setup/mysql/**'
-      - '!sql/tests/setup/biqquery/**'
+      - ".github/actions/setup-python-uv/**"
+      - ".github/workflows/spark.yml"
+      - "sql/tests/**"
+      - "sql/snsql/**"
+      - "sql/pyproject.toml"
+      - "!sql/tests/setup/postgres/**"
+      - "!sql/tests/setup/sqlserver/**"
+      - "!sql/tests/setup/mysql/**"
+      - "!sql/tests/setup/bigquery/**"
   workflow_dispatch:
-  
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
+  JAVA_VERSION: "17"
+  PYSPARK_VERSION: "3.5.0"
+  PYSPARK_DRIVER_PYTHON: python
+  PYSPARK_PYTHON: python
+  SKIP_PANDAS: "1"
+  SPARK_LOCAL_HOSTNAME: localhost
+  SPARK_LOCAL_IP: 127.0.0.1
+  TEST_SPARK: "1"
+
 jobs:
-  build-linux:
+  spark-ubuntu:
+    name: SQL on Spark
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.9]
-      max-parallel: 5
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniconda-version: "latest"
-        auto-update-conda: true
-        auto-activate-base: true
-        python-version: ${{ matrix.python-version }}
-    - name: Upgrade pip
-      shell: bash -l {0}
-      run: |
-        conda install pip
-        conda update pip
-    - name: Install Java
-      shell: bash -l {0}
-      run: |
-        sudo apt-get update
-        sudo apt-get -yq upgrade
-        sudo apt-get -yq install openjdk-11-jre-headless
-    - name: Install dependencies
-      shell: bash -l {0}
-      run: |
-        cd sql
-        pip install --no-cache-dir -r tests/requirements.txt
-        pip install --no-cache-dir pyspark
-    - name: Install smartnoise-sql
-      shell: bash -l {0}
-      run: |
-        cd sql
-        pip install --no-cache-dir .
-        export TEST_SPARK=1
-        export SKIP_PANDAS=1
-        python tests/check_databases.py
-    - name: Test SDK
-      shell: bash -l {0}
-      run: |
-        cd sql
-        export TEST_SPARK=1
-        export SKIP_PANDAS=1
-        pytest tests
+      - uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          editable-projects: |
+            sql
+          requirements-files: |
+            sql/tests/requirements.txt
+          package-specs: |
+            pyspark==${{ env.PYSPARK_VERSION }}
+
+      - name: Check database connections test fixture
+        run: |
+          cd sql
+          python tests/check_databases.py
+
+      - name: Test SDK
+        run: |
+          cd sql
+          pytest tests

@@ -1,101 +1,101 @@
 name: MySQL Integration Tests
+
 on:
   pull_request:
     paths:
-      - 'sql/tests/**'
-      - 'sql/snsql/**'
-      - 'sql/pyproject.toml'
-      - '!sql/tests/setup/postgres/**'
-      - '!sql/tests/setup/sqlserver/**'
-      - '!sql/tests/setup/biqquery/**'
+      - ".github/actions/setup-python-uv/**"
+      - ".github/workflows/mysql.yml"
+      - "sql/tests/**"
+      - "sql/snsql/**"
+      - "sql/pyproject.toml"
+      - "!sql/tests/setup/postgres/**"
+      - "!sql/tests/setup/sqlserver/**"
+      - "!sql/tests/setup/bigquery/**"
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
+  MYSQL_HOST: 127.0.0.1
+  MYSQL_PASSWORD: runnerpass
+  MYSQL_PORT: "3306"
+  MYSQL_ROOT_PASSWORD: rootpass
+  MYSQL_USER: runner
+
 jobs:
-  container-job:
+  mysql-ubuntu:
+    name: MySQL Integration Tests
     runs-on: ubuntu-latest
-    environment: CI
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.9]
-      max-parallel: 5
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prootpass"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
     steps:
-      - uses: actions/checkout@v2
-      - name: start mysql
-        shell: bash -l {0}
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        run: |
-          sudo systemctl start mysql.service
-      - name: Set up miniconda
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
         with:
-          miniconda-version: "latest"
-          auto-update-conda: true
-          auto-activate-base: true
-          python-version: ${{ matrix.python-version }}
-      - name: Upgrade pip
-        shell: bash -l {0}
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          editable-projects: |
+            sql
+          requirements-files: |
+            sql/tests/requirements.txt
+            sql/tests/setup/mysql/requirements.txt
+
+      - name: Create MySQL CI user
         run: |
-          conda install pip
-          conda update pip
-      - name: Set MySQL Root password
-        shell: bash -l {0}
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          docker exec "${{ job.services.mysql.id }}" mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "
+            CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+            GRANT ALL ON *.* TO '${MYSQL_USER}'@'%' WITH GRANT OPTION;
+            FLUSH PRIVILEGES;
+            SHOW VARIABLES LIKE 'secure_file_priv';
+          "
+
+      - name: Stage MySQL fixture files
         run: |
-          sudo mysql --user=root --password=root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
-          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "CREATE USER 'runner'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{env.MYSQL_PASSWORD}}';"
-          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "GRANT ALL ON *.* TO 'runner'@'localhost'; FLUSH PRIVILEGES;"
-          sudo mysql --user=root --password=${{env.MYSQL_PASSWORD}} -e "SHOW VARIABLES LIKE 'secure_file_priv';"
-      - name: Setup SDK
-        shell: bash -l {0}
+          export MYSQL_TEST_DATA_DIR="${RUNNER_TEMP}/mysql-files"
+          rm -rf "${MYSQL_TEST_DATA_DIR}"
+          mkdir -p "${MYSQL_TEST_DATA_DIR}"
+          python sql/tests/setup/mysql/copy.py
+          docker exec "${{ job.services.mysql.id }}" mkdir -p /var/lib/mysql-files
+          docker cp "${MYSQL_TEST_DATA_DIR}/." "${{ job.services.mysql.id }}:/var/lib/mysql-files"
+
+      - name: Install tables to MySQL
         run: |
-          cd sql
-          pip install --no-cache-dir -r tests/requirements.txt
-          pip install --no-cache-dir -r tests/setup/mysql/requirements.txt
-          pip install --no-cache-dir  .
+          docker exec -i "${{ job.services.mysql.id }}" mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" < sql/tests/setup/mysql/create_tables.sql
+
       - name: Check database connections test fixture
-        shell: bash -l {0}
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_USER: runner
         run: |
+          mkdir -p ~/.smartnoise
+          cp sql/tests/setup/mysql/connections-unit.yaml ~/.smartnoise/connections-unit.yaml
           cd sql
-          mkdir ~/.smartnoise
-          cp tests/setup/mysql/connections-unit.yaml ~/.smartnoise
           python tests/check_databases.py
-      - name: Copy CSV files
-        shell: bash -l {0}
         env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        run: |
-          cd sql/tests/setup/mysql
-          sudo python copy.py
-      - name: Install Tables to MySQL
-        shell: bash -l {0}
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        run: |
-          cd sql/tests/setup/mysql
-          mysql --user=runner --password=${{ secrets.MYSQL_PASSWORD }} < create_tables.sql
+          MYSQL_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+
       - name: Check DB install
-        shell: bash -l {0}
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_USER: runner
         run: |
-          cd sql
-          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_large; SELECT COUNT(*) FROM pums_large;'
-          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS; SELECT COUNT(*) FROM pums;'
-          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_dup; SELECT COUNT(*) FROM pums;'
-          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_null; SELECT COUNT(*) FROM pums;'
-          mysql --user=${{env.MYSQL_USER}} --password=${{ env.MYSQL_PASSWORD }} -e 'USE PUMS_pid; SELECT COUNT(*) FROM pums;'
-          python tests/check_databases.py
+          docker exec "${{ job.services.mysql.id }}" mysql -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -e "USE PUMS_large; SELECT COUNT(*) FROM pums_large;"
+          docker exec "${{ job.services.mysql.id }}" mysql -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -e "USE PUMS; SELECT COUNT(*) FROM pums;"
+          docker exec "${{ job.services.mysql.id }}" mysql -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -e "USE PUMS_dup; SELECT COUNT(*) FROM pums;"
+          docker exec "${{ job.services.mysql.id }}" mysql -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -e "USE PUMS_null; SELECT COUNT(*) FROM pums;"
+          docker exec "${{ job.services.mysql.id }}" mysql -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -e "USE PUMS_pid; SELECT COUNT(*) FROM pums;"
+
       - name: Test SDK
-        shell: bash -l {0}
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           cd sql
-          export SKIP_PANDAS=1
           pytest tests
+        env:
+          MYSQL_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+          SKIP_PANDAS: "1"

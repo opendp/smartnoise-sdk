@@ -140,6 +140,25 @@ class TestPreAggregatedSuccess:
             query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
             res = priv.execute_df(query, pre_aggregated=pre_aggregated)
             assert(str(res['sex'][0]) == '1') # it's sorted
+    def test_spark_classic_df_module_success(self, test_databases):
+        class DataFrame:
+            __module__ = "pyspark.sql.classic.dataframe"
+
+            def __init__(self, columns):
+                self.columns = columns
+
+        query = 'SELECT sex, COUNT(*) AS n, COUNT(*) AS foo FROM PUMS.PUMS GROUP BY sex ORDER BY sex'
+        pre_aggregated = DataFrame(('keycount', 'sex', 'count_star'))
+
+        priv = test_databases.get_private_reader(
+            privacy=privacy,
+            database="PUMS_pid",
+            engine="pandas"
+        )
+        if priv:
+            subquery, _ = priv._rewrite(query)
+            checked = priv._check_pre_aggregated_columns(pre_aggregated, subquery)
+            assert checked is pre_aggregated
     def test_spark_rdd_success(self, test_databases):
         # pass in properly formatted dataframe
         pre_aggregated = [
@@ -250,4 +269,3 @@ class TestPreAggregatedColumnFail:
             except ValueError:
                 return
             raise AssertionError("execute should have raised an exception")
-

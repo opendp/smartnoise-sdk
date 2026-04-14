@@ -6,7 +6,7 @@ SPHINXBUILD   = sphinx-build
 SPHINXMULTI   = sphinx-multiversion
 PAPER         =
 BUILDDIR      = build
-VERSION       = $(shell cat ../VERSION)
+VERSION       = $(shell git describe --always --dirty --tags 2>/dev/null || echo main)
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -24,7 +24,7 @@ clean:
 	rm -rf $(BUILDDIR)/*
 
 html:
-	$(SPHINXBUILD) $(SPHINXOPTS) -D version=$(VERSION) -D 'html_sidebars.**'=sidebar-nav-bs.html source $(BUILDDIR)/html
+	SPHINX_LOCAL_BUILD=1 $(SPHINXBUILD) $(SPHINXOPTS) -D version=$(VERSION) source $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
