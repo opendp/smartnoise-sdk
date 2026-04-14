@@ -68,7 +68,7 @@ class StandardScaler(CachingColumnTransformer):
 
             enable_features("floating-point", "contrib")
 
-            input_domain = dp.vector_domain(dp.atom_domain(T=float), size=n)
+            input_domain = dp.vector_domain(dp.atom_domain(T=float, nan=False), size=n)
             input_metric = dp.symmetric_distance()
 
             var_pre =  (input_domain, input_metric) >> dp.t.then_clamp(bounds) >> dp.t.then_variance()
@@ -76,10 +76,10 @@ class StandardScaler(CachingColumnTransformer):
 
             v_e = self.epsilon * 0.8
             m_e = self.epsilon - v_e
-            v_s = binary_search_param(lambda s: var_pre >> make_laplace(dp.atom_domain(T=float), dp.absolute_distance(T=float), s), d_in=1, d_out=v_e, T=float)
-            m_s = binary_search_param(lambda s: mean_pre >> make_laplace(dp.atom_domain(T=float), dp.absolute_distance(T=float), s), d_in=1, d_out=m_e, T=float)
-            dpvar = var_pre >> make_laplace(dp.atom_domain(T=float), dp.absolute_distance(T=float), v_s)
-            dpmean = mean_pre >> make_laplace(dp.atom_domain(T=float), dp.absolute_distance(T=float), m_s)
+            v_s = binary_search_param(lambda s: var_pre >> make_laplace(dp.atom_domain(T=float, nan=False), dp.absolute_distance(T=float), s), d_in=1, d_out=v_e, T=float)
+            m_s = binary_search_param(lambda s: mean_pre >> make_laplace(dp.atom_domain(T=float, nan=False), dp.absolute_distance(T=float), s), d_in=1, d_out=m_e, T=float)
+            dpvar = var_pre >> make_laplace(dp.atom_domain(T=float, nan=False), dp.absolute_distance(T=float), v_s)
+            dpmean = mean_pre >> make_laplace(dp.atom_domain(T=float, nan=False), dp.absolute_distance(T=float), m_s)
             
             self.var = dpvar(np.array(self._fit_vals))
             self.var = np.clip(self.var, 0.001, (self.fit_upper - self.fit_lower) ** 2 / 4)

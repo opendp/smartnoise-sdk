@@ -57,7 +57,7 @@ def approx_bounds(vals, epsilon):
     enable_features('floating-point', 'contrib')
     discovered_scale = 1.0 / epsilon
 
-    input_domain = dp.atom_domain(T=float)
+    input_domain = dp.atom_domain(T=float, nan=False)
     input_metric = dp.absolute_distance(T=float)
 
     meas = make_laplace(input_domain, input_metric, discovered_scale)
