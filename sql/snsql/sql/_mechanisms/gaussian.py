@@ -38,7 +38,7 @@ class Gaussian(AdditiveNoiseMechanism):
             raise ValueError(f"Noise scale is too large using epsilon={self.epsilon} and bounds ({lower}, {upper}) with {self.mechanism}.  Try preprocessing to reduce senstivity, or try different privacy parameters.")
         enable_features('floating-point', 'contrib')
 
-        input_domain = dp.vector_domain(dp.atom_domain(T=float))
+        input_domain = dp.vector_domain(dp.atom_domain(T=float, nan=False))
         input_metric = dp.symmetric_distance()
 
         bounded_sum = (input_domain, input_metric) >> dp.t.then_clamp(bounds=bounds) >> dp.t.then_sum()
@@ -68,7 +68,7 @@ class Gaussian(AdditiveNoiseMechanism):
         enable_features('contrib')
         bit_depth = self.bit_depth
         set_default_int_type(f"i{bit_depth}")
-        meas = make_gaussian(dp.atom_domain(T=float), dp.absolute_distance(T=float), self.scale)
+        meas = make_gaussian(dp.atom_domain(T=float, nan=False), dp.absolute_distance(T=float), self.scale)
         vals = [meas(float(v)) for v in vals]
         return vals
     def accuracy(self, alpha):

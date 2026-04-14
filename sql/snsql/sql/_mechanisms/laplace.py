@@ -38,7 +38,7 @@ class Laplace(AdditiveNoiseMechanism):
 
         enable_features('floating-point', 'contrib')
 
-        input_domain = dp.vector_domain(dp.atom_domain(T=float))
+        input_domain = dp.vector_domain(dp.atom_domain(T=float, nan=False))
         input_metric = dp.symmetric_distance()
 
         bounded_sum = (input_domain, input_metric) >> dp.t.then_clamp(bounds=bounds) >> dp.t.then_sum()
@@ -64,7 +64,7 @@ class Laplace(AdditiveNoiseMechanism):
         return thresh
     def release(self, vals):
         enable_features('floating-point', 'contrib')
-        input_domain = dp.atom_domain(T=float)
+        input_domain = dp.atom_domain(T=float, nan=False)
         input_metric = dp.absolute_distance(T=float)
         meas = make_laplace(input_domain, input_metric, self.scale)
         vals = [meas(float(v)) for v in vals]

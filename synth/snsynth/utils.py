@@ -30,7 +30,7 @@ def exponential_mechanism(qualities, epsilon, sensitivity=1.0, base_measure=None
 
 def gaussian_noise(sigma, size=None):
     enable_features('floating-point', 'contrib')
-    input_domain = dp.atom_domain(T=float)
+    input_domain = dp.atom_domain(T=float, nan=False)
     input_metric =  dp.absolute_distance(T=float)
     meas = make_gaussian(input_domain, input_metric, sigma)
     if size is None:
@@ -40,7 +40,7 @@ def gaussian_noise(sigma, size=None):
 
 def laplace_noise(scale, size=None):
     enable_features('floating-point', 'contrib')
-    input_domain = dp.atom_domain(T=float)
+    input_domain = dp.atom_domain(T=float, nan=False)
     input_metric =  dp.absolute_distance(T=float)
     meas = make_laplace(input_domain, input_metric, scale)
     if size is None:
@@ -52,7 +52,7 @@ def cdp_rho(epsilon, delta, max_contrib=1):
     # return a rho that satisfies (epsilon, delta)
     budget = (epsilon, delta)
     enable_features('floating-point', 'contrib')
-    input_domain = dp.atom_domain(T=float)
+    input_domain = dp.atom_domain(T=float, nan=False)
     input_metric =  dp.absolute_distance(T=float)
     def make_adp_gauss(scale):
         test_gauss = make_gaussian(input_domain, input_metric, scale)
