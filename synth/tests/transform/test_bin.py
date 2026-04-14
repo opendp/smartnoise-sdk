@@ -31,3 +31,7 @@ class TestBin:
         assert(np.max(sepal_encoded) == 11)  # bins are numbered 0-11
         sepal_decoded = bt.inverse_transform(sepal_encoded)
         assert(np.mean([np.abs(a - b) for a, b in zip(sepal_orig, sepal_decoded)]) < 1.0)
+    def test_upper_bound_maps_to_last_bin(self):
+        bt = BinTransformer(bins=10, lower=0, upper=100)
+        bt.fit([100])
+        assert(bt.transform([100])[0] == 9)

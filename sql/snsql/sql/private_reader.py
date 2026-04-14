@@ -369,7 +369,7 @@ class PrivateReader(Reader):
                 check_colnames(colnames)
                 pre_aggregated = pre_aggregated.to_numpy()
             elif (
-                agg_mod == 'pyspark.sql.dataframe' and
+                agg_mod in ('pyspark.sql.dataframe', 'pyspark.sql.classic.dataframe') and
                 agg_class == 'DataFrame'
             ):
                 colnames = pre_aggregated.columns

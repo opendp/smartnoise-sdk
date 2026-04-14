@@ -1,42 +1,86 @@
 name: Run Sample Notebooks
 
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
+  MPLBACKEND: Agg
+  NOTEBOOK_SANDBOX: .tmp/notebook-smoke
 
 jobs:
   build-linux:
+    name: Sample notebooks
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.8]
-      max-parallel: 5
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Clone samples
-      run: |
-        git clone https://github.com/opendp/smartnoise-samples.git
-        touch smartnoise-samples/devops
-        git clone https://github.com/opendp/dp-test-datasets.git
-    - name: Samples dependencies
-      run: |
-        pip install --use-feature=2020-resolver -r smartnoise-samples/requirements.txt
-    - name: Install additional dependencies
-      run: |
-        pip install --use-feature=2020-resolver psycopg2 jupyter nbmake pyspark nltk scikit-learn scikit-image
-    - name: Install opendp-smartnoise
-      run: |
-        pip install --use-feature=2020-resolver ./sdk
-    - name: Test Notebooks
-      run: |
-        conda install pytest
-        # run notebooks, ignore slow ones
-        pytest --nbmake smartnoise-samples/ --ignore="smartnoise-samples/analysis/data/Data set processing - Mental Health in Tech Survey.ipynb" --ignore=smartnoise-samples/whitepaper-demos/6-deep-learning-medical.ipynb --ignore=smartnoise-samples/whitepaper-demos/2-reidentification-attack.ipynb --ignore=smartnoise-samples/whitepaper-demos/5-ml-synthetic-data.ipynb --ignore=smartnoise-samples/whitepaper-demos/4-ml-dp-classifier.ipynb
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          editable-projects: |
+            sql
+            synth
+          package-specs: |
+            ipykernel
+            matplotlib
+            nbmake
+
+      - name: Prepare notebook smoke set
+        run: |
+          set -euo pipefail
+          rm -rf "${NOTEBOOK_SANDBOX}"
+          python - <<'PY'
+          import json
+          import os
+          import shutil
+          from pathlib import Path
+
+          root = Path.cwd()
+          sandbox = root / os.environ["NOTEBOOK_SANDBOX"]
+          notebooks = [
+              Path("sql/samples/SQL Queries.ipynb"),
+              Path("synth/samples/aggregate_seeded_sample/aggregate_seeded_short_sample.ipynb"),
+              Path("synth/samples/mst_sample/mst_sample_pums.ipynb"),
+              Path("synth/samples/mwem_sample/Visualizing MWEM.ipynb"),
+          ]
+          support_files = [
+              Path("synth/samples/aggregate_seeded_sample/utils.py"),
+          ]
+
+          def should_drop_cell(cell):
+              if cell.get("cell_type") != "code":
+                  return False
+              lines = [line.strip() for line in "".join(cell.get("source", [])).splitlines() if line.strip()]
+              return bool(lines) and all(
+                  line.startswith(("!pip install", "%pip install"))
+                  for line in lines
+              )
+
+          for notebook in notebooks:
+              source = root / notebook
+              target = sandbox / notebook
+              target.parent.mkdir(parents=True, exist_ok=True)
+              payload = json.loads(source.read_text())
+              payload["cells"] = [cell for cell in payload.get("cells", []) if not should_drop_cell(cell)]
+              target.write_text(json.dumps(payload, indent=1) + "\n")
+
+          for support_file in support_files:
+              source = root / support_file
+              target = sandbox / support_file
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(source, target)
+          PY
+
+      - name: Test notebooks
+        run: |
+          pytest --nbmake --nbmake-timeout=600 \
+            "${NOTEBOOK_SANDBOX}/sql/samples/SQL Queries.ipynb" \
+            "${NOTEBOOK_SANDBOX}/synth/samples/aggregate_seeded_sample/aggregate_seeded_short_sample.ipynb" \
+            "${NOTEBOOK_SANDBOX}/synth/samples/mst_sample/mst_sample_pums.ipynb" \
+            "${NOTEBOOK_SANDBOX}/synth/samples/mwem_sample/Visualizing MWEM.ipynb"

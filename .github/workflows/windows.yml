@@ -1,56 +1,64 @@
 name: SQL on Pandas and LocalDB on Windows
+
 on:
   pull_request:
     paths:
-      - 'sql/tests/**'
-      - 'sql/snsql/**'
-      - 'sql/pyproject.toml'
-      - '!sql/tests/setup/postgres/**'
-      - '!sql/tests/setup/sqlserver/**'
-      - '!sql/tests/setup/mysql/**'
-      - '!sql/tests/setup/biqquery/**'
+      - ".github/actions/setup-python-uv/**"
+      - ".github/workflows/windows.yml"
+      - "sql/tests/**"
+      - "sql/snsql/**"
+      - "sql/pyproject.toml"
+      - "!sql/tests/setup/postgres/**"
+      - "!sql/tests/setup/mysql/**"
+      - "!sql/tests/setup/bigquery/**"
   workflow_dispatch:
-  
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
+
 jobs:
   windows-localdb:
+    name: SQL on Pandas and LocalDB on Windows
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v2
-      - name: install smartnoise-sql
-        shell: cmd
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          editable-projects: |
+            sql
+          requirements-files: |
+            sql/tests/requirements.txt
+            sql/tests/setup/sqlserver/requirements.txt
+
+      - name: Prepare test datasets and connection fixture
+        shell: pwsh
         run: |
-          cd sql
-          pip install --no-cache-dir -r tests\requirements.txt
-          pip install --no-cache-dir .
-      - name: install sqlserver dependencies
-        shell: cmd
-        run: |
-          cd sql
-          pip install --no-cache-dir -r tests\setup\sqlserver\requirements.txt
-      - name: download CSV files
-        shell: cmd
-        run: |
-          cd sql
+          Set-Location sql
+          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.smartnoise" | Out-Null
+          Copy-Item tests\setup\sqlserver\connections-unit-localdb.yaml "$env:USERPROFILE\.smartnoise\connections-unit.yaml" -Force
           python tests\check_databases.py
-      - name: copy connections-unit.yaml
-        shell: cmd
-        run: |
-          cd sql
-          mkdir %USERPROFILE%\.smartnoise
-          copy /Y tests\setup\sqlserver\connections-unit-localdb.yaml %USERPROFILE%\.smartnoise\connections-unit.yaml
-      - name: install databases in localdb
+
+      - name: Install databases in LocalDB
         shell: cmd
         run: |
           SQLLocalDB info
           cd sql\tests\setup\sqlserver\PUMS
           .\install_localdb.cmd
-      - name: show what's installed
-        shell: cmd
+
+      - name: Show installed databases
+        shell: pwsh
         run: |
-          cd sql
+          Set-Location sql
           python tests\check_databases.py
+
       - name: Unit tests
-        shell: cmd
+        shell: pwsh
         run: |
-          cd sql
+          Set-Location sql
           pytest tests

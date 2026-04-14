@@ -27,6 +27,7 @@ extensions = [
 
 # This prevents the RuntimeTypeDescriptors from expanding and making the signatures on API docs unreadable
 autodoc_typehints = "description"
+autodoc_mock_imports = ["jax", "mbi"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -91,10 +92,14 @@ html_theme_options = {
 html_theme = 'pydata_sphinx_theme'
 
 # See https://pydata-sphinx-theme.readthedocs.io/en/v0.6.3/user_guide/configuring.html#configure-the-sidebar
-# Note: Overridden in the Makefile for local builds. Be sure to update both places.
-html_sidebars = {
-   '**': ['search-field.html', 'sidebar-nav-bs.html', 'versioning.html'],
-}
+if os.getenv("SPHINX_LOCAL_BUILD") == "1":
+    html_sidebars = {
+        '**': ['search-field.html', 'sidebar-nav-bs.html'],
+    }
+else:
+    html_sidebars = {
+        '**': ['search-field.html', 'sidebar-nav-bs.html', 'versioning.html'],
+    }
 
 # SPHINX-MULTIVERSION STUFF
 # Whitelist pattern for tags (set to None to ignore all tags)

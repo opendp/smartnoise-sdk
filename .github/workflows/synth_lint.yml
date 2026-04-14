@@ -3,30 +3,25 @@ name: Lint Synthesizers
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
+
 jobs:
   build-linux:
+    name: Lint Synthesizers
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.8]
-      max-parallel: 5
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniconda-version: "latest"
-        auto-update-conda: true
-        auto-activate-base: true
-        python-version: ${{ matrix.python-version }}
-    - name: Upgrade pip
-      shell: bash -l {0}
-      run: |
-        conda install pip
-        conda update pip
-    - name: Lint with flake8
-      shell: bash -l {0}
-      run: |
-        conda install flake8
-        flake8 synth/snsynth -v
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          package-specs: |
+            flake8
+
+      - name: Lint with flake8
+        run: flake8 synth/snsynth -v

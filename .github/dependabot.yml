@@ -1,0 +1,105 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - github-actions
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pip
+    directory: /sql
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-sql:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pip
+    directory: /synth
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-synth:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pip
+    directory: /eval
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-eval:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pip
+    directory: /docs
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-docs:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pip
+    directory: /sql/docs
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-sql-docs:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pip
+    directory: /synth/docs
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-synth-docs:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pip
+    directory: /eval/docs
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-eval-docs:
+        patterns:
+          - "*"

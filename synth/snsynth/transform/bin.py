@@ -80,7 +80,7 @@ class BinTransformer(CachingColumnTransformer):
             raise ValueError("BinTransformer has not been fit yet.")
         if self.nullable and (val is None or (isinstance(val, float) and np.isnan(val))):
             return 1
-        return int(self.bins * (val - self.fit_lower) / (self.fit_upper - self.fit_lower))
+        return min(self.bins - 1, int(self.bins * (val - self.fit_lower) / (self.fit_upper - self.fit_lower)))
     def _transform(self, val):
         if not self.fit_complete:
             raise ValueError("BinTransformer has not been fit yet.")

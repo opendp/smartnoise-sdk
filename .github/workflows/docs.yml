@@ -1,64 +1,65 @@
 name: Test Documentation Build
 
 on:
-  # pull_request:
-  #   paths:
-  #     - 'sql/tests/**'
-  #     - 'sql/snsql/**'
-  #     - 'sql/pyproject.toml'
-  #     - 'synth/tests/**'
-  #     - 'synth/snsynth/**'
-  #     - 'synth/pyproject.toml'
+  pull_request:
+    paths:
+      - ".github/actions/setup-python-uv/**"
+      - ".github/workflows/docs.yml"
+      - "docs/**"
+      - "sql/docs/**"
+      - "synth/docs/**"
+      - "eval/docs/**"
+      - "sql/snsql/**"
+      - "synth/snsynth/**"
+      - "eval/sneval/**"
+      - "sql/pyproject.toml"
+      - "synth/pyproject.toml"
+      - "eval/pyproject.toml"
+      - "sql/VERSION"
+      - "synth/VERSION"
+      - "eval/VERSION"
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
 
 jobs:
   build-linux:
+    name: Build docs
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.8]
-      max-parallel: 5
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniconda-version: "latest"
-        auto-update-conda: true
-        auto-activate-base: true
-        python-version: ${{ matrix.python-version }}
-    - name: Upgrade pip
-      shell: bash -l {0}
-      run: |
-        conda install pip
-        conda update pip
-    - name: Get development headers
-      shell: bash -l {0}
-      run: |
-        sudo apt-get update
-        sudo apt-get -yq upgrade
-        sudo apt-get -yq -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install python3-dev libpq-dev unixodbc-dev cargo openssl libssl-dev openjdk-11-jre-headless
-    - name: Install smartnoise-sql
-      shell: bash -l {0}
-      run: |
-        cd sql
-        pip install --no-cache-dir .
-        pip install --no-cache-dir -r tests/requirements.txt
-    - name: Install smartnoise-synth
-      shell: bash -l {0}
-      run: |
-        cd synth
-        pip install --no-cache-dir .
-        pip install --no-cache-dir -r tests/requirements.txt
-    - name: Clone documentation repo
-      shell: bash -l {0}
-      run: |
-        git clone https://github.com/opendp/opendp-documentation.git
-    - name: Build documentation
-      shell: bash -l {0}
-      run: |
-        cd opendp-documentation
-        pip install -r requirements.txt
-        make html
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          editable-projects: |
+            sql
+            synth
+            eval
+          requirements-files: |
+            docs/requirements.txt
+            sql/docs/requirements.txt
+            synth/docs/requirements.txt
+            eval/docs/requirements.txt
+
+      - name: Build top-level docs
+        run: |
+          make -C docs html
+
+      - name: Build SQL docs
+        run: |
+          make -C sql/docs html
+
+      - name: Build synth docs
+        run: |
+          make -C synth/docs html
+
+      - name: Build eval docs
+        run: |
+          make -C eval/docs html

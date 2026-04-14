@@ -1,104 +1,103 @@
 name: PostgreSQL and SQLite Integration Tests
+
 on:
   pull_request:
     paths:
-      - 'sql/tests/**'
-      - 'sql/snsql/**'
-      - 'sql/pyproject.toml'
-      - '!sql/tests/setup/sqlserver/**'
-      - '!sql/tests/setup/mysql/**'
-      - '!sql/tests/setup/biqquery/**'
+      - ".github/actions/setup-python-uv/**"
+      - ".github/workflows/postgres.yml"
+      - "sql/tests/**"
+      - "sql/snsql/**"
+      - "sql/pyproject.toml"
+      - "!sql/tests/setup/sqlserver/**"
+      - "!sql/tests/setup/mysql/**"
+      - "!sql/tests/setup/bigquery/**"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
+  POSTGRES_DB: postgres
+  POSTGRES_HOST: 127.0.0.1
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: postgres
+
 jobs:
-  container-job:
+  postgres-sqlite-ubuntu:
+    name: PostgreSQL and SQLite Integration Tests
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.9]
-      max-parallel: 5
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           lfs: true
-      - name: Generate random password
-        shell: bash -l {0}
-        run: |
-          export RANDPASS=pgpass$RANDOM
-          echo "export PGPASSWORD=$RANDPASS" >> pass.sh
-          echo "export POSTGRES_PASSWORD=$RANDPASS" >> pass.sh
-      - name: Install postgres
-        shell: bash -l {0}
-        run: |
-          sudo apt-get update
-          sudo apt-get --yes install postgresql-client postgresql
-          sudo service postgresql start
-      - name: Set up miniconda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          miniconda-version: "latest"
-          auto-update-conda: true
-          auto-activate-base: true
-          python-version: ${{ matrix.python-version }}
-      - name: Configure postgres password
-        shell: bash -l {0}
-        run: |
-          source pass.sh
-          sudo -u postgres psql -U postgres -d postgres -c "alter user postgres with password '$PGPASSWORD';"
-      - name: Upgrade pip
-        shell: bash -l {0}
-        run: |
-          conda install pip
-          conda update pip
-      - name: Setup SDK
-        shell: bash -l {0}
-        run: |
-          cd sql
-          pip install --no-cache-dir -r tests/requirements.txt
-          pip install --no-cache-dir -r tests/setup/postgres/requirements.txt
-          pip install --no-cache-dir  .
-      - name: Download test datasets
-        shell: bash -l {0}
-        run: |
-          cd sql
-          ls -l ../datasets
-      - name: Install PUMS
-        shell: bash -l {0}
-        run: |
-          source pass.sh
-          cd sql
-          cd tests/setup/postgres/PUMS
-          source install.sh
-        env:
-          POSTGRES_HOST: localhost
-      - name: Verify database counts
-        shell: bash -l {0}
-        run: |
-          source pass.sh
-          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums.pums"
-          psql -U postgres -h $POSTGRES_HOST -d pums -c "select count(*) FROM pums.pums_large"
-          psql -U postgres -h $POSTGRES_HOST -d pums_pid -c "select count(*) FROM pums.pums"
-          psql -U postgres -h $POSTGRES_HOST -d pums_dup -c "select count(*) FROM pums.pums"
-          psql -U postgres -h $POSTGRES_HOST -d pums_null -c "select count(*) FROM pums"
-        env:
-          POSTGRES_HOST: localhost
-      - name: Check database connections test fixture
-        shell: bash -l {0}
-        run: |
-          source pass.sh
-          cd sql
-          mkdir ~/.smartnoise
-          cp tests/setup/postgres/connections-unit.yaml ~/.smartnoise
-          python tests/check_databases.py
-          ls -l ../datasets
-      - name: Test SDK
-        shell: bash -l {0}
-        run: |
-          source pass.sh
-          cd sql
-          export SKIP_PANDAS=1
-          export TEST_SQLITE=1
-          ls -l ../datasets
-          pytest tests
 
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          editable-projects: |
+            sql
+          requirements-files: |
+            sql/tests/requirements.txt
+            sql/tests/setup/postgres/requirements.txt
+
+      - name: Load PostgreSQL fixtures
+        run: |
+          fixture_dir="${RUNNER_TEMP}/postgres-pums"
+          rm -rf "${fixture_dir}"
+          mkdir -p "${fixture_dir}"
+
+          tail -n +2 datasets/PUMS.csv > "${fixture_dir}/PUMS.csv"
+          tail -n +2 datasets/PUMS_large.csv > "${fixture_dir}/PUMS_large.csv"
+          tail -n +2 datasets/PUMS_pid.csv > "${fixture_dir}/PUMS_pid.csv"
+          tail -n +2 datasets/PUMS_dup.csv > "${fixture_dir}/PUMS_dup.csv"
+          tail -n +2 datasets/PUMS_null.csv > "${fixture_dir}/PUMS_null.csv"
+          cp sql/tests/setup/postgres/PUMS/pums.sql "${fixture_dir}/pums.sql"
+
+          docker cp "${fixture_dir}/." "${{ job.services.postgres.id }}:/tmp/postgres-pums"
+          docker exec \
+            -e PGPASSWORD="${POSTGRES_PASSWORD}" \
+            "${{ job.services.postgres.id }}" \
+            bash -lc "cd /tmp/postgres-pums && psql -h localhost -U '${POSTGRES_USER}' -d '${POSTGRES_DB}' -f pums.sql"
+
+      - name: Verify database counts
+        run: |
+          docker exec -e PGPASSWORD="${POSTGRES_PASSWORD}" "${{ job.services.postgres.id }}" psql -h localhost -U "${POSTGRES_USER}" -d pums -c "select count(*) FROM pums.pums"
+          docker exec -e PGPASSWORD="${POSTGRES_PASSWORD}" "${{ job.services.postgres.id }}" psql -h localhost -U "${POSTGRES_USER}" -d pums -c "select count(*) FROM pums.pums_large"
+          docker exec -e PGPASSWORD="${POSTGRES_PASSWORD}" "${{ job.services.postgres.id }}" psql -h localhost -U "${POSTGRES_USER}" -d pums_pid -c "select count(*) FROM pums.pums"
+          docker exec -e PGPASSWORD="${POSTGRES_PASSWORD}" "${{ job.services.postgres.id }}" psql -h localhost -U "${POSTGRES_USER}" -d pums_dup -c "select count(*) FROM pums.pums"
+          docker exec -e PGPASSWORD="${POSTGRES_PASSWORD}" "${{ job.services.postgres.id }}" psql -h localhost -U "${POSTGRES_USER}" -d pums_null -c "select count(*) FROM pums"
+
+      - name: Check database connections test fixture
+        run: |
+          mkdir -p ~/.smartnoise
+          cp sql/tests/setup/postgres/connections-unit.yaml ~/.smartnoise/connections-unit.yaml
+          cd sql
+          python tests/check_databases.py
+        env:
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+
+      - name: Test SDK
+        run: |
+          cd sql
+          pytest tests
+        env:
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          SKIP_PANDAS: "1"
+          TEST_SQLITE: "1"

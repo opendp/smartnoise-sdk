@@ -1,16 +1,17 @@
 terraform {
-  required_version = ">= 0.13.1"
+  required_version = ">= 1.5.0"
   backend "local" {}
   required_providers {
-  google = {
-      source = "hashicorp/google"
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 6.0"
     }
   }
 }
 
 provider "google" {
- project = var.project_id
- region  = var.region
+  project = var.project_id
+  region  = var.region
 }
 
 resource "google_storage_bucket" "smartnoise_ci_bucket" {
@@ -37,8 +38,8 @@ resource "google_storage_bucket_object" "pums" {
 }
 
 resource "google_bigquery_table" "pums" {
-  dataset_id = google_bigquery_dataset.pums.dataset_id
-  table_id   = "PUMS"
+  dataset_id          = google_bigquery_dataset.pums.dataset_id
+  table_id            = "PUMS"
   deletion_protection = false
 
   labels = {
@@ -50,20 +51,20 @@ resource "google_bigquery_table" "pums" {
     source_format = "CSV"
 
     csv_options {
-      quote = ""
+      quote             = ""
       skip_leading_rows = 1
     }
 
     schema = file("${path.root}/schema/PUMS.json")
 
     source_uris = [
-        "gs://${var.bucket_name}/PUMS.csv"
+      "gs://${var.bucket_name}/PUMS.csv"
     ]
   }
 
   depends_on = [
-      google_bigquery_dataset.pums,
-    ]
+    google_bigquery_dataset.pums,
+  ]
 }
 
 # PUMS_large dataset
@@ -74,8 +75,8 @@ resource "google_storage_bucket_object" "pums_large" {
 }
 
 resource "google_bigquery_table" "pums_large" {
-  dataset_id = google_bigquery_dataset.pums.dataset_id
-  table_id   = "PUMS_LARGE"
+  dataset_id          = google_bigquery_dataset.pums.dataset_id
+  table_id            = "PUMS_LARGE"
   deletion_protection = false
 
   labels = {
@@ -87,20 +88,20 @@ resource "google_bigquery_table" "pums_large" {
     source_format = "CSV"
 
     csv_options {
-      quote = ""
+      quote             = ""
       skip_leading_rows = 1
     }
 
     schema = file("${path.root}/schema/PUMS_large.json")
 
     source_uris = [
-        "gs://${var.bucket_name}/PUMS_large.csv"
+      "gs://${var.bucket_name}/PUMS_large.csv"
     ]
   }
 
   depends_on = [
-      google_bigquery_dataset.pums,
-    ]
+    google_bigquery_dataset.pums,
+  ]
 }
 
 # PUMS_pid dataset 'datasets/PUMS_pid.csv'
@@ -111,8 +112,8 @@ resource "google_storage_bucket_object" "pums_pid" {
 }
 
 resource "google_bigquery_table" "pums_pid" {
-  dataset_id = google_bigquery_dataset.pums.dataset_id
-  table_id   = "PUMS_PID"
+  dataset_id          = google_bigquery_dataset.pums.dataset_id
+  table_id            = "PUMS_PID"
   deletion_protection = false
 
   labels = {
@@ -124,20 +125,20 @@ resource "google_bigquery_table" "pums_pid" {
     source_format = "CSV"
 
     csv_options {
-      quote = ""
+      quote             = ""
       skip_leading_rows = 1
     }
 
     schema = file("${path.root}/schema/PUMS_pid.json")
 
     source_uris = [
-        "gs://${var.bucket_name}/PUMS_pid.csv"
+      "gs://${var.bucket_name}/PUMS_pid.csv"
     ]
   }
 
   depends_on = [
-      google_bigquery_dataset.pums,
-    ]
+    google_bigquery_dataset.pums,
+  ]
 }
 
 # PUMS_dup dataset 'datasets/PUMS_dup.csv'
@@ -148,8 +149,8 @@ resource "google_storage_bucket_object" "pums_dup" {
 }
 
 resource "google_bigquery_table" "pums_dup" {
-  dataset_id = google_bigquery_dataset.pums.dataset_id
-  table_id   = "PUMS_DUP"
+  dataset_id          = google_bigquery_dataset.pums.dataset_id
+  table_id            = "PUMS_DUP"
   deletion_protection = false
 
   labels = {
@@ -161,20 +162,20 @@ resource "google_bigquery_table" "pums_dup" {
     source_format = "CSV"
 
     csv_options {
-      quote = ""
+      quote             = ""
       skip_leading_rows = 1
     }
 
     schema = file("${path.root}/schema/PUMS_dup.json")
 
     source_uris = [
-        "gs://${var.bucket_name}/PUMS_dup.csv"
+      "gs://${var.bucket_name}/PUMS_dup.csv"
     ]
   }
 
   depends_on = [
-      google_bigquery_dataset.pums,
-    ]
+    google_bigquery_dataset.pums,
+  ]
 }
 # PUMS_null dataset 'datasets/PUMS_null.csv'
 resource "google_storage_bucket_object" "pums_null" {
@@ -184,8 +185,8 @@ resource "google_storage_bucket_object" "pums_null" {
 }
 
 resource "google_bigquery_table" "pums_null" {
-  dataset_id = google_bigquery_dataset.pums.dataset_id
-  table_id   = "PUMS_NULL"
+  dataset_id          = google_bigquery_dataset.pums.dataset_id
+  table_id            = "PUMS_NULL"
   deletion_protection = false
 
   labels = {
@@ -197,18 +198,18 @@ resource "google_bigquery_table" "pums_null" {
     source_format = "CSV"
 
     csv_options {
-      quote = ""
+      quote             = ""
       skip_leading_rows = 1
     }
 
     schema = file("${path.root}/schema/PUMS_null.json")
 
     source_uris = [
-        "gs://${var.bucket_name}/PUMS_null.csv"
+      "gs://${var.bucket_name}/PUMS_null.csv"
     ]
   }
 
   depends_on = [
-      google_bigquery_dataset.pums,
-    ]
+    google_bigquery_dataset.pums,
+  ]
 }

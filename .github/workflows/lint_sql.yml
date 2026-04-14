@@ -3,48 +3,37 @@ name: SQL code linter
 on:
   pull_request:
     paths:
-      - 'sql/snsql/**'
-      - '!sql/tests/setup/postgres/**'
-      - '!sql/tests/setup/sqlserver/**'
-      - '!sql/tests/setup/mysql/**'
-      - '!sql/tests/setup/biqquery/**'
+      - ".github/actions/setup-python-uv/**"
+      - ".github/workflows/lint_sql.yml"
+      - "sql/snsql/**"
+      - "tox.ini"
+      - "!sql/tests/setup/postgres/**"
+      - "!sql/tests/setup/sqlserver/**"
+      - "!sql/tests/setup/mysql/**"
+      - "!sql/tests/setup/bigquery/**"
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
 
 jobs:
   lint-sql:
+    name: SQL code linter
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.9']
-      max-parallel: 5
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniconda-version: "latest"
-        auto-update-conda: true
-        auto-activate-base: true
-        python-version: ${{ matrix.python-version }}
-    - name: Upgrade pip
-      shell: bash -l {0}
-      run: |
-        conda install pip
-        conda update pip
-    - name: Install smartnoise-sql
-      shell: bash -l {0}
-      run: |
-        cd sql
-        pip install --no-cache-dir .
-    - name: Install dependencies
-      shell: bash -l {0}
-      run: |
-        cd sql
-        pip install --no-cache-dir -r tests/requirements.txt
-    - name: Lint with flake8
-      shell: bash -l {0}
-      run: |
-        conda install flake8
-        flake8 sql/snsql/sql/dpsu.py -v
-        flake8 sql/snsql/reader/ -v
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          package-specs: |
+            flake8
+
+      - name: Lint with flake8
+        run: |
+          flake8 sql/snsql/sql/dpsu.py -v
+          flake8 sql/snsql/reader/ -v
