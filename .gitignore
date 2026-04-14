@@ -117,6 +117,9 @@ run.py
 # VS Code
 .vscode/
 
+# Local GitHub hooks
+.github/hooks/
+
 # DS_Store
 .DS_Store
 
