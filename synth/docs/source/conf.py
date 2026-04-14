@@ -27,6 +27,7 @@ extensions = [
 
 # This prevents the RuntimeTypeDescriptors from expanding and making the signatures on API docs unreadable
 autodoc_typehints = "description"
+autodoc_mock_imports = ["jax", "mbi"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
