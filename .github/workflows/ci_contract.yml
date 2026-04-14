@@ -1,0 +1,80 @@
+name: CI bootstrap contract
+
+on:
+  pull_request:
+    paths:
+      - ".github/actions/setup-python-uv/**"
+      - ".github/workflows/ci_contract.yml"
+      - ".github/workflows/README.md"
+      - "sql/pyproject.toml"
+      - "synth/pyproject.toml"
+      - "eval/pyproject.toml"
+      - "**/requirements*.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.12"
+
+jobs:
+  default-runtime-install-smoke:
+    name: Default runtime install smoke (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: sql
+            editable_projects: |
+              sql
+            requirements_files: |
+              sql/tests/requirements.txt
+            import_module: snsql
+          - name: synth
+            editable_projects: |
+              sql
+              synth
+            requirements_files: |
+              synth/tests/requirements.txt
+            import_module: snsynth
+          - name: eval
+            editable_projects: |
+              sql
+              eval
+            requirements_files: |
+              eval/tests/requirements.txt
+            import_module: sneval
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+          editable-projects: ${{ matrix.editable_projects }}
+          requirements-files: ${{ matrix.requirements_files }}
+
+      - name: Import installed package
+        run: python -c "import ${{ matrix.import_module }}"
+
+  support-window-smoke:
+    name: Support window smoke (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up repo bootstrap
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ matrix.python-version }}
+          editable-projects: |
+            sql
+
+      - name: Import installed package
+        run: python -c "import snsql"

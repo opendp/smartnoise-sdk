@@ -1,0 +1,74 @@
+name: Setup SmartNoise Python with uv
+description: Standardize Python setup, uv caching, and local package installs for SmartNoise CI.
+
+inputs:
+  python-version:
+    description: Python version to install for the job.
+    required: false
+    default: "3.12"
+  editable-projects:
+    description: Newline-delimited local project directories to install in editable mode, in dependency order.
+    required: false
+    default: ""
+  requirements-files:
+    description: Newline-delimited requirements files relative to the repository root.
+    required: false
+    default: ""
+  package-specs:
+    description: Newline-delimited package specs to install with uv pip.
+    required: false
+    default: ""
+  cache-dependency-glob:
+    description: Glob passed to setup-uv for dependency cache invalidation.
+    required: false
+    default: |
+      **/pyproject.toml
+      **/requirements*.txt
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v8
+      with:
+        python-version: ${{ inputs.python-version }}
+        enable-cache: true
+        cache-dependency-glob: ${{ inputs.cache-dependency-glob }}
+
+    - name: Install editable projects
+      if: ${{ inputs.editable-projects != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        while IFS= read -r project_dir; do
+          if [[ -n "${project_dir}" ]]; then
+            uv pip install --system --editable "${project_dir}"
+          fi
+        done <<< "${{ inputs.editable-projects }}"
+
+    - name: Install requirements files
+      if: ${{ inputs.requirements-files != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        while IFS= read -r requirements_file; do
+          if [[ -n "${requirements_file}" ]]; then
+            uv pip install --system -r "${requirements_file}"
+          fi
+        done <<< "${{ inputs.requirements-files }}"
+
+    - name: Install package specs
+      if: ${{ inputs.package-specs != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        while IFS= read -r package_spec; do
+          if [[ -n "${package_spec}" ]]; then
+            uv pip install --system "${package_spec}"
+          fi
+        done <<< "${{ inputs.package-specs }}"
