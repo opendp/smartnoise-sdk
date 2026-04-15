@@ -6,7 +6,7 @@ Adaptive Iterative Mechanism (AIM)
 
 .. code-block:: bash
 
-  pip install git+https://github.com/ryan112358/private-pgm.git
+  pip install mbi
 
 And call like this:
 

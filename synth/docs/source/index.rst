@@ -53,7 +53,7 @@ When inferring a preprocessor, the synthesizer first attempts to determine wheth
 
 .. note::
 
-  Before using the MST synthesizer, please install ``mbi`` by running ``pip install git+https://github.com/ryan112358/private-pgm.git``.
+  Before using the MST synthesizer, please install ``mbi`` by running ``pip install mbi`` if it's not already installed.
 
 .. code-block:: python
 
