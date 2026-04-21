@@ -1,3 +1,7 @@
+# SmartNoise Synth v1.0.8 Release Notes
+
+* Switch the `mbi` dependency to the published PyPI release series so `smartnoise-synth` can be uploaded to PyPI.
+
 # SmartNoise Synth v1.0.7 Release Notes
 
 * Update AIM and MST to use the latest MBI build and package the dependency directly (thanks, @tjh2822!)

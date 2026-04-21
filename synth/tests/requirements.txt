@@ -5,4 +5,4 @@ mlflow
 scikit-learn<1.8
 numpy
 pytest
-git+https://github.com/ryan112358/private-pgm.git@667facacbf29bd554c9a33e79bee57f1af2efa74
+mbi>=1.1.0,<2
