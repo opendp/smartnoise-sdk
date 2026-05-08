@@ -2,6 +2,7 @@ from .table import TableTransformer
 from .onehot import OneHotEncoder
 from .label import LabelTransformer
 from .minmax import MinMaxTransformer
+from .ordinal import OrdinalTransformer
 from .bin import BinTransformer
 from .chain import ChainTransformer
 from .log import LogTransformer
@@ -15,8 +16,9 @@ __all__ = [
     "TableTransformer", 
     "OneHotEncoder", 
     "LabelTransformer", 
-    "MinMaxTransformer", 
-    "BinTransformer", 
+    "MinMaxTransformer",
+    "OrdinalTransformer",
+    "BinTransformer",
     "ChainTransformer", 
     "LogTransformer",
     "StandardScaler",
