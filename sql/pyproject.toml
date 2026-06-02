@@ -11,8 +11,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.15"
-opendp = ">=0.14.1,<0.15"
-antlr4-python3-runtime = "4.9.3"
+opendp = ">=0.14.1,<0.16"
+antlr4-python3-runtime = "4.13.2"
 PyYAML = "^6.0.1"
 graphviz = ">=0.17,<1.0"
 sqlalchemy = "^2.0.0"
