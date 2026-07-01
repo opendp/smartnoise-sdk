@@ -47,7 +47,7 @@ jobs:
               eval/tests/requirements.txt
             import_module: sneval
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up repo bootstrap
         uses: ./.github/actions/setup-python-uv
@@ -67,7 +67,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up repo bootstrap
         uses: ./.github/actions/setup-python-uv

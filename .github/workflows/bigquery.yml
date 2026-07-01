@@ -32,7 +32,7 @@ jobs:
       SKIP_PANDAS: "1"
       TF_IN_AUTOMATION: "1"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check BigQuery secret availability
         id: bigquery-secrets

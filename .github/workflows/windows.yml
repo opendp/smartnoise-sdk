@@ -24,7 +24,7 @@ jobs:
     name: SQL on Pandas and LocalDB on Windows
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up repo bootstrap
         uses: ./.github/actions/setup-python-uv
