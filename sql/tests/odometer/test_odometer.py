@@ -109,7 +109,7 @@ class TestOdometer:
             odo.spend()
         eps, delt = odo.spent
         assert(np.isclose(eps, 8.2519))
-        assert(np.isclose(delt, 0.19256))
+        assert(np.isclose(delt, 0.2596633))
     def test_odo_het(self):
         privacy = Privacy(epsilon=0.1, delta = 1/(1000))
         odo = OdometerHeterogeneous(privacy)
@@ -213,3 +213,62 @@ class TestMultiplier:
             assert(len(res) == 5)
             eps, _ = priv.get_privacy_cost(query)
             assert(eps <= 5.0)
+
+
+@pytest.mark.parametrize(
+    "epsilon, delta, k, expected",
+    [
+        # Each alternative in Theorem 3.4 is the minimum in one of these cases.
+        (1.0, 0.01, 1, (1.0, 0.01495)),
+        (0.1, 0.1, 10, (0.7135807026501802, 0.668755481905)),
+        (0.1, 0.001, 300, (8.251929371461469, 0.2596633213599786)),
+    ],
+    ids=["basic", "log-e", "log-inverse-slack"],
+)
+def test_homogeneous_composition_reference_values(epsilon, delta, k, expected):
+    # Regression for GH-643, reported by marcpare. Reference values use
+    # Kairouz et al., Theorem 3.4 (https://arxiv.org/abs/1311.0776).
+    # They were evaluated separately with 60-digit decimal arithmetic.
+    odo = Odometer(Privacy(epsilon=epsilon, delta=delta))
+    odo.spend(k)
+
+    assert odo.spent == pytest.approx(expected, rel=1e-12, abs=1e-14)
+
+
+@pytest.mark.parametrize(
+    "epsilon, delta, k",
+    [(0.01, 1e-6, 100), (0.1, 0.001, 300), (0.1, 0.1, 10), (1.0, 0.1, 10)],
+)
+def test_homogeneous_matches_identical_heterogeneous_spends(epsilon, delta, k):
+    privacy = Privacy(epsilon=epsilon, delta=delta)
+    homogeneous = Odometer(privacy)
+    heterogeneous = OdometerHeterogeneous(privacy)
+    homogeneous.spend(k)
+    for _ in range(k):
+        heterogeneous.spend()
+
+    assert homogeneous.spent == pytest.approx(heterogeneous.spent)
+
+
+def test_homogeneous_delta_does_not_decrease_with_more_spends():
+    odo = Odometer(Privacy(epsilon=0.1, delta=0.1))
+    deltas = [odo.spent[1]]
+    for _ in range(30):
+        odo.spend()
+        deltas.append(odo.spent[1])
+
+    assert deltas == sorted(deltas)
+    assert all(0 <= delta <= 1 for delta in deltas)
+
+
+def test_homogeneous_reset_and_batch_spends():
+    odo = Odometer(Privacy(epsilon=0.1, delta=0.1))
+    assert odo.spent == (0.0, 0.0)
+    odo.spend(10)
+    spent = odo.spent
+    odo.reset()
+    assert odo.spent == (0.0, 0.0)
+    assert odo.k == 0
+    for _ in range(10):
+        odo.spend()
+    assert odo.spent == spent
